@@ -73,7 +73,7 @@ class parameters_julian:
         self.sigma = np.array([3.5,3,2.8])
         self.theta = np.array([7,6,8])   #
         self.beta = np.ones(S)/S
-        self.zeta = np.ones(S)*0.05 #
+        self.zeta = np.ones(S)*0.01 #
         self.g_0 = 0.01             #makes sense to be low
         self.tau = np.ones((N,N,S))*4 #
         for i in range(self.tau.shape[2]):
@@ -135,7 +135,7 @@ class var:
         A = (self.g_s + p.nu + p.zeta)
         B = np.einsum('s,nis,ns,ns -> nis',
                       p.nu,
-                      np.divide(1, self.psi_star**(p.k-1), out=np.full_like(self.psi_star,np.inf), where=self.psi_star!=0),
+                      np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(self.psi_star), where=self.psi_star!=np.inf),
                       1/(self.g_s[None,:]+p.delta+p.zeta[None,:]),
                       1/(self.g_s[None,:]+p.delta+p.nu[None,:]+p.zeta[None,:])
                       )
@@ -150,7 +150,7 @@ class var:
         A_tilde = (self.g_s + p.nu_tilde + p.zeta)
         B_tilde = np.einsum('s,nis,ns,ns -> nis',
                       p.nu,
-                      np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(self.psi_star), where=self.psi_star!=0),
+                      np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(self.psi_star), where=self.psi_star!=np.inf),
                       1/(self.g_s[None,:]+p.delta+p.nu_tilde[None,:]+p.zeta[None,:]),
                       1/(self.g_s[None,:]+p.delta+p.nu[None,:]+p.zeta[None,:])
                       )
@@ -159,32 +159,38 @@ class var:
                                 1/A_tilde,
                                 (p.nu/A)[None,None:]-B_tilde*A_tilde[None,None,:]) 
         self.PSI_CL[:,:,0] = 0
-
+        
+        while np.any(np.einsum('njs->ns',self.PSI_M)+np.einsum('njs->ns',self.PSI_CL)>1):
+            self.PSI_CL = self.PSI_CL/2
+            self.PSI_M = self.PSI_M/2
+        
         self.PSI_CD = 1-(np.einsum('njs->ns',self.PSI_M)+np.einsum('njs->ns',self.PSI_CL))  
-        # self.PSI_CD[:,0] = 1 
+        # assert np.all(self.PSI_CD[:,0] == 1)
         # self.PSI_CD[self.PSI_CD<0]=0        
         # print((np.einsum('njs->ns',self.PSI_M)+np.einsum('njs->ns',self.PSI_CL)).max())
     
-    def compute_price_indices(self,p,phi = None):
-        if phi is None:
-            phi = self.phi
-        
-        numeratorA = ( (p.sigma/(p.sigma-1))**(1-p.sigma) )[None,:] \
-                    * ( self.PSI_M * phi**((p.sigma[None,None,:]-1)/p.theta[None,None,:]) ).sum(axis=1)     
-        numeratorB = ( self.PSI_CL*phi**((p.sigma[None,None,:]-1)/p.theta[None,None,:]) ).sum(axis=1)
-        numeratorC = self.PSI_CD*phi.sum(axis=1)**((p.sigma[None,:]-1)/p.theta[None,:])
-        numerator = (numeratorA + numeratorB + numeratorC) 
-        # print(numeratorC.min())
-        price = ( (numerator/numerator[0,:])**(p.beta[None,:]/(1-p.sigma[None,:])) ).prod(axis = 1)
-        
-        return price
-
     def compute_phi(self,p):    
         self.phi = p.T[None,:,None] * np.einsum('nis,is,is->nis',
                     p.tau,
                     self.w[:,None]**p.alpha[None,:],
                     self.price_indices[:,None]**(1-p.alpha[None,:])
                     )**(-p.theta[None,None,:])
+    
+    def compute_price_indices(self,p,phi = None):
+        if phi is None:
+            phi = self.phi
+        
+        power = (p.sigma-1)/p.theta
+        
+        numeratorA = ( (p.sigma/(p.sigma-1))**(1-p.sigma) )[None,:] \
+                    * ( self.PSI_M * phi**power[None,None,:] ).sum(axis=1)     
+        numeratorB = ( self.PSI_CL*phi**power[None,None,:] ).sum(axis=1)
+        numeratorC = self.PSI_CD*phi.sum(axis=1)**power[None,:]
+        numerator = (numeratorA + numeratorB + numeratorC) 
+        # print(numeratorC.min())
+        price = ( (numerator/numerator[0,:])**(p.beta[None,:]/(1-p.sigma[None,:])) ).prod(axis = 1)
+        
+        return price
                   
     def solve_price_ind_and_phi_with_price(self, p, price_init = None, tol_p=1e-15, plot_convergence = False):
         
@@ -211,7 +217,7 @@ class var:
             if count!=0:
                 aa_wrk.apply(price_new, price_old)
                 price_old = price_new  
-                price_old[price_old<0] = 0
+                # price_old[price_old<0] = 0
             
             self.guess_price_indices(price_old)
             self.compute_phi(p)
@@ -223,6 +229,7 @@ class var:
             count+=1           
             
         if plot_convergence:
+            print(convergence)
             plt.semilogy(convergence)
             plt.show()
             
@@ -230,18 +237,17 @@ class var:
         self.compute_phi(p)         
     
     def compute_monopolistic_sectoral_prices(self, p):
+        power = (p.sigma-1)/p.theta
         A = ( (p.sigma/(p.sigma-1))**(1-p.sigma) )[None,:] \
-                    * ( self.PSI_M*self.phi**( ((p.sigma-1)/p.theta)[None,None,:] ) ).sum(axis=1)
+                    * ( self.PSI_M*self.phi**power[None,None,:] ).sum(axis=1)
                   
-        B = ( self.PSI_CL*self.phi**((p.sigma-1)/p.theta)[None,None,:] ).sum(axis=1)
+        B = (self.PSI_CL*self.phi**power[None,None,:]).sum(axis=1)
         
-        C = self.PSI_CD*self.phi.sum(axis=1)**((p.sigma-1)/p.theta)[None,:]
-        
-        denominator = A+B+C
+        C = self.PSI_CD*self.phi.sum(axis=1)**power[None,:]
         
         self.P_M = np.ones((p.N,p.S))
-        self.P_M[:,:1] = np.inf
-        self.P_M[:,1:] = (A[:,1:]/denominator[:,1:])**(1/(1-p.sigma))[None,1:]
+        self.P_M[:,0] = np.inf
+        self.P_M[:,1:] = (A[:,1:]/(A+B+C)[:,1:])**(1/(1-p.sigma))[None,1:]
         
     def compute_monopolistic_trade_flows(self,p):
         numerator = np.einsum('nis,nis->nis',
@@ -263,14 +269,15 @@ class var:
                                 self.w,
                                 self.PSI_M,
                                 1/p.nu,
-                                np.divide(1, self.X_M, out=np.zeros_like(self.X_M), where=self.X_M!=0),
+                                np.divide(1, self.X_M, out=np.full_like(self.X_M,np.inf), where=self.X_M!=0),
                                 p.fo[None,None,:]+np.einsum('n,i,s -> nis',
                                                self.w,
                                                1/self.w,
                                                p.fe),
                                 self.r+p.zeta[None,:]+p.delta-self.g+self.g_s[None,:],
-                                self.r+p.zeta[None,:]+p.delta-self.g+self.g_s[None,:]+p.nu[None,:]
+                                self.r+p.zeta[None,:]+p.nu[None,:]-self.g+self.g_s[None,:]+p.delta
                                 )
+        psi_star[...,0] = np.inf
         return psi_star
         
     def solve_psi_star(self, p, psi_star_init = None, price_init = None, tol_psi = 1e-15, plot_convergence = False):
@@ -304,7 +311,7 @@ class var:
             
             self.guess_patenting_threshold(psi_star_old)
             self.compute_aggregate_qualities(p)
-            self.solve_price_ind_and_phi_with_price(p, price_init = price_init)
+            self.solve_price_ind_and_phi_with_price(p, price_init = self.price_indices)
             # if count == 0:
             #     self.solve_price_ind_and_phi_with_price(p,price_init=price_init)
             # else:
@@ -313,8 +320,10 @@ class var:
             self.compute_monopolistic_trade_flows(p)
             psi_star_new = self.compute_psi_star(p)
             
-            condition = np.linalg.norm(psi_star_new - psi_star_old)/np.linalg.norm(psi_star_new) > tol_psi
-            convergence.append(np.linalg.norm(psi_star_new - psi_star_old)/np.linalg.norm(psi_star_new))
+            condition = np.linalg.norm(psi_star_new[...,1:] - psi_star_old[...,1:])/\
+                np.linalg.norm(psi_star_new[...,1:]) > tol_psi
+            convergence.append(np.linalg.norm(psi_star_new[...,1:] - psi_star_old[...,1:])/\
+                               np.linalg.norm(psi_star_new[...,1:]))
             count+=1           
             
         if plot_convergence:
@@ -329,33 +338,56 @@ class var:
         self.compute_monopolistic_trade_flows(p)
         
     def compute_competitive_sectoral_prices(self,p):
-        A = np.einsum('s,njs,njs -> ns',
-                     (p.sigma/(p.sigma-1))**(1-p.sigma),
-                     self.PSI_M,
-                     self.phi**((p.sigma-1)/p.theta)[None,None,:])
+        # A = np.einsum('s,njs,njs -> ns',
+        #              (p.sigma/(p.sigma-1))**(1-p.sigma),
+        #              self.PSI_M,
+        #              self.phi**((p.sigma-1)/p.theta)[None,None,:])
                   
-        B = np.einsum('njs,njs->ns', self.PSI_CL, self.phi**((p.sigma-1)/p.theta)[None,None,:] )
+        # B = np.einsum('njs,njs->ns', self.PSI_CL, self.phi**((p.sigma-1)/p.theta)[None,None,:] )
         
-        C = self.PSI_CD*np.einsum('njs->ns',self.phi)**((p.sigma-1)/p.theta)[None,:]
-
-        denominator = A+B+C
+        # C = self.PSI_CD*np.einsum('njs->ns',self.phi)**((p.sigma-1)/p.theta)[None,:]
+        power = (p.sigma-1)/p.theta
+        A = ( (p.sigma/(p.sigma-1))**(1-p.sigma) )[None,:] \
+                    * ( self.PSI_M*self.phi**power[None,None,:] ).sum(axis=1)
+                  
+        B = (self.PSI_CL*self.phi**power[None,None,:]).sum(axis=1)
         
-        one_over_P_CL = (B/denominator)**(1/(p.sigma-1))[None,:]
-        self.P_CL = np.divide(1, one_over_P_CL, out=np.full_like(one_over_P_CL, np.inf), where=one_over_P_CL!=0)
-
-        self.P_CD = ((C/denominator)**(1/(1-p.sigma))[None,:])
+        C = self.PSI_CD*self.phi.sum(axis=1)**power[None,:]
+        
+        # denominator = A+B+C
+        
+        # one_over_P_CL = (B/denominator)**(1/(p.sigma-1))[None,:]
+        # self.P_CL = np.divide(1, one_over_P_CL, out=np.full_like(one_over_P_CL, np.inf), where=one_over_P_CL!=0)
+        
+        self.P_CL = np.ones((p.N,p.S))
+        self.P_CL[:,0] = np.inf
+        self.P_CL[:,1:] = (B[:,1:]/(A+B+C)[:,1:])**(1/(1-p.sigma))[None,1:]
+        
+        self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None,:]
     
     def compute_competitive_trade_flows(self,p):
+        # self.X_CL = np.zeros((p.N,p.N,p.S))
+        # self.X_CL[...,1:] = np.einsum('nis,nis,ns,ns,s,n,n->nis',
+        #                      self.PSI_CL[...,1:],
+        #                      (self.phi**((p.sigma-1)/p.theta)[None,None,:])[...,1:],
+        #                      1/((self.PSI_CL*self.phi**((p.sigma-1)/p.theta)[None,None,:])[...,1:].sum(axis=1)),
+        #                      (self.P_CL[...,1:]**(1-p.sigma[None,1:])),
+        #                      p.beta[1:],
+        #                      self.price_indices,
+        #                      self.Y
+        #                      )  
+        numerator = np.einsum('nis,nis->nis',
+                              self.PSI_CL,
+                              self.phi**((p.sigma-1)/p.theta)[None,None,:])
         self.X_CL = np.zeros((p.N,p.N,p.S))
-        self.X_CL[...,1:] = np.einsum('nis,nis,ns,ns,s,n,n->nis',
-                             self.PSI_CL[...,1:],
-                             (self.phi**((p.sigma-1)/p.theta)[None,None,:])[...,1:],
-                             1/((self.PSI_CL*self.phi**((p.sigma-1)/p.theta)[None,None,:])[...,1:].sum(axis=1)),
-                             (self.P_CL[...,1:]**(1-p.sigma[None,1:])),
+        self.X_CL[...,1:] = np.einsum('nis,ns,ns,s,n,n->nis',
+                             numerator[...,1:],
+                             1/(numerator[...,1:].sum(axis=1)),
+                             self.P_CL[...,1:]**(1-p.sigma[None,1:]),
                              p.beta[1:],
                              self.price_indices,
                              self.Y
-                             )     
+                             )
         
         # self.X_CD = np.zeros((p.N,p.N,p.S))
         # self.X_CD[...,1:] = np.einsum('nis,ns,ns,s,n,n->nis',
@@ -380,7 +412,7 @@ class var:
                               p.fe,
                               p.eta,
                               self.l_R**(1-p.kappa),
-                              np.divide(1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star!=0)
+                              np.divide(1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star!=np.inf)
                               )
         self.l_Ao = np.einsum('ins,s,s -> ins',
                               self.l_Ae,
@@ -391,16 +423,22 @@ class var:
                                        np.einsum('ins->is',self.l_Ao+self.l_Ae)+self.l_R)
     
     def compute_wage(self,p):
+        # wage = (
+        #     p.alpha[None,:]*
+        #     (self.X_CD+self.X_CL+(1-1/p.sigma[None,None,:])*self.X_M).sum(axis=0)
+        #     )[:,1:].sum(axis=1)/self.l_P
         wage = (
             p.alpha[None,:]*
             (self.X_CD+self.X_CL+(1-1/p.sigma[None,None,:])*self.X_M).sum(axis=0)
-            )[:,1:].sum(axis=1)/self.l_P
+            ).sum(axis=1)/self.l_P
         return wage
     
     def compute_expenditure(self,p):   
         A = np.einsum('nis->i',self.X_CD+self.X_CL+self.X_M)
-        B = np.einsum('i,nis->i',self.w,self.l_Ae[...,1:])
-        C = p.deficit + np.einsum('n,ins->i',self.w,self.l_Ae[...,1:])
+        # B = np.einsum('i,nis->i',self.w,self.l_Ae[...,1:])
+        B = np.einsum('i,nis->i',self.w,self.l_Ae)
+        # C = p.deficit + np.einsum('n,ins->i',self.w,self.l_Ae[...,1:])
+        C = p.deficit + np.einsum('n,ins->i',self.w,self.l_Ae)
         Y = (A+B-C)/self.price_indices
         
         return Y
@@ -418,7 +456,7 @@ class var:
                                      self.w,
                                      1/self.w,
                                      p.fe),
-                      np.divide(1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star!=0)
+                      np.divide(1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star!=np.inf)
                       )
         l_R = (p.eta*(A+B)/(p.k-1))**(1/p.kappa)
         
@@ -446,11 +484,12 @@ class var:
             # print(count)
             if count!=0:
                 aa_wrk_w.apply(w_new, w_old)
-                # w_old = (w_new+w_old)/2
-                w_old = w_new
+                w_old = (w_new+w_old)/2
+                # w_old = w_new
             self.guess_wage(w_old)
-            self.compute_growth(p)
-            self.solve_psi_star(p,psi_star_init = psi_star_init, price_init = price_init)
+            # self.compute_growth(p)
+            # self.solve_psi_star(p,psi_star_init = self.psi_star, price_init = self.price_indices)
+            self.solve_l_R(p, l_R_init = self.l_R)
             # if count == 0:
             #     self.solve_psi_star(p,psi_star_init=psi_star_init,price_init=price_init)
             # else:
@@ -492,20 +531,23 @@ class var:
             # print(count)
             if count!=0:
                 aa_wrk_Y.apply(Y_new, Y_old)
-                # w_old = (w_new+w_old)/2
-                Y_old = Y_new
+                Y_old = (Y_new+Y_old)/2
+                # Y_old = Y_new
             self.guess_expenditure(Y_old)
-            self.compute_growth(p)
-            self.solve_psi_star(p,psi_star_init = psi_star_init, price_init = price_init)
+            # self.compute_growth(p) 
+            # self.solve_psi_star(p,psi_star_init = self.psi_star, price_init = self.price_indices)
+            # self.solve_l_R(p,l_R_init = self.l_R)
             # if count == 0:
             #     self.solve_psi_star(p,psi_star_init=psi_star_init,price_init=price_init)
             # else:
             #     self.solve_psi_star(p,psi_star_init=self.psi_star,price_init=self.price_indices) 
-            self.compute_competitive_sectoral_prices(p)
-            self.compute_competitive_trade_flows(p)
-            self.compute_production_allocations(p)
-            self.solve_w(p,tol_m=1e-10)
+            # self.compute_competitive_sectoral_prices(p)
+            # self.compute_competitive_trade_flows(p)
+            # self.compute_production_allocations(p)
+            # print(self.l_P)
+            # self.solve_l_R(p,l_R_init=self.l_R)
             # self.solve_l_R(p,plot_convergence=True)
+            self.solve_w(p,w_init = self.w)
             Y_new = self.compute_expenditure(p)
             condition_Y = np.linalg.norm(Y_new - Y_old)/np.linalg.norm(Y_new) > tol_m
             convergence_Y.append(np.linalg.norm(Y_new - Y_old)/np.linalg.norm(Y_new))
@@ -530,7 +572,7 @@ class var:
         count = 0
         convergence_l_R = []
         aa_options_l_R = {'dim': p.N*p.S,
-                    'mem': 5,
+                    'mem': 10,
                     'type1': False,
                     'regularization' : 1e-12,
                     'relaxation': 1,
@@ -538,24 +580,30 @@ class var:
                     'max_weight_norm': 1e6}
         aa_wrk_l_R = aa.AndersonAccelerator(**aa_options_l_R )
         while condition_l_R:
-            print(count)
+            # print(count)
             if count!=0:
                 l_R_new = l_R_new.ravel()
                 l_R_old = l_R_old.ravel()
                 aa_wrk_l_R.apply(l_R_new, l_R_old)
                 # l_R_new[l_R_new<0] = 0
-                # l_R_old = ((l_R_new+l_R_old)/2).reshape(p.N,p.S)
-                l_R_old = l_R_new.reshape(p.N,p.S)
+                l_R_old = ((l_R_new+l_R_old)/2).reshape(p.N,p.S)
+                # l_R_old = l_R_new.reshape(p.N,p.S)
             self.guess_labor_research(l_R_old)
             self.compute_growth(p)
             self.solve_psi_star(p,psi_star_init = psi_star_init, price_init = price_init)
-            self.compute_competitive_sectoral_prices(p)
-            self.compute_competitive_trade_flows(p)
-            self.compute_production_allocations(p)
-            self.solve_w(p,psi_star_init = psi_star_init, price_init = price_init,
-                         w_init = w_init, plot_convergence = False)
-            self.solve_Y(p,psi_star_init = psi_star_init, price_init = price_init,
-                         Y_init = Y_init, plot_convergence = False)
+            # self.compute_competitive_sectoral_prices(p)
+            # self.compute_competitive_trade_flows(p)
+            # self.compute_production_allocations(p)
+            # self.solve_w(p,psi_star_init = psi_star_init, price_init = price_init,
+            #              w_init = w_init, plot_convergence = False)
+            # self.solve_w(p,psi_star_init = self.psi_star, price_init = self.price_indices,
+            #              w_init = self.w, plot_convergence = True)
+            # print('w :',self.w)
+            # # self.solve_Y(p,psi_star_init = psi_star_init, price_init = price_init,
+            # #              Y_init = Y_init, plot_convergence = False)
+            # self.solve_Y(p,psi_star_init = self.psi_star, price_init = self.price_indices,
+            #              Y_init = self.w, plot_convergence = True)
+            # print('Y :',self.Y)
             l_R_new = self.compute_labor_research(p)
             condition_l_R = np.linalg.norm(l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
             convergence_l_R.append(np.linalg.norm(l_R_new - l_R_old)/np.linalg.norm(l_R_new))
@@ -565,10 +613,10 @@ class var:
                 # plt.plot(self.price_indices)
                 plt.semilogy(convergence_l_R,label='l_R')
                 plt.show()
-    
+            # print(self.psi_star)
         self.l_R = l_R_new
     
-    def solve_w_Y_l_R(self, p, w_init = None, Y_init = None, l_R_init = None,
+    def solve_w_Y(self, p, w_init = None, Y_init = None, l_R_init = None,
                       psi_star_init = None, price_init = None, tol_m=1e-15, 
                       plot_convergence=False, plot_norm = False):
         
@@ -631,22 +679,22 @@ class var:
             print(count)
             # full_vec_old = np.concatenate((w_old,Y_old,l_R_old),axis=None)
             if count!=0:
-                l_R_new = l_R_new.ravel()
-                l_R_old = l_R_old.ravel()
-                aa_wrk_l_R.apply(l_R_new, l_R_old)
-                # l_R_new[l_R_new<0] = 0
-                # l_R_old = ((l_R_new+l_R_old)/2).reshape(p.N,p.S)
-                l_R_old = l_R_new.reshape(p.N,p.S)
+                # l_R_new = l_R_new.ravel()
+                # l_R_old = l_R_old.ravel()
+                # aa_wrk_l_R.apply(l_R_new, l_R_old)
+                # # l_R_new[l_R_new<0] = 0
+                # # l_R_old = ((l_R_new+l_R_old)/2).reshape(p.N,p.S)
+                # l_R_old = l_R_new.reshape(p.N,p.S)
                 aa_wrk_w.apply(w_new, w_old)
-                w_old = w_new
-                # w_old = (w_new+w_old)/2
+                # w_old = w_new
+                w_old = (w_new+w_old)/2
                 # if count<10:
                 #     w_old = (w_new+w_old)/2
                 # else:
                 #     w_old = w_new
                 aa_wrk_Y.apply(Y_new, Y_old)  
-                # Y_old = (Y_new+Y_old)/2
-                Y_old = Y_new
+                Y_old = (Y_new+Y_old)/2
+                # Y_old = Y_new
                 
                 # full_vec_new = np.concatenate((w_new,Y_new,l_R_new),axis=None)
                 # aa_wrk_full_vec.apply(full_vec_new,full_vec_old)
@@ -666,7 +714,7 @@ class var:
             self.guess_expenditure(Y_old)
             self.guess_labor_research(l_R_old)
             self.compute_growth(p)
-            self.solve_psi_star(p,psi_star_init=psi_star_init,price_init=price_init)
+            self.solve_psi_star(p,psi_star_init = self.psi_star, price_init = self.price_indices)
             # if count == 0:
             #     self.solve_psi_star(p,psi_star_init=psi_star_init,price_init=price_init)
             # else:
@@ -677,16 +725,16 @@ class var:
             # self.solve_l_R(p)
             w_new = self.compute_wage(p)
             Y_new = self.compute_expenditure(p)
-            l_R_new = self.compute_labor_research(p)
+            # l_R_new = self.compute_labor_research(p)
             
             condition_w = np.linalg.norm(w_new - w_old)/np.linalg.norm(w_new) > tol_m
             condition_Y = np.linalg.norm(Y_new - Y_old)/np.linalg.norm(Y_new) > tol_m
             # condition_l_R = np.linalg.norm(l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
-            condition = condition_w or condition_Y or condition_l_R
+            condition = condition_w or condition_Y# or condition_l_R
             
             convergence_w.append(np.linalg.norm(w_new - w_old))
             convergence_Y.append(np.linalg.norm(Y_new - Y_old))
-            convergence_l_R.append(np.linalg.norm(l_R_new - l_R_old))
+            # convergence_l_R.append(np.linalg.norm(l_R_new - l_R_old))
             count+=1           
             # print(np.linalg.norm(w_new - w_old),np.linalg.norm(Y_new - Y_old),np.linalg.norm(l_R_new - l_R_old))
             
@@ -695,6 +743,7 @@ class var:
             # norm_l_R.append(np.linalg.norm(l_R_new))
             
             if plot_convergence:
+                print(convergence_w[-1])
                 # plt.semilogy(convergence_w,label='wage')
                 # plt.semilogy(convergence_Y,label='Y')
                 # plt.semilogy(convergence_l_R,label='labor_R')
@@ -730,7 +779,7 @@ class var:
         
         self.w = w_new
         self.Y = Y_new
-        self.l_R = l_R_new
+        # self.l_R = l_R_new
         
     def run_one_iteration(self,p):
         self.compute_phi(p)
@@ -746,12 +795,16 @@ class var:
 # test.solve_w(p,plot_convergence=True)        
         
 
-#%%
+#
 p = parameters_julian()
 simon_sol = var()
 
-j_res = np.array(pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result.csv',header = None)).squeeze()
+j_res = np.array(pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result_lev_levy.csv',header = None)).squeeze()
 j_res = np.insert(j_res,0,1)
+# j_res_2 = np.array(pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result_2.csv',header = None)).squeeze()
+# j_res_2 = np.insert(j_res_2,0,1)
+# j_res_original = np.array(pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result.csv',header = None)).squeeze()
+# j_res_original = np.insert(j_res_original,0,1)
 
 julian_sol_w=j_res[p.N:p.N*2]
 simon_sol.guess_wage(julian_sol_w)
@@ -769,14 +822,42 @@ simon_sol.guess_price_indices(julian_sol_price_indices)
 julian_sol_psi_star = j_res[p.N*3+p.N*(p.S-1):].reshape((p.N,p.S-1,p.N))
 julian_sol_psi_star = np.transpose(julian_sol_psi_star,(0,2,1))
 julian_sol_psi_star = np.insert(julian_sol_psi_star,0,np.zeros(p.N),axis=2)
+julian_sol_psi_star[julian_sol_psi_star == 0] = np.inf
 simon_sol.guess_patenting_threshold(julian_sol_psi_star)
 
+# simon_sol.solve_l_R(p,
+#                     l_R_init=julian_sol_l_R,
+#                     price_init=julian_sol_price_indices,
+#                     psi_star_init=julian_sol_psi_star,
+#                     w_init=julian_sol_w,
+#                     Y_init=julian_sol_Y,plot_convergence=True)
+
+#%%
+simon_sol.compute_growth(p)
+# simon_sol.compute_aggregate_qualities(p)
+# simon_sol.solve_price_ind_and_phi_with_price(p,simon_sol.price_indices,plot_convergence=True)
+simon_sol.solve_psi_star(p,simon_sol.psi_star,plot_convergence=True)
+simon_sol.compute_competitive_sectoral_prices(p)
+simon_sol.compute_competitive_trade_flows(p)
+simon_sol.compute_production_allocations(p)
+w_new = simon_sol.compute_wage(p)
+print(w_new)
+simon_sol.guess_wage(w_new)
+
+#%%
+simon_sol.solve_l_R(p,
+                    l_R_init=julian_sol_l_R,
+                    price_init=julian_sol_price_indices,
+                    psi_star_init=julian_sol_psi_star,
+                    w_init=julian_sol_w,
+                    Y_init=julian_sol_Y,plot_convergence=True)
 #%%
 
 simon_sol.solve_Y(p,
                   Y_init=julian_sol_Y,
                   price_init=julian_sol_price_indices,
                   psi_star_init=julian_sol_psi_star,plot_convergence=True)
+
 simon_sol.solve_w(p,
                   w_init=julian_sol_w,
                   price_init=julian_sol_price_indices,
@@ -787,12 +868,25 @@ simon_sol.solve_l_R(p,
                     psi_star_init=julian_sol_psi_star,
                     w_init=julian_sol_w,
                     Y_init=julian_sol_Y,plot_convergence=True)
-simon_sol.solve_w_Y_l_R(p,
+simon_sol.solve_w_Y(p,
                     l_R_init=julian_sol_l_R,
-                    price_init=julian_sol_price_indices,
+                    price_init=julian_sol_price_indices,    
                     psi_star_init=julian_sol_psi_star,
                     w_init=julian_sol_w,
                     Y_init=julian_sol_Y,plot_convergence=True)
+
+#%%
+
+simon_sol.solve_Y(p,
+                  Y_init=simon_sol.Y,
+                  plot_convergence=True)
+
+#%%
+
+simon_sol.compute_growth(p)
+# simon_sol.compute_aggregate_qualities(p)
+# simon_sol.solve_price_ind_and_phi_with_price(p,simon_sol.price_indices,plot_convergence=True)
+simon_sol.solve_psi_star(p,simon_sol.psi_star,plot_convergence=True)
 
 #%%
 
@@ -820,6 +914,8 @@ price_indices = p.price_level_data
 test.guess_price_indices(price_indices)
 psi_star = np.ones((p.N,p.N,p.S))
 test.guess_patenting_threshold(psi_star)
+
+
 
 #%%
 test.run_one_iteration(p)
