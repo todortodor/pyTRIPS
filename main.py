@@ -94,8 +94,8 @@ class parameters_julian:
         self.delta[:, 1] = 0.1
         self.nu = np.array([100000, 0.23, 0.2])
         self.nu_tilde = self.nu/2
-        # self.deficit = np.zeros(N)
-        self.deficit = np.array([0.01,0.01,-0.01,-0.01])
+        self.deficit = np.zeros(N)
+        # self.deficit = np.array([0.01,0.01,-0.01,-0.01])
 
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -283,6 +283,11 @@ class var:
                 plt.title('price')
                 plt.show()
         self.price_indices = price_new
+        # numeraire = price_new[0]
+        # self.price_indices = self.price_indices/numeraire
+        # self.w = self.w/numeraire
+        # self.Y = self.Y/numeraire
+        # self.phi = self.phi*numeraire*p.theta[None,None,:]
         
 
     def compute_monopolistic_sectoral_prices(self, p):
@@ -305,12 +310,11 @@ class var:
                               self.PSI_M,
                               self.phi**((p.sigma-1)/p.theta)[None, None, :])
         self.X_M = np.zeros((p.N, p.N, p.S))
-        self.X_M[..., 1:] = np.einsum('nis,ns,ns,s,n,n->nis',
+        self.X_M[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
                                       numerator[..., 1:],
                                       1/(numerator[..., 1:].sum(axis=1)),
                                       self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
                                       p.beta[1:],
-                                      self.price_indices,
                                       self.Y
                                       )
         assert np.isnan(self.X_M).sum() == 0, 'nan in X_M'
@@ -520,22 +524,20 @@ class var:
                               self.PSI_CL,
                               self.phi**((p.sigma-1)/p.theta)[None, None, :])
         self.X_CL = np.zeros((p.N, p.N, p.S))
-        self.X_CL[..., 1:] = np.einsum('nis,ns,ns,s,n,n->nis',
+        self.X_CL[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
                                        numerator[..., 1:],
                                        1/(numerator[..., 1:].sum(axis=1)),
                                        self.P_CL[...,
                                                  1:]**(1-p.sigma[None, 1:]),
                                        p.beta[1:],
-                                       self.price_indices,
                                        self.Y
                                        )
         assert np.isnan(self.X_CL).sum() == 0, 'nan in X_CL'
-        self.X_CD = np.einsum('nis,ns,ns,s,n,n->nis',
+        self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
                               self.phi,
                               1/(self.phi.sum(axis=1)),
                               (self.P_CD**(1-p.sigma[None, :])),
                               p.beta,
-                              self.price_indices,
                               self.Y
                               )
         assert np.isnan(self.X_CD).sum() == 0, 'nan in X_CD'
@@ -575,10 +577,11 @@ class var:
                           'safeguard_factor': 1,
                           'max_weight_norm': 1e6}
         aa_w = aa.AndersonAccelerator(**aa_options_w_Y)
+        damping = 1
         while condition_w and count<500:
             if count != 0:
                 aa_w.apply(w_new, w_old)
-                w_old = (w_new+9*w_old)/10
+                w_old = (w_new+(damping-1)*w_old)/damping
                 # w_old = w_new
                 # w_old[w_old < 0 ] = 1e-5
                 # print(np.linalg.norm(w_old))
@@ -591,7 +594,7 @@ class var:
             self.compute_competitive_sectoral_prices(p)
             self.compute_competitive_trade_flows(p)
             w_new = self.compute_wage(p)
-            w_new = w_new/w_new[0]
+            
             # w_old[0] = 1
             # print(np.linalg.norm(w_old),np.linalg.norm(w_new))
             condition_w = np.linalg.norm(
@@ -601,8 +604,8 @@ class var:
             count += 1
             cob_comp = 1 
             if cobweb:
-                cob_x = cob_x[-10:]
-                cob_y = cob_y[-10:]
+                # cob_x = cob_x[-10:]
+                # cob_y = cob_y[-10:]
                 cob_x.append(w_old[cob_comp])
                 cob_x.append(w_old[cob_comp])
                 cob_y.append(w_new[cob_comp])
@@ -619,7 +622,7 @@ class var:
             if plot_convergence:
                 plt.semilogy(convergence_w, label='wage')
                 plt.show()
-                
+            # w_new = w_new/w_new[0]
                 
             
 
@@ -633,7 +636,7 @@ class var:
         A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
         C = p.deficit + np.einsum('n,ins->i', self.w, self.l_Ae)
-        Y = (A+B-C)/self.price_indices
+        Y = (A+B-C)
         assert np.isnan(Y).sum() == 0, 'nan in Y'
 
         return Y
@@ -697,7 +700,7 @@ class var:
                 # plt.yscale('log')
                 # plt.xscale('log')
                 plt.show()
-                time.sleep(3)
+                time.sleep(0.1)
 
         self.Y = Y_new
         self.num_scale_solution(p)
@@ -705,7 +708,7 @@ class var:
     def num_scale_solution(self, p):
         numeraire = self.price_indices[0]
         
-        for qty in ['X_CD','X_CL','X_M','price_indices','w']:
+        for qty in ['X_CD','X_CL','X_M','price_indices','w','Y']:
             setattr(self, qty, getattr(self, qty)/numeraire)
         
         self.phi = self.phi*numeraire**p.theta[None,None,:]
