@@ -61,7 +61,6 @@ class parameters:
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
 
-
 class parameters_julian:
     def __init__(self):
         self.countries = ['USA', 'EUR', 'JAP', 'CHN']
@@ -72,8 +71,8 @@ class parameters_julian:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.labor = np.array([10, 20, 30, 40])
-        # self.labor = np.array([100,200,300,400])
+        # self.labor = np.array([10, 20, 30, 40])
+        self.labor = np.array([100,200,300,400])
         self.T = np.ones(N)*0.25/10  # could be anything >0
         self.k = 1.5                  #
         self.rho = 0.02  # 0.001 - 0.02
@@ -94,13 +93,20 @@ class parameters_julian:
         self.delta[:, 1] = 0.1
         self.nu = np.array([100000, 0.23, 0.2])
         self.nu_tilde = self.nu/2
-        self.deficit = np.zeros(N)
-        # self.deficit = np.array([0.01,0.01,-0.01,-0.01])
+        # self.deficit = np.zeros(N)
+        self.deficit = np.array([0.01,0.01,-0.01,-0.01])
 
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
 
+class cobweb:
+    def __innit__(self):
+        cob_x = []
+        cob_y = []
+    
+    def append_x_and_y(self, x, y):
+        pass
 
 class var:
     def __init__(self):
@@ -176,10 +182,7 @@ class var:
         self.PSI_CL[:, :, 0] = 0
         assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
 
-        while np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1):
-            print('correcting PSI_M,CL too high')
-            # self.PSI_CL = self.PSI_CL/2
-            # self.PSI_M = self.PSI_M/2
+        assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'correcting PSI_M,CL too high'
 
         self.PSI_CD = 1-(np.einsum('njs->ns', self.PSI_M) +
                          np.einsum('njs->ns', self.PSI_CL))
@@ -192,11 +195,6 @@ class var:
                                                   self.price_indices[:, None]**(1-p.alpha[None, :])
                                                   )**(-p.theta[None, None, :])
         assert np.all(self.w > 0), 'non positive wage'
-        # print(np.einsum('is,is->is',
-        #                          self.w[:, None]**p.alpha[None, :],
-        #                          self.price_indices[:,
-        #                                             None]**(1-p.alpha[None, :])
-        #                          ).min()) #!!!!!
         assert np.all(np.einsum('is,is->is',
                                  self.w[:, None]**p.alpha[None, :],
                                  self.price_indices[:,
@@ -213,13 +211,7 @@ class var:
             * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
         B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
         C = self.PSI_CD*self.phi.sum(axis=1)**power[None, :]
-        # numerator = (numeratorA + numeratorB + numeratorC)
-        # price = ( (numerator/numerator[0,:])**(p.beta[None,:]/(1-p.sigma[None,:])) ).prod(axis = 1)
-        # P0 = ( (gamma((p.theta+1-p.sigma)/p.sigma)*numerator[0,:].squeeze())**(p.beta/(1-p.sigma)) ).prod()
-        # price = ((numerator[0, :]/numerator) **
-        #          (p.beta[None, :]/(p.sigma[None, :]-1))).prod(axis=1)# * P0
         price = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
-        # price = price/price[0]
         assert np.isnan(price).sum() == 0, 'nan in price'
         return price
 
@@ -245,36 +237,18 @@ class var:
         aa_price = aa.AndersonAccelerator(**aa_options)
 
         while condition:
-            # print(count)
             if count != 0:
                 aa_price.apply(price_new, price_old)
-                # print(price_new[0])
                 price_old = price_new
-            # price_old[0] = 1
             
             self.guess_price_indices(price_old)
             self.compute_phi(p)
-            # phi_old= self.phi
             price_new = self.compute_price_indices(p)
-            # self.phi = self.phi/(price_new[0]**((p.alpha-1)*p.theta))[None,None,:]
-            # self.w = self.w/price_new[0]
-            # price_new = price_new/price_new[0]
-            # self.compute_phi(p)
-            # price_new = price_new - price_new.min() + 1
-            # self.phi = self.phi #/ (price_old[0]**((p.alpha-1)*p.theta))[None,None,:]
-
-            # condition = np.linalg.norm(
-            #     price_new/price_new[0] - price_old/price_old[0])/np.linalg.norm(price_new/price_new[0]) > tol_p
             condition = np.linalg.norm(
                 price_new - price_old)/np.linalg.norm(price_new) > tol_p
-            # print(np.linalg.norm(
-            #     price_new/price_new[0] - price_old/price_old[0])/np.linalg.norm(price_new/price_new[0]))
             convergence.append(np.linalg.norm(
                 price_new - price_old)/np.linalg.norm(price_new))
             count += 1
-            # plt.plot(price_old)
-            # plt.plot(price_new)
-            # plt.show()
             if count>50:
                 plot_convergence = True
             
@@ -283,12 +257,6 @@ class var:
                 plt.title('price')
                 plt.show()
         self.price_indices = price_new
-        # numeraire = price_new[0]
-        # self.price_indices = self.price_indices/numeraire
-        # self.w = self.w/numeraire
-        # self.Y = self.Y/numeraire
-        # self.phi = self.phi*numeraire*p.theta[None,None,:]
-        
 
     def compute_monopolistic_sectoral_prices(self, p):
         power = (p.sigma-1)/p.theta
@@ -302,7 +270,6 @@ class var:
         self.P_M = np.ones((p.N, p.S))
         self.P_M[:, 0] = np.inf
         self.P_M[:, 1:] = (A[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
-        # print(np.min((A+B+C)[:, 1:]))
         assert np.isnan(self.P_M).sum() == 0, 'nan in P_M'
 
     def compute_monopolistic_trade_flows(self, p):
@@ -331,10 +298,8 @@ class var:
                                                            self.w,
                                                            1/self.w,
                                                            p.fe),
-                             self.r+p.zeta[None, :]+p.delta -
-                             self.g+self.g_s[None, :],
-                             self.r+p.zeta[None, :]+p.nu[None, :] -
-                             self.g+self.g_s[None, :]+p.delta
+                             self.r+p.zeta[None, :]+p.delta - self.g+self.g_s[None, :],
+                             self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta
                              )
         psi_star[..., 0] = np.inf
 
@@ -363,14 +328,13 @@ class var:
         aa_psi_star = aa.AndersonAccelerator(**aa_options)
 
         while condition:
-            # print(count)
             if count != 0:
                 # psi_star_new = psi_star_new.ravel()
                 # psi_star_old = psi_star_old.ravel()
                 # aa_psi_star.apply(psi_star_new, psi_star_old)
-                # assert np.isnan(psi_star_new).sum()==0, 'nan in psi_star'
                 # psi_star_old = psi_star_new.reshape(p.N,p.N,p.S)
                 psi_star_old = psi_star_new
+                # psi_star_old[psi_star_old < 1] = 1
 
             self.guess_patenting_threshold(psi_star_old)
             assert np.isnan(self.psi_star).sum() == 0, 'nan in psi_star'
@@ -387,19 +351,15 @@ class var:
             convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
                                np.linalg.norm(psi_star_new[..., 1:]))
             count += 1
+            
             if count>50:
                 plot_convergence = True #!!!!!
             if plot_convergence:
                 plt.title('psi star')
                 plt.semilogy(convergence)
                 plt.show()
-
+            
         self.psi_star = psi_star_new
-        self.compute_aggregate_qualities(p)
-        self.solve_price_ind_and_phi_with_price(
-            p, price_init=self.price_indices)
-        self.compute_monopolistic_sectoral_prices(p)
-        self.compute_monopolistic_trade_flows(p)
 
     def compute_labor_research(self, p):
         A = np.einsum('nis,s,i,nis,s->is',
@@ -443,12 +403,10 @@ class var:
                           'max_weight_norm': 1e6}
         aa_l_R = aa.AndersonAccelerator(**aa_options_l_R)
         while condition_l_R:
-            # print(count)
             if count != 0:
                 l_R_new = l_R_new.ravel()
                 l_R_old = l_R_old.ravel()
                 aa_l_R.apply(l_R_new, l_R_old)
-                # l_R_old = ((l_R_new+l_R_old)/2).reshape(p.N,p.S)
                 l_R_old = l_R_new.reshape(p.N, p.S)
             self.guess_labor_research(l_R_old)
             self.compute_growth(p)
@@ -555,12 +513,10 @@ class var:
 
     def solve_w(self, p, w_init=None, psi_star_init=None, price_init=None,
                 tol_m=1e-8, plot_convergence=False):
-        cobweb = True
+        cobweb = False
         if cobweb:
             cob_x = []
             cob_y = []
-            # cob_x.append(w_init[0])
-            # cob_y.append(w_init[0])
         w_new = None
         if w_init is None:
             w_old = np.ones(p.N)
@@ -582,21 +538,13 @@ class var:
             if count != 0:
                 aa_w.apply(w_new, w_old)
                 w_old = (w_new+(damping-1)*w_old)/damping
-                # w_old = w_new
-                # w_old[w_old < 0 ] = 1e-5
-                # print(np.linalg.norm(w_old))
-            # w_old = w_old/w_old[0]
-            
+         
             self.guess_wage(w_old)
             self.solve_l_R(p, l_R_init=self.l_R)
             self.compute_labor_allocations(p)
-            
             self.compute_competitive_sectoral_prices(p)
             self.compute_competitive_trade_flows(p)
             w_new = self.compute_wage(p)
-            
-            # w_old[0] = 1
-            # print(np.linalg.norm(w_old),np.linalg.norm(w_new))
             condition_w = np.linalg.norm(
                 w_new - w_old)/np.linalg.norm(w_new) > tol_m
             convergence_w.append(np.linalg.norm(w_new - w_old)/np.linalg.norm(w_new))
@@ -604,8 +552,6 @@ class var:
             count += 1
             cob_comp = 1 
             if cobweb:
-                # cob_x = cob_x[-10:]
-                # cob_y = cob_y[-10:]
                 cob_x.append(w_old[cob_comp])
                 cob_x.append(w_old[cob_comp])
                 cob_y.append(w_new[cob_comp])
@@ -622,28 +568,22 @@ class var:
             if plot_convergence:
                 plt.semilogy(convergence_w, label='wage')
                 plt.show()
-            # w_new = w_new/w_new[0]
-                
-            
-
+        
         self.w = w_new
-        # self.solve_l_R(p, l_R_init=self.l_R)
-        # self.compute_labor_allocations(p)
-        # self.compute_competitive_sectoral_prices(p)
-        # self.compute_competitive_trade_flows(p)
 
     def compute_expenditure(self, p):
         A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = p.deficit + np.einsum('n,ins->i', self.w, self.l_Ae)
-        Y = (A+B-C)
+        C = np.einsum('i,n,n->i', p.deficit, self.w, p.labor)
+        D = np.einsum('n,ins->i', self.w, self.l_Ae)
+        Y = (A+B-(C+D))
         assert np.isnan(Y).sum() == 0, 'nan in Y'
 
         return Y
 
     def solve_Y(self, p, Y_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
                 plot_convergence=False):
-        cobweb = False
+        cobweb = True
         if cobweb:
             cob_x = []
             cob_y = []
@@ -667,28 +607,20 @@ class var:
             print(count)
             if count != 0:
                 aa_Y.apply(Y_new, Y_old)
-                # Y_old = (Y_new+Y_old)/2
                 Y_old = Y_new
             self.guess_expenditure(Y_old)
             self.solve_w(p, w_init=self.w)
-            # self.solve_w(p)
             Y_new = self.compute_expenditure(p)
-            # Y_new = Y_new/Y_new[0]
-            # print(np.linalg.norm(Y_new))
             condition_Y = np.linalg.norm(
                 Y_new - Y_old)/np.linalg.norm(Y_new) > tol_m
             convergence_Y.append(np.linalg.norm(
                 Y_new - Y_old)/np.linalg.norm(Y_new))
             count += 1
-            # plt.plot(Y_new)
-            # plt.show()
             if plot_convergence:
                 plt.semilogy(convergence_Y, label='Y')
                 plt.show()
             cob_comp = 1
             if cobweb:
-                # cob_x = cob_x[-3:]
-                # cob_y = cob_y[-3:]
                 cob_x.append(Y_old[cob_comp])
                 cob_x.append(Y_old[cob_comp])
                 cob_y.append(Y_new[cob_comp])
@@ -697,8 +629,6 @@ class var:
                 plt.plot(np.linspace(min(cob_x),max(cob_x),1000),np.linspace(min(cob_x),max(cob_x),1000))
                 plt.scatter(cob_x[-2],cob_y[-2])
                 plt.scatter(cob_x[-1],cob_y[-1])
-                # plt.yscale('log')
-                # plt.xscale('log')
                 plt.show()
                 time.sleep(0.1)
 
@@ -726,7 +656,7 @@ class var:
         check.compute_competitive_sectoral_prices(p)
         check.compute_competitive_trade_flows(p)
         check.compute_labor_allocations(p)
-        check.w = check.compute_wage(p)/check.compute_wage(p)[0]
+        check.w = check.compute_wage(p)
         check.Y = check.compute_expenditure(p)
         if assertions:
             assert np.all(
@@ -738,7 +668,6 @@ class var:
             assert np.all(
                 np.isclose(check.l_R, check.compute_labor_research(p))
                 ), 'check l_R wrong'
-            print(check.w,check.compute_wage(p))
             assert np.all(
                 np.isclose(check.w, check.compute_wage(p))
                 ), 'check w wrong'
@@ -779,19 +708,17 @@ class var:
         
         
 
-def compare_two_solutions(sol1,sol2):
-    commonKeys = set(vars(sol1).keys()) - (set(vars(sol1).keys()) - set(vars(sol1).keys()))
-    diffs = []
-    for k in commonKeys:
-        if np.all(np.isclose(vars(sol1)[k], vars(sol2)[k])):
-            print(k, 'identical')
-        else:
-            diffs.append(k)
-    
-    for k in diffs:
-        print(k, (np.nanmean(vars(sol1)[k]/vars(sol2)[k])))
+    def compare_two_solutions(self,sol2):
+        commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(self).keys()))
+        diffs = []
+        for k in commonKeys:
+            if np.all(np.isclose(vars(self)[k], vars(sol2)[k])):
+                print(k, 'identical')
+            else:
+                diffs.append(k)
         
-#
+        for k in diffs:
+            print(k, (np.nanmean(vars(self)[k]/vars(sol2)[k])))
 
 p = parameters_julian()
 simon_sol = var()
@@ -816,7 +743,7 @@ julian_sol_psi_star = np.insert(julian_sol_psi_star, 0, np.zeros(p.N), axis=2)
 julian_sol_psi_star[julian_sol_psi_star == 0] = np.inf
 simon_sol.guess_patenting_threshold(julian_sol_psi_star)
 
-julian_sol_Y = j_res[p.N*2:p.N*3]*5
+julian_sol_Y = j_res[p.N*2:p.N*3]
 simon_sol.solve_Y(p,
                   Y_init=julian_sol_Y,
                   price_init=julian_sol_price_indices,
