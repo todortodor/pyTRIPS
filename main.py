@@ -19,27 +19,30 @@ import matplotlib.animation as animation
 
 class parameters:     
     def __init__(self, n=7, s=2):
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]
+        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         N = len(self.countries)
         self.N = N
-        self.sectors = ['Non patent', 'Patent', 'other'][:s]
+        # self.sectors = ['Non patent', 'Patent', 'other', 'other2'][:s]
+        self.sectors = ['Non patent', 'Patent']+[str(i) for i in range(s-2)]
         S = len(self.sectors)
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.labor = np.array(
-            [197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])[:n]   
-        self.labor = self.labor/self.labor.min()*30
-        self.labor = np.ones(N)*30
+        self.labor = np.concatenate(
+            (np.array([197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])
+             ,np.ones(n)*124021697)
+            )[:n]
+        self.labor = self.labor/self.labor.sum()*30
+        # self.labor = np.ones(N)*30
         self.T = np.ones(N)*0.25  # could be anything >0
         self.k = 1.5                  #
         self.rho = 0.02  # 0.001 - 0.02
-        self.alpha = np.array([0.5758, 0.3545,0.5])[:s]
+        self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
         self.fe = np.ones(S)*2.7  # could be over one
         self.fo = np.ones(S)*2.3  # could be over one
         self.sigma = np.ones(S)*3   #
         self.theta = np.ones(S)*8   #
-        self.beta = np.array([0.74, 0.26, 0.5])[:s]
+        self.beta = np.concatenate((np.array([0.74, 0.26]),np.ones(s)*0.5))[:s]
         self.beta = self.beta / self.beta.sum()
         self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
@@ -53,18 +56,26 @@ class parameters:
         self.nu = np.ones(S)*0.2    #
         self.nu_tilde = self.nu/2
         self.deficit = np.zeros(N)
-        self.price_level_data = np.array([1, 1.09, 1.18, 0.35, 0.44, 0.24, 0.62])[:n]
-        # self.deficit = np.array(
-        #     [-650210, 359158, 99389, 170021, 36294, -24930, 10277])[:n]  
-        self.wage_data = np.array(
-            [66032, 40395, 55951, 2429, 7189, 1143, 5917])[:n] 
+        self.price_level_data = np.concatenate(
+            (np.array([1, 1.09, 1.18, 0.35, 0.44, 0.24, 0.62])
+             ,np.ones(n)*0.8)
+            )[:n]
+        self.deficit = np.concatenate(
+            (np.array([-650210, 359158, 99389, 170021, 36294, -24930, 10277]),np.zeros(n))
+              )[:n]  
+        self.wage_data = np.concatenate(
+            (np.array([66032, 40395, 55951, 2429, 7189, 1143, 5917]),
+             np.ones(n)*30000)
+            )[:n] 
         self.unit = (self.wage_data*self.labor).sum()
         # self.unit = 1
         self.wage_data = self.wage_data/self.unit
-        self.deficit = self.deficit/self.unit
+        self.deficit = self.deficit/self.unit**2
         self.deficit[0] = self.deficit[0]-self.deficit.sum()      
-        self.output = np.array([23514908,28011779,8632722,6707045,
-                                1634664,1608557,20553953])[:n]/self.unit
+        self.output = np.concatenate(
+            (np.array([23514908,28011779,8632722,6707045,1634664,1608557,20553953]),
+            np.ones(n)*1634664)
+            )[:n]/self.unit
         
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -853,7 +864,7 @@ def smooth_large_jumps(x_new,x_old):
 
 def guess_from_params(p):
     price_guess = p.price_level_data
-    w_guess = p.wage_data*1000
+    w_guess = p.wage_data*10000
     Y_guess = p.output
     l_R_guess = np.repeat(p.labor[:,None]/100, p.S-1, axis=1).ravel()
     psi_star_guess = np.ones((p.N,p.N,(p.S-1))).ravel()*10
@@ -891,15 +902,16 @@ print('Solving time :',finish-start)
 
 p_j = parameters_julian()
 x_j = guess_from_params(p_j)
-# p.sigma = p.sigma*2
+
 # x_old = var.var_from_vector(j_res, p).vector_from_var()
 # x_old = np.random.rand(len(j_res))*10
-p0 = parameters(n=7,s=3)
+p0 = parameters(n=7,s=2)
 x0 = guess_from_params(p0)
 
 x_old = x0
 p = p0
-# p.eta = p.eta*2
+# p.eta = p.eta*9
+# p.sigma = p.sigma*2
 tol = 1e-10
 condition = True
 count = 0
@@ -943,9 +955,9 @@ while condition and count < max_count:
     convergence.append(np.linalg.norm(
         x_new - x_old)/np.linalg.norm(x_new))
     count += 1
-    if np.all(np.array(convergence[-10:])<0.5e-1) and accelerate_when_stable:
+    if np.all(np.array(convergence[-10:])<1e-1) and accelerate_when_stable:
         accelerate = True
-        damping = 2
+        damping = 1
     # history_old.append(x_old.min())
     # history_new.append(x_new.min())
     # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
@@ -969,7 +981,7 @@ if plot_cobweb:
     cob = cobweb('all')
     for i,c in enumerate(convergence):
         cob.append_old_new(history_old[i],history_new[i])
-        # cob.plot(count=i, window = 100,pause = 0.05) 
+        # cob.plot(count=i, window = len(convergence),pause = 0.05) 
     cob.plot(count = count, window = None)
         
 if plot_convergence:
