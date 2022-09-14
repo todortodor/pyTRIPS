@@ -17,50 +17,55 @@ import time
 import matplotlib.animation as animation
 
 
-class parameters:
-    def __init__(self):
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+class parameters:     
+    def __init__(self, n=7, s=2):
+        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]
         N = len(self.countries)
         self.N = N
-        self.sectors = ['Non patent', 'Patent']
+        self.sectors = ['Non patent', 'Patent', 'other'][:s]
         S = len(self.sectors)
         self.S = S
-        self.labor = np.array(
-            [197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])
-        # self.labor = self.labor/self.labor.sum()
-        self.kappa = 0.5            #
-        self.k = 1.5                  #
-        self.fe = np.ones(S)*2.3  # could be over one
-        self.fo = np.ones(S)*2.7  # could be over one
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.zeta = np.ones(S)*0.01
-        self.beta = np.array([0.74, 0.26])
-        self.beta = self.beta / self.beta.sum()
+        self.labor = np.array(
+            [197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])[:n]   
+        self.labor = self.labor/self.labor.min()*30
+        self.labor = np.ones(N)*30
+        self.T = np.ones(N)*0.25  # could be anything >0
+        self.k = 1.5                  #
+        self.rho = 0.02  # 0.001 - 0.02
+        self.alpha = np.array([0.5758, 0.3545,0.5])[:s]
+        self.fe = np.ones(S)*2.7  # could be over one
+        self.fo = np.ones(S)*2.3  # could be over one
         self.sigma = np.ones(S)*3   #
-        self.alpha = np.array([0.5758, 0.3545])
+        self.theta = np.ones(S)*8   #
+        self.beta = np.array([0.74, 0.26, 0.5])[:s]
+        self.beta = self.beta / self.beta.sum()
+        self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
-        self.rho = 0.05  # 0.001 - 0.02
-        self.gamma = 0.4           #
-        self.nu = np.ones(S)*0.2    #
-        self.nu_tilde = self.nu/2
-        self.delta = np.ones((N, S))
-        self.T = np.ones(N)*2  # could be anything >0
-        self.tau = 3+np.arange(N*N*S).reshape(N, N, S)/50
+        # self.tau = 3+np.arange(N*N*S).reshape(N, N, S)/50
+        self.tau = np.ones((N, N, S))*4
         for i in range(self.tau.shape[2]):
             np.fill_diagonal(self.tau[:, :, i], 1)
-        self.theta = np.ones(S)*8   #
-        # self.deficit = np.zeros(N)
-        self.deficit = np.array(
-            [-650210, 359158, 99389, 170021, 36294, -24930, 10277])
+        self.kappa = 0.5            #
+        self.gamma = 0.4           #
+        self.delta = np.ones((N, S))*0.1
+        self.nu = np.ones(S)*0.2    #
+        self.nu_tilde = self.nu/2
+        self.deficit = np.zeros(N)
+        self.price_level_data = np.array([1, 1.09, 1.18, 0.35, 0.44, 0.24, 0.62])[:n]
+        # self.deficit = np.array(
+        #     [-650210, 359158, 99389, 170021, 36294, -24930, 10277])[:n]  
         self.wage_data = np.array(
-            [66032, 40395, 55951, 2429, 7189, 1143, 5917])/1e6
-        self.deficit = self.deficit/(self.wage_data*self.labor).sum()
-        self.deficit[0] = self.deficit[0]-self.deficit.sum()
-        self.price_level_data = np.array([1, 1.09, 1.18, 0.35, 0.44, 0.24, 0.62])
+            [66032, 40395, 55951, 2429, 7189, 1143, 5917])[:n] 
+        self.unit = (self.wage_data*self.labor).sum()
+        # self.unit = 1
+        self.wage_data = self.wage_data/self.unit
+        self.deficit = self.deficit/self.unit
+        self.deficit[0] = self.deficit[0]-self.deficit.sum()      
         self.output = np.array([23514908,28011779,8632722,6707045,
-                                1634664,1608557,20553953])
-
+                                1634664,1608557,20553953])[:n]/self.unit
+        
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
@@ -99,7 +104,9 @@ class parameters_julian:
         self.nu_tilde = self.nu/2
         # self.deficit = np.zeros(N)
         self.deficit = np.array([0.001,0.001,-0.001,-0.001])
-        
+        self.price_level_data = np.array([1, 1.09, 1.18, 0.35])
+        self.wage_data = np.array([0.52462834, 0.47387077, 1.03890105, 0.67765934])
+        self.output = np.array([0.89526988, 1.78706841, 3.47491016, 4.27691947])
     # def __init__(self):
     #     self.countries = ['USA', 'EUR', 'JAP', 'CHN']
     #     N = len(self.countries)
@@ -150,7 +157,7 @@ class cobweb:
         self.cob_y.append(new)
         self.cob_y.append(old)
         
-    def plot(self, count = None, window = None, ax = None):
+    def plot(self, count = None, window = None, pause = 0.1):
         if window is None:
             plt.plot(self.cob_x,self.cob_y)
             plt.plot(np.linspace(min(self.cob_x),max(self.cob_x),1000),
@@ -165,32 +172,8 @@ class cobweb:
             plt.scatter(self.cob_x[-1],self.cob_y[-1],s=5)
         if count is not None:
             plt.title(self.name+''+str(count))
-        plt.pause(0.1)
-        # time.sleep(0.1)
-    
-    # def animate(self):
-    #     fig = plt.figure()
-    #     ax = fig.add_subplot()
-    #     # line, = ax.plot([], [], 'o-', lw=2)
-    #     # scat1 = ax.scatter([],[])
-    #     # scat2 = ax.scatter([],[],s=5)
-    #     # trace, = ax.plot([], [], '.-', lw=1, ms=2)
-    #     # text = ax.text(0.5,0.5,'')
-    #     # def init_func():
-    #     #     line.set_data([],[])
-    #     #     return line
-    #     # def frame(i):
-    #     #     line.set_data(self.cob_x[:2*i],self.cob_y[:2*i])
-    #     #     return line
-    #     # ani = animation.FuncAnimation(
-    #     #     fig, frame, int(len(self.cob_x)/2), init_func=init_func, blit=True)
-    #     # plt.show()
-    #     list_of_artists = [plt.plot(self.cob_x[0:2*i],self.cob_y[0:2*i]) for i in range(int(len(self.cob_x)/2))]
-    #     # for i in [0:len(self.cob_x)/2]:
-    #     #     list_of_artists.append([plt.plot(self.cob_x[:2*i],self.cob_y[:2*i])])
-    #     # %matplotlib qt
-    #     im_ani = animation.ArtistAnimation(fig, list_of_artists, interval=100000, blit=True)
-    #     plt.show() 
+        plt.show()
+        time.sleep(pause)
         
 class var:
     def __init__(self):
@@ -829,6 +812,54 @@ def deviation(x,p):
 def deviation_norm(x,p):
     return np.linalg.norm(deviation(x,p))
 
+def bound_psi_star(x,p,hit_the_bound=None):
+    x_psi_star = x[p.N*3+p.N*(p.S-1):]
+    if np.any(x_psi_star<1):
+        hit_the_bound += 1
+        x_psi_star[x_psi_star<1] = 1
+    x[p.N*3+p.N*(p.S-1):] = x_psi_star
+    return x, hit_the_bound
+
+def bound_research_labor(x,p,hit_the_bound=None):
+    x_l_R = x[p.N*3:p.N*3+p.N*(p.S-1)]
+    if np.any(x_l_R > p.labor.max()):
+        if hit_the_bound is not None:
+            hit_the_bound+=1
+        x_l_R[x_l_R > p.labor.max()] = p.labor.max()
+    x[p.N*3:p.N*3+p.N*(p.S-1)] = x_l_R
+    return x,hit_the_bound
+
+def bound_zero(x, cutoff=1e-8, hit_the_bound=None):
+    if np.any(x<=0):
+        x[x <= 0] = cutoff
+        if hit_the_bound is not None:
+            hit_the_bound+=1
+    return x,hit_the_bound
+
+def smooth_large_jumps(x_new,x_old):
+    high_jumps_too_big = x_new > 1000*x_old
+    while np.any(high_jumps_too_big):
+        # print('high',high_jumps_too_big.sum())
+        # x_new[high_jumps_too_big] = x_old[high_jumps_too_big]*1/2+x_new[high_jumps_too_big]*1/2
+        x_new = x_old*1/2+x_new*1/2
+        high_jumps_too_big = x_new > 1000*x_old
+    low_jumps_too_big = x_new < x_old/1000
+    while np.any(low_jumps_too_big):
+        # print('low',low_jumps_too_big.sum())
+        # x_new[low_jumps_too_big] = x_old[low_jumps_too_big]*1/2+x_new[low_jumps_too_big]*1/2
+        x_new = x_old*1/2+x_new*1/2
+        low_jumps_too_big = x_new < x_old/1000
+    return x_new
+
+def guess_from_params(p):
+    price_guess = p.price_level_data
+    w_guess = p.wage_data*1000
+    Y_guess = p.output
+    l_R_guess = np.repeat(p.labor[:,None]/100, p.S-1, axis=1).ravel()
+    psi_star_guess = np.ones((p.N,p.N,(p.S-1))).ravel()*10
+    vec = np.concatenate((price_guess,w_guess,Y_guess,l_R_guess,psi_star_guess), axis=0)
+    return vec
+
 p = parameters_julian()
 j_res = np.array(
     pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result_lev_levy.csv'
@@ -837,84 +868,118 @@ j_res = np.insert(j_res, 0, 1)
 
 #%% partial equilibrium solver
 
-partial_equilibriums_sol = var.var_from_vector(j_res, p)
+p_j = parameters_julian()
+x_j = guess_from_params(p_j)
+p0 = parameters(n=6,s=3)
+x0 = guess_from_params(p0)
+
+x_guess = x_j
+p = p_j
+partial_equilibriums_sol = var.var_from_vector(x_guess, p)
+
 start = time.perf_counter()
 
-partial_equilibriums_sol.solve_Y(p,Y_init=partial_equilibriums_sol.Y,plot_cobweb = True)
+partial_equilibriums_sol.solve_Y(p,
+                                 Y_init=partial_equilibriums_sol.Y,
+                                  plot_cobweb = True
+                                 )
 
 finish = time.perf_counter()
 print('Solving time :',finish-start)
 
-#%%
-p = parameters_julian()
-x_old = var.var_from_vector(j_res, p).vector_from_var()
-# p = parameters()
-# x_old = state.vector_from_var()
-tol = 1e-8
+#%% full fixed point solver
+
+p_j = parameters_julian()
+x_j = guess_from_params(p_j)
+# p.sigma = p.sigma*2
+# x_old = var.var_from_vector(j_res, p).vector_from_var()
+# x_old = np.random.rand(len(j_res))*10
+p0 = parameters(n=7,s=3)
+x0 = guess_from_params(p0)
+
+x_old = x0
+p = p0
+# p.eta = p.eta*2
+tol = 1e-10
 condition = True
 count = 0
 convergence = []
-
+hit_the_bound_count = 0
+# x_old, hit_the_bound_count = bound_zero(x_old,1e-8, hit_the_bound_count)
+# x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
+# x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
 history_old = []
 history_new = []
 x_new = None
 aa_options = {'dim': len(x_old),
-                'mem': 5,
+                'mem': 10,
                 'type1': False,
                 'regularization': 1e-12,
                 'relaxation': 1,
                 'safeguard_factor': 1,
                 'max_weight_norm': 1e6}
 aa_wrk = aa.AndersonAccelerator(**aa_options)
+max_count = 10000
 plot_cobweb = True
-plot_convergence = False
-damping = 2
-accelerate = True
+plot_convergence = True
+damping = 5
+accelerate = False
+accelerate_when_stable = True
 start = time.perf_counter()
-while condition:
-    print(count)
+while condition and count < max_count:
+    # print(count)
     if count != 0:
-        if count>0 and accelerate:
+        if accelerate:
             aa_wrk.apply(x_new, x_old)
+        x_new = smooth_large_jumps(x_new,x_old)
         x_old = (x_new+(damping-1)*x_old)/damping
-        x_old[x_old < 0] = 1e-12
+        x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+        # x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
+        # x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
     x_new = iter_once(x_old, p, normalize = False)
+    # x_new, hit_the_bound_count = bound_zero(x_new,1e-8, hit_the_bound_count)
     condition = np.linalg.norm(
         x_new - x_old)/np.linalg.norm(x_new) > tol
     convergence.append(np.linalg.norm(
         x_new - x_old)/np.linalg.norm(x_new))
     count += 1
-    if plot_cobweb:
-        history_old.append(x_old[1])
-        history_new.append(x_new[1])
-        # state_new = var.var_from_vector(x_new, p)
-        # state_old = var.var_from_vector(x_old, p)
-        # cob.append_old_new(state_old.l_R.ravel()[1],state_new.l_R.ravel()[1])
-        # cob.append_old_new(state_old.psi_star.ravel()[1],state_new.psi_star.ravel()[1])
-        # cob.append_old_new(state_old.psi_star.min(),state_new.psi_star.min())
-        # cob.append_old_new(x_old[-1],x_new[-1])
-        # print(state_old.psi_star.min())
-        # cob.plot(count=count, window = 60)
+    if np.all(np.array(convergence[-10:])<0.5e-1) and accelerate_when_stable:
+        accelerate = True
+        damping = 2
+    # history_old.append(x_old.min())
+    # history_new.append(x_new.min())
+    # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
+    # history_new.append(x_new[p.N*3+p.N*(p.S-1):].min())
+    history_old.append(x_old[25])
+    history_new.append(x_new[25])
 
 finish = time.perf_counter()
-print('Solving time :',finish-start)
+if count < max_count and np.isnan(x_new).sum()==0:
+    status = 'successful'
+else:
+    status = 'failed'
+print('Solving time :',finish-start
+      ,'\nIterations : ',count
+      ,'\nDeviation norm : ',deviation_norm(x_new,p)
+      ,'\nStatus : ',status
+      ,'\nHit the bounds ',hit_the_bound_count,' times'
+      )
 
 if plot_cobweb:
     cob = cobweb('all')
     for i,c in enumerate(convergence):
         cob.append_old_new(history_old[i],history_new[i])
-        cob.plot(count=i, window = 60) 
+        # cob.plot(count=i, window = 100,pause = 0.05) 
+    cob.plot(count = count, window = None)
         
 if plot_convergence:
-    for i,c in enumerate(convergence):
-        plt.semilogy(convergence[:i])
-        plt.show()
-        time.pause(0.05)
-                    
-cob.plot(count = count, window = None)
-plt.show()
+    plt.semilogy(convergence)
+    plt.show()
 
-#%%
+full_fixed_point_sol = var.var_from_vector(x_new,p)
+full_fixed_point_sol.num_scale_solution(p)
+
+#%% least square solver
 
 
 # sol = optimize.root(fun = function_of_vector, 
