@@ -81,81 +81,6 @@ class parameters:
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
 
-class parameters_julian:
-    def __init__(self):
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN']
-        N = len(self.countries)
-        self.N = N
-        self.sectors = ['Non patent', 'Patent', 'other']
-        S = len(self.sectors)
-        self.S = S
-        self.eta = np.ones((N, S))*0.02  # could be over one
-        self.eta[:, 0] = 0
-        self.labor = np.array([10, 20, 30, 40])*1.5
-        # self.labor = np.array([100,200,300,400])
-        self.T = np.ones(N)*0.25/10  # could be anything >0
-        self.k = 1.5                  #
-        self.rho = 0.02  # 0.001 - 0.02
-        self.alpha = np.ones(S)*0.5
-        self.fo = np.ones(S)*2.3  # could be over one
-        self.fe = np.ones(S)*2.7  # could be over one
-        self.sigma = np.array([3.5, 3, 2.8])
-        self.theta = np.array([7, 6, 8])   #
-        self.beta = np.ones(S)/S
-        self.zeta = np.ones(S)*0.01
-        self.g_0 = 0.01
-        self.tau = np.ones((N, N, S))*4
-        for i in range(self.tau.shape[2]):
-            np.fill_diagonal(self.tau[:, :, i], 1)
-        self.kappa = 0.5
-        self.gamma = 0.4            #
-        self.delta = np.ones((N, S))
-        self.delta[:, 1] = 0.1
-        self.nu = np.array([100000, 0.23, 0.2])
-        self.nu_tilde = self.nu/2
-        # self.deficit = np.zeros(N)
-        self.deficit = np.array([0.001,0.001,-0.001,-0.001])
-        self.price_level_data = np.array([1, 1.09, 1.18, 0.35])
-        self.wage_data = np.array([0.52462834, 0.47387077, 1.03890105, 0.67765934])
-        self.output = np.array([0.89526988, 1.78706841, 3.47491016, 4.27691947])
-    # def __init__(self):
-    #     self.countries = ['USA', 'EUR', 'JAP', 'CHN']
-    #     N = len(self.countries)
-    #     self.N = N
-    #     self.sectors = ['Non patent', 'Patent', 'other']
-    #     S = len(self.sectors)
-    #     self.S = S
-    #     self.eta = np.ones((N, S))*0.02  # could be over one
-    #     self.eta[:, 0] = 0
-    #     self.labor = np.array([10, 20, 30, 40])*10
-    #     # self.labor = np.array([100,200,300,400])
-    #     self.T = np.ones(N)*0.25/10  # could be anything >0
-    #     self.k = 1.5                  #
-    #     self.rho = 0.02  # 0.001 - 0.02
-    #     self.alpha = np.ones(S)*0.5
-    #     self.fo = np.ones(S)*2.3  # could be over one
-    #     self.fe = np.ones(S)*2.7  # could be over one
-    #     self.sigma = np.array([3.5, 3, 2.8])
-    #     self.theta = np.array([7, 6, 8])   #
-    #     self.beta = np.ones(S)/S
-    #     self.zeta = np.ones(S)*0.01
-    #     self.g_0 = 0.01
-    #     self.tau = np.ones((N, N, S))*4
-    #     for i in range(self.tau.shape[2]):
-    #         np.fill_diagonal(self.tau[:, :, i], 1)
-    #     self.kappa = 0.5
-    #     self.gamma = 0.4            #
-    #     self.delta = np.ones((N, S))
-    #     self.delta[:, 1] = 0.1
-    #     self.nu = np.array([0.1, 0.23, 0.2])/2
-    #     self.nu_tilde = self.nu/2
-    #     # self.deficit = np.zeros(N)
-    #     self.deficit = np.array([0.001,0.001,-0.001,-0.001])
-
-    def elements(self):
-        for key, item in sorted(self.__dict__.items()):
-            print(key, ',', str(type(item))[8:-2])
-
 class cobweb:
     def __init__(self, name):
         self.cob_x = []
@@ -900,96 +825,146 @@ print('Solving time :',finish-start)
 
 #%% full fixed point solver
 
-p_j = parameters_julian()
-x_j = guess_from_params(p_j)
-
-# x_old = var.var_from_vector(j_res, p).vector_from_var()
-# x_old = np.random.rand(len(j_res))*10
-p0 = parameters(n=7,s=2)
-x0 = guess_from_params(p0)
-
-x_old = x0
-p = p0
-# p.eta = p.eta*9
-# p.sigma = p.sigma*2
-tol = 1e-10
-condition = True
-count = 0
-convergence = []
-hit_the_bound_count = 0
-# x_old, hit_the_bound_count = bound_zero(x_old,1e-8, hit_the_bound_count)
-# x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
-# x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
-history_old = []
-history_new = []
-x_new = None
-aa_options = {'dim': len(x_old),
-                'mem': 10,
-                'type1': False,
-                'regularization': 1e-12,
-                'relaxation': 1,
-                'safeguard_factor': 1,
-                'max_weight_norm': 1e6}
-aa_wrk = aa.AndersonAccelerator(**aa_options)
-max_count = 10000
-plot_cobweb = True
-plot_convergence = True
-damping = 5
-accelerate = False
-accelerate_when_stable = True
-start = time.perf_counter()
-while condition and count < max_count:
-    # print(count)
-    if count != 0:
-        if accelerate:
-            aa_wrk.apply(x_new, x_old)
-        x_new = smooth_large_jumps(x_new,x_old)
-        x_old = (x_new+(damping-1)*x_old)/damping
-        x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
-        # x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
-        # x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
-    x_new = iter_once(x_old, p, normalize = False)
-    # x_new, hit_the_bound_count = bound_zero(x_new,1e-8, hit_the_bound_count)
-    condition = np.linalg.norm(
-        x_new - x_old)/np.linalg.norm(x_new) > tol
-    convergence.append(np.linalg.norm(
-        x_new - x_old)/np.linalg.norm(x_new))
-    count += 1
-    if np.all(np.array(convergence[-10:])<1e-1) and accelerate_when_stable:
-        accelerate = True
-        damping = 1
-    # history_old.append(x_old.min())
-    # history_new.append(x_new.min())
-    # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
-    # history_new.append(x_new[p.N*3+p.N*(p.S-1):].min())
-    history_old.append(x_old[25])
-    history_new.append(x_new[25])
-
-finish = time.perf_counter()
-if count < max_count and np.isnan(x_new).sum()==0:
-    status = 'successful'
-else:
-    status = 'failed'
-print('Solving time :',finish-start
-      ,'\nIterations : ',count
-      ,'\nDeviation norm : ',deviation_norm(x_new,p)
-      ,'\nStatus : ',status
-      ,'\nHit the bounds ',hit_the_bound_count,' times'
-      )
-
-if plot_cobweb:
-    cob = cobweb('all')
-    for i,c in enumerate(convergence):
-        cob.append_old_new(history_old[i],history_new[i])
-        # cob.plot(count=i, window = len(convergence),pause = 0.05) 
-    cob.plot(count = count, window = None)
+class sol_class:
+    def __init__(self, x_new, p, solving_time, iterations, deviation_norm, 
+                 status, hit_the_bound_count, x0=None, tol = 1e-10, 
+                 # damping = 5, max_count=1e4,
+                 # accelerate = False, safe_convergence=0.1,
+                 # accelerate_when_stable=True, plot_cobweb = True, cobweb_anim=False,
+                 # plot_convergence = True, apply_bound_zero = True, 
+                 # apply_bound_psi_star = False, apply_bound_research_labor = False,
+                 # accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
+                 # accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6
+                 ):
+        self.x = x_new
+        self.p = p
+        self.time = solving_time
+        self.iter = iterations
+        self.dev = deviation_norm
+        self.status = status
+        self.hit_the_bound_count = hit_the_bound_count
+        self.x0 = x0
+        self.tol = tol
+        # self.damping = damping 
+        # self.max_count = max_count
+        # self.accelerate = accelerate
+        # self.safe_convergence= safe_convergence
+        # self.accelerate_when_stable= accelerate_when_stable
+        # self.apply_bound_zero = apply_bound_zero
+        # self.apply_bound_psi_star = apply_bound_psi_star
+        # self.apply_bound_research_labor = apply_bound_research_labor
+        # self.accel_memory = accel_memory
+        # self.accel_type1 = accel_type1 
+        # self.accel_regularization = accel_regularization
+        # self.accel_relaxation = accel_relaxation
+        # self.accel_safeguard_factor = accel_safeguard_factor 
+        # self.accel_max_weight_norm = accel_max_weight_norm
+    def elements(self):
+        for key, item in sorted(self.__dict__.items()):
+            print(key, ',', str(type(item))[8:-2])
+    
+    def run_summary(self):
+        print(self.p.N,' countries, ', self.p.S,' sectors '
+              '\nSolving time :',self.time
+              ,'\nIterations : ',self.iter
+              ,'\nDeviation norm : ',self.dev
+              ,'\nStatus : ',self.status
+              ,'\nHit the bounds ',self.hit_the_bound_count,' times'
+              )
         
-if plot_convergence:
-    plt.semilogy(convergence)
-    plt.show()
+p_j = parameters_julian()
+p0 = parameters(n=40,s=20)
 
-full_fixed_point_sol = var.var_from_vector(x_new,p)
-full_fixed_point_sol.num_scale_solution(p)
+def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
+                       accelerate = False, safe_convergence=0.1,
+                       accelerate_when_stable=True, plot_cobweb = True, cobweb_anim=False,
+                       plot_convergence = True, apply_bound_zero = True, 
+                       apply_bound_psi_star = False, apply_bound_research_labor = False,
+                       accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
+                       accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       ):   
+    if x0 is None:
+        x0 = guess_from_params(p)
+    x_old = x0 
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    x_old, hit_the_bound_count = bound_zero(x_old,1e-8, hit_the_bound_count)
+    x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
+    x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
+    history_old = []
+    history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                    'mem': accel_memory,
+                    'type1': accel_type1,
+                    'regularization': accel_regularization,
+                    'relaxation': accel_relaxation,
+                    'safeguard_factor': accel_safeguard_factor,
+                    'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    while condition and count < max_count:
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_new = smooth_large_jumps(x_new,x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+            if apply_bound_zero:
+                x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+            if apply_bound_psi_star:
+                x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
+            if apply_bound_research_labor:
+                x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
+        x_new = iter_once(x_old, p, normalize = False)
+        condition = np.linalg.norm(
+            x_new - x_old)/np.linalg.norm(x_new) > tol
+        convergence.append(np.linalg.norm(
+            x_new - x_old)/np.linalg.norm(x_new))
+        count += 1
+        if np.all(np.array(convergence[-10:])<safe_convergence) and accelerate_when_stable:
+            accelerate = True
+            damping = 1
+        # history_old.append(x_old.min())
+        # history_new.append(x_new.min())
+        # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
+        # history_new.append(x_new[p.N*3+p.N*(p.S-1):].min())
+        history_old.append(x_old[25])
+        history_new.append(x_new[25])
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = deviation_norm(x_new,p)
+    if count < max_count and np.isnan(x_new).sum()==0:
+        status = 'successful'
+    else:
+        status = 'failed'
+    
+    if plot_cobweb:
+        cob = cobweb('all')
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = len(convergence),pause = 0.05) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence)
+        plt.show()
+    
+    sol_inst = sol_class(x_new, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+    
+    sol_inst.run_summary()
+    
+    return sol_inst
+
+sol = fixed_point_solver(p0)
+        
+# full_fixed_point_sol = var.var_from_vector(x_new,p)
+# full_fixed_point_sol.num_scale_solution(p)
 
 #%% least square solver
 
