@@ -432,7 +432,6 @@ class var:
         condition = True
         count = 0
         convergence = []
-
         aa_options = {'dim': p.N,
                       'mem': 10,
                       'type1': False,
@@ -441,12 +440,10 @@ class var:
                       'safeguard_factor': 1,
                       'max_weight_norm': 1e6}
         aa_price = aa.AndersonAccelerator(**aa_options)
-
         while condition:
             if count != 0:
                 aa_price.apply(price_new, price_old)
-                price_old = price_new
-            
+                price_old = price_new            
             self.guess_price_indices(price_old)
             self.compute_phi(p)
             price_new = self.compute_price_indices(p)
@@ -454,16 +451,13 @@ class var:
                 price_new - price_old)/np.linalg.norm(price_new) > tol_p
             convergence.append(np.linalg.norm(
                 price_new - price_old)/np.linalg.norm(price_new))
-            count += 1
-            
+            count += 1            
             if plot_cobweb and count%5==0:
                 cob_price.append_old_new(price_old[1],price_new[1])
                 cob_price.plot(count=count)
-                time.sleep(0.1)
-            
+                time.sleep(0.1)           
             if count>50:
-                plot_convergence = True
-            
+                plot_convergence = True            
             if plot_convergence:
                 plt.semilogy(convergence)
                 plt.title('price')
@@ -483,7 +477,6 @@ class var:
         condition = True
         count = 0
         convergence = []
-
         aa_options = {'dim': p.N*p.N*p.S,
                       'mem': 5,
                       'type1': False,
@@ -492,10 +485,8 @@ class var:
                       'safeguard_factor': 1,
                       'max_weight_norm': 1e6}
         aa_psi_star = aa.AndersonAccelerator(**aa_options)
-        damping = 5
-        
+        damping = 5        
         while condition:
-            # print(count,'psi_star count')
             if count != 0:
                 # psi_star_new = psi_star_new.ravel()
                 # psi_star_old = psi_star_old.ravel()
@@ -519,10 +510,6 @@ class var:
             convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
                                np.linalg.norm(psi_star_new[..., 1:]))
             count += 1
-            # if np.all(np.array(convergence[-10:])<0.1):
-            #     damping=1
-            # if count>-50:
-            #     plot_convergence = True #!!!!!
             if plot_convergence:
                 plt.title('psi star')
                 plt.semilogy(convergence)
@@ -556,7 +543,6 @@ class var:
         aa_l_R = aa.AndersonAccelerator(**aa_options_l_R)
         damping = 5
         while condition_l_R:
-            # print(count,'l_R count')
             if count != 0:
                 l_R_new = l_R_new.ravel()
                 l_R_old = l_R_old.ravel()
@@ -566,15 +552,8 @@ class var:
             self.compute_growth(p)
             self.solve_psi_star(p, psi_star_init=self.psi_star,
                                 price_init=self.price_indices)
-            l_R_new = self.compute_labor_research(p).astype('double')
-            # print(l_R_old[1,1],l_R_new[1,1])
             if np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False) < 0):
                 print('non positive production labor')
-            # print(count,'count l_P',l_P)
-            # if np.any(l_P < 0):
-            #     print('Negative above')
-            #     time.sleep(2)
-            # assert np.all(l_P > 0), 'non positive production labor'
             condition_l_R = np.linalg.norm(
                 l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
             convergence_l_R.append(np.linalg.norm(
@@ -589,7 +568,6 @@ class var:
             if plot_convergence:
                 plt.semilogy(convergence_l_R, label='l_R')
                 plt.show()
-
         self.l_R = l_R_new
     
     def solve_w(self, p, w_init=None, psi_star_init=None, price_init=None,
@@ -617,8 +595,7 @@ class var:
             print(count,'w count')
             if count != 0:
                 aa_w.apply(w_new, w_old)
-                w_old = (w_new+(damping-1)*w_old)/damping
-         
+                w_old = (w_new+(damping-1)*w_old)/damping        
             self.guess_wage(w_old)
             self.solve_l_R(p, l_R_init=self.l_R)
             self.compute_labor_allocations(p)
@@ -628,7 +605,6 @@ class var:
             condition_w = np.linalg.norm(
                 w_new - w_old)/np.linalg.norm(w_new) > tol_m
             convergence_w.append(np.linalg.norm(w_new - w_old)/np.linalg.norm(w_new))
-            
             count += 1
             if np.all(np.array(convergence_w[-10:])<0.1):
                 damping=1
@@ -637,8 +613,7 @@ class var:
                 cob_w.plot(count=count)
             if plot_convergence:
                 plt.semilogy(convergence_w, label='wage')
-                plt.show()
-        
+                plt.show()       
         self.w = w_new
 
     def solve_Y(self, p, Y_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
@@ -680,7 +655,6 @@ class var:
             if plot_convergence:
                 plt.semilogy(convergence_Y, label='Y')
                 plt.show()
-
         self.Y = Y_new
         self.num_scale_solution(p)
 
@@ -730,13 +704,6 @@ class var:
 class sol_class:
     def __init__(self, x_new, p, solving_time, iterations, deviation_norm, 
                  status, hit_the_bound_count, x0=None, tol = 1e-10, 
-                 # damping = 5, max_count=1e4,
-                 # accelerate = False, safe_convergence=0.1,
-                 # accelerate_when_stable=True, plot_cobweb = True, cobweb_anim=False,
-                 # plot_convergence = True, apply_bound_zero = True, 
-                 # apply_bound_psi_star = False, apply_bound_research_labor = False,
-                 # accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
-                 # accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6
                  ):
         self.x = x_new
         self.p = p
@@ -747,20 +714,7 @@ class sol_class:
         self.hit_the_bound_count = hit_the_bound_count
         self.x0 = x0
         self.tol = tol
-        # self.damping = damping 
-        # self.max_count = max_count
-        # self.accelerate = accelerate
-        # self.safe_convergence= safe_convergence
-        # self.accelerate_when_stable= accelerate_when_stable
-        # self.apply_bound_zero = apply_bound_zero
-        # self.apply_bound_psi_star = apply_bound_psi_star
-        # self.apply_bound_research_labor = apply_bound_research_labor
-        # self.accel_memory = accel_memory
-        # self.accel_type1 = accel_type1 
-        # self.accel_regularization = accel_regularization
-        # self.accel_relaxation = accel_relaxation
-        # self.accel_safeguard_factor = accel_safeguard_factor 
-        # self.accel_max_weight_norm = accel_max_weight_norm
+
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
@@ -893,10 +847,6 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
             if accelerate_when_stable:
                 accelerate = True
             damping = 1
-        # history_old.append(x_old.min())
-        # history_new.append(x_new.min())
-        # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
-        # history_new.append(x_new[p.N*3+p.N*(p.S-1):].min())
         history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
         history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
     
@@ -938,7 +888,8 @@ sol = fixed_point_solver(p,cobweb_anim=False,
                          cobweb_qty='psi_star',
                          # apply_bound_psi_star=True
                          )
-sol_c = var.var_from_vector(sol.x, sol.p)        
+sol_c = var.var_from_vector(sol.x, p)     
+sol_c.num_scale_solution(p)   
 
 #%% partial equilibrium solver
 
@@ -997,10 +948,10 @@ sol_state.num_scale_solution(p)
 #%% dependance on T
 
 p = parameters(n=10,s=4)
-list_p = []
+list_T = []
 list_sol = []
 
-for T in np.linspace(0,100,101)[1:]:
+for T in np.linspace(0,100,51)[1:]:
     print(T)
     p.T = np.ones(p.N)*T
     sol = fixed_point_solver(p,cobweb_anim=False,
@@ -1014,12 +965,85 @@ for T in np.linspace(0,100,101)[1:]:
     sol_c = var.var_from_vector(sol.x, sol.p)   
     sol_c.num_scale_solution(p)
     list_sol.append(sol_c)
-    list_p.append(p)
-    
-#%%    
-    
-plt.plot(np.linspace(0,100,101)[1:],
-         [sol.Y.mean()*p.unit for sol in list_sol]
+    list_T.append(p.T)
+
+fig,ax = plt.subplots()
+  
+ax.plot([T.mean() for T in list_T],
+         [sol.Y.sum()*p.unit for sol in list_sol]
          )
+ax.set_xlabel('Technology T')
+ax.set_ylabel('World gross output Y')
 
+plt.show()
 
+#%% T calibration try
+
+p = parameters(n=7,s=2)
+# interval = (1e-5,100)
+interval = (slice(1,2, 1),)*p.N
+    
+
+# test = optimize.brute(func=calibration_func, ranges=interval, 
+#                       args=(p,), Ns=20, full_output=True, disp=True, workers=1)
+
+#%%
+def calibration_func(T,p):
+    p.T = T
+    sol = fixed_point_solver(p,
+                             accelerate=False,
+                             accelerate_when_stable=True,
+                             plot_cobweb=False,
+                             plot_convergence=False,
+                             disp_summary=False,
+                             )
+    if sol.status == 'successful':     
+        sol_c = var.var_from_vector(sol.x, sol.p)   
+        sol_c.num_scale_solution(p)
+        return np.linalg.norm(p.output - sol_c.Y)
+    else:
+        return np.inf
+
+p = parameters(n=7,s=2)
+
+lb = np.full_like(p.T, 1e-2)
+ub = np.full_like(p.T, 100)
+bounds = (lb,ub)
+
+test_ls = optimize.least_squares(fun = calibration_func, 
+                    x0 = p.T, 
+                    args = (p,), 
+                    bounds = bounds,
+                    # method= 'trf',
+                    # loss='arctan',
+                    # max_nfev=1e3,
+                    # ftol=1e-14, 
+                    xtol=0, 
+                    # gtol=1e-14,
+                    verbose = 2)
+
+p.T = test_ls.x
+test_sol = fixed_point_solver(p,
+                         accelerate=False,
+                         accelerate_when_stable=True,
+                         plot_cobweb=False,
+                         plot_convergence=False,
+                         disp_summary=True,
+                         )
+test_sol_c = var.var_from_vector(test_sol.x, p)
+
+#%%
+
+fig, ax = plt.subplots()
+
+ax.plot(p.output, label = 'Data gross output')
+ax.plot(test_sol_c.Y, label = 'Calibrated gross output')
+ax.plot(p.T, label='Technology T', color = 'r')
+ax.set_xticks([i for i in range(0,7)])
+ax.set_xticklabels(p.countries)
+
+plt.legend()
+
+plt.title('Calibration of T targeting Y')
+
+plt.show()
