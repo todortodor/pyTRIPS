@@ -5,7 +5,7 @@ Created on Fri Aug 19 13:39:20 2022
 
 @author: simonl
 """
-
+#%% main classes and dependencies
 import numpy as np
 from copy import deepcopy
 import aa
@@ -14,8 +14,6 @@ import pandas as pd
 from scipy.special import gamma
 from scipy import optimize
 import time
-import matplotlib.animation as animation
-
 
 class parameters:     
     def __init__(self, n=7, s=2):
@@ -23,7 +21,7 @@ class parameters:
         N = len(self.countries)
         self.N = N
         # self.sectors = ['Non patent', 'Patent', 'other', 'other2'][:s]
-        self.sectors = ['Non patent', 'Patent']+[str(i) for i in range(s-2)]
+        self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         S = len(self.sectors)
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
@@ -46,7 +44,6 @@ class parameters:
         self.beta = self.beta / self.beta.sum()
         self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
-        # self.tau = 3+np.arange(N*N*S).reshape(N, N, S)/50
         self.tau = np.ones((N, N, S))*4
         for i in range(self.tau.shape[2]):
             np.fill_diagonal(self.tau[:, :, i], 1)
@@ -80,6 +77,15 @@ class parameters:
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
+            
+    def guess_from_params(self):
+        price_guess = self.price_level_data
+        Y_guess = self.output
+        w_guess = Y_guess/self.labor*100
+        l_R_guess = np.repeat(self.labor[:,None]/100, self.S-1, axis=1).ravel()
+        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*10
+        vec = np.concatenate((price_guess,w_guess,Y_guess,l_R_guess,psi_star_guess), axis=0)
+        return vec
 
 class cobweb:
     def __init__(self, name):
@@ -137,6 +143,48 @@ class var:
     def copy(self):
         frame = deepcopy(self)
         return frame
+    
+    @staticmethod
+    def var_from_vector(vec,p):
+        init = var()    
+        init.guess_price_indices(vec[0:p.N])
+        init.guess_wage(vec[p.N:p.N*2])
+        init.guess_expenditure(vec[p.N*2:p.N*3])
+        init.guess_labor_research(
+            np.insert(vec[p.N*3:p.N*3+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+        init.guess_patenting_threshold(
+            np.insert(vec[p.N*3+p.N*(p.S-1):].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
+        init.compute_growth(p)
+        init.compute_aggregate_qualities(p)
+        init.compute_phi(p)
+        init.compute_monopolistic_sectoral_prices(p)
+        init.compute_monopolistic_trade_flows(p)
+        init.compute_competitive_sectoral_prices(p)
+        init.compute_competitive_trade_flows(p)
+        init.compute_labor_allocations(p)        
+        return init
+    
+    def vector_from_var(self):
+        price = self.price_indices
+        w = self.w
+        l_R = self.l_R[...,1:].ravel()
+        psi_star = self.psi_star[...,1:].ravel()
+        Y = self.Y
+        vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
+        return vec
+        
+    def compare_two_solutions(self,sol2):
+        commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(self).keys()))
+        diffs = []
+        for k in commonKeys:
+            if np.all(np.isclose(vars(self)[k], vars(sol2)[k])):
+                print(k, 'identical')
+            else:
+                diffs.append(k)
+        
+        for k in diffs:
+            print(k, (np.nanmean(vars(self)[k]/vars(sol2)[k])))
+
 
     def compute_growth(self, p):
         self.g_s = p.k*np.einsum('is,is -> s',
@@ -184,7 +232,6 @@ class var:
                                 (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :])
         self.PSI_CL[:, :, 0] = 0
         # assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
-
         # assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'PSI_M,CL too high'
 
         self.PSI_CD = 1-(np.einsum('njs->ns', self.PSI_M) +
@@ -217,58 +264,6 @@ class var:
         price = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
         # assert np.isnan(price).sum() == 0, 'nan in price'
         return price
-
-    def solve_price_ind_and_phi_with_price(self, p, price_init=None, tol_p=1e-10, 
-                                           plot_convergence=False, plot_cobweb = False):
-        if plot_cobweb:
-            cob_price = cobweb('price')
-        price_new = None
-        if price_init is None:
-            price_old = np.ones(p.N)
-        else:
-            price_old = price_init
-
-        condition = True
-        count = 0
-        convergence = []
-
-        aa_options = {'dim': p.N,
-                      'mem': 10,
-                      'type1': False,
-                      'regularization': 1e-10,
-                      'relaxation': 1,
-                      'safeguard_factor': 1,
-                      'max_weight_norm': 1e6}
-        aa_price = aa.AndersonAccelerator(**aa_options)
-
-        while condition:
-            if count != 0:
-                aa_price.apply(price_new, price_old)
-                price_old = price_new
-            
-            self.guess_price_indices(price_old)
-            self.compute_phi(p)
-            price_new = self.compute_price_indices(p)
-            condition = np.linalg.norm(
-                price_new - price_old)/np.linalg.norm(price_new) > tol_p
-            convergence.append(np.linalg.norm(
-                price_new - price_old)/np.linalg.norm(price_new))
-            count += 1
-            
-            if plot_cobweb and count%5==0:
-                # cob_psi_star.append_old_new(psi_star_old[1,1,1],psi_star_new[1,1,1])
-                cob_price.append_old_new(price_old[1],price_new[1])
-                cob_price.plot(count=count)
-                time.sleep(0.1)
-            
-            if count>50:
-                plot_convergence = True
-            
-            if plot_convergence:
-                plt.semilogy(convergence)
-                plt.title('price')
-                plt.show()
-        self.price_indices = price_new
 
     def compute_monopolistic_sectoral_prices(self, p):
         power = (p.sigma-1)/p.theta
@@ -314,75 +309,8 @@ class var:
                              self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta
                              )
         psi_star[..., 0] = np.inf
-
         # assert np.isnan(psi_star).sum() == 0, 'nan in psi_star'
         return psi_star
-
-    def solve_psi_star(self, p, psi_star_init=None, price_init=None, 
-                       tol_psi=1e-10, plot_convergence=False, plot_cobweb = False):
-        if plot_cobweb:
-            cob_psi_star = cobweb('psi star')
-        psi_star_new = None
-        if psi_star_init is None:
-            psi_star_old = np.ones((p.N, p.N, p.S))
-        else:
-            psi_star_old = psi_star_init
-
-        condition = True
-        count = 0
-        convergence = []
-
-        aa_options = {'dim': p.N*p.N*p.S,
-                      'mem': 5,
-                      'type1': False,
-                      'regularization': 1e-12,
-                      'relaxation': 1,
-                      'safeguard_factor': 1,
-                      'max_weight_norm': 1e6}
-        aa_psi_star = aa.AndersonAccelerator(**aa_options)
-        damping = 1.1
-        
-        while condition:
-            # print(count,'psi_star count')
-            if count != 0:
-                # psi_star_new = psi_star_new.ravel()
-                # psi_star_old = psi_star_old.ravel()
-                # aa_psi_star.apply(psi_star_new, psi_star_old)
-                # psi_star_new = psi_star_new.reshape(p.N,p.N,p.S)
-                # psi_star_old = psi_star_old.reshape(p.N,p.N,p.S)
-                psi_star_old = (psi_star_new+(damping-1)*psi_star_old)/damping
-                # if psi_star_old.min() < 1:
-                #     print('correcting psi star')
-                #     psi_star_old = psi_star_old/psi_star_old.min()
-
-            self.guess_patenting_threshold(psi_star_old)
-            assert np.isnan(self.psi_star).sum() == 0, 'nan in psi_star'
-            self.compute_aggregate_qualities(p)
-            self.solve_price_ind_and_phi_with_price(
-                p, price_init=self.price_indices)
-            self.compute_monopolistic_sectoral_prices(p)
-            self.compute_monopolistic_trade_flows(p)
-            psi_star_new = self.compute_psi_star(p)
-            assert np.isnan(psi_star_new).sum() == 0, 'nan in psi_star'
-
-            condition = np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /\
-                np.linalg.norm(psi_star_new[..., 1:]) > tol_psi
-            convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
-                               np.linalg.norm(psi_star_new[..., 1:]))
-            count += 1
-            
-            # if count>-50:
-            #     plot_convergence = True #!!!!!
-            if plot_convergence:
-                plt.title('psi star')
-                plt.semilogy(convergence)
-                plt.show()
-            if plot_cobweb:
-                # cob_psi_star.append_old_new(psi_star_old[1,1,1],psi_star_new[1,1,1])
-                cob_psi_star.append_old_new(psi_star_old.min(),psi_star_new.min())
-                cob_psi_star.plot(count=count)
-            
-        self.psi_star = psi_star_new
 
     def compute_labor_research(self, p):
         A = np.einsum('nis,s,i,nis,s->is',
@@ -403,67 +331,7 @@ class var:
                       )
         l_R = (p.eta*(A+B)/(p.k-1))**(1/p.kappa)
         # assert np.isnan(l_R).sum() == 0, 'nan in l_R'
-
         return l_R
-
-    def solve_l_R(self, p, l_R_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                  w_init=None, Y_init=None, plot_convergence=False,plot_cobweb = False):
-        if plot_cobweb:
-            cob_l_R = cobweb('l_R')
-        l_R_new = None
-        if l_R_init is None:
-            l_R_old = np.ones((p.N, p.S))
-        else:
-            l_R_old = l_R_init
-        condition_l_R = True
-        count = 0
-        convergence_l_R = []
-        aa_options_l_R = {'dim': p.N*p.S,
-                          'mem': 5,
-                          'type1': False,
-                          'regularization': 1e-12,
-                          'relaxation': 1,
-                          'safeguard_factor': 1,
-                          'max_weight_norm': 1e6}
-        aa_l_R = aa.AndersonAccelerator(**aa_options_l_R)
-        damping = 3
-        while condition_l_R:
-            # print(count,'l_R count')
-            if count != 0:
-                l_R_new = l_R_new.ravel()
-                l_R_old = l_R_old.ravel()
-                aa_l_R.apply(l_R_new, l_R_old)
-                l_R_old = (l_R_new.reshape(p.N, p.S) + (damping-1)*l_R_old.reshape(p.N, p.S))/damping
-                # while np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False)<0):
-                #     print('correcting l_R')
-                #     l_R_old = l_R_old/2
-            self.guess_labor_research(l_R_old)
-            self.compute_growth(p)
-            self.solve_psi_star(p, psi_star_init=self.psi_star,
-                                price_init=self.price_indices)
-            l_R_new = self.compute_labor_research(p).astype('double')
-            # print(l_R_old[1,1],l_R_new[1,1])
-            if np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False) < 0):
-                print('non positive production labor')
-            # print(count,'count l_P',l_P)
-            # if np.any(l_P < 0):
-            #     print('Negative above')
-            #     time.sleep(2)
-            # assert np.all(l_P > 0), 'non positive production labor'
-            condition_l_R = np.linalg.norm(
-                l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
-            convergence_l_R.append(np.linalg.norm(
-                l_R_new - l_R_old)/np.linalg.norm(l_R_new))
-            count += 1
-            if plot_cobweb:
-                cob_l_R.append_old_new(l_R_old[1,1],l_R_new[1,1])
-                cob_l_R.plot(count=count)
-            
-            if plot_convergence:
-                plt.semilogy(convergence_l_R, label='l_R')
-                plt.show()
-
-        self.l_R = l_R_new
 
     def compute_labor_allocations(self, p, l_R=None, assign=True):
         if l_R is None:
@@ -482,12 +350,9 @@ class var:
                          )
         l_P = p.labor - np.einsum('is->i',
                                   np.einsum('ins->is', l_Ao+l_Ae)+l_R)
-
         # assert np.isnan(l_Ae).sum() == 0, 'nan in l_Ae'
         # assert np.isnan(l_Ao).sum() == 0, 'nan in l_Ao'
         # assert np.isnan(l_P).sum() == 0, 'nan in l_P'
-        
-
         if assign:
             self.l_Ae = l_Ae
             self.l_Ao = l_Ao
@@ -503,12 +368,11 @@ class var:
         B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
 
         C = self.PSI_CD*self.phi.sum(axis=1)**power[None, :]
-
+        
         self.P_CL = np.ones((p.N, p.S))
         self.P_CL[:, 0] = np.inf
         self.P_CL[:, 1:] = (B[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
         # assert np.isnan(self.P_CL).sum() == 0, 'nan in P_CL'
-
         self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
         # assert np.isnan(self.P_CD).sum() == 0, 'nan in P_CD'
 
@@ -546,6 +410,188 @@ class var:
         # assert np.all(wage > 0), 'non positive wage'
         return wage
 
+    def compute_output(self, p):
+        A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
+        B = np.einsum('i,nis->i', self.w, self.l_Ae)
+        C = np.einsum('i,n,n->i', p.deficit, self.w, p.labor)
+        D = np.einsum('n,ins->i', self.w, self.l_Ae)
+        Y = (A+B-(C+D))
+        # assert np.isnan(Y).sum() == 0, 'nan in Y'
+        return Y
+    
+    def solve_price_indices(self, p, price_init=None, tol_p=1e-10, 
+                                           plot_convergence=False, plot_cobweb = False):
+        if plot_cobweb:
+            cob_price = cobweb('price')
+        price_new = None
+        if price_init is None:
+            price_old = np.ones(p.N)
+        else:
+            price_old = price_init
+
+        condition = True
+        count = 0
+        convergence = []
+
+        aa_options = {'dim': p.N,
+                      'mem': 10,
+                      'type1': False,
+                      'regularization': 1e-10,
+                      'relaxation': 1,
+                      'safeguard_factor': 1,
+                      'max_weight_norm': 1e6}
+        aa_price = aa.AndersonAccelerator(**aa_options)
+
+        while condition:
+            if count != 0:
+                aa_price.apply(price_new, price_old)
+                price_old = price_new
+            
+            self.guess_price_indices(price_old)
+            self.compute_phi(p)
+            price_new = self.compute_price_indices(p)
+            condition = np.linalg.norm(
+                price_new - price_old)/np.linalg.norm(price_new) > tol_p
+            convergence.append(np.linalg.norm(
+                price_new - price_old)/np.linalg.norm(price_new))
+            count += 1
+            
+            if plot_cobweb and count%5==0:
+                cob_price.append_old_new(price_old[1],price_new[1])
+                cob_price.plot(count=count)
+                time.sleep(0.1)
+            
+            if count>50:
+                plot_convergence = True
+            
+            if plot_convergence:
+                plt.semilogy(convergence)
+                plt.title('price')
+                plt.show()
+        self.price_indices = price_new
+    
+    def solve_psi_star(self, p, psi_star_init=None, price_init=None, 
+                       tol_psi=1e-10, plot_convergence=False, plot_cobweb = False):
+        if plot_cobweb:
+            cob_psi_star = cobweb('psi star')
+        psi_star_new = None
+        if psi_star_init is None:
+            psi_star_old = np.ones((p.N, p.N, p.S))
+        else:
+            psi_star_old = psi_star_init
+
+        condition = True
+        count = 0
+        convergence = []
+
+        aa_options = {'dim': p.N*p.N*p.S,
+                      'mem': 5,
+                      'type1': False,
+                      'regularization': 1e-12,
+                      'relaxation': 1,
+                      'safeguard_factor': 1,
+                      'max_weight_norm': 1e6}
+        aa_psi_star = aa.AndersonAccelerator(**aa_options)
+        damping = 5
+        
+        while condition:
+            # print(count,'psi_star count')
+            if count != 0:
+                # psi_star_new = psi_star_new.ravel()
+                # psi_star_old = psi_star_old.ravel()
+                # aa_psi_star.apply(psi_star_new, psi_star_old)
+                # psi_star_new = psi_star_new.reshape(p.N,p.N,p.S)
+                # psi_star_old = psi_star_old.reshape(p.N,p.N,p.S)
+                psi_star_old = (psi_star_new+(damping-1)*psi_star_old)/damping
+
+            self.guess_patenting_threshold(psi_star_old)
+            assert np.isnan(self.psi_star).sum() == 0, 'nan in psi_star'
+            self.compute_aggregate_qualities(p)
+            self.solve_price_indices(
+                p, price_init=self.price_indices)
+            self.compute_monopolistic_sectoral_prices(p)
+            self.compute_monopolistic_trade_flows(p)
+            psi_star_new = self.compute_psi_star(p)
+            assert np.isnan(psi_star_new).sum() == 0, 'nan in psi_star'
+
+            condition = np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /\
+                np.linalg.norm(psi_star_new[..., 1:]) > tol_psi
+            convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
+                               np.linalg.norm(psi_star_new[..., 1:]))
+            count += 1
+            # if np.all(np.array(convergence[-10:])<0.1):
+            #     damping=1
+            # if count>-50:
+            #     plot_convergence = True #!!!!!
+            if plot_convergence:
+                plt.title('psi star')
+                plt.semilogy(convergence)
+                plt.show()
+            if plot_cobweb:
+                # cob_psi_star.append_old_new(psi_star_old[1,1,1],psi_star_new[1,1,1])
+                cob_psi_star.append_old_new(psi_star_old.min(),psi_star_new.min())
+                cob_psi_star.plot(count=count)
+            
+        self.psi_star = psi_star_new
+    
+    def solve_l_R(self, p, l_R_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
+                  w_init=None, Y_init=None, plot_convergence=False,plot_cobweb = False):
+        if plot_cobweb:
+            cob_l_R = cobweb('l_R')
+        l_R_new = None
+        if l_R_init is None:
+            l_R_old = np.ones((p.N, p.S))
+        else:
+            l_R_old = l_R_init
+        condition_l_R = True
+        count = 0
+        convergence_l_R = []
+        aa_options_l_R = {'dim': p.N*p.S,
+                          'mem': 5,
+                          'type1': False,
+                          'regularization': 1e-12,
+                          'relaxation': 1,
+                          'safeguard_factor': 1,
+                          'max_weight_norm': 1e6}
+        aa_l_R = aa.AndersonAccelerator(**aa_options_l_R)
+        damping = 5
+        while condition_l_R:
+            # print(count,'l_R count')
+            if count != 0:
+                l_R_new = l_R_new.ravel()
+                l_R_old = l_R_old.ravel()
+                # aa_l_R.apply(l_R_new, l_R_old)
+                l_R_old = (l_R_new.reshape(p.N, p.S) + (damping-1)*l_R_old.reshape(p.N, p.S))/damping
+            self.guess_labor_research(l_R_old)
+            self.compute_growth(p)
+            self.solve_psi_star(p, psi_star_init=self.psi_star,
+                                price_init=self.price_indices)
+            l_R_new = self.compute_labor_research(p).astype('double')
+            # print(l_R_old[1,1],l_R_new[1,1])
+            if np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False) < 0):
+                print('non positive production labor')
+            # print(count,'count l_P',l_P)
+            # if np.any(l_P < 0):
+            #     print('Negative above')
+            #     time.sleep(2)
+            # assert np.all(l_P > 0), 'non positive production labor'
+            condition_l_R = np.linalg.norm(
+                l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
+            convergence_l_R.append(np.linalg.norm(
+                l_R_new - l_R_old)/np.linalg.norm(l_R_new))
+            count += 1
+            if np.all(np.array(convergence_l_R[-10:])<0.1):
+                damping=1
+            if plot_cobweb:
+                cob_l_R.append_old_new(l_R_old[1,1],l_R_new[1,1])
+                cob_l_R.plot(count=count)
+            
+            if plot_convergence:
+                plt.semilogy(convergence_l_R, label='l_R')
+                plt.show()
+
+        self.l_R = l_R_new
+    
     def solve_w(self, p, w_init=None, psi_star_init=None, price_init=None,
                 tol_m=1e-8, plot_convergence=False, plot_cobweb = False):
         if plot_cobweb:
@@ -566,9 +612,9 @@ class var:
                           'safeguard_factor': 1,
                           'max_weight_norm': 1e6}
         aa_w = aa.AndersonAccelerator(**aa_options_w_Y)
-        damping = 1.5
+        damping = 5
         while condition_w:
-            # print(count,'w count')
+            print(count,'w count')
             if count != 0:
                 aa_w.apply(w_new, w_old)
                 w_old = (w_new+(damping-1)*w_old)/damping
@@ -584,6 +630,8 @@ class var:
             convergence_w.append(np.linalg.norm(w_new - w_old)/np.linalg.norm(w_new))
             
             count += 1
+            if np.all(np.array(convergence_w[-10:])<0.1):
+                damping=1
             if plot_cobweb:
                 cob_w.append_old_new(w_old[1],w_new[1])
                 cob_w.plot(count=count)
@@ -593,18 +641,8 @@ class var:
         
         self.w = w_new
 
-    def compute_expenditure(self, p):
-        A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
-        B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = np.einsum('i,n,n->i', p.deficit, self.w, p.labor)
-        D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        Y = (A+B-(C+D))
-        # assert np.isnan(Y).sum() == 0, 'nan in Y'
-
-        return Y
-
     def solve_Y(self, p, Y_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                plot_convergence=False, plot_cobweb = False):
+                plot_convergence=False, plot_cobweb = True):
         if plot_cobweb:
             cob_Y = cobweb('Y')
         Y_new = None
@@ -630,7 +668,7 @@ class var:
                 Y_old = Y_new
             self.guess_expenditure(Y_old)
             self.solve_w(p, w_init=self.w)
-            Y_new = self.compute_expenditure(p)
+            Y_new = self.compute_output(p)
             condition_Y = np.linalg.norm(
                 Y_new - Y_old)/np.linalg.norm(Y_new) > tol_m
             convergence_Y.append(np.linalg.norm(
@@ -654,7 +692,7 @@ class var:
         
         self.phi = self.phi*numeraire**p.theta[None,None,:]
     
-    def check_solution(self, p, return_checking_copy = False, assertions = False):
+    def check_solution(self, p, return_checking_copy = False, assertions = True):
         check = self.copy()
         check.compute_growth(p)
         check.compute_aggregate_qualities(p)
@@ -668,7 +706,7 @@ class var:
         check.compute_competitive_trade_flows(p)
         check.compute_labor_allocations(p)
         check.w = check.compute_wage(p)
-        check.Y = check.compute_expenditure(p)
+        check.Y = check.compute_output(p)
         if assertions:
             assert np.all(
                 np.isclose(check.price_indices, check.compute_price_indices(p))
@@ -683,148 +721,12 @@ class var:
                 np.isclose(check.w, check.compute_wage(p))
                 ), 'check w wrong'
             assert np.all(
-                np.isclose(check.Y, check.compute_expenditure(p))
+                np.isclose(check.Y, check.compute_output(p))
                 ), 'check Y wrong'
+            print('is a solution')
         if return_checking_copy:
             return check
         
-    @staticmethod
-    def var_from_vector(vec,p):
-        init = var()    
-        init.guess_price_indices(vec[0:p.N])
-        init.guess_wage(vec[p.N:p.N*2])
-        init.guess_expenditure(vec[p.N*2:p.N*3])
-        init.guess_labor_research(
-            np.insert(vec[p.N*3:p.N*3+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
-        init.guess_patenting_threshold(
-            np.insert(vec[p.N*3+p.N*(p.S-1):].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
-        init.compute_growth(p)
-        init.compute_aggregate_qualities(p)
-        init.compute_phi(p)
-        init.compute_monopolistic_sectoral_prices(p)
-        init.compute_monopolistic_trade_flows(p)
-        init.compute_competitive_sectoral_prices(p)
-        init.compute_competitive_trade_flows(p)
-        init.compute_labor_allocations(p)        
-        return init
-    
-    def vector_from_var(self):
-        price = self.price_indices
-        w = self.w
-        l_R = self.l_R[...,1:].ravel()
-        psi_star = self.psi_star[...,1:].ravel()
-        Y = self.Y
-        vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
-        return vec
-        
-    def compare_two_solutions(self,sol2):
-        commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(self).keys()))
-        diffs = []
-        for k in commonKeys:
-            if np.all(np.isclose(vars(self)[k], vars(sol2)[k])):
-                print(k, 'identical')
-            else:
-                diffs.append(k)
-        
-        for k in diffs:
-            print(k, (np.nanmean(vars(self)[k]/vars(sol2)[k])))
-
-def iter_once(x,p, normalize = False):
-    init = var.var_from_vector(x,p)
-    if normalize:
-        init.num_scale_solution(p)
-    price = init.compute_price_indices(p)
-    w = init.compute_wage(p)
-    Y = init.compute_expenditure(p)
-    l_R = init.compute_labor_research(p)[...,1:].ravel()
-    psi_star = init.compute_psi_star(p)[...,1:].ravel()
-    vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
-    return vec
-
-def deviation(x,p):
-    vec = iter_once(x,p)
-    return vec - x
-
-def deviation_norm(x,p):
-    return np.linalg.norm(deviation(x,p))
-
-def bound_psi_star(x,p,hit_the_bound=None):
-    x_psi_star = x[p.N*3+p.N*(p.S-1):]
-    if np.any(x_psi_star<1):
-        hit_the_bound += 1
-        x_psi_star[x_psi_star<1] = 1
-    x[p.N*3+p.N*(p.S-1):] = x_psi_star
-    return x, hit_the_bound
-
-def bound_research_labor(x,p,hit_the_bound=None):
-    x_l_R = x[p.N*3:p.N*3+p.N*(p.S-1)]
-    if np.any(x_l_R > p.labor.max()):
-        if hit_the_bound is not None:
-            hit_the_bound+=1
-        x_l_R[x_l_R > p.labor.max()] = p.labor.max()
-    x[p.N*3:p.N*3+p.N*(p.S-1)] = x_l_R
-    return x,hit_the_bound
-
-def bound_zero(x, cutoff=1e-8, hit_the_bound=None):
-    if np.any(x<=0):
-        x[x <= 0] = cutoff
-        if hit_the_bound is not None:
-            hit_the_bound+=1
-    return x,hit_the_bound
-
-def smooth_large_jumps(x_new,x_old):
-    high_jumps_too_big = x_new > 1000*x_old
-    while np.any(high_jumps_too_big):
-        # print('high',high_jumps_too_big.sum())
-        # x_new[high_jumps_too_big] = x_old[high_jumps_too_big]*1/2+x_new[high_jumps_too_big]*1/2
-        x_new = x_old*1/2+x_new*1/2
-        high_jumps_too_big = x_new > 1000*x_old
-    low_jumps_too_big = x_new < x_old/1000
-    while np.any(low_jumps_too_big):
-        # print('low',low_jumps_too_big.sum())
-        # x_new[low_jumps_too_big] = x_old[low_jumps_too_big]*1/2+x_new[low_jumps_too_big]*1/2
-        x_new = x_old*1/2+x_new*1/2
-        low_jumps_too_big = x_new < x_old/1000
-    return x_new
-
-def guess_from_params(p):
-    price_guess = p.price_level_data
-    w_guess = p.wage_data*10000
-    Y_guess = p.output
-    l_R_guess = np.repeat(p.labor[:,None]/100, p.S-1, axis=1).ravel()
-    psi_star_guess = np.ones((p.N,p.N,(p.S-1))).ravel()*10
-    vec = np.concatenate((price_guess,w_guess,Y_guess,l_R_guess,psi_star_guess), axis=0)
-    return vec
-
-p = parameters_julian()
-j_res = np.array(
-    pd.read_csv('/Users/simonl/Dropbox/TRIPS/Code/new code/temporary_result_lev_levy.csv'
-                ,header=None)[5])
-j_res = np.insert(j_res, 0, 1)
-
-#%% partial equilibrium solver
-
-p_j = parameters_julian()
-x_j = guess_from_params(p_j)
-p0 = parameters(n=6,s=3)
-x0 = guess_from_params(p0)
-
-x_guess = x_j
-p = p_j
-partial_equilibriums_sol = var.var_from_vector(x_guess, p)
-
-start = time.perf_counter()
-
-partial_equilibriums_sol.solve_Y(p,
-                                 Y_init=partial_equilibriums_sol.Y,
-                                  plot_cobweb = True
-                                 )
-
-finish = time.perf_counter()
-print('Solving time :',finish-start)
-
-#%% full fixed point solver
-
 class sol_class:
     def __init__(self, x_new, p, solving_time, iterations, deviation_norm, 
                  status, hit_the_bound_count, x0=None, tol = 1e-10, 
@@ -870,21 +772,81 @@ class sol_class:
               ,'\nDeviation norm : ',self.dev
               ,'\nStatus : ',self.status
               ,'\nHit the bounds ',self.hit_the_bound_count,' times'
-              )
-        
-p_j = parameters_julian()
-p0 = parameters(n=40,s=20)
+              )        
+#%% functions of the state vector
+def get_vec_qty(x,p):
+    res = {'price_indices':x[0:p.N],
+           'w':x[p.N:p.N*2],
+           'Y':x[p.N*2:p.N*3],
+           'l_R':x[p.N*3:p.N*3+p.N*(p.S-1)],
+           'psi_star':x[p.N*3+p.N*(p.S-1):]
+           }
+    return res
+
+def iter_once(x,p, normalize = False):
+    init = var.var_from_vector(x,p)
+    if normalize:
+        init.num_scale_solution(p)
+    price = init.compute_price_indices(p)
+    w = init.compute_wage(p)
+    Y = init.compute_output(p)
+    l_R = init.compute_labor_research(p)[...,1:].ravel()
+    psi_star = init.compute_psi_star(p)[...,1:].ravel()
+    vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
+    return vec
+
+def deviation(x,p):
+    vec = iter_once(x,p)
+    return vec - x
+
+def deviation_norm(x,p):
+    return np.linalg.norm(deviation(x,p))
+
+def bound_psi_star(x,p,hit_the_bound=None):
+    x_psi_star = x[p.N*3+p.N*(p.S-1):]
+    if np.any(x_psi_star<1):
+        hit_the_bound += 1
+        x_psi_star[x_psi_star<1] = 1
+    x[p.N*3+p.N*(p.S-1):] = x_psi_star
+    return x, hit_the_bound
+
+def bound_research_labor(x,p,hit_the_bound=None):
+    x_l_R = x[p.N*3:p.N*3+p.N*(p.S-1)]
+    if np.any(x_l_R > p.labor.max()):
+        if hit_the_bound is not None:
+            hit_the_bound+=1
+        x_l_R[x_l_R > p.labor.max()] = p.labor.max()
+    x[p.N*3:p.N*3+p.N*(p.S-1)] = x_l_R
+    return x,hit_the_bound
+
+def bound_zero(x, cutoff=1e-8, hit_the_bound=None):
+    if np.any(x<=0):
+        x[x <= 0] = cutoff
+        if hit_the_bound is not None:
+            hit_the_bound+=1
+    return x,hit_the_bound
+
+def smooth_large_jumps(x_new,x_old):
+    high_jumps_too_big = x_new > 1000*x_old
+    while np.any(high_jumps_too_big):
+        x_new = x_old*1/2+x_new*1/2
+        high_jumps_too_big = x_new > 1000*x_old
+    low_jumps_too_big = x_new < x_old/1000
+    while np.any(low_jumps_too_big):
+        x_new = x_old*1/2+x_new*1/2
+        low_jumps_too_big = x_new < x_old/1000
+    return x_new
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
-                       accelerate = False, safe_convergence=0.1,
-                       accelerate_when_stable=True, plot_cobweb = True, cobweb_anim=False,
-                       plot_convergence = True, apply_bound_zero = True, 
+                       accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
+                       plot_cobweb = True, cobweb_anim=False, cobweb_qty='price_indices',
+                       cobweb_coord = 1, plot_convergence = True, apply_bound_zero = True, 
                        apply_bound_psi_star = False, apply_bound_research_labor = False,
                        accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
                        accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
-                       ):   
+                       disp_summary=True):   
     if x0 is None:
-        x0 = guess_from_params(p)
+        x0 = p.guess_from_params()
     x_old = x0 
         
     condition = True
@@ -919,20 +881,24 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
             if apply_bound_research_labor:
                 x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
         x_new = iter_once(x_old, p, normalize = False)
-        condition = np.linalg.norm(
-            x_new - x_old)/np.linalg.norm(x_new) > tol
+        x_new_decomp = get_vec_qty(x_new,p)
+        x_old_decomp = get_vec_qty(x_old,p)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['price_indices','w','Y','psi_star','l_R']]
+        condition = np.any(conditions)
         convergence.append(np.linalg.norm(
             x_new - x_old)/np.linalg.norm(x_new))
         count += 1
-        if np.all(np.array(convergence[-10:])<safe_convergence) and accelerate_when_stable:
-            accelerate = True
+        if np.all(np.array(convergence[-10:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
             damping = 1
         # history_old.append(x_old.min())
         # history_new.append(x_new.min())
         # history_old.append(x_old[p.N*3+p.N*(p.S-1):].min())
         # history_new.append(x_new[p.N*3+p.N*(p.S-1):].min())
-        history_old.append(x_old[25])
-        history_new.append(x_new[25])
+        history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+        history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
     
     finish = time.perf_counter()
     solving_time = finish-start
@@ -941,60 +907,74 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
         status = 'successful'
     else:
         status = 'failed'
+        
+    sol_inst = sol_class(x_new, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
     
     if plot_cobweb:
-        cob = cobweb('all')
+        cob = cobweb(cobweb_qty)
         for i,c in enumerate(convergence):
             cob.append_old_new(history_old[i],history_new[i])
             if cobweb_anim:
-                cob.plot(count=i, window = len(convergence),pause = 0.05) 
+                cob.plot(count=i, window = 100,pause = 0.05) 
         cob.plot(count = count, window = None)
             
     if plot_convergence:
         plt.semilogy(convergence)
         plt.show()
     
-    sol_inst = sol_class(x_new, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
-                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
-    
-    sol_inst.run_summary()
-    
     return sol_inst
 
-sol = fixed_point_solver(p0)
-        
-# full_fixed_point_sol = var.var_from_vector(x_new,p)
-# full_fixed_point_sol.num_scale_solution(p)
+#%% full fixed point solver
+    
+p = parameters(n=40,s=20)
+
+sol = fixed_point_solver(p,cobweb_anim=False,
+                         accelerate=False,
+                         accelerate_when_stable=True,
+                         cobweb_qty='psi_star',
+                         # apply_bound_psi_star=True
+                         )
+sol_c = var.var_from_vector(sol.x, sol.p)        
+
+#%% partial equilibrium solver
+
+p0 = parameters(n=10, s=2)
+x0 = p0.guess_from_params()
+
+partial_equilibriums_sol = var.var_from_vector(fixed_point_solver(p0, 
+                                                                  disp_summary=False,
+                                                                  plot_convergence=False,
+                                                                  plot_cobweb=False,
+                                                                  # cobweb_anim=True
+                                                                  ).x, p0) 
+partial_equilibriums_sol.Y+=np.random.rand(p0.N)*10
+
+start = time.perf_counter()
+partial_equilibriums_sol.solve_Y(p0,
+                                 Y_init=partial_equilibriums_sol.Y,
+                                  plot_cobweb = True
+                                 )
+
+finish = time.perf_counter()
+print('Solving time :',finish-start)
 
 #%% least square solver
 
+p0 = parameters(n=4, s=2)
+x0 = p0.guess_from_params()
 
-# sol = optimize.root(fun = function_of_vector, 
-#                     x0 = j_res, 
-#                     args = p, 
-#                     method='krylov',
-#                     options={'disp':True})
+partial_equilibriums_sol = var.var_from_vector(fixed_point_solver(p0, 
+                                                                  disp_summary=False,
+                                                                  plot_convergence=False,
+                                                                  plot_cobweb=False
+                                                                  ).x, p0) 
+partial_equilibriums_sol.Y+=np.random.rand(p0.N)*10
 
-# x0 = state.vector_from_var()
-x0 = j_res
-# p_bds = (0,np.inf)
-# w_bds = (0,np.inf)
-# l_R_bds = (0,np.inf)
-# psi_star_bds = (0,np.inf)
-# Y_bds = (0,np.inf)
-# keep_feasible = [True]*len(x0)
-
-
-# bounds = list((*(p_bds,)*p.N,
-#           *(w_bds,)*p.N,
-#           *(l_R_bds,)*(p.N*(p.S-1)),
-#           *(psi_star_bds,)*(p.N*p.N*(p.S-1)),
-#           *(Y_bds,)*p.N))
-# bounds = optimize.Bounds(lb=1e-10,
-#                           ub=np.inf)
-bounds = (1e-10,np.inf)
 lb = np.full_like(x0, 1e-10)
-# lb[p.N*3+p.N*(p.S-1):] = 1
 ub = np.full_like(x0, np.inf)
 ub[p.N*3:p.N*3+p.N*(p.S-1)] = p.labor.max()
 keep_feasible=True
@@ -1004,27 +984,42 @@ sol = optimize.least_squares(fun = deviation,
                     args = (p,), 
                     bounds = bounds,
                     method= 'trf',
-                    loss='arctan',
-                    max_nfev=1e6,
+                    # loss='arctan',
+                    max_nfev=2e3,
                     ftol=1e-14, 
                     xtol=0, 
                     gtol=1e-14,
                     verbose = 2)
-# sol = optimize.minimize(fun = deviation, 
-#                     x0 = sol.x, 
-#                     args = p, 
-#                     bounds = bounds,
-#                     options={'disp':True,
-#                               'maxiter':1e6,
-#                               'maxfun':1e6,
-#                               })
 
 sol_state = var.var_from_vector(sol.x, p)
 sol_state.num_scale_solution(p)
 
-# sol_state.solve_Y(p,Y_init = sol_state.Y)
+#%% dependance on T
 
-# simon_sol.solve_Y(p,
-#                   Y_init=simon_sol.Y,
-#                   price_init=simon_sol.price_indices,
-#                   psi_star_init=simon_sol.psi_star, plot_convergence=True)
+p = parameters(n=10,s=4)
+list_p = []
+list_sol = []
+
+for T in np.linspace(0,100,101)[1:]:
+    print(T)
+    p.T = np.ones(p.N)*T
+    sol = fixed_point_solver(p,cobweb_anim=False,
+                             accelerate=False,
+                             accelerate_when_stable=True,
+                             cobweb_qty='psi_star',
+                             plot_cobweb=False,
+                             plot_convergence=False,
+                             # apply_bound_psi_star=True
+                             )
+    sol_c = var.var_from_vector(sol.x, sol.p)   
+    sol_c.num_scale_solution(p)
+    list_sol.append(sol_c)
+    list_p.append(p)
+    
+#%%    
+    
+plt.plot(np.linspace(0,100,101)[1:],
+         [sol.Y.mean()*p.unit for sol in list_sol]
+         )
+
+
