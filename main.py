@@ -466,7 +466,9 @@ class var:
         self.price_indices = price_new
     
     def solve_psi_star(self, p, psi_star_init=None, price_init=None, 
-                       tol_psi=1e-10, plot_convergence=False, plot_cobweb = False):
+                       tol_psi=1e-10, plot_convergence=False
+                       , plot_cobweb = False, accelerate_when_stable = True,
+                       accelerate = False):
         if plot_cobweb:
             cob_psi_star = cobweb('psi star')
         psi_star_new = None
@@ -489,11 +491,12 @@ class var:
         damping = 5        
         while condition:
             if count != 0:
-                # psi_star_new = psi_star_new.ravel()
-                # psi_star_old = psi_star_old.ravel()
-                # aa_psi_star.apply(psi_star_new, psi_star_old)
-                # psi_star_new = psi_star_new.reshape(p.N,p.N,p.S)
-                # psi_star_old = psi_star_old.reshape(p.N,p.N,p.S)
+                if accelerate:
+                    psi_star_new = psi_star_new.ravel()
+                    psi_star_old = psi_star_old.ravel()
+                    aa_psi_star.apply(psi_star_new, psi_star_old)
+                    psi_star_new = psi_star_new.reshape(p.N,p.N,p.S)
+                    psi_star_old = psi_star_old.reshape(p.N,p.N,p.S)
                 psi_star_old = (psi_star_new+(damping-1)*psi_star_old)/damping
 
             self.guess_patenting_threshold(psi_star_old)
@@ -511,6 +514,8 @@ class var:
             convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
                                np.linalg.norm(psi_star_new[..., 1:]))
             count += 1
+            if accelerate_when_stable and np.all(np.array(convergence[-10:])<1e-1):
+                damping = 2
             if plot_convergence:
                 plt.title('psi star')
                 plt.semilogy(convergence)
@@ -523,7 +528,8 @@ class var:
         self.psi_star = psi_star_new
     
     def solve_l_R(self, p, l_R_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                  w_init=None, Y_init=None, plot_convergence=False,plot_cobweb = False):
+                  w_init=None, Y_init=None, plot_convergence=False
+                  ,plot_cobweb = False):
         if plot_cobweb:
             cob_l_R = cobweb('l_R')
         l_R_new = None
@@ -555,6 +561,7 @@ class var:
                                 price_init=self.price_indices)
             if np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False) < 0):
                 print('non positive production labor')
+            l_R_new = self.compute_labor_research(p)
             condition_l_R = np.linalg.norm(
                 l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
             convergence_l_R.append(np.linalg.norm(
@@ -572,7 +579,8 @@ class var:
         self.l_R = l_R_new
     
     def solve_w(self, p, w_init=None, psi_star_init=None, price_init=None,
-                tol_m=1e-8, plot_convergence=False, plot_cobweb = False):
+                tol_m=1e-8, plot_convergence=False, plot_cobweb = False,
+                accelerate = True):
         if plot_cobweb:
             cob_w = cobweb('wage')
         w_new = None
@@ -593,9 +601,10 @@ class var:
         aa_w = aa.AndersonAccelerator(**aa_options_w_Y)
         damping = 5
         while condition_w:
-            print(count,'w count')
+            print(count,'wage iteration, research problem solved')
             if count != 0:
-                aa_w.apply(w_new, w_old)
+                if accelerate:
+                    aa_w.apply(w_new, w_old)
                 w_old = (w_new+(damping-1)*w_old)/damping        
             self.guess_wage(w_old)
             self.solve_l_R(p, l_R_init=self.l_R)
@@ -895,21 +904,21 @@ sol_c.num_scale_solution(p)
 
 #%% partial equilibrium solver
 
-p0 = parameters(n=10, s=2)
+p0 = parameters(n=7, s=2)
 x0 = p0.guess_from_params()
 
 partial_equilibriums_sol = var.var_from_vector(fixed_point_solver(p0, 
-                                                                  disp_summary=False,
-                                                                  plot_convergence=False,
-                                                                  plot_cobweb=False,
-                                                                  # cobweb_anim=True
-                                                                  ).x, p0) 
+                                disp_summary=False,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                # cobweb_anim=True
+                                ).x, p0) 
 partial_equilibriums_sol.Y+=np.random.rand(p0.N)*10
 
 start = time.perf_counter()
 partial_equilibriums_sol.solve_Y(p0,
                                  Y_init=partial_equilibriums_sol.Y,
-                                  plot_cobweb = True
+                                  plot_cobweb = False
                                  )
 
 finish = time.perf_counter()
@@ -989,7 +998,6 @@ interval = (slice(1,2, 1),)*p.N
 # test = optimize.brute(func=calibration_func, ranges=interval, 
 #                       args=(p,), Ns=20, full_output=True, disp=True, workers=1)
 
-#%%
 def calibration_func(T,p):
     p.T = T
     sol = fixed_point_solver(p,
@@ -1033,8 +1041,6 @@ test_sol = fixed_point_solver(p,
                          disp_summary=True,
                          )
 test_sol_c = var.var_from_vector(test_sol.x, p)
-
-#%%
 
 fig, ax = plt.subplots(figsize = (12,8))
 ax2 = ax.twinx()
