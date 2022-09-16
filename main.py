@@ -30,7 +30,8 @@ class parameters:
             (np.array([197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])
              ,np.ones(n)*124021697)
             )[:n]
-        self.labor = self.labor/self.labor.sum()*30
+        self.unit_labor = 30/self.labor.sum()
+        self.labor = self.labor*self.unit_labor
         # self.labor = np.ones(N)*30
         self.T = np.ones(N)*0.25  # could be anything >0
         self.k = 1.5                  #
@@ -881,6 +882,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
 #%% full fixed point solver
     
 p = parameters(n=40,s=20)
+p.theta*=3
 
 sol = fixed_point_solver(p,cobweb_anim=False,
                          accelerate=False,
@@ -947,11 +949,11 @@ sol_state.num_scale_solution(p)
 
 #%% dependance on T
 
-p = parameters(n=10,s=4)
+p = parameters(n=7,s=2)
 list_T = []
 list_sol = []
 
-for T in np.linspace(0,100,51)[1:]:
+for T in np.linspace(0,10000,101)[1:]:
     print(T)
     p.T = np.ones(p.N)*T
     sol = fixed_point_solver(p,cobweb_anim=False,
@@ -967,13 +969,14 @@ for T in np.linspace(0,100,51)[1:]:
     list_sol.append(sol_c)
     list_T.append(p.T)
 
-fig,ax = plt.subplots()
+fig,ax = plt.subplots(figsize = (12,8))
   
 ax.plot([T.mean() for T in list_T],
-         [sol.Y.sum()*p.unit for sol in list_sol]
+         [sol.Y.sum()*p.unit for sol in list_sol], lw =3
          )
-ax.set_xlabel('Technology T')
-ax.set_ylabel('World gross output Y')
+ax.set_xlabel('Average technology T', fontsize = 20)
+ax.set_ylabel('World gross output Y', fontsize = 20)
+ax.tick_params(axis='both', which='major', labelsize=20)
 
 plt.show()
 
@@ -983,7 +986,6 @@ p = parameters(n=7,s=2)
 # interval = (1e-5,100)
 interval = (slice(1,2, 1),)*p.N
     
-
 # test = optimize.brute(func=calibration_func, ranges=interval, 
 #                       args=(p,), Ns=20, full_output=True, disp=True, workers=1)
 
@@ -1000,14 +1002,14 @@ def calibration_func(T,p):
     if sol.status == 'successful':     
         sol_c = var.var_from_vector(sol.x, sol.p)   
         sol_c.num_scale_solution(p)
-        return np.linalg.norm(p.output - sol_c.Y)
+        return np.linalg.norm((p.output - sol_c.Y))
     else:
         return np.inf
 
 p = parameters(n=7,s=2)
 
-lb = np.full_like(p.T, 1e-2)
-ub = np.full_like(p.T, 100)
+lb = np.full_like(p.T, 1e-12)
+ub = np.full_like(p.T, 1e12)
 bounds = (lb,ub)
 
 test_ls = optimize.least_squares(fun = calibration_func, 
@@ -1018,7 +1020,7 @@ test_ls = optimize.least_squares(fun = calibration_func,
                     # loss='arctan',
                     # max_nfev=1e3,
                     # ftol=1e-14, 
-                    xtol=0, 
+                    # xtol=0, 
                     # gtol=1e-14,
                     verbose = 2)
 
@@ -1034,16 +1036,19 @@ test_sol_c = var.var_from_vector(test_sol.x, p)
 
 #%%
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize = (12,8))
+ax2 = ax.twinx()
+ax.plot(p.output, label = 'Data Y',lw=3)
+ax.plot(test_sol_c.Y, label = 'Calibrated Y',lw=3)
+ax2.semilogy(p.T, label='Technology T', ls = '--', color = 'r',lw=3)
+ax.set_xticks([i for i in range(0,p.N)])
+ax.set_xticklabels(p.countries,fontsize=20)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax2.tick_params(axis='both', which='major', labelsize=20)
 
-ax.plot(p.output, label = 'Data gross output')
-ax.plot(test_sol_c.Y, label = 'Calibrated gross output')
-ax.plot(p.T, label='Technology T', color = 'r')
-ax.set_xticks([i for i in range(0,7)])
-ax.set_xticklabels(p.countries)
+ax.legend(loc=(-0.4,0.8),fontsize=20)
+ax2.legend(loc=(1.1,0.8),fontsize=20)
 
-plt.legend()
-
-plt.title('Calibration of T targeting Y')
+plt.title('Partial calibration of T targeting Y',fontsize=20)
 
 plt.show()
