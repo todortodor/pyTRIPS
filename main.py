@@ -26,13 +26,6 @@ class parameters:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.labor = np.concatenate(
-            (np.array([197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])
-             ,np.ones(n)*124021697)
-            )[:n]
-        self.unit_labor = 30/self.labor.sum()
-        self.labor = self.labor*self.unit_labor
-        # self.labor = np.ones(N)*30
         self.T = np.ones(N)*0.25  # could be anything >0
         self.k = 1.5                  #
         self.rho = 0.02  # 0.001 - 0.02
@@ -53,27 +46,55 @@ class parameters:
         self.delta = np.ones((N, S))*0.1
         self.nu = np.ones(S)*0.2    #
         self.nu_tilde = self.nu/2
-        self.deficit = np.zeros(N)
+        
+        self.labor_raw = np.concatenate(
+            (np.array([197426230, 379553032, 84991747, 940817540, 124021697, 717517456, 1758243964])
+             ,np.ones(n)*124021697)
+            )[:n]
+        
+        self.output_raw = np.concatenate(
+            (np.array([23514908,28011779,8632722,6707045,1634664,1608557,20553953]),
+            np.ones(n)*1634664)
+            )[:n]
+        
+        self.wage_data_raw = np.concatenate(
+            (np.array([66032, 40395, 55951, 2429, 7189, 1143, 5917]),
+             np.ones(n))
+            )[:n]/1e6 
+        self.gdp_raw = self.labor_raw*self.wage_data_raw
+        
+        self.deficit_raw = np.concatenate(
+            (np.array([-650210, 359158, 99389, 170021, 36294, -24930, 10277]),np.zeros(n))
+              )[:n]
+        self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
+    
+        self.unit = self.output_raw.mean()
+        
+        self.unit_labor = self.labor_raw.mean()
+        
+        self.labor = self.labor_raw/self.unit_labor
+        self.output = self.output_raw/self.unit
+        self.deficit =self.deficit_raw/self.unit
+        self.gdp = self.gdp_raw/self.unit
+        # self.deficit = self.deficit/self.gdp.sum()/self.unit
+        # self.unit = (self.wage_data*self.labor).mean()
+        self.wage_data = self.wage_data_raw*self.unit_labor/self.unit
+        # self.deficit = self.deficit/self.unit/(self.wage_data*self.labor).sum()
+        # self.deficit[0] = self.deficit[0]-self.deficit.sum()      
+        # self.output = np.concatenate(
+            # (np.array([23514908,28011779,8632722,6707045,1634664,1608557,20553953]),
+            # np.ones(n)*1634664)
+            # )[:n]/self.unit
+        
+        self.deficit_share_world_gdp = self.deficit/self.gdp.sum()
+        
         self.price_level_data = np.concatenate(
             (np.array([1, 1.09, 1.18, 0.35, 0.44, 0.24, 0.62])
              ,np.ones(n)*0.8)
             )[:n]
-        self.deficit = np.concatenate(
-            (np.array([-650210, 359158, 99389, 170021, 36294, -24930, 10277]),np.zeros(n))
-              )[:n]  
-        self.wage_data = np.concatenate(
-            (np.array([66032, 40395, 55951, 2429, 7189, 1143, 5917]),
-             np.ones(n)*30000)
-            )[:n] 
-        self.unit = (self.wage_data*self.labor).sum()
-        # self.unit = 1
-        self.wage_data = self.wage_data/self.unit
-        self.deficit = self.deficit/self.unit**2
-        self.deficit[0] = self.deficit[0]-self.deficit.sum()      
-        self.output = np.concatenate(
-            (np.array([23514908,28011779,8632722,6707045,1634664,1608557,20553953]),
-            np.ones(n)*1634664)
-            )[:n]/self.unit
+        
+        # self.labor = np.arange(p.N*2)[1:][:n]
+        
         
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -81,12 +102,18 @@ class parameters:
             
     def guess_from_params(self):
         price_guess = self.price_level_data
-        Y_guess = self.output
-        w_guess = Y_guess/self.labor*100
+        Z_guess = self.output
+        w_guess = self.wage_data
         l_R_guess = np.repeat(self.labor[:,None]/100, self.S-1, axis=1).ravel()
         psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*10
-        vec = np.concatenate((price_guess,w_guess,Y_guess,l_R_guess,psi_star_guess), axis=0)
+        vec = np.concatenate((price_guess,w_guess,Z_guess,l_R_guess,psi_star_guess), axis=0)
         return vec
+    
+    def make_dataframe_countries(self):
+        df = pd.DataFrame(index = p.countries)
+        for qty in ['labor_raw','deficit_raw','gdp_raw','deficit','labor','gdp','deficit_share_world_gdp']:
+            df[qty] = getattr(self,qty).round(5)
+        return df
 
 class cobweb:
     def __init__(self, name):
@@ -131,8 +158,8 @@ class var:
     def guess_wage(self, w_init):
         self.w = w_init
 
-    def guess_expenditure(self, Y_init):
-        self.Y = Y_init
+    def guess_expenditure(self, Z_init):
+        self.Z = Z_init
 
     def guess_labor_research(self, l_R_init):
         self.l_R = l_R_init
@@ -170,9 +197,37 @@ class var:
         w = self.w
         l_R = self.l_R[...,1:].ravel()
         psi_star = self.psi_star[...,1:].ravel()
-        Y = self.Y
-        vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
+        Z = self.Z
+        vec = np.concatenate((price,w,Z,l_R,psi_star), axis=0)
         return vec
+    
+    def make_dataframe_countries(self,p,unit='code'):
+        # df = pd.DataFrame(index = p.countries)
+        # for qty in ['Z']:
+        #     df[qty+'_code_units'] = getattr(self,qty)
+        #     df[qty+'_real_units'] = getattr(self,qty)*p.unit
+        # for qty in ['l_P']:
+        #     df[qty+'_code_units'] = getattr(self,qty)
+        #     df[qty+'_real_units'] = getattr(self,qty)*p.unit_labor
+        # df['price_indices_code_units'] = self.price_indices
+        # # df['price_indices_real_units'] = self.price_indices/p.unit
+        # df['w_code_units'] = self.w
+        # df['w_real_units'] = self.w*p.unit/p.unit_labor
+        self.compute_other_quantities(p)
+        df = pd.DataFrame(index = p.countries)
+        if unit=='code':
+            for qty in ['Z','price_indices','w','l_P','gdp']:
+                df[qty] = getattr(self,qty).round(5)
+            df['l_R'] = self.l_R.sum(axis=1)
+        if unit=='real':
+            df['Z real'] = (self.Z*p.unit).round(5)
+            df['price_indices'] = (self.price_indices).round(5)
+            df['w real'] = (self.w*p.unit_labor/p.unit).round(5)
+            df['l_P real'] = (self.l_P*p.unit_labor).round(5)
+            df['gdp real'] = (self.gdp*p.unit).round(5)
+            df['l_R real'] = (self.l_R.sum(axis=1)*p.unit_labor).round(5)
+        return df
+            
         
     def compare_two_solutions(self,sol2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(self).keys()))
@@ -290,7 +345,7 @@ class var:
                                       1/(numerator[..., 1:].sum(axis=1)),
                                       self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
                                       p.beta[1:],
-                                      self.Y
+                                      self.Z
                                       )
         # assert np.isnan(self.X_M).sum() == 0, 'nan in X_M'
 
@@ -388,7 +443,7 @@ class var:
                                        self.P_CL[...,
                                                  1:]**(1-p.sigma[None, 1:]),
                                        p.beta[1:],
-                                       self.Y
+                                       self.Z
                                        )
         # assert np.isnan(self.X_CL).sum() == 0, 'nan in X_CL'
         self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
@@ -396,7 +451,7 @@ class var:
                               1/(self.phi.sum(axis=1)),
                               (self.P_CD**(1-p.sigma[None, :])),
                               p.beta,
-                              self.Y
+                              self.Z
                               )
         # assert np.isnan(self.X_CD).sum() == 0, 'nan in X_CD'
 
@@ -414,11 +469,32 @@ class var:
     def compute_output(self, p):
         A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = np.einsum('i,n,n->i', p.deficit, self.w, p.labor)
+        C = np.einsum('i,n,n->i', p.deficit_share_world_gdp, self.w, p.labor)
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        Y = (A+B-(C+D))
-        # assert np.isnan(Y).sum() == 0, 'nan in Y'
-        return Y
+        Z = (A+B-(C+D))
+        # assert np.isnan(Z).sum() == 0, 'nan in Z'
+        return Z
+    
+    def compute_nominal_value_added(self,p):
+        self.nominal_value_added = p.alpha[None, :]*(self.X_CD+self.X_CL + (1-1/p.sigma[None, None, :])*self.X_M).sum(axis=0)
+    
+    def compute_nominal_intermediate_input(self,p):
+        self.nominal_intermediate_input = np.einsum('s,i,is->is',
+                           (1-p.alpha)/p.alpha,
+                           self.w,
+                           self.nominal_value_added)
+    
+    def compute_nominal_final_consumption(self,p):
+        self.nominal_final_consumption = self.Z - self.nominal_intermediate_input.sum(axis=1)
+        
+    def compute_gdp(self,p):
+        self.gdp = self.nominal_final_consumption + p.deficit_share_world_gdp*self.w*p.labor + self.w*(p.labor - self.l_P)
+        
+    def compute_other_quantities(self,p):
+        self.compute_nominal_value_added(p)
+        self.compute_nominal_intermediate_input(p)
+        self.compute_nominal_final_consumption(p)
+        self.compute_gdp(p)
     
     def solve_price_indices(self, p, price_init=None, tol_p=1e-10, 
                                            plot_convergence=False, plot_cobweb = False):
@@ -528,7 +604,7 @@ class var:
         self.psi_star = psi_star_new
     
     def solve_l_R(self, p, l_R_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                  w_init=None, Y_init=None, plot_convergence=False
+                  w_init=None, Z_init=None, plot_convergence=False
                   ,plot_cobweb = False):
         if plot_cobweb:
             cob_l_R = cobweb('l_R')
@@ -591,17 +667,17 @@ class var:
         condition_w = True
         count = 0
         convergence_w = []
-        aa_options_w_Y = {'dim': p.N,
+        aa_options_w_Z = {'dim': p.N,
                           'mem': 5,
                           'type1': False,
                           'regularization': 1e-12,
                           'relaxation': 1,
                           'safeguard_factor': 1,
                           'max_weight_norm': 1e6}
-        aa_w = aa.AndersonAccelerator(**aa_options_w_Y)
+        aa_w = aa.AndersonAccelerator(**aa_options_w_Z)
         damping = 5
         while condition_w:
-            print(count,'wage iteration, research problem solved')
+            # print(count,'wage iteration\nresearch problem solved')
             if count != 0:
                 if accelerate:
                     aa_w.apply(w_new, w_old)
@@ -626,52 +702,52 @@ class var:
                 plt.show()       
         self.w = w_new
 
-    def solve_Y(self, p, Y_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
+    def solve_Z(self, p, Z_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
                 plot_convergence=False, plot_cobweb = True):
         if plot_cobweb:
-            cob_Y = cobweb('Y')
-        Y_new = None
-        if Y_init is None:
-            Y_old = np.ones(p.N)
+            cob_Z = cobweb('Z')
+        Z_new = None
+        if Z_init is None:
+            Z_old = np.ones(p.N)
         else:
-            Y_old = Y_init
-        condition_Y = True
+            Z_old = Z_init
+        condition_Z = True
         count = 0
-        convergence_Y = []
-        aa_options_Y = {'dim': p.N,
+        convergence_Z = []
+        aa_options_Z = {'dim': p.N,
                         'mem': 5,
                         'type1': False,
                         'regularization': 1e-12,
                         'relaxation': 1,
                         'safeguard_factor': 1,
                         'max_weight_norm': 1e6}
-        aa_Y = aa.AndersonAccelerator(**aa_options_Y)
-        while condition_Y:
+        aa_Z = aa.AndersonAccelerator(**aa_options_Z)
+        while condition_Z:
             print(count)
             if count != 0:
-                aa_Y.apply(Y_new, Y_old)
-                Y_old = Y_new
-            self.guess_expenditure(Y_old)
+                aa_Z.apply(Z_new, Z_old)
+                Z_old = Z_new
+            self.guess_expenditure(Z_old)
             self.solve_w(p, w_init=self.w)
-            Y_new = self.compute_output(p)
-            condition_Y = np.linalg.norm(
-                Y_new - Y_old)/np.linalg.norm(Y_new) > tol_m
-            convergence_Y.append(np.linalg.norm(
-                Y_new - Y_old)/np.linalg.norm(Y_new))
+            Z_new = self.compute_output(p)
+            condition_Z = np.linalg.norm(
+                Z_new - Z_old)/np.linalg.norm(Z_new) > tol_m
+            convergence_Z.append(np.linalg.norm(
+                Z_new - Z_old)/np.linalg.norm(Z_new))
             count += 1
             if plot_cobweb:
-                cob_Y.append_old_new(Y_old[1],Y_new[1])
-                cob_Y.plot(count=count)
+                cob_Z.append_old_new(Z_old[1],Z_new[1])
+                cob_Z.plot(count=count)
             if plot_convergence:
-                plt.semilogy(convergence_Y, label='Y')
+                plt.semilogy(convergence_Z, label='Z')
                 plt.show()
-        self.Y = Y_new
+        self.Z = Z_new
         self.num_scale_solution(p)
 
     def num_scale_solution(self, p):
         numeraire = self.price_indices[0]
         
-        for qty in ['X_CD','X_CL','X_M','price_indices','w','Y']:
+        for qty in ['X_CD','X_CL','X_M','price_indices','w','Z']:
             setattr(self, qty, getattr(self, qty)/numeraire)
         
         self.phi = self.phi*numeraire**p.theta[None,None,:]
@@ -690,7 +766,7 @@ class var:
         check.compute_competitive_trade_flows(p)
         check.compute_labor_allocations(p)
         check.w = check.compute_wage(p)
-        check.Y = check.compute_output(p)
+        check.Z = check.compute_output(p)
         if assertions:
             assert np.all(
                 np.isclose(check.price_indices, check.compute_price_indices(p))
@@ -705,8 +781,8 @@ class var:
                 np.isclose(check.w, check.compute_wage(p))
                 ), 'check w wrong'
             assert np.all(
-                np.isclose(check.Y, check.compute_output(p))
-                ), 'check Y wrong'
+                np.isclose(check.Z, check.compute_output(p))
+                ), 'check Z wrong'
             print('is a solution')
         if return_checking_copy:
             return check
@@ -737,11 +813,14 @@ class sol_class:
               ,'\nStatus : ',self.status
               ,'\nHit the bounds ',self.hit_the_bound_count,' times'
               )        
+        
+# p = parameters(n=7,s=2)                
+
 #%% functions of the state vector
 def get_vec_qty(x,p):
     res = {'price_indices':x[0:p.N],
            'w':x[p.N:p.N*2],
-           'Y':x[p.N*2:p.N*3],
+           'Z':x[p.N*2:p.N*3],
            'l_R':x[p.N*3:p.N*3+p.N*(p.S-1)],
            'psi_star':x[p.N*3+p.N*(p.S-1):]
            }
@@ -753,10 +832,10 @@ def iter_once(x,p, normalize = False):
         init.num_scale_solution(p)
     price = init.compute_price_indices(p)
     w = init.compute_wage(p)
-    Y = init.compute_output(p)
+    Z = init.compute_output(p)
     l_R = init.compute_labor_research(p)[...,1:].ravel()
     psi_star = init.compute_psi_star(p)[...,1:].ravel()
-    vec = np.concatenate((price,w,Y,l_R,psi_star), axis=0)
+    vec = np.concatenate((price,w,Z,l_R,psi_star), axis=0)
     return vec
 
 def deviation(x,p):
@@ -848,10 +927,11 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
-                      for qty in ['price_indices','w','Y','psi_star','l_R']]
+                      for qty in ['price_indices','w','Z','psi_star','l_R']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(
             x_new - x_old)/np.linalg.norm(x_new))
+        # print(convergence[-1])
         count += 1
         if np.all(np.array(convergence[-10:])<safe_convergence):
             if accelerate_when_stable:
@@ -867,8 +947,13 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
         status = 'successful'
     else:
         status = 'failed'
+    
+    x_sol = x_new
+    # temp_for_scaling = var.var_from_vector(x_new, p)
+    # temp_for_scaling.num_scale_solution(p)     
+    # x_sol = temp_for_scaling.vector_from_var()
         
-    sol_inst = sol_class(x_new, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
                    status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
         
     if disp_summary:
@@ -888,16 +973,19 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e4,
     
     return sol_inst
 
+
+
 #%% full fixed point solver
     
-p = parameters(n=40,s=20)
-p.theta*=3
+p = parameters(n=7,s=2)
+# p.theta*=3
 
-sol = fixed_point_solver(p,cobweb_anim=False,
+sol = fixed_point_solver(p,cobweb_anim=False,tol =1e-14,
                          accelerate=False,
                          accelerate_when_stable=True,
-                         cobweb_qty='psi_star',
-                         # apply_bound_psi_star=True
+                         cobweb_qty='price_indices',
+                         plot_convergence=True,
+                          # apply_bound_psi_star=True
                          )
 sol_c = var.var_from_vector(sol.x, p)     
 sol_c.num_scale_solution(p)   
@@ -913,11 +1001,11 @@ partial_equilibriums_sol = var.var_from_vector(fixed_point_solver(p0,
                                 plot_cobweb=False,
                                 # cobweb_anim=True
                                 ).x, p0) 
-partial_equilibriums_sol.Y+=np.random.rand(p0.N)*10
+partial_equilibriums_sol.Z+=np.random.rand(p0.N)*10
 
 start = time.perf_counter()
-partial_equilibriums_sol.solve_Y(p0,
-                                 Y_init=partial_equilibriums_sol.Y,
+partial_equilibriums_sol.solve_Z(p0,
+                                 Z_init=partial_equilibriums_sol.Z,
                                   plot_cobweb = False
                                  )
 
@@ -934,7 +1022,7 @@ partial_equilibriums_sol = var.var_from_vector(fixed_point_solver(p0,
                                                                   plot_convergence=False,
                                                                   plot_cobweb=False
                                                                   ).x, p0) 
-partial_equilibriums_sol.Y+=np.random.rand(p0.N)*10
+partial_equilibriums_sol.Z+=np.random.rand(p0.N)*10
 
 lb = np.full_like(x0, 1e-10)
 ub = np.full_like(x0, np.inf)
@@ -961,11 +1049,16 @@ sol_state.num_scale_solution(p)
 p = parameters(n=7,s=2)
 list_T = []
 list_sol = []
+x0 = None
 
-for T in np.linspace(0,10000,101)[1:]:
+for T in np.linspace(1.297,1.3,1001):
     print(T)
+    try:
+        x0 = p.guess
+    except:
+        pass
     p.T = np.ones(p.N)*T
-    sol = fixed_point_solver(p,cobweb_anim=False,
+    sol = fixed_point_solver(p,x0,cobweb_anim=False,
                              accelerate=False,
                              accelerate_when_stable=True,
                              cobweb_qty='psi_star',
@@ -975,16 +1068,19 @@ for T in np.linspace(0,10000,101)[1:]:
                              )
     sol_c = var.var_from_vector(sol.x, sol.p)   
     sol_c.num_scale_solution(p)
+    if sol_c.Z.sum() > p.output.sum():
+        break
+    p.guess = sol_c.vector_from_var()
     list_sol.append(sol_c)
     list_T.append(p.T)
-
+sol_c.compute_other_quantities(p)
 fig,ax = plt.subplots(figsize = (12,8))
   
 ax.plot([T.mean() for T in list_T],
-         [sol.Y.sum()*p.unit for sol in list_sol], lw =3
+         [sol.Z.sum()*p.unit for sol in list_sol], lw =3
          )
 ax.set_xlabel('Average technology T', fontsize = 20)
-ax.set_ylabel('World gross output Y', fontsize = 20)
+ax.set_ylabel('World gross output Z', fontsize = 20)
 ax.tick_params(axis='both', which='major', labelsize=20)
 
 plt.show()
@@ -993,24 +1089,34 @@ plt.show()
 
 p = parameters(n=7,s=2)
 # interval = (1e-5,100)
-interval = (slice(1,2, 1),)*p.N
+# interval = (slice(1,2, 1),)*p.N
     
 # test = optimize.brute(func=calibration_func, ranges=interval, 
 #                       args=(p,), Ns=20, full_output=True, disp=True, workers=1)
 
-def calibration_func(T,p):
+def calibration_func(T,p,x0=None):
     p.T = T
-    sol = fixed_point_solver(p,
+    try:
+        x0 = p.guess
+    except:
+        pass
+    sol = fixed_point_solver(p,x0,tol=1e-14,
                              accelerate=False,
                              accelerate_when_stable=True,
                              plot_cobweb=False,
                              plot_convergence=False,
                              disp_summary=False,
                              )
+    # p.guess = sol.x
+    # try:
+    #     print(p.guess.mean())
+    # except:
+    #     pass
     if sol.status == 'successful':     
         sol_c = var.var_from_vector(sol.x, sol.p)   
         sol_c.num_scale_solution(p)
-        return np.linalg.norm((p.output - sol_c.Y))
+        p.guess = sol_c.vector_from_var()
+        return p.output - sol_c.Z 
     else:
         return np.inf
 
@@ -1020,6 +1126,7 @@ lb = np.full_like(p.T, 1e-12)
 ub = np.full_like(p.T, 1e12)
 bounds = (lb,ub)
 
+start = time.perf_counter()
 test_ls = optimize.least_squares(fun = calibration_func, 
                     x0 = p.T, 
                     args = (p,), 
@@ -1027,13 +1134,103 @@ test_ls = optimize.least_squares(fun = calibration_func,
                     # method= 'trf',
                     # loss='arctan',
                     # max_nfev=1e3,
-                    # ftol=1e-14, 
+                    # ftol=1e-10, 
                     # xtol=0, 
-                    # gtol=1e-14,
+                    # gtol=1e-10,
                     verbose = 2)
-
+finish = time.perf_counter()
+print('minimizing time',finish-start)
 p.T = test_ls.x
-test_sol = fixed_point_solver(p,
+test_sol = fixed_point_solver(p,x0=p.guess,
+                         accelerate=False,
+                         accelerate_when_stable=True,
+                         plot_cobweb=False,
+                         plot_convergence=False,
+                         disp_summary=True,
+                         )
+test_sol_c = var.var_from_vector(test_sol.x, p)
+test_sol_c.compute_other_quantities(p)
+
+fig, ax = plt.subplots(figsize = (12,8))
+ax2 = ax.twinx()
+ax.plot(p.output, label = 'Data Z',lw=3)
+ax.plot(test_sol_c.Z, label = 'Calibrated Z',lw=3)
+ax2.semilogy(p.T, label='Technology T', ls = '--', color = 'r',lw=3)
+ax.set_xticks([i for i in range(0,p.N)])
+ax.set_xticklabels(p.countries,fontsize=20)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax2.tick_params(axis='both', which='major', labelsize=20)
+
+ax.legend(loc=(-0.4,0.8),fontsize=20)
+ax2.legend(loc=(1.1,0.8),fontsize=20)
+
+plt.title('Partial calibration of T targeting Z',fontsize=20)
+
+plt.show()
+
+#%% T calibration try 2
+
+p = parameters(n=7,s=2)
+# interval = (1e-5,100)
+interval = (slice(1,2, 1),)*p.N
+    
+# test = optimize.brute(func=calibration_func, ranges=interval, 
+#                       args=(p,), Ns=20, full_output=True, disp=True, workers=1)
+
+def calibration_func(T,p,x0=None):
+    p.T = T
+    # try:
+    #     # x0 = (p.guess + p.guess_from_params())/2
+    #     x0 = p.guess
+    # except:
+    #     pass
+    sol = fixed_point_solver(p,x0,
+                             accelerate=False,
+                             accelerate_when_stable=True,
+                             plot_cobweb=False,
+                             plot_convergence=False,
+                             disp_summary=False,
+                             )
+    # p.guess = sol.x
+    # try:
+    #     print(p.guess.mean())
+    # except:
+    #     pass
+    if sol.status == 'successful':     
+        sol_c = var.var_from_vector(sol.x, sol.p)   
+        sol_c.num_scale_solution(p)
+        p.guess = sol_c.vector_from_var()
+        return np.linalg.norm((p.output - sol_c.Z))     
+    else:
+        return np.inf
+    
+def callback(xk,state):
+    print(state.fun)
+
+p = parameters(n=7,s=2)
+
+# lb = np.full_like(p.T, 1e-12)
+# ub = np.full_like(p.T, 1e12)
+# bounds = (lb,ub)
+bounds = ((1e-12,1e12),)*len(p.T)
+
+start = time.perf_counter()
+test_ls = optimize.minimize(fun = calibration_func, 
+                    x0 = p.T, 
+                    args = (p,), 
+                    bounds = bounds,
+                    # method= 'trf',
+                    # loss='arctan',
+                    # max_nfev=1e3,
+                    # ftol=1e-10, 
+                    # xtol=0, 
+                    # gtol=1e-10,
+                    callback = callback,
+                    )
+finish = time.perf_counter()
+print('minimizing time',finish-start)
+p.T = test_ls.x
+test_sol = fixed_point_solver(p,x0=p.guess,
                          accelerate=False,
                          accelerate_when_stable=True,
                          plot_cobweb=False,
@@ -1044,8 +1241,8 @@ test_sol_c = var.var_from_vector(test_sol.x, p)
 
 fig, ax = plt.subplots(figsize = (12,8))
 ax2 = ax.twinx()
-ax.plot(p.output, label = 'Data Y',lw=3)
-ax.plot(test_sol_c.Y, label = 'Calibrated Y',lw=3)
+ax.plot(p.output, label = 'Data Z',lw=3)
+ax.plot(test_sol_c.Z, label = 'Calibrated Z',lw=3)
 ax2.semilogy(p.T, label='Technology T', ls = '--', color = 'r',lw=3)
 ax.set_xticks([i for i in range(0,p.N)])
 ax.set_xticklabels(p.countries,fontsize=20)
@@ -1055,6 +1252,21 @@ ax2.tick_params(axis='both', which='major', labelsize=20)
 ax.legend(loc=(-0.4,0.8),fontsize=20)
 ax2.legend(loc=(1.1,0.8),fontsize=20)
 
-plt.title('Partial calibration of T targeting Y',fontsize=20)
+plt.title('Partial calibration of T targeting Z',fontsize=20)
 
 plt.show()
+
+#%% julian comparison
+
+compar = np.array(pd.read_csv('misc/solution_vec.csv',header=None).values).squeeze()
+compar = np.insert(compar,0,1)
+compar[p.N*3+p.N*(p.S-1):] = np.transpose(np.transpose(compar[p.N*3+p.N*(p.S-1):].reshape((p.N,p.S-1,p.N)),(0,2,1)),(1,0,2)).ravel()
+compar[p.N*2:p.N*3] = compar[p.N*2:p.N*3]*compar[0:p.N]
+
+julian_sol = var.var_from_vector(compar, p)
+
+
+
+
+
+
