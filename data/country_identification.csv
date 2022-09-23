@@ -1,0 +1,8 @@
+country,country_code,origin,origin_code,destination,destination_code
+USA,1,USA,1,USA,1
+EUR,2,EUR,2,EUR,2
+JAP,3,JAP,3,JAP,3
+CHN,4,CHN,4,CHN,4
+BRA,5,BRA,5,BRA,5
+IND,6,IND,6,IND,6
+ROW,7,ROW,7,ROW,7
