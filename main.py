@@ -14,6 +14,7 @@ import pandas as pd
 from scipy.special import gamma
 from scipy import optimize
 import time
+import sys
 import os
 
 class parameters:     
@@ -27,15 +28,15 @@ class parameters:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.T = np.ones(N)*0.25  # could be anything >0
-        self.k = 1.5                  #
+        self.T = np.ones(N)*1.5  # could be anything >0
+        self.k = 1.33350683                 #
         self.rho = 0.02  # 0.001 - 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
         self.fe = np.ones(S)*2.7  # could be over one
         self.fo = np.ones(S)*2.3  # could be over one
-        self.sigma = np.ones(S)*3   #
-        self.theta = np.ones(S)*8   #
-        self.beta = np.concatenate((np.array([0.74, 0.26]),np.ones(s)*0.5))[:s]
+        self.sigma = np.ones(S)*1.8125  #
+        self.theta = np.ones(S)*5   #
+        self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
         self.beta = self.beta / self.beta.sum()
         self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
@@ -43,9 +44,9 @@ class parameters:
         for i in range(self.tau.shape[2]):
             np.fill_diagonal(self.tau[:, :, i], 1)
         self.kappa = 0.5            #
-        self.gamma = 0.4           #
+        self.gamma = 0.5       #
         self.delta = np.ones((N, S))*0.1
-        self.nu = np.ones(S)*0.2    #
+        self.nu = np.ones(S)*0.1   #
         self.nu_tilde = np.ones(S)*0.1
         
         self.data = pd.read_csv('data/country_moments.csv',index_col=[0])
@@ -73,10 +74,10 @@ class parameters:
         self.unit = 1e6
         
         co = 1e-3
-        cou = 1e10
+        cou = 1e5
         self.lb_dict = {'sigma':1,
                         'theta':co,
-                        'rho':0,
+                        'rho':co,
                         'gamma':co,
                         'zeta':0,
                         'nu':0,
@@ -86,7 +87,7 @@ class parameters:
                         'tau':1,
                         'fe':co,
                         'fo':co,
-                        'delta':0,
+                        'delta':co,
                         'g_0':0,
                         'alpha':co,
                          'beta':co,
@@ -110,6 +111,62 @@ class parameters:
                          'beta':1,
                          'T':cou,
                          'eta':cou}
+        
+        self.idx = {'sigma':pd.Index(self.sectors, name='sector'),
+                    'theta':pd.Index(self.sectors, name='sector'),
+                    'rho':pd.Index(['scalar']),
+                    'gamma':pd.Index(['scalar']),
+                    'zeta':pd.Index(self.sectors, name='sector'),
+                    'nu':pd.Index(self.sectors, name='sector'),
+                    'nu_tilde':pd.Index(self.sectors, name='sector'),
+                    'kappa':pd.Index(['scalar']),
+                    'k':pd.Index(['scalar']),
+                    'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                     , names=['destination','origin','sector']),
+                    'fe':pd.Index(self.sectors, name='sector'),
+                    'fo':pd.Index(self.sectors, name='sector'),
+                    'delta':pd.MultiIndex.from_product([self.countries,self.sectors]
+                                                       , names=['country','sector']),
+                    'g_0':pd.Index(['scalar']),
+                    'alpha':pd.Index(self.sectors, name='sector'),
+                    'beta':pd.Index(self.sectors, name='sector'),
+                     'T':pd.Index(self.countries, name='country'),
+                     'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
+                                                      , names=['country','sector'])}
+        
+        sl_non_calib = {'sigma':[np.s_[0]],
+                    'theta':[np.s_[0]],
+                    'rho':None,
+                    'gamma':None,
+                    'zeta':[np.s_[0]],
+                    'nu':[np.s_[0]],
+                    'nu_tilde':[np.s_[0]],
+                    'kappa':None,
+                    'k':None,
+                    'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
+                    'fe':[np.s_[0]],
+                    'fo':[np.s_[0]],
+                    'delta':[np.s_[::S]],
+                    'g_0':None,
+                    'alpha':None,
+                    'beta':None,
+                     'T':None,
+                     'eta':[np.s_[::S]]}
+        
+        self.mask = {}
+        
+        for par_name in ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta',
+                         'g_0','tau','kappa','gamma','delta','nu','nu_tilde']:
+            par = getattr(self,par_name)
+            if sl_non_calib[par_name] is not None:
+                self.mask[par_name] = np.ones_like(par,bool).ravel()
+                for slnc in sl_non_calib[par_name]:
+                    self.mask[par_name][slnc] = False
+                self.mask[par_name] = self.mask[par_name].reshape(par.shape)    
+            else:
+                self.mask[par_name] = np.ones_like(par,bool)
+        
+        self.calib_parameters = None
         self.guess = None
         
     def elements(self):
@@ -130,24 +187,18 @@ class parameters:
         vec = np.concatenate((price_guess,w_guess,Z_guess,l_R_guess,psi_star_guess), axis=0)
         return vec
     
-    # def make_dataframe_countries(self):
-    #     df = pd.DataFrame(index = p.countries)
-    #     for qty in ['labor_raw','deficit_raw','gdp_raw','deficit','labor','gdp','deficit_share_world_gdp']:
-    #         df[qty] = getattr(self,qty).round(5)
-    #     return df
-    
-    def make_p_vector(self,calib_parameters):
-        vec = np.concatenate([np.array(getattr(self,p)).ravel() for p in calib_parameters])
+    def make_p_vector(self):
+        vec = np.concatenate([np.array(getattr(self,p))[self.mask[p]].ravel() for p in self.calib_parameters])
         return vec
     
-    def update_parameters(self,vec,calib_parameters):
+    def update_parameters(self,vec):
         idx_from = 0
-        for p in calib_parameters:
-            corresp_p = np.array(getattr(self,p))
-            setattr(self,p,vec[idx_from:idx_from+corresp_p.size].reshape(corresp_p.shape))
-            idx_from += corresp_p.size
-        for i in range(self.tau.shape[2]):
-            np.fill_diagonal(self.tau[:, :, i], 1)
+        for p in self.calib_parameters:
+            param = np.array(getattr(self,p))
+            size = param[self.mask[p]].size
+            param[self.mask[p]] = vec[idx_from:idx_from+size]
+            setattr(self,p,param)
+            idx_from += size
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -162,12 +213,12 @@ class parameters:
         for k in diffs:
             print(k, (np.nanmean(vars(self)[k]/vars(p2)[k])))
     
-    def write_params(self,path,calib_parameters):
+    def write_params(self,path):
         try:
             os.mkdir(path)
         except:
             pass
-        for pa_name in calib_parameters:
+        for pa_name in self.get_list_of_params():
             par = getattr(p,pa_name)
             df = pd.DataFrame(data = np.array(par).ravel())
             df.to_csv(path+pa_name+'.csv',header=False)
@@ -176,24 +227,34 @@ class parameters:
             df.to_csv(path+'guess.csv',index=False,header=None)
         except:
             pass
+        if self.calib_parameters is not None:
+            df = pd.DataFrame(data = self.calib_parameters)
+            df.to_csv(path+'calib_parameters.csv',index=False,header=None)
         
             
-    def load_data(self,path,calib_parameters):
-        for pa_name in calib_parameters:
+    def load_data(self,path,list_of_params = None):
+        if list_of_params is None:
+            list_of_params = self.get_list_of_params()
+        for pa_name in list_of_params:
             df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
             setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
         try:
             df = pd.read_csv(path+'guess.csv',header=None)
             setattr(self,'guess',df.values.squeeze())
         except:
-            self.guess = None
+            pass
+        try:
+            df = pd.read_csv(path+'calib_parameters.csv',header=None)
+            setattr(self,'calib_parameters',df.values.squeeze())
+        except:
+            pass
             
-    def make_parameters_bounds(self,calib_parameters):
+    def make_parameters_bounds(self):
         lb = []
         ub = []
-        for par in calib_parameters:
-            lb.append(np.ones(np.array(getattr(self,par)).size)*self.lb_dict[par])
-            ub.append(np.ones(np.array(getattr(self,par)).size)*self.ub_dict[par])
+        for par in self.calib_parameters:
+            lb.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.lb_dict[par])
+            ub.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.ub_dict[par])
         return (np.concatenate(lb),np.concatenate(ub))
 
 class cobweb:
@@ -367,12 +428,15 @@ class var:
                                 prefact,
                                 1/A_tilde,
                                 (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :])
+        # print(self.psi_star[...,1].min())
         self.PSI_CL[:, :, 0] = 0
         # assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
         # assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'PSI_M,CL too high'
-
+        # print((np.einsum('njs->ns', self.PSI_M) +
+        #                  np.einsum('njs->ns', self.PSI_CL)).max())
         self.PSI_CD = 1-(np.einsum('njs->ns', self.PSI_M) +
                          np.einsum('njs->ns', self.PSI_CL))
+        # print(self.PSI_CD.min())
         # assert np.isnan(self.PSI_CD).sum() == 0, 'nan in PSI_CD'
 
     def compute_phi(self, p):
@@ -508,6 +572,7 @@ class var:
         
         self.P_CL = np.ones((p.N, p.S))
         self.P_CL[:, 0] = np.inf
+        # print(self.PSI_CL.min())
         self.P_CL[:, 1:] = (B[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
         # assert np.isnan(self.P_CL).sum() == 0, 'nan in P_CL'
         self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
@@ -885,11 +950,38 @@ def remove_diag(A):
     return np.squeeze(removed)
     
 class moments:
-    def __init__(self,list_of_moments = None):
+    def __init__(self,list_of_moments = None, n=7, s=2):
+        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
+        self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
             self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW']
         else:
             self.list_of_moments = list_of_moments
+        self.weights_dict = {'GPDIFF':1, 
+                             'GROWTH':1, 
+                             'KM':1, 
+                             'OUT':1, 
+                             'RD':1, 
+                             'RP':1, 
+                             'SPFLOW':1, 
+                             'SRDUS':1, 
+                             'SRGDP':1, 
+                             'STFLOW':1}
+        
+        # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
+        
+        self.idx = {'GPDIFF':pd.Index(['scalar']), 
+                    'GROWTH':pd.Index(['scalar']), 
+                    'KM':pd.Index(['scalar']), 
+                    'OUT':pd.Index(['scalar']), 
+                    'RD':pd.Index(self.countries, name='country'), 
+                    'RP':pd.Index(self.countries, name='country'), 
+                    'SPFLOW':pd.MultiIndex.from_tuples([(c1,c2) for c1 in self.countries for c2 in self.countries if c1 != c2]
+                                           , names=['destination','origin']),
+                    'SRDUS':pd.Index(['scalar']), 
+                    'SRGDP':pd.Index(self.countries, name='country'), 
+                    'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                     , names=['destination','origin','sector'])}
     
     @staticmethod
     def get_list_of_moments():
@@ -936,10 +1028,22 @@ class moments:
                     fig,ax = plt.subplots(figsize = (12,8))
                     ax.scatter(getattr(m,mom+'_target').ravel(),getattr(m,mom).ravel())
                     ax.plot([getattr(m,mom+'_target').min(),
-                             getattr(m,mom+'_target').max()]
+                              getattr(m,mom+'_target').max()]
                             ,[getattr(m,mom+'_target').min(),
-                             getattr(m,mom+'_target').max()])
+                              getattr(m,mom+'_target').max()])
+                    ax.plot([0,
+                              getattr(m,mom+'_target').max()]
+                            ,[0,
+                              getattr(m,mom+'_target').max()])
                     ax.set_xlabel('target')
+                    # plt.xlim((0.9*getattr(m,mom+'_target').min(),
+                    #           1.1*getattr(m,mom+'_target').max()))
+                    # plt.ylim((0.9*getattr(m,mom+'_target').min(),
+                    #           1.1*getattr(m,mom+'_target').max()))
+                    # plt.xlim((0,
+                    #          1.1*getattr(m,mom+'_target').max()))
+                    # plt.ylim((0,
+                    #          1.1*getattr(m,mom+'_target').max()))
                     plt.title(mom+' targeting')
                     plt.yscale('log')
                     plt.xscale('log')
@@ -949,7 +1053,9 @@ class moments:
         for mom in list_of_moments:
             df = pd.DataFrame(data = {'target':getattr(m,mom+'_target').ravel(),
                                       'moment':getattr(m,mom).ravel()})
-            df.to_csv(path+mom,index=False)
+            df.to_csv(path+mom+'.csv',index=False)
+        df = pd.DataFrame(data = self.list_of_moments)
+        df.to_csv(path+'list_of_moments.csv',index=False)
         
     def compute_STFLOW(self,var,p):
         self.STFLOW = (var.X_M+var.X_CL+var.X_CD)/var.Z.sum()
@@ -1018,14 +1124,17 @@ class moments:
         
     def compute_moments_deviations(self):
         for mom in self.list_of_moments:
-            setattr(self,mom+'_deviation',(getattr(self,mom) - getattr(self,mom+'_target'))/getattr(self,mom+'_target'))
+            setattr(self,
+                    mom+'_deviation',
+                    self.weights_dict[mom]*((getattr(self,mom) - getattr(self,mom+'_target'))
+                            /(getattr(self,mom+'_target')*np.sqrt(getattr(self,mom+'_target').size)))
+                    )
             
     def deviation_vector(self,list_of_moments = None):
         if list_of_moments is None:
             list_of_moments = self.list_of_moments
             
-        dev = np.concatenate([getattr(self,mom+'_deviation').ravel()/np.sqrt(getattr(self,mom+'_deviation').size)
-                              for mom in self.list_of_moments])
+        dev = np.concatenate([getattr(self,mom+'_deviation').ravel() for mom in self.list_of_moments])
         return dev
     
     def target_vector(self):
@@ -1058,6 +1167,35 @@ class sol_class:
               ,'\nStatus : ',self.status
               ,'\nHit the bounds ',self.hit_the_bound_count,' times'
               )        
+
+class history:
+    def __init__(self,*args):
+        self.count = 0
+        self.dict = {}
+        for a in args:
+            self.dict[a] = []
+        self.time = 0
+    
+    def append(self,**kwargs):
+        for k,v in kwargs.items():
+            self.dict[k].append(v)
+            
+    def plot(self):
+        fig,ax = plt.subplots(figsize = (12,8))     
+        ax2 = ax.twiny()
+        for k,v in self.dict.items():
+            if k != 'objective':
+                ax.plot(np.linspace(0,self.count,len(v)),v,label=k)
+            else:
+                ax2.plot(np.linspace(0,self.time/60,len(v)),v,label=k,color='k',lw=2)
+        ax.set_xlabel('Number of succesful steady state solving')
+        ax.set_ylabel('L2 norm of the deviation from target (m/target - 1)/sqrt(dim(m))')
+        ax2.set_xlabel('Time (min)')
+        plt.yscale('log')
+        ax.legend()
+        ax2.legend(loc=(0.85,1.05))
+        plt.show()    
+        
 
 def get_vec_qty(x,p):
     res = {'price_indices':x[0:p.N],
@@ -1121,6 +1259,63 @@ def smooth_large_jumps(x_new,x_old):
         x_new = x_old*1/2+x_new*1/2
         low_jumps_too_big = x_new < x_old/1000
     return x_new
+
+def write_calibration_results(path,p,m,commentary = None):
+    writer = pd.ExcelWriter(path+'.xlsx', engine='xlsxwriter')
+    # summary = pd.DataFrame({'calibrated parameters':str(calib_parameters),
+    #                        'targeted moments':m.list_of_moments,
+    #                        'summary':commentary})
+    # summary = pd.DataFrame(columns=['summary'])
+    workbook = writer.book
+    worksheet = workbook.add_worksheet('Summary')
+    writer.sheets['Summary'] = worksheet
+    df1 = pd.DataFrame(index = p.get_list_of_params(), 
+                      columns = ['state', 'lower bound', 'higher bound'])
+    for pa_name in p.get_list_of_params():
+        if pa_name in p.calib_parameters:
+            df1.loc[pa_name] = ['calibrated',p.lb_dict[pa_name],p.ub_dict[pa_name]]
+        else:
+            df1.loc[pa_name] = ['fixed','','']
+    df1.name = 'parameters'
+    worksheet.write_string(0, 0, df1.name)
+    df1.to_excel(writer,sheet_name='Summary',startrow=1 , startcol=0)
+    
+    df2 = pd.DataFrame(index = m.list_of_moments, columns = ['weight','norm of deviation', 'description'])
+    for mom in m.get_list_of_moments():
+        df2.loc[mom] = [m.weights_dict[mom],
+                        np.linalg.norm(getattr(m,mom+'_deviation')),
+                        m.description.loc[mom].description]
+    df2.name = 'targeted moments'
+    worksheet.write_string(df1.shape[0] + 4, 0, df2.name)
+    df2.to_excel(writer,sheet_name='Summary',startrow=df1.shape[0] + 5 , startcol=0)
+    
+    worksheet.write_string(df1.shape[0] + df1.shape[0] + 2, 0, commentary)
+    
+    
+    scalar_moments = pd.DataFrame(columns=['model','target'])
+    for mom in m.get_list_of_moments():
+        if np.array(getattr(m,mom)).size == 1:
+            scalar_moments.loc[mom] = [getattr(m,mom),getattr(m,mom+'_target')]
+        else:
+                moment = getattr(m,mom)
+                moment_target = getattr(m,mom+'_target')
+                # df = pd.DataFrame(data = [np.array(moment).ravel(),np.array(moment_target).ravel()],
+                #                   index=m.idx[mom], columns = ['model','target'])
+                df = pd.DataFrame({'model':np.array(moment).ravel(),'target':np.array(moment_target).ravel()},
+                                  index=m.idx[mom])
+                df.to_excel(writer,sheet_name=mom)
+    scalar_moments.to_excel(writer,sheet_name='scalar_moments')
+    scalar_parameters = pd.DataFrame(columns=['value'])
+    for pa_name in p.get_list_of_params():
+        if np.array(getattr(p,pa_name)).size == 1:
+            scalar_parameters.loc[pa_name] = getattr(p,pa_name)
+        else:
+            par = getattr(p,pa_name)
+            df = pd.DataFrame({'value':np.array(par).ravel()},index=p.idx[pa_name])
+            df.to_excel(writer,sheet_name=pa_name)
+    scalar_parameters.to_excel(writer,sheet_name='scalar_parameters')
+    writer.save()
+
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
@@ -1187,17 +1382,22 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e6,
             if accelerate_when_stable:
                 accelerate = True
             damping = 2
-        history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
-        history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
-        # if count > 1e3 and count%200==0:
-        #     plt.semilogy(convergence)
+        history_old.append(get_vec_qty(x_old,p)[cobweb_qty].min())
+        history_new.append(get_vec_qty(x_new,p)[cobweb_qty].min())
+        # history_old.append(get_vec_qty(x_old,p)[cobweb_qty][1,...])
+        # history_new.append(get_vec_qty(x_new,p)[cobweb_qty][1,...])
+        # if count > 1e4 and count%1000==0:
+        #     damping = 3
+        #     # plt.semilogy(convergence)
+        #     plt.plot(history_old)
         #     plt.title(count)
         #     plt.show()
-        # if count > 500 and count%200==0:
+            # x_new = x_new*(0.5+np.random.rand(x_new.size))**10
+        # if count > 5 and count%2==0:
         #     cob.append_old_new(history_old[-1],history_new[-1])
         #     pause = 0.1
-        #     if count == 20:
-        #         pause = 1
+        #     # if count == 20:
+        #     #     pause = 1
         #     cob.plot(count=count, window = None,pause = pause)
     
     finish = time.perf_counter()
@@ -1232,96 +1432,116 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 5, max_count=1e6,
         plt.show()
     return sol_inst
 
-
-
 #%% fixed point solver
     
-p = parameters(n=7,s=2)
-calib_parameters = parameters.get_list_of_params()
+# p = parameters(n=7,s=2)
+# calib_parameters = parameters.get_list_of_params()
+# p.calib_parameters = ['sigma','theta','nu','k','nu_tilde','eta',
+#                     'delta','fe','tau','T','fo','g_0']
 
-p.load_data('calibration_results/6/', calib_parameters)
-sol = fixed_point_solver(p,x0=p.guess
-                         ,cobweb_anim=False,tol =1e-14,
-                            accelerate=False,
-                            accelerate_when_stable=True,
-                            cobweb_qty='psi_star',
-                            plot_convergence=True,
-                            plot_cobweb=True,
-                            safe_convergence=0.001
-                             # apply_bound_psi_star=True
-                            )
+# p.load_data('calibration_results/15/',['eta','delta','fe','tau','T','fo','g_0'])
+# p.delta[4,1] = 50*7.93126207e-04
+# p.delta[:,1] = 0.1
+sol = fixed_point_solver(p,#x0=p.guess,
+                        cobweb_anim=False,tol =1e-13,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='psi_star',
+                        plot_convergence=True,
+                        plot_cobweb=True,
+                        safe_convergence=0.001
+                         # apply_bound_psi_star=True
+                        )
 
 sol_c = var.var_from_vector(sol.x, p)     
 sol_c.num_scale_solution(p)   
 sol_c.compute_non_solver_quantities(p)
-m = moments()
-m.load_data()
-m.compute_moments(sol_c,p)
-m.compute_Z(sol_c,p)
-m.compute_moments_deviations()
+# list_of_moments = ['GPDIFF','GROWTH','KM','OUT','RD',
+#                    'RP','SPFLOW','SRGDP','STFLOW']
+# m = moments(list_of_moments)
+# m.load_data()
+# m.compute_moments(sol_c,p)
+# m.compute_Z(sol_c,p)
+# m.compute_moments_deviations()
+# m.plot_moments(m.get_list_of_moments())
+p.guess = sol_c.vector_from_var()
 
 #%% calibration
 
-def calibration_func(vec_parameters,p,m,v0=None):
-    p.update_parameters(vec_parameters,calib_parameters)
+def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+    p.update_parameters(vec_parameters)
     try:
         v0 = p.guess
     except:
         pass
-    sol = fixed_point_solver(p,v0,tol=1e-12,
+    sol = fixed_point_solver(p,v0,tol=1e-13,
                                  accelerate=False,
-                                 accelerate_when_stable=False,
+                                 accelerate_when_stable=True,
                                  plot_cobweb=False,
                                  plot_convergence=False,
-                                 cobweb_qty='psi_star',
+                                 cobweb_qty='l_R',
                                  disp_summary=False,
                                  safe_convergence=0.001
                                  )
-    if sol.status == 'successful':     
-        sol_c = var.var_from_vector(sol.x, sol.p)   
-        sol_c.num_scale_solution(p)
-        sol_c.compute_non_solver_quantities(p)
-        m.compute_moments(sol_c,p)
-        m.compute_Z(sol_c,p)
-        m.compute_moments_deviations()
-        # m.plot_moments(m.get_list_of_moments(),plot=False)
-        p.guess = sol_c.vector_from_var()
-        return m.deviation_vector() 
-    else:
-        return np.array([1e15])
+    # if sol.status == 'successful':     
+    sol_c = var.var_from_vector(sol.x, sol.p)   
+    sol_c.num_scale_solution(p)
+    sol_c.compute_non_solver_quantities(p)
+    m.compute_moments(sol_c,p)
+    m.compute_Z(sol_c,p)
+    m.compute_moments_deviations()
+    hist.count += 1
+    # print({mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments})
+    if hist is not None:
+        if hist.count%10 == 0:
+            hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
+            hist_dic['objective'] = np.linalg.norm(m.deviation_vector())
+            hist.append(**hist_dic)
+            hist.time = time.perf_counter() - start_time
+        if hist.count%1000 == 0:
+            hist.plot()
+    p.guess = sol_c.vector_from_var()
+    # print(p.fe[1],p.fo[1])
+    return m.deviation_vector() 
     
-p = parameters(n=7,s=2)
+# p = parameters(n=7,s=2)
+# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
+# p.load_data('calibration_results/16/',list_of_params=p.calib_parameters)
+# p.guess = None
 
-calib_parameters = ['sigma','theta','nu','k','nu_tilde','eta',
-                    'delta','fe','tau','T','fo','g_0']
-# calib_parameters = parameters.get_list_of_params()
-p.load_data('calibration_results/5/', p.get_list_of_params())
-list_of_moments = ['GPDIFF','GROWTH','KM','OUT','RD',
-                   'RP','SPFLOW','SRDUS','SRGDP','STFLOW']
-m = moments()
+list_of_moments = ['GPDIFF','GROWTH','KM','SRDUS','OUT','RD','RP','SPFLOW','SRGDP','STFLOW']
+m = moments(list_of_moments)
+# hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
+bounds = p.make_parameters_bounds()
+# start_time = time.perf_counter()
 
-bounds = p.make_parameters_bounds(calib_parameters)
-    
-start = time.perf_counter()
-test_ls = optimize.least_squares(fun = calibration_func, 
-                    x0 = np.maximum(p.make_p_vector(calib_parameters),bounds[0]), 
-                    args = (p,m,p.guess), 
+# hist.append({mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments})
+# p.guess=None    
+
+test_ls = optimize.least_squares(fun = calibration_func,    
+                    x0 = p.make_p_vector(), 
+                    args = (p,m,p.guess,hist,start_time), 
                     bounds = bounds,
                     # method= 'trf',
                     # loss='arctan',
-                    # max_nfev=1e3,
+                    max_nfev=1e8,
                     ftol=1e-14, 
-                    xtol=0, 
+                    xtol=1e-15, 
                     gtol=1e-14,
                     # f_scale=scale,
                     verbose = 2)
-finish = time.perf_counter()
-print('minimizing time',finish-start)
+finish_time = time.perf_counter()
+print('minimizing time',finish_time-start_time)
 
 plt.plot(test_ls.x)
 plt.show()
 
+#%%
+
+commentary = 'Same situation as 3, but adding the SRDUS moment'
+write_calibration_results('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results/3',p,m,
+                          commentary = commentary)
 
 #%% dependance on T
 
