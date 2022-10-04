@@ -8,4 +8,5 @@ RP;Relative prices
 SPFLOW;Ratio of international bilateral patent flows to international world patenting
 SRDUS;Share of sector 1 produced by firms performing R&D in the US 
 SRGDP;Share of world real GDP 
-STFLOW;"Ratio of bilateral trade flow to world output "
+STFLOW;Ratio of bilateral trade flow to world output
+JUPCOST;Patenting cost in Japan for the US
