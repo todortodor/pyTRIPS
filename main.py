@@ -40,16 +40,24 @@ class parameters:
         self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
         self.beta = self.beta / self.beta.sum()
         # self.zeta = np.ones(S)*0.01
-        self.zeta = np.ones(S)*0
+        self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
-        self.tau = np.ones((N, N, S))
-        for i in range(self.tau.shape[2]):
-            np.fill_diagonal(self.tau[:, :, i], 1)
         self.kappa = 0.5            #
         self.gamma = 0.5       #
         self.delta = np.ones((N, S))
         self.nu = np.ones(S)*0.1   #
         self.nu_tilde = np.ones(S)*0.1
+        
+        # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
+        # self.off_diag_mask[np.s_[::(N+1)*S]] = False
+        # self.off_diag_mask[np.s_[1::(N+1)*S]] = False
+        # self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
+        # self.diag_mask = np.invert(self.off_diag_mask)
+        
+        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/1e6
+        self.trade_flows = self.trade_flows.reshape((N,N,S))
+        self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
+        # self.trade_shares = (self.trade_flows).reshape((N,N,S))
         
         self.data = pd.read_csv('data/country_moments.csv',index_col=[0])
         
@@ -86,7 +94,6 @@ class parameters:
                         'nu_tilde':0,
                         'kappa':0,
                         'k':1+co,
-                        'tau':1,
                         'fe':co,
                         'fo':co,
                         'delta':co,
@@ -104,7 +111,6 @@ class parameters:
                         'nu_tilde':cou,
                         'kappa':1-cou,
                         'k':cou,
-                        'tau':cou,
                         'fe':cou,
                         'fo':cou,
                         'delta':cou,
@@ -123,8 +129,8 @@ class parameters:
                     'nu_tilde':pd.Index(self.sectors, name='sector'),
                     'kappa':pd.Index(['scalar']),
                     'k':pd.Index(['scalar']),
-                    'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
-                                                     , names=['destination','origin','sector']),
+                    # 'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                    #                                  , names=['destination','origin','sector']),
                     'fe':pd.Index(self.sectors, name='sector'),
                     'fo':pd.Index(self.sectors, name='sector'),
                     'delta':pd.MultiIndex.from_product([self.countries,self.sectors]
@@ -145,7 +151,7 @@ class parameters:
                     'nu_tilde':[np.s_[0]],
                     'kappa':None,
                     'k':None,
-                    'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
+                    # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
                     'delta':[np.s_[::S]],#np.s_[S-1]],
@@ -158,7 +164,7 @@ class parameters:
         self.mask = {}
         
         for par_name in ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta',
-                         'g_0','tau','kappa','gamma','delta','nu','nu_tilde']:
+                         'g_0','kappa','gamma','delta','nu','nu_tilde']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
                 self.mask[par_name] = np.ones_like(par,bool).ravel()
@@ -178,15 +184,16 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta','g_0',
-         'tau','kappa','gamma','delta','nu','nu_tilde']
+         'kappa','gamma','delta','nu','nu_tilde']
             
     def guess_from_params(self):
-        price_guess = self.data.price_level.values
+        # price_guess = self.data.price_level.values
         Z_guess = self.data.expenditure.values/self.unit
         w_guess = 10*self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
         psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*10
-        vec = np.concatenate((price_guess,w_guess,Z_guess,l_R_guess,psi_star_guess), axis=0)
+        phi_guess = np.ones((self.N,self.N,self.S)).ravel()*0.01
+        vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
         return vec
     
     def make_p_vector(self):
@@ -295,10 +302,16 @@ class cobweb:
         
 class var:
     def __init__(self):
-        pass
+        N = 7
+        S = 2
+        self.off_diag_mask = np.ones((N,N,S),bool).ravel()
+        self.off_diag_mask[np.s_[::(N+1)*S]] = False
+        self.off_diag_mask[np.s_[1::(N+1)*S]] = False
+        self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
+        self.diag_mask = np.invert(self.off_diag_mask)
 
-    def guess_price_indices(self, price_indices_init):
-        self.price_indices = price_indices_init
+    # def guess_price_indices(self, price_indices_init):
+    #     self.price_indices = price_indices_init
 
     def guess_patenting_threshold(self, psi_star_init):
         self.psi_star = psi_star_init
@@ -311,6 +324,9 @@ class var:
 
     def guess_labor_research(self, l_R_init):
         self.l_R = l_R_init
+    
+    def guess_phi(self, phi_init):
+        self.phi = phi_init
 
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -322,61 +338,51 @@ class var:
     
     @staticmethod
     def var_from_vector(vec,p, compute = True):
+        # init = var()    
+        # init.guess_price_indices(vec[0:p.N])
+        # init.guess_wage(vec[p.N:p.N*2])
+        # init.guess_expenditure(vec[p.N*2:p.N*3])
+        # init.guess_labor_research(
+        #     np.insert(vec[p.N*3:p.N*3+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+        # init.guess_patenting_threshold(
+        #     np.insert(vec[p.N*3+p.N*(p.S-1):p.N*3+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
+        # init.guess_phi(vec[p.N*3+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
+        # if compute:
+        #     init.compute_growth(p)
+        #     init.compute_aggregate_qualities(p)
+        #     init.compute_monopolistic_sectoral_prices(p)
+        #     init.compute_monopolistic_trade_flows(p)
+        #     init.compute_competitive_sectoral_prices(p)
+        #     init.compute_competitive_trade_flows(p)
+        #     init.compute_labor_allocations(p)
+        # return init
         init = var()    
-        init.guess_price_indices(vec[0:p.N])
-        init.guess_wage(vec[p.N:p.N*2])
-        init.guess_expenditure(vec[p.N*2:p.N*3])
+        init.guess_wage(vec[0:p.N])
+        init.guess_expenditure(vec[p.N:p.N*2])
         init.guess_labor_research(
-            np.insert(vec[p.N*3:p.N*3+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+            np.insert(vec[p.N*2:p.N*2+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
         init.guess_patenting_threshold(
-            np.insert(vec[p.N*3+p.N*(p.S-1):].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
+            np.insert(vec[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
+        init.guess_phi(vec[p.N*2+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
         if compute:
             init.compute_growth(p)
             init.compute_aggregate_qualities(p)
-            init.compute_phi(p)
             init.compute_monopolistic_sectoral_prices(p)
             init.compute_monopolistic_trade_flows(p)
             init.compute_competitive_sectoral_prices(p)
             init.compute_competitive_trade_flows(p)
-            init.compute_labor_allocations(p)        
+            init.compute_labor_allocations(p)
         return init
     
     def vector_from_var(self):
-        price = self.price_indices
+        # price = self.price_indices
         w = self.w
         l_R = self.l_R[...,1:].ravel()
         psi_star = self.psi_star[...,1:].ravel()
         Z = self.Z
-        vec = np.concatenate((price,w,Z,l_R,psi_star), axis=0)
+        phi = self.phi.ravel()
+        vec = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
         return vec
-    
-    def make_dataframe_countries(self,p,unit='code'):
-        # df = pd.DataFrame(index = p.countries)
-        # for qty in ['Z']:
-        #     df[qty+'_code_units'] = getattr(self,qty)
-        #     df[qty+'_real_units'] = getattr(self,qty)*p.unit
-        # for qty in ['l_P']:
-        #     df[qty+'_code_units'] = getattr(self,qty)
-        #     df[qty+'_real_units'] = getattr(self,qty)*p.unit_labor
-        # df['price_indices_code_units'] = self.price_indices
-        # # df['price_indices_real_units'] = self.price_indices/p.unit
-        # df['w_code_units'] = self.w
-        # df['w_real_units'] = self.w*p.unit/p.unit_labor
-        self.compute_non_solver_quantities(p)
-        df = pd.DataFrame(index = p.countries)
-        if unit=='code':
-            for qty in ['Z','price_indices','w','l_P','gdp']:
-                df[qty] = getattr(self,qty).round(5)
-            df['l_R'] = self.l_R.sum(axis=1)
-        if unit=='real':
-            df['Z real'] = (self.Z*p.unit).round(5)
-            df['price_indices'] = (self.price_indices).round(5)
-            df['w real'] = (self.w*p.unit_labor/p.unit).round(5)
-            df['l_P real'] = (self.l_P*p.unit_labor).round(5)
-            df['gdp real'] = (self.gdp*p.unit).round(5)
-            df['l_R real'] = (self.l_R.sum(axis=1)*p.unit_labor).round(5)
-        return df
-            
         
     def compare_two_solutions(self,sol2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(self).keys()))
@@ -399,7 +405,6 @@ class var:
         self.g_s[0] = p.g_0
         # assert np.isnan(self.g_s).sum() == 0, 'nan in g_s'
         self.g = (p.beta*self.g_s/(p.sigma-1)).sum() / (p.beta*p.alpha).sum()
-
         self.r = p.rho + self.g/p.gamma
         
     def check_PSI_CL(self,p):
@@ -413,8 +418,6 @@ class var:
             print('corrected', (self.psi_star[...,1] < psi_star_lim).sum())
             self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim]
             print(self.psi_star.min())
-        
-        
         return status
 
     def compute_aggregate_qualities(self, p):
@@ -467,51 +470,30 @@ class var:
         # print(self.PSI_CD.min())
         # assert np.isnan(self.PSI_CD).sum() == 0, 'nan in PSI_CD'
 
-    def compute_phi(self, p):
-        self.phi = p.T[None, :, None] * np.einsum('nis,is,is->nis',
-                                                  p.tau,
-                                                  self.w[:, None]**p.alpha[None, :],
-                                                  self.price_indices[:, None]**(1-p.alpha[None, :])
-                                                  )**(-p.theta[None, None, :])
-        # assert np.all(self.w > 0), 'non positive wage'
-        # assert np.all(np.einsum('is,is->is',
-        #                          self.w[:, None]**p.alpha[None, :],
-        #                          self.price_indices[:,
-        #                                             None]**(1-p.alpha[None, :])
-        #                          ) > 0), 'zero or negative in phi den'
-        # assert np.isnan(self.phi).sum() == 0, 'nan in phi'
-        # assert np.all(self.phi > 0), 'negative phi'
-
-    def compute_price_indices(self, p):
-
-        power = (p.sigma-1)/p.theta
-        
-        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
-            * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
-        B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
-        C = self.PSI_CD*self.phi.sum(axis=1)**power[None, :]
-        price = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
-        # assert np.isnan(price).sum() == 0, 'nan in price'
-        return price
-
-    def compute_monopolistic_sectoral_prices(self, p):
-        power = (p.sigma-1)/p.theta
+    def compute_sectoral_prices(self, p):
+        power = p.sigma-1
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
             * (self.PSI_M*self.phi**power[None, None, :]).sum(axis=1)
 
         B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
 
-        C = self.PSI_CD*self.phi.sum(axis=1)**power[None, :]
+        C = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
 
         self.P_M = np.ones((p.N, p.S))
         self.P_M[:, 0] = np.inf
         self.P_M[:, 1:] = (A[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
-        # assert np.isnan(self.P_M).sum() == 0, 'nan in P_M'
+        
+        self.P_CL = np.ones((p.N, p.S))
+        self.P_CL[:, 0] = np.inf
 
-    def compute_monopolistic_trade_flows(self, p):
+        self.P_CL[:, 1:] = (B[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
+
+        self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
+
+    def compute_trade_flows(self, p):
         numerator = np.einsum('nis,nis->nis',
                               self.PSI_M,
-                              self.phi**((p.sigma-1)/p.theta)[None, None, :])
+                              self.phi**(p.sigma-1)[None, None, :])
         self.X_M = np.zeros((p.N, p.N, p.S))
         self.X_M[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
                                       numerator[..., 1:],
@@ -520,7 +502,27 @@ class var:
                                       p.beta[1:],
                                       self.Z
                                       )
-        # assert np.isnan(self.X_M).sum() == 0, 'nan in X_M'
+        numerator = np.einsum('nis,nis->nis',
+                              self.PSI_CL,
+                              self.phi**(p.sigma-1)[None, None, :])
+        self.X_CL = np.zeros((p.N, p.N, p.S))
+        self.X_CL[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
+                                       numerator[..., 1:],
+                                       1/(numerator[..., 1:].sum(axis=1)),
+                                       self.P_CL[...,1:]**(1-p.sigma[None, 1:]),
+                                       p.beta[1:],
+                                       self.Z
+                                       )
+        # assert np.isnan(self.X_CL).sum() == 0, 'nan in X_CL'
+        self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
+                              self.phi**p.theta[None,None,:],
+                              1/((self.phi**p.theta[None,None,:]).sum(axis=1)),
+                              (self.P_CD**(1-p.sigma[None, :])),
+                              p.beta,
+                              self.Z
+                              )
+        
+        self.X = self.X_CD+self.X_CL+self.X_M
 
     def compute_psi_star(self, p):
         psi_star = np.einsum('s,i,nis,s,nis,nis,ns,ns -> nis',
@@ -589,46 +591,6 @@ class var:
         else:
             return l_P
 
-    def compute_competitive_sectoral_prices(self, p):
-        power = (p.sigma-1)/p.theta
-        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
-            * (self.PSI_M*self.phi**power[None, None, :]).sum(axis=1)
-
-        B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
-
-        C = self.PSI_CD*self.phi.sum(axis=1)**power[None, :]
-        
-        self.P_CL = np.ones((p.N, p.S))
-        self.P_CL[:, 0] = np.inf
-        # print(C.min())
-        self.P_CL[:, 1:] = (B[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
-        # assert np.isnan(self.P_CL).sum() == 0, 'nan in P_CL'
-        self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
-        # assert np.isnan(self.P_CD).sum() == 0, 'nan in P_CD'
-
-    def compute_competitive_trade_flows(self, p):
-        numerator = np.einsum('nis,nis->nis',
-                              self.PSI_CL,
-                              self.phi**((p.sigma-1)/p.theta)[None, None, :])
-        self.X_CL = np.zeros((p.N, p.N, p.S))
-        self.X_CL[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
-                                       numerator[..., 1:],
-                                       1/(numerator[..., 1:].sum(axis=1)),
-                                       self.P_CL[...,
-                                                 1:]**(1-p.sigma[None, 1:]),
-                                       p.beta[1:],
-                                       self.Z
-                                       )
-        # assert np.isnan(self.X_CL).sum() == 0, 'nan in X_CL'
-        self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
-                              self.phi,
-                              1/(self.phi.sum(axis=1)),
-                              (self.P_CD**(1-p.sigma[None, :])),
-                              p.beta,
-                              self.Z
-                              )
-        # assert np.isnan(self.X_CD).sum() == 0, 'nan in X_CD'
-
     def compute_wage(self, p):
         wage = (
             p.alpha[None, :] *
@@ -648,9 +610,25 @@ class var:
         Z = (A+B-(C+D))
         # assert np.isnan(Z).sum() == 0, 'nan in Z'
         return Z
+        
+    def compute_phi(self, p):
+        # phi = np.ones_like(self.phi)
+        # phi[self.diag_mask] = (p.T[:, None] * \
+        #     (self.w[:, None]**p.alpha[None, :]* self.price_indices[:, None]**(1-p.alpha[None, :]))**(-p.theta[None, :])
+        #     ).ravel()
+        # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
+        # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
+        phi = self.phi*self.X/(p.trade_shares*(np.diagonal(self.X).transpose())[:,None,:])
+        return phi
     
-    def compute_total_trade_flows(self,p):
-        self.X = self.X_CD+self.X_CL+self.X_M
+    def compute_price_indices(self, p):
+        power = (p.sigma-1)
+        
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
+            * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
+        B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
+        C = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
+        self.price_indices = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
     
     def compute_nominal_value_added(self,p):
         self.nominal_value_added = p.alpha[None, :]*(self.X-self.X_M/p.sigma[None, None, :]).sum(axis=0)
@@ -681,7 +659,23 @@ class var:
                               self.l_R[...,1:]**(1-p.k)
                               ).squeeze()
     
+    # def compute_T(self,p):
+    #     self.T = np.diagonal(self.phi).transpose()\
+    #         *(self.w[:,None]**p.alpha[None,:]*self.price_indices[:,None]**(1-p.alpha[None,:]))**p.theta[None,:]
+    
+    def compute_tau(self,p):
+        # self.tau = np.ones((p.N,p.N,p.S))
+        self.tau = np.einsum('nis,is,is,is->nis',
+                             self.phi**(-1/p.theta[None,None,:]),
+                             p.T[:,None]**(1/p.theta[None,:]),
+                             self.w[:,None]**(-p.alpha[None,:]),
+                             self.price_indices[:,None]**(p.alpha[None,:]-1))
+        # self.tau = self.tau# / np.diagonal(self.tau).transpose()[:,None,:] 
+    # def compute_T_tau(self,p):
+    #     self.T_tau = self.T[None,:,:]*self.tau**p.theta[None,None,:]
+    
     def compute_non_solver_quantities(self,p):
+        self.compute_price_indices(p)
         self.compute_total_trade_flows(p)
         self.compute_nominal_value_added(p)
         self.compute_nominal_intermediate_input(p)
@@ -689,254 +683,7 @@ class var:
         self.compute_gdp(p)
         self.compute_profit(p)
         self.compute_pflow(p)
-    
-    def solve_price_indices(self, p, price_init=None, tol_p=1e-10, 
-                                           plot_convergence=False, plot_cobweb = False):
-        if plot_cobweb:
-            cob_price = cobweb('price')
-        price_new = None
-        if price_init is None:
-            price_old = np.ones(p.N)
-        else:
-            price_old = price_init
-
-        condition = True
-        count = 0
-        convergence = []
-        aa_options = {'dim': p.N,
-                      'mem': 10,
-                      'type1': False,
-                      'regularization': 1e-10,
-                      'relaxation': 1,
-                      'safeguard_factor': 1,
-                      'max_weight_norm': 1e6}
-        aa_price = aa.AndersonAccelerator(**aa_options)
-        while condition:
-            if count != 0:
-                aa_price.apply(price_new, price_old)
-                price_old = price_new            
-            self.guess_price_indices(price_old)
-            self.compute_phi(p)
-            price_new = self.compute_price_indices(p)
-            condition = np.linalg.norm(
-                price_new - price_old)/np.linalg.norm(price_new) > tol_p
-            convergence.append(np.linalg.norm(
-                price_new - price_old)/np.linalg.norm(price_new))
-            count += 1            
-            if plot_cobweb and count%5==0:
-                cob_price.append_old_new(price_old[1],price_new[1])
-                cob_price.plot(count=count)
-                time.sleep(0.1)           
-            if count>50:
-                plot_convergence = True            
-            if plot_convergence:
-                plt.semilogy(convergence)
-                plt.title('price')
-                plt.show()
-        self.price_indices = price_new
-    
-    def solve_psi_star(self, p, psi_star_init=None, price_init=None, 
-                       tol_psi=1e-10, plot_convergence=False
-                       , plot_cobweb = False, accelerate_when_stable = True,
-                       accelerate = False):
-        if plot_cobweb:
-            cob_psi_star = cobweb('psi star')
-        psi_star_new = None
-        if psi_star_init is None:
-            psi_star_old = np.ones((p.N, p.N, p.S))
-        else:
-            psi_star_old = psi_star_init
-
-        condition = True
-        count = 0
-        convergence = []
-        aa_options = {'dim': p.N*p.N*p.S,
-                      'mem': 5,
-                      'type1': False,
-                      'regularization': 1e-12,
-                      'relaxation': 1,
-                      'safeguard_factor': 1,
-                      'max_weight_norm': 1e6}
-        aa_psi_star = aa.AndersonAccelerator(**aa_options)
-        damping = 5        
-        while condition:
-            if count != 0:
-                if accelerate:
-                    psi_star_new = psi_star_new.ravel()
-                    psi_star_old = psi_star_old.ravel()
-                    aa_psi_star.apply(psi_star_new, psi_star_old)
-                    psi_star_new = psi_star_new.reshape(p.N,p.N,p.S)
-                    psi_star_old = psi_star_old.reshape(p.N,p.N,p.S)
-                psi_star_old = (psi_star_new+(damping-1)*psi_star_old)/damping
-
-            self.guess_patenting_threshold(psi_star_old)
-            assert np.isnan(self.psi_star).sum() == 0, 'nan in psi_star'
-            self.compute_aggregate_qualities(p)
-            self.solve_price_indices(
-                p, price_init=self.price_indices)
-            self.compute_monopolistic_sectoral_prices(p)
-            self.compute_monopolistic_trade_flows(p)
-            psi_star_new = self.compute_psi_star(p)
-            assert np.isnan(psi_star_new).sum() == 0, 'nan in psi_star'
-
-            condition = np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /\
-                np.linalg.norm(psi_star_new[..., 1:]) > tol_psi
-            convergence.append(np.linalg.norm(psi_star_new[..., 1:] - psi_star_old[..., 1:]) /
-                               np.linalg.norm(psi_star_new[..., 1:]))
-            count += 1
-            if accelerate_when_stable and np.all(np.array(convergence[-10:])<1e-1):
-                damping = 2
-            if plot_convergence:
-                plt.title('psi star')
-                plt.semilogy(convergence)
-                plt.show()
-            if plot_cobweb:
-                # cob_psi_star.append_old_new(psi_star_old[1,1,1],psi_star_new[1,1,1])
-                cob_psi_star.append_old_new(psi_star_old.min(),psi_star_new.min())
-                cob_psi_star.plot(count=count)
-            
-        self.psi_star = psi_star_new
-    
-    def solve_l_R(self, p, l_R_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                  w_init=None, Z_init=None, plot_convergence=False
-                  ,plot_cobweb = False):
-        if plot_cobweb:
-            cob_l_R = cobweb('l_R')
-        l_R_new = None
-        if l_R_init is None:
-            l_R_old = np.ones((p.N, p.S))
-        else:
-            l_R_old = l_R_init
-        condition_l_R = True
-        count = 0
-        convergence_l_R = []
-        aa_options_l_R = {'dim': p.N*p.S,
-                          'mem': 5,
-                          'type1': False,
-                          'regularization': 1e-12,
-                          'relaxation': 1,
-                          'safeguard_factor': 1,
-                          'max_weight_norm': 1e6}
-        aa_l_R = aa.AndersonAccelerator(**aa_options_l_R)
-        damping = 5
-        while condition_l_R:
-            if count != 0:
-                l_R_new = l_R_new.ravel()
-                l_R_old = l_R_old.ravel()
-                # aa_l_R.apply(l_R_new, l_R_old)
-                l_R_old = (l_R_new.reshape(p.N, p.S) + (damping-1)*l_R_old.reshape(p.N, p.S))/damping
-            self.guess_labor_research(l_R_old)
-            self.compute_growth(p)
-            self.solve_psi_star(p, psi_star_init=self.psi_star,
-                                price_init=self.price_indices)
-            if np.any(self.compute_labor_allocations(p, l_R=l_R_old, assign=False) < 0):
-                print('non positive production labor')
-            l_R_new = self.compute_labor_research(p)
-            condition_l_R = np.linalg.norm(
-                l_R_new - l_R_old)/np.linalg.norm(l_R_new) > tol_m
-            convergence_l_R.append(np.linalg.norm(
-                l_R_new - l_R_old)/np.linalg.norm(l_R_new))
-            count += 1
-            if np.all(np.array(convergence_l_R[-10:])<0.1):
-                damping=1
-            if plot_cobweb:
-                cob_l_R.append_old_new(l_R_old[1,1],l_R_new[1,1])
-                cob_l_R.plot(count=count)
-            
-            if plot_convergence:
-                plt.semilogy(convergence_l_R, label='l_R')
-                plt.show()
-        self.l_R = l_R_new
-    
-    def solve_w(self, p, w_init=None, psi_star_init=None, price_init=None,
-                tol_m=1e-8, plot_convergence=False, plot_cobweb = False,
-                accelerate = True):
-        if plot_cobweb:
-            cob_w = cobweb('wage')
-        w_new = None
-        if w_init is None:
-            w_old = np.ones(p.N)
-        else:
-            w_old = w_init
-        condition_w = True
-        count = 0
-        convergence_w = []
-        aa_options_w_Z = {'dim': p.N,
-                          'mem': 5,
-                          'type1': False,
-                          'regularization': 1e-12,
-                          'relaxation': 1,
-                          'safeguard_factor': 1,
-                          'max_weight_norm': 1e6}
-        aa_w = aa.AndersonAccelerator(**aa_options_w_Z)
-        damping = 5
-        while condition_w:
-            # print(count,'wage iteration\nresearch problem solved')
-            if count != 0:
-                if accelerate:
-                    aa_w.apply(w_new, w_old)
-                w_old = (w_new+(damping-1)*w_old)/damping        
-            self.guess_wage(w_old)
-            self.solve_l_R(p, l_R_init=self.l_R)
-            self.compute_labor_allocations(p)
-            self.compute_competitive_sectoral_prices(p)
-            self.compute_competitive_trade_flows(p)
-            w_new = self.compute_wage(p)
-            condition_w = np.linalg.norm(
-                w_new - w_old)/np.linalg.norm(w_new) > tol_m
-            convergence_w.append(np.linalg.norm(w_new - w_old)/np.linalg.norm(w_new))
-            count += 1
-            if np.all(np.array(convergence_w[-10:])<0.1):
-                damping=1
-            if plot_cobweb:
-                cob_w.append_old_new(w_old[1],w_new[1])
-                cob_w.plot(count=count)
-            if plot_convergence:
-                plt.semilogy(convergence_w, label='wage')
-                plt.show()       
-        self.w = w_new
-
-    def solve_Z(self, p, Z_init=None, psi_star_init=None, price_init=None, tol_m=1e-8,
-                plot_convergence=False, plot_cobweb = True):
-        if plot_cobweb:
-            cob_Z = cobweb('Z')
-        Z_new = None
-        if Z_init is None:
-            Z_old = np.ones(p.N)
-        else:
-            Z_old = Z_init
-        condition_Z = True
-        count = 0
-        convergence_Z = []
-        aa_options_Z = {'dim': p.N,
-                        'mem': 5,
-                        'type1': False,
-                        'regularization': 1e-12,
-                        'relaxation': 1,
-                        'safeguard_factor': 1,
-                        'max_weight_norm': 1e6}
-        aa_Z = aa.AndersonAccelerator(**aa_options_Z)
-        while condition_Z:
-            print(count)
-            if count != 0:
-                aa_Z.apply(Z_new, Z_old)
-                Z_old = Z_new
-            self.guess_expenditure(Z_old)
-            self.solve_w(p, w_init=self.w)
-            Z_new = self.compute_expenditure(p)
-            condition_Z = np.linalg.norm(
-                Z_new - Z_old)/np.linalg.norm(Z_new) > tol_m
-            convergence_Z.append(np.linalg.norm(
-                Z_new - Z_old)/np.linalg.norm(Z_new))
-            count += 1
-            if plot_cobweb:
-                cob_Z.append_old_new(Z_old[1],Z_new[1])
-                cob_Z.plot(count=count)
-            if plot_convergence:
-                plt.semilogy(convergence_Z, label='Z')
-                plt.show()
-        self.Z = Z_new
-        self.num_scale_solution(p)
+        self.compute_tau(p)
 
     def num_scale_solution(self, p):
         numeraire = self.price_indices[0]
@@ -944,7 +691,53 @@ class var:
         for qty in ['X_CD','X_CL','X_M','price_indices','w','Z']:
             setattr(self, qty, getattr(self, qty)/numeraire)
         
-        self.phi = self.phi*numeraire**p.theta[None,None,:]
+        self.phi = self.phi*numeraire**(p.theta[None,None,:])
+        try:
+            self.X = self.X/numeraire
+        except:
+            pass
+    
+    def scale_A_B(self, p):
+        self.compute_growth(p)
+        self.compute_aggregate_qualities(p)
+        self.compute_price_indices(p)
+        K = np.einsum('ns,n,ns,ns->ns',
+                    np.diagonal(self.phi).transpose(),
+                    1/p.T,
+                    self.w[:,None]**((p.alpha*p.theta)[None,:]),
+                    self.price_indices[:,None]**(((1-p.alpha)*p.theta)[None,:])
+                    )
+
+        self.B = K*( K**( 
+                        (1-p.alpha)*p.beta / ( 1 - ((1-p.alpha)*p.beta).sum() )
+                        )[None,:]
+                    ).prod(axis = 1)[:,None]
+        
+        self.A = self.price_indices[0] * (self.B[0,:]**(p.beta/p.theta)).prod()
+
+        self.w = self.w / self.A
+        self.Z = self.Z / self.A
+        # self.price_indices = self.price_indices*(self.B**(p.beta/p.theta)[None,:]).prod() / self.A
+        self.phi = self.phi*(self.A**p.theta)[None,None,:]/self.B[:,None,:]
+        
+        # self.compute_growth(p)
+        # self.compute_aggregate_qualities(p)
+        
+        self.compute_monopolistic_sectoral_prices(p)
+        self.compute_monopolistic_trade_flows(p)
+        self.compute_competitive_sectoral_prices(p)
+        self.compute_competitive_trade_flows(p)
+        self.compute_labor_allocations(p)     
+        self.compute_total_trade_flows(p)
+        # self.compute_price_indices(p)
+        self.compute_non_solver_quantities(p)
+        
+        # for qty in ['X_CD','X_CL','X_M','X']:
+        #     try:
+        #         setattr(self, qty, getattr(self, qty)/self.A)
+        #     except:
+        #         pass
+   
     
     def check_solution(self, p, return_checking_copy = False, assertions = True):
         check = self.copy()
@@ -1339,38 +1132,20 @@ class history:
         self.saves += 1        
 
 def get_vec_qty(x,p):
-    res = {'price_indices':x[0:p.N],
-           'w':x[p.N:p.N*2],
-           'Z':x[p.N*2:p.N*3],
-           'l_R':x[p.N*3:p.N*3+p.N*(p.S-1)],
-           'psi_star':x[p.N*3+p.N*(p.S-1):]
+    # res = {'price_indices':x[0:p.N],
+    #        'w':x[p.N:p.N*2],
+    #        'Z':x[p.N*2:p.N*3],
+    #        'l_R':x[p.N*3:p.N*3+p.N*(p.S-1)],
+    #        'psi_star':x[p.N*3+p.N*(p.S-1):p.N*3+p.N*(p.S-1)+p.N**2],
+    #        'phi':x[p.N*3+p.N*(p.S-1)+p.N**2:]
+    #        }
+    res = {'w':x[0:p.N],
+           'Z':x[p.N:p.N*2],
+           'l_R':x[p.N*2:p.N*2+p.N*(p.S-1)],
+           'psi_star':x[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2],
+           'phi':x[p.N*2+p.N*(p.S-1)+p.N**2:]
            }
     return res
-
-def iter_once(x,p, check_feasibility = False, normalize = False):
-    modified_guess = None
-    init = var.var_from_vector(x,p,compute=False)
-    init.compute_growth(p)
-    if check_feasibility:
-        check = init.check_PSI_CL(p)
-        if check == 'corrected':
-            modified_guess = init.vector_from_var()
-    init.compute_aggregate_qualities(p)
-    init.compute_phi(p)
-    init.compute_monopolistic_sectoral_prices(p)
-    init.compute_monopolistic_trade_flows(p)
-    init.compute_competitive_sectoral_prices(p)
-    init.compute_competitive_trade_flows(p)
-    init.compute_labor_allocations(p)     
-    if normalize:
-        init.num_scale_solution(p)
-    price = init.compute_price_indices(p)
-    w = init.compute_wage(p)
-    Z = init.compute_expenditure(p)
-    l_R = init.compute_labor_research(p)[...,1:].ravel()
-    psi_star = init.compute_psi_star(p)[...,1:].ravel()
-    vec = np.concatenate((price,w,Z,l_R,psi_star), axis=0)
-    return vec, modified_guess
 
 def deviation(x,p):
     vec, _ = iter_once(x,p)
@@ -1563,7 +1338,41 @@ def load_grad_jac(path):
     grad = pd.read_csv(path+'grad.csv',index_col=0).values.squeeze()
     jac = pd.read_csv(path+'jac.csv',index_col=0).values.squeeze().reshape(-1,grad.size)
     return grad, jac
-            
+
+def iter_once(x,p, check_feasibility = False, normalize = False):
+    modified_guess = None
+    init = var.var_from_vector(x,p,compute=False)
+    
+    init.compute_growth(p)
+    if check_feasibility:
+        check = init.check_PSI_CL(p)
+        if check == 'corrected':
+            modified_guess = init.vector_from_var()
+    init.compute_aggregate_qualities(p)
+    init.compute_monopolistic_sectoral_prices(p)
+    init.compute_monopolistic_trade_flows(p)
+    init.compute_competitive_sectoral_prices(p)
+    init.compute_competitive_trade_flows(p)
+    init.compute_labor_allocations(p)     
+    init.compute_total_trade_flows(p)
+    init.compute_non_solver_quantities(p)
+    if normalize:
+        init.num_scale_solution(p)
+    # plt.plot(init.X.ravel())
+    # plt.show()
+    price = init.compute_price_indices(p)
+    # numeraire = price[0]
+    w = init.compute_wage(p)
+    Z = init.compute_expenditure(p)
+    l_R = init.compute_labor_research(p)[...,1:].ravel()
+    psi_star = init.compute_psi_star(p)[...,1:].ravel()
+    phi = init.compute_phi(p).ravel()
+    # phi = phi/phi.mean()
+    
+    # print(numeraire)
+    # print(phi.max()/numeraire**p.theta[0])
+    vec = np.concatenate((price,w,Z,l_R,psi_star,phi), axis=0)
+    return vec, modified_guess            
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
@@ -1581,71 +1390,83 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     count = 0
     convergence = []
     hit_the_bound_count = 0
-    x_old, hit_the_bound_count = bound_zero(x_old,1e-8, hit_the_bound_count)
-    x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
-    x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
     history_old = []
     history_new = []
     x_new = None
     aa_options = {'dim': len(x_old),
-                    'mem': accel_memory,
-                    'type1': accel_type1,
-                    'regularization': accel_regularization,
-                    'relaxation': accel_relaxation,
-                    'safeguard_factor': accel_safeguard_factor,
-                    'max_weight_norm': accel_max_weight_norm}
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
     aa_wrk = aa.AndersonAccelerator(**aa_options)
     start = time.perf_counter()
     cob = cobweb(cobweb_qty)
+    norm = []
     damping = damping
-    while condition and count < max_count:
-        # if count%1000 ==0:
-        #     print(count)
+    
+    while condition and count < max_count and np.all(x_old<1e40):
         if count != 0:
             if accelerate:
                 aa_wrk.apply(x_new, x_old)
             x_new = smooth_large_jumps(x_new,x_old)
             x_old = (x_new+(damping-1)*x_old)/damping
-            if apply_bound_zero:
-                x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
-            if apply_bound_psi_star:
-                x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
-            if apply_bound_research_labor:
-                x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
-        x_new, modified_x_old  = iter_once(x_old, p, 
-                                           normalize = False, 
-                                           check_feasibility = True)
-        if modified_x_old is not None:
-            x_old = modified_x_old
+        if apply_bound_zero:
+            x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+        if apply_bound_psi_star:
+            x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
+        if apply_bound_research_labor:
+            x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
+        # x_new, modified_x_old  = iter_once(x_old, p, 
+        #                                    normalize = False, 
+        #                                    check_feasibility = False)
+        init = var.var_from_vector(x_old,p,compute=False)
+        init.compute_growth(p)
+        init.compute_aggregate_qualities(p)
+        init.compute_monopolistic_sectoral_prices(p)
+        init.compute_monopolistic_trade_flows(p)
+        init.compute_competitive_sectoral_prices(p)
+        init.compute_competitive_trade_flows(p)
+        init.compute_labor_allocations(p)     
+        init.compute_total_trade_flows(p)
+        # init.compute_non_solver_quantities(p)
+        w = init.compute_wage(p)
+        Z = init.compute_expenditure(p)
+        l_R = init.compute_labor_research(p)[...,1:].ravel()
+        psi_star = init.compute_psi_star(p)[...,1:].ravel()
+        phi = init.compute_phi(p).ravel()
+        x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
+        
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
-        # if np.any(x_new<0):
-        #     print(count, 'negative')
-        # if count == 1e3:
-        #     x_old[p.N:p.N*2] = 2*x_old[p.N:p.N*2]
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
-                      for qty in ['price_indices','w','Z','psi_star','l_R']]
+                      for qty in ['w','Z','psi_star','l_R','phi']]
+        # conditions = [np.linalg.norm((x_new_decomp[qty] - x_old_decomp[qty])/x_old_decomp[qty]) > tol
+        #               for qty in ['w','Z','psi_star','l_R','phi']]
         condition = np.any(conditions)
-        convergence.append(np.linalg.norm(
-            x_new - x_old)/np.linalg.norm(x_new))
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_new))
         # print(convergence[-1])
         count += 1
         if np.all(np.array(convergence[-10:])<safe_convergence):
             if accelerate_when_stable:
                 accelerate = True
             damping = 2
-        history_old.append(get_vec_qty(x_old,p)[cobweb_qty].min())
-        history_new.append(get_vec_qty(x_new,p)[cobweb_qty].min())
+        norm.append((get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+        history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+        history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
         # history_old.append(get_vec_qty(x_old,p)[cobweb_qty][1,...])
         # history_new.append(get_vec_qty(x_new,p)[cobweb_qty][1,...])
-        # if count > 1e3 and count%1000==0:
-        #     damping = 3
-        #     # plt.semilogy(convergence)
-        #     plt.semilogy(history_old)
+        # if count > -1 and count%1==0:
+        #     # plt.plot(get_vec_qty(x_new,p)[cobweb_qty].ravel())
+        #     # plt.show()
+        #     # damping = 3
+        #     plt.semilogy(convergence)
+        #     # plt.semilogy(history_old)
         #     plt.title(count)
         #     plt.show()
             # x_new = x_new*(0.5+np.random.rand(x_new.size))**10
-        # if count > 500 and count%2==0:
+        # if count > 1 and count%100==0:
         #     cob.append_old_new(history_old[-1],history_new[-1])
         #     pause = 0.1
         #     # if count == 20:
@@ -1655,16 +1476,14 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     
     finish = time.perf_counter()
     solving_time = finish-start
-    dev_norm = deviation_norm(x_new,p)
-    if count < max_count and np.isnan(x_new).sum()==0:
+    # dev_norm = deviation_norm(x_new,p)
+    dev_norm = 'TODO'
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40):
         status = 'successful'
     else:
         status = 'failed'
     
     x_sol = x_new
-    # temp_for_scaling = var.var_from_vector(x_new, p)
-    # temp_for_scaling.num_scale_solution(p)     
-    # x_sol = temp_for_scaling.vector_from_var()
         
     sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
                    status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
@@ -1682,93 +1501,117 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             
     if plot_convergence:
         plt.semilogy(convergence)
+        # plt.semilogy(norm)
         plt.show()
-    return sol_inst
+    return sol_inst, init
+
+
+
+x = np.array([6.52789324e+01, 3.61863465e+01, 4.63050951e+01, 3.82012522e+00,
+       6.69248260e+00, 1.34620148e+00, 6.32166730e+00, 2.53894177e+01,
+       2.62428708e+01, 7.56112313e+00, 6.79881367e+00, 1.57006379e+00,
+       1.87273374e+00, 2.12286086e+01, 3.30666029e-04, 1.36138186e-03,
+       2.13652042e-04, 1.60413378e-02, 9.67556470e-04, 8.91198573e-03,
+       2.50603454e-02, 9.98005991e+02, 3.04392017e+03, 4.88501104e+03,
+       4.70748035e+03, 9.13194259e+03, 2.39518535e+04, 1.96792743e+03,
+       3.86502875e+03, 5.20973334e+02, 4.66199517e+03, 3.53580175e+03,
+       6.96182635e+03, 1.20767374e+04, 1.69707981e+03, 1.78939174e+04,
+       1.21207232e+04, 2.28088119e+03, 9.51774081e+03, 5.57504418e+04,
+       1.94771518e+05, 6.95723403e+03, 1.51746801e+04, 5.90769315e+03,
+       6.95908232e+03, 2.44090794e+02, 1.10615419e+04, 1.46009921e+04,
+       1.02140146e+03, 4.32389578e+04, 2.08670257e+04, 6.30033072e+04,
+       2.35446004e+04, 1.62238053e+03, 4.23148521e+04, 8.97438515e+03,
+       3.57315371e+04, 1.36939486e+04, 3.85013165e+04, 5.68898961e+03,
+       1.00811431e+04, 3.14667087e+02, 2.54318799e+03, 2.08411041e+03,
+       1.04319056e+03, 1.95538104e+03, 5.09032646e+02, 1.17256907e+03,
+       1.12922670e+03, 1.40524060e+02, 1.00000000e+00, 1.00000000e+00,
+       4.89046808e-03, 3.27744765e-02, 3.04569625e-04, 1.27399136e-02,
+       3.20362467e-04, 4.21729805e-03, 1.43471988e-04, 8.90876383e-04,
+       7.62408487e-05, 6.59284237e-05, 2.40731629e-02, 4.07938061e-02,
+       6.07833555e-03, 1.55243603e-02, 1.00000000e+00, 1.00000000e+00,
+       6.66771270e-04, 5.79021364e-03, 6.90953954e-04, 1.89324913e-03,
+       5.84642223e-04, 4.13905531e-04, 3.93223031e-04, 7.48596794e-05,
+       2.96768479e-02, 1.38045823e-02, 2.69041919e-03, 9.24381467e-03,
+       2.95694738e-03, 1.15029866e-02, 1.00000000e+00, 1.00000000e+00,
+       2.21071345e-03, 6.05920671e-03, 2.77364081e-04, 8.38743147e-05,
+       4.72718699e-04, 2.81827196e-06, 3.44162592e-02, 1.49807935e-02,
+       1.57792050e-03, 8.07218232e-03, 3.38165292e-03, 2.17715987e-02,
+       8.77578967e-04, 2.54021407e-02, 1.00000000e+00, 1.00000000e+00,
+       1.54950824e-03, 1.60637340e-04, 3.26062238e-03, 1.35865209e-05,
+       3.15821955e-02, 5.66767755e-02, 1.30984166e-03, 1.82831390e-02,
+       3.97852524e-03, 3.09595484e-02, 4.24541802e-04, 3.31948250e-03,
+       1.18259898e-04, 6.81375554e-04, 1.00000000e+00, 1.00000000e+00,
+       2.39625953e-04, 8.04579636e-05, 2.24751798e-02, 1.29528833e-02,
+       2.18893003e-03, 2.21688997e-02, 1.08936759e-02, 5.80733044e-02,
+       8.10519418e-04, 7.95748826e-03, 9.54869895e-04, 3.66982170e-03,
+       7.81877943e-04, 2.65134418e-03, 1.00000000e+00, 1.00000000e+00,
+       3.13744033e-02, 7.37086866e-02, 2.03179407e-02, 9.00974468e-02,
+       4.20854438e-02, 1.38035424e-01, 9.42762083e-03, 4.89396405e-02,
+       6.80581415e-03, 2.30751938e-02, 1.10339305e-03, 5.34461063e-03,
+       2.29715954e-03, 1.56479151e-03, 1.00000000e+00, 1.00000000e+00])
+
+sol_c = var.var_from_vector(x, p)  
+
+#%%
+
+x_old = sol_c.vector_from_var()
+
+#%%
+
+
+init = var.var_from_vector(x_old,p,compute=False)
+init.compute_growth(p)
+init.compute_aggregate_qualities(p)
+init.compute_price_indices(p)
+# init.scale_A_B(p)
+# x_old = init.vector_from_var()
+init.compute_monopolistic_sectoral_prices(p)
+init.compute_monopolistic_trade_flows(p)
+init.compute_competitive_sectoral_prices(p)
+init.compute_competitive_trade_flows(p)
+init.compute_labor_allocations(p)     
+init.compute_total_trade_flows(p)
+# init.compute_non_solver_quantities(p)
+w = init.compute_wage(p)
+Z = init.compute_expenditure(p)
+l_R = init.compute_labor_research(p)[...,1:].ravel()
+psi_star = init.compute_psi_star(p)[...,1:].ravel()
+phi = init.compute_phi(p).ravel()
+x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
+
+# x_new_decomp = get_vec_qty(x_new,p)
+# x_old_decomp = get_vec_qty(x_old,p)
 
 #%% fixed point solver
-# p = parameters(n=7,s=2)
+p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
 # p.load_data('calibration_results/35/',p.get_list_of_params())
-# p.fo[1] = 1
-# p.fe[1] = 1
-# p = parameters(n=7,s=2)
-# # # # calib_parameters = parameters.get_list_of_params()
-# # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-
-# p.load_data('calibration_results/4/',p.get_list_of_params())
-#             ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde'])
-# p.delta[0,1] = 1e-2
-# p.delta = np.array([[5.00000000e-02, 0.1],
-#         [5.00000000e-02, 1.65487495e-01],
-#         [5.00000000e-02, 2.27647539e-01],
-#         [5.00000000e-02, 8.43274138e+00],
-#         [5.00000000e-02, 3.12782306e+00],
-#         [5.00000000e-02, 1.10431446e+01],
-#         [5.00000000e-02, 1.08444146e+01]])
-# p.eta = np.array([[0.00000000e+00, 1.10962987e+00],
-#        [0.00000000e+00, 5.85031127e-01],
-#        [0.00000000e+00, 1.37786543e-01],
-#        [0.00000000e+00, 2.81807958e-02],
-#        [0.00000000e+00, 0.01],
-#        [0.00000000e+00, 4.18969828e-04],
-#        [0.00000000e+00, 2.59075224e-01]])
-# p.delta[:,1] = 0.1
-# for i in [1,2,3,6]:
-#     p.delta[i,1]=1
-# p.delta = np.array([[1.00000000e+00, 4.99351032e-02],
-#        [1.00000000e+00, 4.76445292e-01],
-#        [1.00000000e+00, 6.97096861e-05],
-#        [1.00000000e+00, 7.85590548e-01],
-#        [1.00000000e+00, 4.52083851e-01],
-#        [1.00000000e+00, 2.98593547e+00],
-#        [1.00000000e+00, 2.51448891e+00]])
-# p.nu = np.array([0.1      , 0.1618437])
-sol = fixed_point_solver(p,x0=p.guess,
+sol, sol_c = fixed_point_solver(p,#x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
+                        accelerate=True,
                         accelerate_when_stable=True,
-                        cobweb_qty='psi_star',
+                        cobweb_qty='phi',
                         plot_convergence=True,
                         plot_cobweb=True,
-                        safe_convergence=0.001,
+                        safe_convergence=0.1,
+                        disp_summary=True,
+                        damping = 10,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
-# sol = fixed_point_solver(p,x0=p.guess,
-#                         cobweb_anim=False,tol =1e-13,
-#                         accelerate=False,
-#                         accelerate_when_stable=True,
-#                         cobweb_qty='w',
-#                         plot_convergence=False,
-#                         plot_cobweb=False,
-#                         safe_convergence=0.001
-#                          # apply_bound_psi_star=True
-#                         )
-# new_guess = 0
-# while np.any(np.isnan(sol.x)) and new_guess<len(collec_of_guess):
-#     print(new_guess)
-#     sol = fixed_point_solver(p,x0=collec_of_guess[new_guess],tol=1e-14,
-#                                   accelerate=False,
-#                                   accelerate_when_stable=False,
-#                                   plot_cobweb=False,
-#                                   plot_convergence=False,
-#                                   cobweb_qty='l_R',
-#                                   disp_summary=False,
-#                                   safe_convergence=0.1,
-#                                   damping=20
-#                                   )
-#     new_guess += 1
 
-sol_c = var.var_from_vector(sol.x, p)     
-sol_c.num_scale_solution(p)
-sol_c.compute_non_solver_quantities(p)
-list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                   'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST','TP']
-m = moments(list_of_moments)
-m.load_data()
-m.compute_moments(sol_c,p)
-m.compute_Z(sol_c,p)
-m.compute_moments_deviations()
+sol_c = var.var_from_vector(sol.x, p)    
+# sol_c.scale_A_B(p)
+# sol_c.compute_non_solver_quantities(p) 
+
+# sol_c.compute_non_solver_quantities(p)
+# list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+#                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST','TP']
+# m = moments(list_of_moments)
+# m.load_data()
+# m.compute_moments(sol_c,p)
+# m.compute_Z(sol_c,p)
+# m.compute_moments_deviations()
 # m.plot_moments(m.get_list_of_moments())
 # p.guess = sol_c.vector_from_var()
 
@@ -1790,52 +1633,6 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0
                                  disp_summary=False,
                                  safe_convergence=0.001
                                  )    
-    if np.any(np.isnan(sol.x)):
-        sol = fixed_point_solver(p,x0=None,tol=1e-14,
-                                     accelerate=False,
-                                     accelerate_when_stable=True,
-                                     plot_cobweb=False,
-                                     plot_convergence=False,
-                                     cobweb_qty='l_R',
-                                     disp_summary=False,
-                                     safe_convergence=0.001
-                                     )   
-    new_guess = 0
-    while np.any(np.isnan(sol.x)) and new_guess<len(collec_of_guess):
-        # print(new_guess)
-        sol = fixed_point_solver(p,x0=collec_of_guess[new_guess],tol=1e-14,
-                                      accelerate=False,
-                                      accelerate_when_stable=True,
-                                      plot_cobweb=False,
-                                      plot_convergence=False,
-                                      cobweb_qty='l_R',
-                                      disp_summary=False,
-                                      safe_convergence=0.001
-                                      )
-        new_guess += 1
-    if np.any(np.isnan(sol.x)) or sol.status == 'failed':
-        sol = fixed_point_solver(p,x0=None,
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=False,
-                                cobweb_qty='psi_star',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                disp_summary=False,
-                                safe_convergence=0.1)
-    if np.any(np.isnan(sol.x)) or sol.status == 'failed':
-        sol = fixed_point_solver(p,x0=p.guess,
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='psi_star',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                disp_summary=False,
-                                safe_convergence=0.001,
-                                damping=100
-                                  # apply_bound_psi_star=True
-                                )
     sol_c = var.var_from_vector(sol.x, sol.p)   
     sol_c.num_scale_solution(p)
     sol_c.compute_non_solver_quantities(p)
@@ -1868,13 +1665,14 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0
     
 p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-p.calib_parameters = ['T']
-p.load_data('calibration_results/history38/188/')
+p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde']
+# p.load_data('calibration_results/history38/188/')
 start_time = time.perf_counter()
 
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
-list_of_moments = ['STFLOW']
+list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                   'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
 m = moments(list_of_moments)
 hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
@@ -2119,3 +1917,52 @@ ax2.legend(loc=(1.1,0.8),fontsize=20)
 plt.title('Partial calibration of T targeting Z',fontsize=20)
 
 plt.show()
+
+#%%
+
+    if np.any(np.isnan(sol.x)):
+        sol = fixed_point_solver(p,x0=None,tol=1e-14,
+                                     accelerate=False,
+                                     accelerate_when_stable=True,
+                                     plot_cobweb=False,
+                                     plot_convergence=False,
+                                     cobweb_qty='l_R',
+                                     disp_summary=False,
+                                     safe_convergence=0.001
+                                     )   
+    new_guess = 0
+    while np.any(np.isnan(sol.x)) and new_guess<len(collec_of_guess):
+        # print(new_guess)
+        sol = fixed_point_solver(p,x0=collec_of_guess[new_guess],tol=1e-14,
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='l_R',
+                                      disp_summary=False,
+                                      safe_convergence=0.001
+                                      )
+        new_guess += 1
+    if np.any(np.isnan(sol.x)) or sol.status == 'failed':
+        sol = fixed_point_solver(p,x0=None,
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='psi_star',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                disp_summary=False,
+                                safe_convergence=0.1)
+    if np.any(np.isnan(sol.x)) or sol.status == 'failed':
+        sol = fixed_point_solver(p,x0=p.guess,
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='psi_star',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                disp_summary=False,
+                                safe_convergence=0.001,
+                                damping=100
+                                  # apply_bound_psi_star=True
+                                )
