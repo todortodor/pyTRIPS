@@ -12,3 +12,5 @@ STFLOW;Ratio of bilateral trade flow to world output
 JUPCOST;Patenting cost in Japan for the US
 TP;Total number of patents in the world
 Z;country expenditure
+SDOMTFLOW; Sector specific domestic trade flows as shares of total economy
+SINNOVPATEU; Share of innovations patented in Europe
