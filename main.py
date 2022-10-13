@@ -45,8 +45,8 @@ class parameters:
         self.kappa = 0.5            #
         self.gamma = 0.5       #
         self.delta = np.ones((N, S))
-        self.nu = np.ones(S)*0.1   #
-        self.nu_tilde = np.ones(S)*0.1
+        self.nu = np.ones(S)*0.5   #
+        self.nu_tilde = np.ones(S)*0.5
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -843,7 +843,9 @@ class moments:
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST']
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+                               'SINNOVPATEU']
         else:
             self.list_of_moments = list_of_moments
         self.weights_dict = {'GPDIFF':1, 
@@ -1371,7 +1373,7 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df1.to_excel(writer,sheet_name='Summary',startrow=1 , startcol=0)
     
     
-    df2 = pd.DataFrame(index = m.list_of_moments, columns = ['weight','norm of deviation', 'description'])
+    df2 = pd.DataFrame(index = m.get_list_of_moments(), columns = ['weight','norm of deviation', 'description'])
     for mom in m.get_list_of_moments():
         df2.loc[mom] = [m.weights_dict[mom],
                         np.linalg.norm(getattr(m,mom+'_deviation')),
@@ -1380,7 +1382,7 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     worksheet.write_string(df1.shape[0] + 4, 0, df2.name)
     df2.to_excel(writer,sheet_name='Summary',startrow=df1.shape[0] + 5 , startcol=0)
     
-    worksheet.write_string(df1.shape[0] + df1.shape[0] + 2, 0, commentary)
+    worksheet.write_string(df1.shape[0] + df1.shape[0] + 6, 0, commentary)
     
     
     scalar_moments = pd.DataFrame(columns=['model','target'])
@@ -1740,7 +1742,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     return sol_inst, init
 
 #%% fixed point solver
-p = parameters(n=7,s=2)
+# p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
 # p.load_data('calibration_results_matched_trade_flows/history2/190/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
@@ -1879,7 +1881,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         if hist.count%200==0:
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta_US : ', p.delta[0,1])
         if hist.count%200==0:
-            hist.save(path = './calibration_results_matched_trade_flows/history3/', p = p)
+            hist.save(path = './calibration_results_matched_trade_flows/history9/', p = p)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
     # print(hist.count)
@@ -1894,7 +1896,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
 #%%    
 p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde']
+p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu_tilde']
 # p.load_data('calibration_results/history38/188/')
 start_time = time.perf_counter()
 
@@ -1959,14 +1961,17 @@ p3, sol3, m3 = full_load_parameters_set('./calibration_results_matched_trade_flo
 p4, sol4, m4 = full_load_parameters_set('./calibration_results_matched_trade_flows/4/')
 p5, sol5, m5 = full_load_parameters_set('./calibration_results_matched_trade_flows/5/')
 p6, sol6, m6 = full_load_parameters_set('./calibration_results_matched_trade_flows/6/')
+p7, sol7, m7 = full_load_parameters_set('./calibration_results_matched_trade_flows/7/')
+p8, sol8, m8 = full_load_parameters_set('calibration_results_matched_trade_flows/history3/778/')
 
 #%% writing results as excel
 
-# commentary = 'Big weights on share of R&D and total number of patents'
-# write_calibration_results(
-#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/4',
-#     p,m,sol_c,commentary = commentary)
-
+commentary = 'Corrected the computation for T, Added new moments : Share of innov patented in Europe and Share of domestic flows'
+write_calibration_results(
+    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/8',
+    p8,m8,sol8,commentary = commentary)
+# m8.plot_moments(m8.list_of_moments, 
+#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/8')
 #%% load parameters sets
 
 # p26, sol26, m26 = full_load_parameters_set('./calibration_results/26/')
@@ -2014,7 +2019,9 @@ dic = {
         'dogbox not perfectly converged':m3,
         'large weights on share of R&D and total number of patents':m4,
         'new moments SDOMTFLOW, SINNOVPATEU':m5,
-        'correct expression for T':m6
+        'correct expression for T':m6,
+        'final':m7,
+        'history':m8
         }
 
 
