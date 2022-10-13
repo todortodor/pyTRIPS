@@ -1742,7 +1742,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
 #%% fixed point solver
 p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-# p.load_data('calibration_results_matched_trade_flows/history2/190/',p.get_list_of_params())
+p.load_data('/Users/slepot/Documents/taff/pyTRIPS/calibration_results_matched_trade_flows/history3/640/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
 # w_guess = p.data.gdp.values*p.unit_labor/(p.data.labor.values*p.unit)*100
 # l_R_guess = np.repeat(p.labor[:,None]/200, p.S-1, axis=1).ravel()
@@ -1750,7 +1750,7 @@ p = parameters(n=7,s=2)
 # phi_guess = np.ones((p.N,p.N,p.S)).ravel()#*0.01
 # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
 # guess = np.random.rand(p.guess_from_params().size).reshape(p.guess_from_params().shape)
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
+sol, sol_c = fixed_point_solver(p,#x0=p.guess,
                         cobweb_anim=False,tol =1e-10,
                         accelerate=False,
                         accelerate_when_stable=True,
@@ -1772,15 +1772,45 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                           # apply_bound_psi_star=True
                         )
 
-sol_c = var.var_from_vector(sol.x, p)    
-sol_c.scale_tau(p)
+sol_c = var.var_from_vector(sol.x, p)   
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
 
-# sol_c.compute_non_solver_quantities(p)
+# E = np.einsum('nis,ns,is,is,ns,ns->nis',
+#               1/sol_c.phi,
+#               np.diagonal(sol_c.phi).transpose(),
+#               sol_c.w[:,None]**p.alpha[None,:],
+#               sol_c.price_indices[:,None]**(1-p.alpha[None,:]),
+#               1/(sol_c.w[:,None]**p.alpha[None,:]),
+#               1/(sol_c.price_indices[:,None]**(1-p.alpha[None,:])))
+
+# tau = np.einsum('nis,is,ns->nis',
+#                 E,
+#                 p.T[:,None]**(1/p.theta[None,:]),
+#                 p.T[:,None]**(-1/p.theta[None,:]))
+
+ 
+# sol_c.scale_tau(p)
+# sol_c.scale_P(p)
+# sol_c.compute_non_solver_quantities(p) 
+
+# E2 = np.einsum('nis,ns,is,is,ns,ns->nis',
+#               1/sol_c.phi,
+#               np.diagonal(sol_c.phi).transpose(),
+#               sol_c.w[:,None]**p.alpha[None,:],
+#               sol_c.price_indices[:,None]**(1-p.alpha[None,:]),
+#               1/(sol_c.w[:,None]**p.alpha[None,:]),
+#               1/(sol_c.price_indices[:,None]**(1-p.alpha[None,:])))
+
+# tau2 = np.einsum('nis,is,ns->nis',
+#                 E,
+#                 p.T[:,None]**(1/p.theta[None,:]),
+#                 p.T[:,None]**(-1/p.theta[None,:]))
+
+# # sol_c.compute_non_solver_quantities(p)
 list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
-                   'SINNOVPATEU']
+                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+                    'SINNOVPATEU']
 m = moments(list_of_moments)
 m.load_data()
 m.compute_moments(sol_c,p)
