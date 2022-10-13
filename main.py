@@ -33,8 +33,8 @@ class parameters:
         self.k = 1.33350683                 #
         self.rho = 0.02  # 0.001 - 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
-        self.fe = np.ones(S)  # could be over one
-        self.fo = np.ones(S)  # could be over one
+        self.fe = np.ones(S)*0.1  # could be over one
+        self.fo = np.ones(S)*0.1  # could be over one
         self.sigma = np.ones(S)*3  #
         self.theta = np.ones(S)*5   #
         self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
@@ -917,7 +917,7 @@ class moments:
         self.STFLOW_target = (self.ccs_moments.trade/
                               self.ccs_moments.trade.sum()).values.reshape(N,N,S)
         self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
-        self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.cc_moments['patent flows'].sum()
+        self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
         # self.SPFLOW_target = self.cc_moments['patent flows'].values
         # self.SPFLOW_target = self.SPFLOW_target.reshape((N,N))/self.SPFLOW_target.sum()
         self.OUT_target = self.c_moments.expenditure.sum()/self.unit
@@ -1742,7 +1742,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     return sol_inst, init
 
 #%% fixed point solver
-# p = parameters(n=7,s=2)
+p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
 # p.load_data('calibration_results_matched_trade_flows/history2/190/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
