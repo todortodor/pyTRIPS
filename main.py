@@ -177,9 +177,19 @@ class parameters:
         self.calib_parameters = None
         self.guess = None
         
+    def get_signature_list(self):
+        signature_p = []
+        for param in self.calib_parameters: 
+            signature_p.extend([param]*np.array(getattr(self,param))[self.mask[param]].size)
+        return signature_p
+        
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
+    
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
     
     @staticmethod
     def get_list_of_params():
@@ -850,19 +860,19 @@ class moments:
             self.list_of_moments = list_of_moments
         self.weights_dict = {'GPDIFF':1, 
                              'GROWTH':1, 
-                             'KM':5, 
-                             'OUT':10, 
-                             'RD':5, 
-                             'RP':10, 
+                             'KM':1, 
+                             'OUT':1, 
+                             'RD':1, 
+                             'RP':1, 
                              'SPFLOW':1, 
-                             'SRDUS':5, 
+                             'SRDUS':1, 
                              'SRGDP':1, 
                              'STFLOW':1,
-                             'JUPCOST':5,
+                             'JUPCOST':1,
                              'TP':1,
                              'Z':1,
-                             'SDOMTFLOW':10,
-                             'SINNOVPATEU':5}
+                             'SDOMTFLOW':1,
+                             'SINNOVPATEU':1}
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
         
@@ -1194,7 +1204,7 @@ class moments:
             else:
                 mo = getattr(self,mom)
                 tar = getattr(self,mom+'_target')
-                i = 5 #
+                i = 2 #
                 # while mo/(i*tar)+(i-1)/i <= 0:
                 #     i += 1
                 # setattr(self,
@@ -1793,13 +1803,14 @@ m.plot_moments(m.list_of_moments)
 
 #%% calibration
 
-def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+def calibration_func(vec_parameters,p,m,v0=None,hist=None,
+                     start_time=0,update=True):
     p.update_parameters(vec_parameters)
     try:
         v0 = p.guess
     except:
         pass
-    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
                                  accelerate=False,
                                  accelerate_when_stable=True,
                                  plot_cobweb=False,
@@ -1819,7 +1830,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                 
     if sol.status == 'failed':
         print('trying with good guess without acceleration')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
                                      accelerate=False,
                                      accelerate_when_stable=False,
                                      plot_cobweb=False,
@@ -1830,7 +1841,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                      max_count=5e3)
     if sol.status == 'failed':
         print('trying with standard guess')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-14,
                                      accelerate=False,
                                      accelerate_when_stable=True,
                                      plot_cobweb=False,
@@ -1850,7 +1861,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
        
     if sol.status == 'failed':
         print('trying with standard guess without acceleration')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-14,
                                      accelerate=False,
                                      accelerate_when_stable=False,
                                      plot_cobweb=False,
@@ -1879,26 +1890,30 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         if hist.count%40 == 0:
             hist.plot()
         if hist.count%200==0:
-            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta_US : ', p.delta[0,1])
+            print('fe : ',p.fe[1],'fo : ',p.fo[1], 
+                  'delta : ', p.delta[:,1])
         if hist.count%200==0:
-            hist.save(path = './calibration_results_matched_trade_flows/history9/', p = p)
+            hist.save(path = './calibration_results_matched_trade_flows/history14/', p = p)
     hist.count += 1
-    p.guess = sol_c.vector_from_var()
+    if update:
+        p.guess = sol_c.vector_from_var()
     # print(hist.count)
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None
-        hist.save(path = './calibration_results/fails2/', p = p)
+        # hist.save(path = './calibration_results/fails2/', p = p)
         return np.full_like(m.deviation_vector(),1e10)
     else:
         return m.deviation_vector() 
 
 #%%    
-p = parameters(n=7,s=2)
-# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu_tilde']
-# p.load_data('calibration_results/history38/188/')
-start_time = time.perf_counter()
+new_run = False
+if new_run:
+    p = parameters(n=7,s=2)
+    # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
+    p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde']
+    # p.load_data('calibration_results/history38/188/')
+    start_time = time.perf_counter()
 
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
@@ -1906,29 +1921,34 @@ list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
                    'SINNOVPATEU']
 m = moments(list_of_moments)
-hist = history(*tuple(m.list_of_moments+['objective']))
+if new_run:
+    hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
 bounds = p.make_parameters_bounds()
 # collec_of_guess = load_collection_of_guess()
-
-test_ls = optimize.least_squares(fun = calibration_func,    
-                    x0 = p.make_p_vector(), 
-                    args = (p,m,p.guess,hist,start_time), 
-                    bounds = bounds,
-                    # method= 'dogbox',
-                    # loss='arctan',
-                    # jac='3-point',
-                    max_nfev=1e8,
-                    ftol=1e-14, 
-                    xtol=1e-14, 
-                    gtol=1e-14,
-                    # f_scale=scale,
-                    verbose = 2)
+cond = True
+while cond:
+    test_ls = optimize.least_squares(fun = calibration_func,    
+                        x0 = p.make_p_vector(), 
+                        args = (p,m,p.guess,hist,start_time), 
+                        bounds = bounds,
+                        # method= 'dogbox',
+                        # loss='arctan',
+                        # jac='3-point',
+                        max_nfev=1e8,
+                        ftol=1e-14, 
+                        xtol=1e-15, 
+                        gtol=1e-14,
+                        # f_scale=scale,
+                        verbose = 2)
+    cond = test_ls.cost > 10 and test_ls.nfev>25
 finish_time = time.perf_counter()
 print('minimizing time',finish_time-start_time)
 
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                        cobweb_anim=False,tol =1e-10,
+p_sol = p.copy()
+p_sol.update_parameters(test_ls.x)
+sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1949,10 +1969,97 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                           # apply_bound_psi_star=True
                         )
 
-sol_c = var.var_from_vector(sol.x, p)    
-sol_c.scale_tau(p)
-sol_c.scale_P(p)
+# sol_c = var.var_from_vector(sol.x, p)    
+# sol_c.scale_tau(p)
+# sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
+m.compute_moments(sol_c,p)
+m.compute_Z(sol_c,p)
+m.compute_moments_deviations()
+
+#%%
+
+pd.DataFrame(test_ls.grad, index = p.get_signature_list()
+             ).to_csv('calibration_results_matched_trade_flows//grad.csv')
+pd.DataFrame(test_ls.jac, 
+             columns = p.get_signature_list(), 
+             index=m.get_signature_list()
+             ).to_csv('calibration_results_matched_trade_flows//jac.csv')
+
+#%%
+jac = optimize.approx_fprime(p_sol.make_p_vector(), 
+                             calibration_func,1e-16,
+                             p,m,p.guess,hist,start_time,False)
+
+signature_p = []
+for param in p.calib_parameters: 
+    signature_p.extend([param]*np.array(getattr(p,param))[p.mask[param]].size)
+
+fig, ax = plt.subplots(figsize = (14,10))
+ax.plot(jac[-1,:])
+plt.xticks([i for i in range(len(signature_p))])
+ax.set_xticklabels(signature_p, fontsize = 20, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the deviation of the moment OUT with respect to the parameters :', fontsize = 20)
+plt.savefig('calibration_results_matched_trade_flows/out_study/OUT derivatives')
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,14])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fe', fontsize = 20)
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,22])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fo', fontsize = 20)
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,23])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : g_o', fontsize = 20)
+plt.show()
+
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,15+i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : T_'+str(i), fontsize = 20)
+    plt.show()
+    
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : eta_'+str(i), fontsize = 20)
+    plt.show()
+    
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,7+i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : delta_'+str(i), fontsize = 20)
+    plt.show()
 
 #%% load parameters sets
 
