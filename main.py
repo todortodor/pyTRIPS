@@ -44,8 +44,8 @@ class parameters:
         self.g_0 = 0.01  # makes sense to be low
         self.kappa = 0.5            #
         self.gamma = 0.5       #
-        self.delta = np.ones((N, S))
-        self.nu = np.ones(S)*0.5   #
+        self.delta = np.ones((N, S))*0.05
+        self.nu = np.ones(S)*0.5  #
         self.nu_tilde = np.ones(S)*0.5
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
@@ -154,7 +154,7 @@ class parameters:
                     # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    'delta':[np.s_[::S]],#np.s_[S-1]],
+                    'delta':[np.s_[::S]],#,np.s_[1]],
                     'g_0':None,
                     'alpha':None,
                     'beta':None,
@@ -201,7 +201,7 @@ class parameters:
         Z_guess = self.data.expenditure.values/self.unit
         w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)*100
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
-        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*1000
+        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*20000
         phi_guess = np.ones((self.N,self.N,self.S)).ravel()#*0.01
         vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
         return vec
@@ -1762,8 +1762,8 @@ p = parameters(n=7,s=2)
 # phi_guess = np.ones((p.N,p.N,p.S)).ravel()#*0.01
 # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
 # guess = np.random.rand(p.guess_from_params().size).reshape(p.guess_from_params().shape)
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                        cobweb_anim=False,tol =1e-10,
+sol, sol_c = fixed_point_solver(p,#x0=p.guess,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1785,20 +1785,20 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         )
 
 sol_c = var.var_from_vector(sol.x, p)    
-sol_c.scale_tau(p)
-sol_c.scale_P(p)
-sol_c.compute_non_solver_quantities(p) 
+# sol_c.scale_tau(p)
+# sol_c.scale_P(p)
+# sol_c.compute_non_solver_quantities(p) 
 
-# sol_c.compute_non_solver_quantities(p)
-list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
-                   'SINNOVPATEU']
-m = moments(list_of_moments)
-m.load_data()
-m.compute_moments(sol_c,p)
-m.compute_Z(sol_c,p)
-m.compute_moments_deviations()
-m.plot_moments(m.list_of_moments)
+# # sol_c.compute_non_solver_quantities(p)
+# list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+#                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+#                    'SINNOVPATEU']
+# m = moments(list_of_moments)
+# m.load_data()
+# m.compute_moments(sol_c,p)
+# m.compute_Z(sol_c,p)
+# m.compute_moments_deviations()
+# m.plot_moments(m.list_of_moments)
 # p.guess = sol_c.vector_from_var()
 
 #%% calibration
@@ -1893,7 +1893,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 
                   'delta : ', p.delta[:,1])
         if hist.count%200==0:
-            hist.save(path = './calibration_results_matched_trade_flows/history14/', p = p)
+            hist.save(path = './calibration_results_matched_trade_flows/history16/', p = p)
     hist.count += 1
     if update:
         p.guess = sol_c.vector_from_var()
@@ -1907,11 +1907,11 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,
         return m.deviation_vector() 
 
 #%%    
-new_run = False
+new_run = True
 if new_run:
     p = parameters(n=7,s=2)
     # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-    p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde']
+    p.calib_parameters = ['eta','delta','fe','T','fo','g_0']
     # p.load_data('calibration_results/history38/188/')
     start_time = time.perf_counter()
 
@@ -1972,19 +1972,19 @@ sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
 # sol_c = var.var_from_vector(sol.x, p)    
 # sol_c.scale_tau(p)
 # sol_c.scale_P(p)
-sol_c.compute_non_solver_quantities(p) 
-m.compute_moments(sol_c,p)
-m.compute_Z(sol_c,p)
+sol_c.compute_non_solver_quantities(p_sol) 
+m.compute_moments(sol_c,p_sol)
+m.compute_Z(sol_c,p_sol)
 m.compute_moments_deviations()
 
 #%%
 
 pd.DataFrame(test_ls.grad, index = p.get_signature_list()
-             ).to_csv('calibration_results_matched_trade_flows//grad.csv')
+             ).to_csv('calibration_results_matched_trade_flows/16/grad.csv')
 pd.DataFrame(test_ls.jac, 
              columns = p.get_signature_list(), 
              index=m.get_signature_list()
-             ).to_csv('calibration_results_matched_trade_flows//jac.csv')
+             ).to_csv('calibration_results_matched_trade_flows/16/jac.csv')
 
 #%%
 jac = optimize.approx_fprime(p_sol.make_p_vector(), 
