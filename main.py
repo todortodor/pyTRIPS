@@ -29,6 +29,7 @@ class parameters:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
+        # self.T = np.ones((N, S))*1.5  # could be anything >0
         self.T = np.ones(N)*1.5  # could be anything >0
         self.k = 1.33350683                 #
         self.rho = 0.02  # 0.001 - 0.02
@@ -44,9 +45,9 @@ class parameters:
         self.g_0 = 0.01  # makes sense to be low
         self.kappa = 0.5            #
         self.gamma = 0.5       #
-        self.delta = np.ones((N, S))
-        self.nu = np.ones(S)*0.5   #
-        self.nu_tilde = np.ones(S)*0.5
+        self.delta = np.ones((N, S))*0.05
+        self.nu = np.ones(S)*0.15   #
+        self.nu_tilde = np.ones(S)*0.075
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -106,7 +107,7 @@ class parameters:
                         'theta':cou,
                         'rho':cou,
                         'gamma':cou,
-                        'zeta':cou,
+                        'zeta':1,
                         'nu':cou,
                         'nu_tilde':cou,
                         'kappa':1-cou,
@@ -138,7 +139,9 @@ class parameters:
                     'g_0':pd.Index(['scalar']),
                     'alpha':pd.Index(self.sectors, name='sector'),
                     'beta':pd.Index(self.sectors, name='sector'),
-                     'T':pd.Index(self.countries, name='country'),
+                     # 'T':pd.MultiIndex.from_product([self.countries,self.sectors]
+                     #                                    , names=['country','sector']),
+                     'T':pd.Index(self.countries, name = 'country'),
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
@@ -154,7 +157,7 @@ class parameters:
                     # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    'delta':[np.s_[::S]],#np.s_[S-1]],
+                    'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
                     'alpha':None,
                     'beta':None,
@@ -184,6 +187,12 @@ class parameters:
     def copy(self):
         frame = deepcopy(self)
         return frame
+    
+    def get_signature_list(self):
+        signature_p = []
+        for param in self.calib_parameters: 
+            signature_p.extend([param]*np.array(getattr(self,param))[self.mask[param]].size)
+        return signature_p
     
     @staticmethod
     def get_list_of_params():
@@ -713,11 +722,18 @@ class var:
         # self.tau = np.ones((p.N,p.N,p.S))
         if price_to_compute is None:
             price_to_compute = self.price_indices
-        tau = np.einsum('nis,is,is,is->nis',
-                        1/self.phi,
-                        p.T[:,None]**(1/p.theta[None,:]),
-                        self.w[:,None]**(-p.alpha[None,:]),
-                        price_to_compute[:,None]**(p.alpha[None,:]-1))
+        if p.T.size == p.N:
+            tau = np.einsum('nis,is,is,is->nis',
+                            1/self.phi,
+                            p.T[:,None]**(1/p.theta[None,:]),
+                            self.w[:,None]**(-p.alpha[None,:]),
+                            price_to_compute[:,None]**(p.alpha[None,:]-1))
+        else:
+            tau = np.einsum('nis,is,is,is->nis',
+                            1/self.phi,
+                            p.T**(1/p.theta[None,:]),
+                            self.w[:,None]**(-p.alpha[None,:]),
+                            price_to_compute[:,None]**(p.alpha[None,:]-1))
         if assign:
             self.tau = tau
         else:
@@ -868,7 +884,7 @@ class moments:
                              'JUPCOST':1,
                              'TP':1,
                              'Z':1,
-                             'SDOMTFLOW':1,
+                             'SDOMTFLOW':100,
                              'SINNOVPATEU':1}
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
@@ -952,7 +968,8 @@ class moments:
                       mom+' target  : ',
                       getattr(self,mom+'_target'))
                 scalar_moments.append(mom)
-                scalar_moments_ratio.append(getattr(self,mom)/getattr(self,mom+'_target'))
+                # scalar_moments_ratio.append(getattr(self,mom)/getattr(self,mom+'_target'))
+                scalar_moments_ratio.append(getattr(self,mom+'_deviation'))
             else:
                 if plot == True:
                     if mom != 'STFLOW' and mom != 'SDOMTFLOW':
@@ -1023,9 +1040,9 @@ class moments:
                
         fig,ax = plt.subplots(figsize = (12,8))
         ax.scatter(scalar_moments,scalar_moments_ratio)
-        ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        if np.any(np.array(scalar_moments_ratio)>10):
-            plt.yscale('log')
+        ax.plot(scalar_moments,np.zeros_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
+        # if np.any(np.array(scalar_moments_ratio)>10):
+        #     plt.yscale('log')
         plt.title('scalar moments, ratio of moment over moment_target')
         if save_plot is not None:
             plt.savefig(save_plot+'_scalar_moments')
@@ -1055,7 +1072,8 @@ class moments:
                 scalar_moments.append(mom)
                 print('\n'+mom+' target :',getattr(moms_c[0],mom+'_target'))
                 for i,mom_c in enumerate(moms_c):
-                    scalar_moments_collection[i].append(getattr(mom_c,mom)/getattr(mom_c,mom+'_target'))
+                    # scalar_moments_collection[i].append(getattr(mom_c,mom)/getattr(mom_c,mom+'_target'))
+                    scalar_moments_collection[i].append(getattr(mom_c,mom+'_deviation')**2)
                     print(coms[i]+' : ',getattr(mom_c,mom))
             else:
                 fig,ax = plt.subplots(figsize = (12,8))
@@ -1083,10 +1101,11 @@ class moments:
         fig,ax = plt.subplots(figsize = (12,8))
         for i,scalars_of_one_run in enumerate(scalar_moments_collection):
             ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i])
-        ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        if np.any([np.any(np.array(scalars_of_one_run)>10) 
-                   for scalars_of_one_run in scalar_moments_collection]):
-            plt.yscale('log')
+        # ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
+        ax.plot(scalar_moments,np.zeros_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
+        # if np.any([np.any(np.array(scalars_of_one_run)>10) 
+        #            for scalars_of_one_run in scalar_moments_collection]):
+        #     plt.yscale('log')
         plt.title('scalar moments, ratio of moment over moment_target')
         plt.legend()
         plt.show()
@@ -1196,12 +1215,12 @@ class moments:
                 #         )
                 setattr(self,
                         mom+'_deviation',
-                        self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
+                        self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
                         )
             else:
                 mo = getattr(self,mom)
                 tar = getattr(self,mom+'_target')
-                i = 5 #
+                # i = 5 #
                 # while mo/(i*tar)+(i-1)/i <= 0:
                 #     i += 1
                 # setattr(self,
@@ -1209,15 +1228,22 @@ class moments:
                 #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
                 #         /np.log(getattr(self,mom+'_target').size+1)
                 #         )
-                setattr(self,
-                        mom+'_deviation',
-                        self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
-                        /getattr(self,mom+'_target').size
-                        )
                 # setattr(self,
                 #         mom+'_deviation',
                 #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
                 #         )
+                # setattr(self,
+                #         mom+'_deviation',
+                #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
+                #         /getattr(self,mom+'_target').size
+                #         )
+                setattr(self,
+                        mom+'_deviation',
+                        self.weights_dict[mom]*np.abs(mo-tar)/tar
+                        /getattr(self,mom+'_target').size
+                        )
+                # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
+                
             
     def deviation_vector(self,list_of_moments = None):
         if list_of_moments is None:
@@ -1482,7 +1508,7 @@ def full_load_parameters_set(path):
     p = parameters()
     p.load_data(path)
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                            cobweb_anim=False,tol =1e-14,
+                            cobweb_anim=False,tol =1e-12,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -1671,16 +1697,21 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         # print(w[0],l_R[0],p.labor[0])
         # if np.any(w<0):
         #     break
-        temp = var.var_from_vector(x_new,p,compute=False)
-        temp.scale_tau(p)
-        temp.scale_P(p)
-        x_new = temp.vector_from_var()
+        # temp = var.var_from_vector(x_new,p,compute=False)
+        # temp.scale_tau(p)
+        # temp.scale_P(p)
+        # x_new = temp.vector_from_var()
         # print(x_new)
+        
         
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
                       for qty in ['w','Z','psi_star','l_R','phi']]
+        # plt.plot(x_new_decomp['phi']-x_old_decomp['phi'])
+        # # plt.yscale('log')
+        # plt.show()
+        # print([qty+' : '+str(np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])) for qty in ['w','Z','psi_star','l_R','phi']])
         # conditions = [np.linalg.norm((x_new_decomp[qty] - x_old_decomp[qty])/x_old_decomp[qty]) > tol
         #               for qty in ['w','Z','psi_star','l_R','phi']]
         condition = np.any(conditions)
@@ -1743,15 +1774,15 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             
     if plot_convergence:
         plt.semilogy(convergence, label = 'convergence')
-        plt.semilogy(norm, label = 'norm')
+        # plt.semilogy(norm, label = 'norm')
         plt.legend()
         plt.show()
     return sol_inst, init
 
 #%% fixed point solver
-p = parameters(n=7,s=2)
+# p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-p.load_data('calibration_results_matched_trade_flows/18/',p.get_list_of_params())
+# p.load_data('calibration_results_matched_trade_flows/18/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
 # w_guess = p.data.gdp.values*p.unit_labor/(p.data.labor.values*p.unit)*100
 # l_R_guess = np.repeat(p.labor[:,None]/200, p.S-1, axis=1).ravel()
@@ -1759,8 +1790,8 @@ p.load_data('calibration_results_matched_trade_flows/18/',p.get_list_of_params()
 # phi_guess = np.ones((p.N,p.N,p.S)).ravel()#*0.01
 # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
 # guess = np.random.rand(p.guess_from_params().size).reshape(p.guess_from_params().shape)
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                        cobweb_anim=False,tol =1e-14,
+sol, sol_c = fixed_point_solver(p,#x0=p.guess,
+                        cobweb_anim=False,tol =1e-13,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1769,27 +1800,27 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         safe_convergence=0.001,
                         disp_summary=True,
                         damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
+                        max_count = 5e3,
+                        accel_memory = 100, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
+                        damping_post_acceleration=10
                         # damping=10
                           # apply_bound_psi_star=True
                         )
 
-sol_c = var.var_from_vector(sol.x, p)    
-sol_c.scale_tau(p)
-sol_c.scale_P(p)
+# sol_c = var.var_from_vector(sol.x, p)    
+# sol_c.scale_tau(p)
+# sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
 
-# sol_c.compute_non_solver_quantities(p)
-list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
-                   'SINNOVPATEU']
+# # sol_c.compute_non_solver_quantities(p)
+# list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+#                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+#                    'SINNOVPATEU']
 m = moments(list_of_moments)
 m.load_data()
 m.compute_moments(sol_c,p)
@@ -1798,7 +1829,7 @@ m.compute_moments_deviations()
 m.plot_moments(m.list_of_moments)
 # p.guess = sol_c.vector_from_var()
 
-#%% calibration
+#%% calibration func
 
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
@@ -1806,7 +1837,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         v0 = p.guess
     except:
         pass
-    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
                                  accelerate=False,
                                  accelerate_when_stable=True,
                                  plot_cobweb=False,
@@ -1823,10 +1854,28 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                  accel_max_weight_norm=1e6,
                                  damping_post_acceleration=5
                                  )
-                                
+    if sol.status == 'failed': 
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
+                                     accelerate=False,
+                                     accelerate_when_stable=True,
+                                     plot_cobweb=False,
+                                     plot_convergence=False,
+                                     cobweb_qty='phi',
+                                     disp_summary=False,
+                                     safe_convergence=0.001,
+                                     max_count=1e3,
+                                     accel_memory = 50, 
+                                     accel_type1=True, 
+                                     accel_regularization=1e-10,
+                                     accel_relaxation=0.5, 
+                                     accel_safeguard_factor=1, 
+                                     accel_max_weight_norm=1e6,
+                                     damping_post_acceleration=5
+                                     )
+                            
     if sol.status == 'failed':
         print('trying with good guess without acceleration')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
                                      accelerate=False,
                                      accelerate_when_stable=False,
                                      plot_cobweb=False,
@@ -1837,7 +1886,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                      max_count=5e3)
     if sol.status == 'failed':
         print('trying with standard guess')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
                                      accelerate=False,
                                      accelerate_when_stable=True,
                                      plot_cobweb=False,
@@ -1857,7 +1906,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
        
     if sol.status == 'failed':
         print('trying with standard guess without acceleration')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
                                      accelerate=False,
                                      accelerate_when_stable=False,
                                      plot_cobweb=False,
@@ -1886,56 +1935,72 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         if hist.count%40 == 0:
             hist.plot()
         if hist.count%200==0:
-            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta_US : ', p.delta[0,1])
+            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
+                  , 'nu : ', p.nu, 'nu_tilde : ', p.nu_tilde)
         if hist.count%200==0:
-            hist.save(path = './calibration_results_matched_trade_flows/history9/', p = p)
+            hist.save(path = './calibration_results_matched_trade_flows/history99/', p = p)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
     # print(hist.count)
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None
-        hist.save(path = './calibration_results/fails2/', p = p)
+        # hist.save(path = './calibration_results/fails2/', p = p)
         return np.full_like(m.deviation_vector(),1e10)
     else:
         return m.deviation_vector() 
 
-#%%    
-p = parameters(n=7,s=2)
-# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu']
-# p.load_data('calibration_results/history38/188/')
-start_time = time.perf_counter()
+#%% calibration   
+
+new_run = True
+if new_run:
+    p = parameters(n=7,s=2)
+    # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
+    p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde','zeta']
+    # p.load_data('calibration_results_matched_trade_flows/history27/6/')
+    start_time = time.perf_counter()
 
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
-list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
                    'SINNOVPATEU']
 m = moments(list_of_moments)
-hist = history(*tuple(m.list_of_moments+['objective']))
+if new_run:
+    hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
 bounds = p.make_parameters_bounds()
 # collec_of_guess = load_collection_of_guess()
-
-test_ls = optimize.least_squares(fun = calibration_func,    
-                    x0 = p.make_p_vector(), 
-                    args = (p,m,p.guess,hist,start_time), 
-                    bounds = bounds,
-                    # method= 'dogbox',
-                    # loss='arctan',
-                    # jac='3-point',
-                    max_nfev=1e8,
-                    ftol=1e-14, 
-                    xtol=1e-14, 
-                    gtol=1e-14,
-                    # f_scale=scale,
-                    verbose = 2)
+cond = True
+iterations = 0
+while cond:
+    if iterations == 0:
+        x0 = p.make_p_vector()
+    else:
+        x0 = test_ls.x
+    test_ls = optimize.least_squares(fun = calibration_func,    
+                        x0 = x0, 
+                        args = (p,m,p.guess,hist,start_time), 
+                        bounds = bounds,
+                        # method= 'dogbox',
+                        # loss='arctan',
+                        # jac='3-point',
+                        max_nfev=1e8,
+                        ftol=1e-14, 
+                        xtol=1e-14, 
+                        gtol=1e-14,
+                        # f_scale=scale,
+                        verbose = 2)
+    cond = test_ls.cost>1 and test_ls.nfev>30
+    iterations += 1
 finish_time = time.perf_counter()
 print('minimizing time',finish_time-start_time)
 
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                        cobweb_anim=False,tol =1e-10,
+p_sol = p.copy()
+p_sol.update_parameters(test_ls.x)
+
+sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1956,10 +2021,14 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                           # apply_bound_psi_star=True
                         )
 
-sol_c = var.var_from_vector(sol.x, p)    
-sol_c.scale_tau(p)
-sol_c.scale_P(p)
-sol_c.compute_non_solver_quantities(p) 
+sol_c = var.var_from_vector(sol.x, p_sol)    
+sol_c.scale_tau(p_sol)
+sol_c.scale_P(p_sol)
+sol_c.compute_non_solver_quantities(p_sol) 
+m.compute_moments(sol_c,p)
+m.compute_Z(sol_c,p)
+m.compute_moments_deviations()
+
 
 #%% load parameters sets
 
@@ -1975,15 +2044,19 @@ p15, sol15, m15 = full_load_parameters_set('calibration_results_matched_trade_fl
 p16, sol16, m16 = full_load_parameters_set('calibration_results_matched_trade_flows/16/')
 p17, sol17, m17 = full_load_parameters_set('calibration_results_matched_trade_flows/17/')
 p18, sol18, m18 = full_load_parameters_set('calibration_results_matched_trade_flows/18/')
+p27, sol27, m27 = full_load_parameters_set('calibration_results_matched_trade_flows/27/')
+p24, sol24, m24 = full_load_parameters_set('calibration_results_matched_trade_flows/24/')
+p21, sol21, m21 = full_load_parameters_set('calibration_results_matched_trade_flows/21/')
+p22, sol22, m22 = full_load_parameters_set('calibration_results_matched_trade_flows/22/')
 
 #%% writing results as excel
 
-# commentary = 'Fixed delta_US = 0.05, nu = 0.05, nu_tilde = 0.05'
-# write_calibration_results(
-#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/18',
-#     p,m,sol_c,commentary = commentary)
-# m8.plot_moments(m8.list_of_moments, 
-#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/8')
+commentary = 'Same conditions as 14 but with calibrated Zeta'
+write_calibration_results(
+    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/24',
+    p24,m24,sol24,commentary = commentary)
+m24.plot_moments(m24.list_of_moments, 
+                save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/24')
 
 #%% build dic
 
@@ -2012,10 +2085,14 @@ p18, sol18, m18 = full_load_parameters_set('calibration_results_matched_trade_fl
 #         }
 dic = {
         '14 : No fixed quantity':m14,
-        '15 : fixed nu = 0.1, nu_tilde = 0.05':m15,
-        '16 : fixed nu = 0.05, nu_tilde = 0.01':m16,
+        # '15 : fixed nu = 0.1, nu_tilde = 0.05':m15,
+        # '16 : fixed nu = 0.05, nu_tilde = 0.01':m16,
         '17 : fixed delta_US = 0.05':m17,
-        '18 : fixed nu = nu_tilde = delta_US = 0.05':m18
+        # '18 : fixed nu = nu_tilde = delta_US = 0.05':m18,
+        '27 : fixed delta_US = 0.05, calibrated zeta':m27,
+        '24 : No fixed quantity, calibrated zeta':m24,
+        '21 : Different loss function':m21,
+        '22 : Different loss function':m22,
         }
 
 
@@ -2027,7 +2104,10 @@ dic = {
         '15 : fixed nu = 0.1, nu_tilde = 0.05':p15,
         '16 : fixed nu = 0.05, nu_tilde = 0.01':p16,
         '17 : fixed delta_US = 0.05':p17,
-        '18 : fixed nu = nu_tilde = delta_US = 0.05':p18
+        '18 : fixed nu = nu_tilde = delta_US = 0.05':p18,
+        '27 : fixed delta_US = 0.05, calibrated zeta':p27,
+        '24 : No fixed quantity, calibrated zeta':p24,
+        '21 : Different loss function':p21
         }
 
 fig,ax = plt.subplots(figsize = (12,8))
@@ -2036,7 +2116,7 @@ for com,par in dic.items():
     ax.plot(par.countries,par.delta[...,1],label=com)
 plt.legend()
 plt.title(title)
-plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/delta')
+# plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/delta')
 plt.show()    
 
 fig,ax = plt.subplots(figsize = (12,8))
@@ -2045,7 +2125,7 @@ for com,par in dic.items():
     ax.plot(par.countries,1/par.delta[...,1],label=com)
 plt.legend()
 plt.title(title)
-plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/one_over_delta')
+# plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/one_over_delta')
 plt.show()   
 
 fig,ax = plt.subplots(figsize = (12,8))
@@ -2055,7 +2135,7 @@ for com,par in dic.items():
 plt.legend()
 plt.yscale('log')
 plt.title(title)
-plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/T')
+# plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/T')
 plt.show()   
 
 fig,ax = plt.subplots(figsize = (12,8))
@@ -2064,23 +2144,33 @@ for com,par in dic.items():
     ax.plot(par.countries,par.eta[...,1],label=com)
 plt.legend()
 plt.title(title)
-plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/eta')
-plt.show()   
+# plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/eta')
+plt.show() 
+
+fig,ax = plt.subplots(figsize = (12,8))
+title = 'fo, fe' 
+for com,par in dic.items():
+    ax.scatter(['fo','fe', 'nu ratio'],[par.fo[1], par.fe[1], par.nu[1]],label=com)
+plt.legend()
+plt.title(title)
+# plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/eta')
+plt.show()     
 
 #%% counterfactual
 
 p = p17.copy()
 sols_c = []
-
-for delta in np.linspace(0.1,0.9,100):
+deltas = np.linspace(0.3,1,10)
+for delta in deltas:
+    print(delta)
     p.delta[0,1] = delta
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                            cobweb_anim=False,tol =1e-14,
+                            cobweb_anim=False,tol =1e-12,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
-                            plot_convergence=True,
-                            plot_cobweb=True,
+                            plot_convergence=False,
+                            plot_cobweb=False,
                             safe_convergence=0.001,
                             disp_summary=True,
                             damping = 10,
@@ -2100,10 +2190,21 @@ for delta in np.linspace(0.1,0.9,100):
     sol_c.scale_tau(p)
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_welfare(p)
     p.guess = sol_c.vector_from_var()
     
     sols_c.append(sol_c)
-    
+
+
+#%% plot counterfactual
+
+
+# deltas = np.linspace(0.1,0.9,100)
+for i in range(7):
+    fig,ax = plt.subplots(figsize = (12,8))
+    ax.plot(deltas, [sol.Z[i] for sol in sols_c], label = p.countries[i])    
+    plt.legend()
+    plt.show()
 
 
 #%% tau smaller than one discussion
@@ -2183,9 +2284,87 @@ plt.show()
 
 #%%
 
-jac = optimize._numdiff.approx_derivative(fun = calibration_func,
-                                    x0 = p.make_p_vector(), 
-                                    args = (p,m,p.guess,hist,start_time,collec_of_guess))
+pd.DataFrame(test_ls.grad, index = p.get_signature_list()
+             ).to_csv('calibration_results_matched_trade_flows/16/grad.csv')
+pd.DataFrame(test_ls.jac, 
+             columns = p.get_signature_list(), 
+             index=m.get_signature_list()
+             ).to_csv('calibration_results_matched_trade_flows/16/jac.csv')
+
+#%%
+jac = optimize.approx_fprime(p_sol.make_p_vector(), 
+                             calibration_func,1e-16,
+                             p,m,p.guess,hist,start_time,False)
+
+signature_p = []
+for param in p.calib_parameters: 
+    signature_p.extend([param]*np.array(getattr(p,param))[p.mask[param]].size)
+
+fig, ax = plt.subplots(figsize = (14,10))
+ax.plot(jac[-1,:])
+plt.xticks([i for i in range(len(signature_p))])
+ax.set_xticklabels(signature_p, fontsize = 20, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the deviation of the moment OUT with respect to the parameters :', fontsize = 20)
+plt.savefig('calibration_results_matched_trade_flows/out_study/OUT derivatives')
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,14])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fe', fontsize = 20)
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,22])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fo', fontsize = 20)
+plt.show()
+
+signature_m = m.get_signature_list()
+fig, ax = plt.subplots(figsize = (18,10))
+ax.plot(jac[:,23])
+plt.xticks([i for i in range(len(signature_m))])
+ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+plt.title('Derivatives of the  deviations of the moments with respect to the parameter : g_o', fontsize = 20)
+plt.show()
+
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,15+i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : T_'+str(i), fontsize = 20)
+    plt.show()
+    
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : eta_'+str(i), fontsize = 20)
+    plt.show()
+    
+for i in range(7):
+    signature_m = m.get_signature_list()
+    fig, ax = plt.subplots(figsize = (18,10))
+    ax.plot(jac[:,7+i])
+    plt.xticks([i for i in range(len(signature_m))])
+    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
+    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
+    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : delta_'+str(i), fontsize = 20)
+    plt.show()
 
 #%% dependance on T
 
