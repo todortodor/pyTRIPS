@@ -29,8 +29,8 @@ class parameters:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        # self.T = np.ones((N, S))*1.5  # could be anything >0
-        self.T = np.ones(N)*1.5  # could be anything >0
+        self.T = np.ones((N, S))*1.5  # could be anything >0
+        # self.T = np.ones(N)*1.5  # could be anything >0
         self.k = 1.33350683                 #
         self.rho = 0.02  # 0.001 - 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
@@ -55,9 +55,13 @@ class parameters:
         # self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
         # self.diag_mask = np.invert(self.off_diag_mask)
         
-        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/1e6
+        self.unit = 1e6
+        
+        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
         self.trade_flows = self.trade_flows.reshape((N,N,S))
-        self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
+        self.OUT = self.trade_flows.sum()
+        # self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
+        self.trade_shares = self.trade_flows/self.trade_flows.sum()
         # self.trade_shares = (self.trade_flows).reshape((N,N,S))
         
         self.data = pd.read_csv('data/country_moments.csv',index_col=[0])
@@ -82,7 +86,7 @@ class parameters:
         self.deficit_share_world_gdp = self.deficit_raw/self.data.output.sum() 
         
         # self.unit = self.gdp_raw.mean()
-        self.unit = 1e6
+        
         
         co = 1e-6
         cou = 1e5
@@ -139,9 +143,9 @@ class parameters:
                     'g_0':pd.Index(['scalar']),
                     'alpha':pd.Index(self.sectors, name='sector'),
                     'beta':pd.Index(self.sectors, name='sector'),
-                     # 'T':pd.MultiIndex.from_product([self.countries,self.sectors]
-                     #                                    , names=['country','sector']),
-                     'T':pd.Index(self.countries, name = 'country'),
+                    'T':pd.MultiIndex.from_product([self.countries,self.sectors]
+                                                        , names=['country','sector']),
+                     # 'T':pd.Index(self.countries, name = 'country'),
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
@@ -161,12 +165,12 @@ class parameters:
                     'g_0':None,
                     'alpha':None,
                     'beta':None,
-                     'T':None,
+                      'T':None,
                      'eta':[np.s_[::S]]}
         
         self.mask = {}
         
-        for par_name in ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta',
+        for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
                          'g_0','kappa','gamma','delta','nu','nu_tilde']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
@@ -196,7 +200,7 @@ class parameters:
     
     @staticmethod
     def get_list_of_params():
-        return ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta','g_0',
+        return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
          'kappa','gamma','delta','nu','nu_tilde']
             
     def guess_from_params(self):
@@ -701,8 +705,23 @@ class var:
         #     ).ravel()
         # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
         # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
-        # phi = self.phi*self.X/(p.trade_shares*(np.diagonal(self.X).transpose())[:,None,:])
-        phi = self.phi*p.trade_shares*(np.diagonal(self.X).transpose())[:,None,:]/self.X
+        # phi = self.phi*p.trade_shares*self.X.sum()/self.X
+        # phi = self.phi*(p.trade_shares*self.X.sum()/self.X)
+        temp = self.phi*(p.trade_flows/self.X)
+        phi = np.einsum('ns,ns,ns,nis,ns->nis',
+                        p.T**(1/p.theta[None,:]),
+                        self.w[:,None]**(-p.alpha[None,:]),
+                        self.price_indices[:,None]**(p.alpha[None,:]-1),
+                        temp,
+                        1/np.diagonal(temp).transpose())
+        # phi = phi/phi.mean()
+        # phi = np.ones_like(self.phi)
+        # phi[self.diag_mask] = np.einsum('ns,ns,ns,ns->ns',
+        #                 p.T**(1/p.theta[None,:]),
+        #                 self.w[:,None]**(-p.alpha[None,:]),
+        #                 self.price_indices[:,None]**(p.alpha[None,:]-1),
+        #                 (p.trade_flows/self.X)[self.diag_mask].reshape(p.N,p.S)).ravel()
+        # phi[self.off_diag_mask] = (p.trade_flows*self.phi/self.X)[self.off_diag_mask]
         return phi
     
     def compute_price_indices(self, p, assign = True):
@@ -718,47 +737,63 @@ class var:
         else:
             return price_indices
     
-    def compute_tau(self,p, assign = True, price_to_compute = None):
+    # def compute_tau(self,p, assign = True, price_to_compute = None):
+    #     # self.tau = np.ones((p.N,p.N,p.S))
+    #     if price_to_compute is None:
+    #         price_to_compute = self.price_indices
+    #     if p.T.size == p.N:
+    #         tau = np.einsum('nis,is,is,is->nis',
+    #                         1/self.phi,
+    #                         p.T[:,None]**(1/p.theta[None,:]),
+    #                         self.w[:,None]**(-p.alpha[None,:]),
+    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
+    #     else:
+    #         tau = np.einsum('nis,is,is,is->nis',
+    #                         1/self.phi,
+    #                         p.T**(1/p.theta[None,:]),
+    #                         self.w[:,None]**(-p.alpha[None,:]),
+    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
+    #     if assign:
+    #         self.tau = tau
+    #     else:
+    #         return tau
+    
+    def compute_tau(self,p, assign = True):
         # self.tau = np.ones((p.N,p.N,p.S))
-        if price_to_compute is None:
-            price_to_compute = self.price_indices
-        if p.T.size == p.N:
-            tau = np.einsum('nis,is,is,is->nis',
-                            1/self.phi,
-                            p.T[:,None]**(1/p.theta[None,:]),
-                            self.w[:,None]**(-p.alpha[None,:]),
-                            price_to_compute[:,None]**(p.alpha[None,:]-1))
-        else:
-            tau = np.einsum('nis,is,is,is->nis',
-                            1/self.phi,
-                            p.T**(1/p.theta[None,:]),
-                            self.w[:,None]**(-p.alpha[None,:]),
-                            price_to_compute[:,None]**(p.alpha[None,:]-1))
+        tau = np.diagonal(self.phi).transpose()[None,:,:]/self.phi
         if assign:
             self.tau = tau
         else:
             return tau
+        
+    def compute_T(self,p, assign = True):
+        # self.tau = np.ones((p.N,p.N,p.S))
+        T = np.diagonal(self.phi).transpose()*self.w[:,None]**p.alpha[None,:]*self.w[:,None]**(1-p.alpha[None,:])
+        if assign:
+            self.T = T
+        else:
+            return T
     
-    def scale_tau(self, p):
-        try:
-            price_to_compute = self.compute_price_indices(p, assign = False)
-        except:
-            self.compute_growth(p)
-            self.compute_aggregate_qualities(p)
-            price_to_compute = self.compute_price_indices(p, assign = False)
+    # def scale_tau(self, p):
+    #     try:
+    #         price_to_compute = self.compute_price_indices(p, assign = False)
+    #     except:
+    #         self.compute_growth(p)
+    #         self.compute_aggregate_qualities(p)
+    #         price_to_compute = self.compute_price_indices(p, assign = False)
             
-        tau = self.compute_tau(p, assign = False, price_to_compute = price_to_compute)
+    #     tau = self.compute_tau(p, assign = False, price_to_compute = price_to_compute)
 
-        diag_tau = np.diagonal(tau).transpose()
-        # B = np.ones((p.N,p.S))
-        # B[:,0] = ( diag_tau[:,0]**(1+p.beta[1]*(p.alpha[1]-1)) / diag_tau[:,1]**(p.beta[1]*(p.alpha[0]-1)) )**(1/(p.alpha*p.beta).sum())
-        # B[:,1] = ( diag_tau[:,1]**(1+p.beta[0]*(p.alpha[0]-1)) / diag_tau[:,0]**(p.beta[0]*(p.alpha[1]-1)) )**(1/(p.alpha*p.beta).sum())
+    #     diag_tau = np.diagonal(tau).transpose()
+    #     # B = np.ones((p.N,p.S))
+    #     # B[:,0] = ( diag_tau[:,0]**(1+p.beta[1]*(p.alpha[1]-1)) / diag_tau[:,1]**(p.beta[1]*(p.alpha[0]-1)) )**(1/(p.alpha*p.beta).sum())
+    #     # B[:,1] = ( diag_tau[:,1]**(1+p.beta[0]*(p.alpha[0]-1)) / diag_tau[:,0]**(p.beta[0]*(p.alpha[1]-1)) )**(1/(p.alpha*p.beta).sum())
         
-        B = diag_tau * ( (diag_tau**p.beta[None,:]).prod(axis=1))[:,None]**((1-p.alpha[None,:])/(p.alpha*p.beta).sum() )
+    #     B = diag_tau * ( (diag_tau**p.beta[None,:]).prod(axis=1))[:,None]**((1-p.alpha[None,:])/(p.alpha*p.beta).sum() )
         
-        self.phi = self.phi*B[:,None,:]
-        self.compute_sectoral_prices(p)
-        self.compute_trade_flows(p)
+    #     self.phi = self.phi*B[:,None,:]
+    #     self.compute_sectoral_prices(p)
+    #     self.compute_trade_flows(p)
     
     def scale_P(self, p):
         try:
@@ -766,7 +801,7 @@ class var:
         except:
             self.compute_growth(p)
             self.compute_aggregate_qualities(p)
-            price_to_compute = self.compute_price_indices(p, assign = False)
+
         numeraire = price_to_compute[0]
         
         self.w = self.w / numeraire
@@ -774,6 +809,13 @@ class var:
         self.phi = self.phi * numeraire
         
         self.compute_sectoral_prices(p)
+        self.compute_trade_flows(p)
+        
+    def scale_Z(self,p):
+        fact = p.OUT/self.Z.sum()
+        self.w = self.w * fact
+        self.Z = self.Z * fact
+        
         self.compute_trade_flows(p)
     
     def compute_nominal_value_added(self,p):
@@ -814,6 +856,7 @@ class var:
     def compute_non_solver_quantities(self,p):
         self.compute_price_indices(p)
         self.compute_tau(p)
+        self.compute_T(p)
         self.compute_nominal_value_added(p)
         self.compute_nominal_intermediate_input(p)
         self.compute_nominal_final_consumption(p)
@@ -866,8 +909,8 @@ class moments:
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'RD', 'RP',
+                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
                                'SINNOVPATEU']
         else:
             self.list_of_moments = list_of_moments
@@ -884,7 +927,7 @@ class moments:
                              'JUPCOST':1,
                              'TP':1,
                              'Z':1,
-                             'SDOMTFLOW':100,
+                             'SDOMTFLOW':1,
                              'SINNOVPATEU':1}
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
@@ -956,8 +999,8 @@ class moments:
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
         self.TP_target = self.moments.loc['TP'].value
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
-        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
-        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)
+        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values#/self.ccs_moments.trade.sum()
+        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)/self.unit
     
     def plot_moments(self, list_of_moments, plot = True, save_plot = None):
         scalar_moments = []
@@ -1171,7 +1214,7 @@ class moments:
         self.TP = var.pflow.sum()
         
     def compute_SDOMTFLOW(self,var,p):
-        self.SDOMTFLOW = np.diagonal(var.X).transpose()/var.X.sum()
+        self.SDOMTFLOW = np.diagonal(var.X).transpose()#/var.X.sum()
     
     def compute_SINNOVPATEU(self,var,p):
         self.SINNOVPATEU = var.share_innov_patented[1,1]
@@ -1213,9 +1256,13 @@ class moments:
                 #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
                 #         /np.log(getattr(self,mom+'_target').size+1)
                 #         )
+                # setattr(self,
+                #         mom+'_deviation',
+                #         self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
+                #         )
                 setattr(self,
                         mom+'_deviation',
-                        self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
+                        self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
                         )
             else:
                 mo = getattr(self,mom)
@@ -1638,114 +1685,64 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         # x_new, modified_x_old  = iter_once(x_old, p, 
         #                                    normalize = False, 
         #                                    check_feasibility = False)
+        
         init = var.var_from_vector(x_old,p,compute=False)
-        # init.compute_growth(p)
-        # psi_CL_check = init.check_PSI_CL(p)
-        # init.check_PSI_CD(p)
-        # if np.any(init.PSI_CD<=0):
-        #     print('problem')
-        # # labor_check = init.check_labor(p)
+        # if count>1e3:
+        #     # damping = 1
+        #     plt.plot(x_old)
+        #     plt.show()
+        # init.phi = init.phi/np.diagonal(init.phi).transpose()[:,None,:]
+        # init.phi = init.phi/init.phi.mean()
         # x_old = init.vector_from_var()
-
-        init.compute_labor_allocations(p)
-        # correc_count = 0
-        # psi_bound = np.einsum('n,s,is->nis',
-        #                       2/p.labor,
-        #                       p.fe,
-        #                       init.l_R**(1-p.kappa))**(1/p.k)
-        # # while np.any(init.l_Ae > p.labor[None,:,None]/2):
-        # while np.any(init.psi_star < psi_bound):
-        #     correc_count += 1
-        #     # temp_phi = init.phi.transpose((1,0,2))
-        #     # temp_phi[init.l_Ae > p.labor[None,:,None]/2] = temp_phi[init.l_Ae > p.labor[None,:,None]/2]*2
-        #     # init.phi = temp_phi.transpose((1,0,2))
-        #     # phi_bound = np.einsum('n,s,is->',
-        #     #                       2/p.labor,
-        #     #                       p.fe,
-        #     #                       init.l_R**(1-p.kappa))**(1/p.k)
-        #     # init.phi[init.psi_star < psi_bound] = psi_bound[init.psi_star < psi_bound]
-        #     init.phi[init.psi_star < psi_bound] = init.phi[init.psi_star < psi_bound]*2
-        #     init.compute_labor_allocations(p)
-        #     print('correcting psi',correc_count,(init.l_Ae/p.labor[None,:,None]).max())
-        # correc_count = 0
-        # while np.any(init.l_P < 0):
-        #     correc_count += 1
-        #     print('correcting labor',correc_count)
-        #     init.l_R[...,1][init.l_P < 0] = init.l_R[...,1][init.l_P < 0]/2
-        #     init.compute_labor_allocations(p)
-            
-        # init.phi = init.phi / np.diagonal(init.phi).transpose()[:,None,:]
+        # if count>1e4:
+        #     # damping = 1
+        #     plt.plot(x_old)
+        #     plt.show()
+        # init.scale_P(p)
+        # init.scale_Z(p)
         init.compute_growth(p)
         init.compute_aggregate_qualities(p)
-        # plt.plot(1/init.w)
-        # plt.show()
-        init.scale_tau(p)
-        init.scale_P(p)
-        x_old = init.vector_from_var()
-        # init.compute_growth(p)
-        # init.compute_aggregate_qualities(p)
         init.compute_sectoral_prices(p)
         init.compute_trade_flows(p)
+        init.compute_labor_allocations(p)
+        init.compute_price_indices(p)
         
         w = init.compute_wage(p)
         Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         psi_star = init.compute_psi_star(p)[...,1:].ravel()
-        phi = init.compute_phi(p).ravel()
-        # phi = (phi / np.diagonal(phi).transpose()[:,None,:]).ravel()
+        phi = init.compute_phi(p)
+        # phi = phi/(np.diagonal(phi).transpose()[:,None,:])
+        # phi = (phi/phi.mean())
+        phi = phi.ravel()
+        
         x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
-        # print(w[0],l_R[0],p.labor[0])
-        # if np.any(w<0):
-        #     break
         # temp = var.var_from_vector(x_new,p,compute=False)
-        # temp.scale_tau(p)
         # temp.scale_P(p)
+        # temp.scale_Z(p)
+        # temp.compute_price_indices(p)
         # x_new = temp.vector_from_var()
-        # print(x_new)
-        
-        
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
+        if count>500:
+            # damping = 1
+            # plt.scatter(init.X,p.trade_flows)
+            plt.plot(x_new_decomp[cobweb_qty])
+            plt.show()
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
                       for qty in ['w','Z','psi_star','l_R','phi']]
-        # plt.plot(x_new_decomp['phi']-x_old_decomp['phi'])
-        # # plt.yscale('log')
-        # plt.show()
-        # print([qty+' : '+str(np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])) for qty in ['w','Z','psi_star','l_R','phi']])
-        # conditions = [np.linalg.norm((x_new_decomp[qty] - x_old_decomp[qty])/x_old_decomp[qty]) > tol
-        #               for qty in ['w','Z','psi_star','l_R','phi']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
-        # print(convergence[-1])
         count += 1
         if np.all(np.array(convergence[-10:])<safe_convergence):
             if accelerate_when_stable:
                 accelerate = True
-            damping = damping_post_acceleration
-        norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).min() )
+                damping = damping_post_acceleration
+        norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
         history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
         history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
-        # history_old.append(get_vec_qty(x_old,p)[cobweb_qty][1,...])
-        # history_new.append(get_vec_qty(x_new,p)[cobweb_qty][1,...])
-        # if count > 1000 and count%1000==0:
-        #     print(count)
-        # if count > 100 and count%100==0:
-        #     # plt.plot(get_vec_qty(x_new,p)[cobweb_qty].ravel())
-        #     # plt.show()
-        #     # damping = 3
-        #     # plt.semilogy(convergence)
-        #     plt.semilogy(norm)
-        #     # plt.semilogy(history_old)
-        #     plt.title(count)
-        #     plt.show()
-            # x_new = x_new*(0.5+np.random.rand(x_new.size))**10
-        # if count > -1:# and count%10==0:
-        #     cob.append_old_new(history_old[-1],history_new[-1])
-        #     pause = 0.1
-        #     # if count == 20:
-        #     #     pause = 1
-        #     cob.plot(count=count, window = 100,pause = pause)
-        # print(get_vec_qty(x_old,p)['psi_star'].max())
+        # print(convergence[-1])
+        # print(init.price_indices[0])
     
     finish = time.perf_counter()
     solving_time = finish-start
@@ -1774,13 +1771,13 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             
     if plot_convergence:
         plt.semilogy(convergence, label = 'convergence')
-        # plt.semilogy(norm, label = 'norm')
+        plt.semilogy(norm, label = 'norm')
         plt.legend()
         plt.show()
     return sol_inst, init
 
 #%% fixed point solver
-# p = parameters(n=7,s=2)
+p = parameters(n=7,s=2)
 # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
 # p.load_data('calibration_results_matched_trade_flows/18/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
@@ -1791,42 +1788,48 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
 # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
 # guess = np.random.rand(p.guess_from_params().size).reshape(p.guess_from_params().shape)
 sol, sol_c = fixed_point_solver(p,#x0=p.guess,
-                        cobweb_anim=False,tol =1e-13,
+                        cobweb_anim=False,tol =1e-15,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
                         plot_convergence=True,
                         plot_cobweb=True,
-                        safe_convergence=0.001,
+                        safe_convergence=0.01,
                         disp_summary=True,
                         damping = 10,
-                        max_count = 5e3,
-                        accel_memory = 100, 
+                        max_count = 1e3,
+                        accel_memory = 10, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=10
+                        damping_post_acceleration=5
                         # damping=10
                           # apply_bound_psi_star=True
                         )
 
-# sol_c = var.var_from_vector(sol.x, p)    
+sol_c = var.var_from_vector(sol.x, p)    
 # sol_c.scale_tau(p)
 # sol_c.scale_P(p)
+# sol_c.scale_Z(p)
+# sol_c.compute_growth(p)
+# sol_c.compute_aggregate_qualities(p)
+# sol_c.compute_sectoral_prices(p)
+# sol_c.compute_trade_flows(p)
+# sol_c.compute_labor_allocations(p)
 sol_c.compute_non_solver_quantities(p) 
 
 # # sol_c.compute_non_solver_quantities(p)
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
 #                    'SINNOVPATEU']
-m = moments(list_of_moments)
-m.load_data()
-m.compute_moments(sol_c,p)
-m.compute_Z(sol_c,p)
-m.compute_moments_deviations()
-m.plot_moments(m.list_of_moments)
+# m = moments(list_of_moments)
+# m.load_data()
+# m.compute_moments(sol_c,p)
+# m.compute_Z(sol_c,p)
+# m.compute_moments_deviations()
+# m.plot_moments(m.list_of_moments)
 # p.guess = sol_c.vector_from_var()
 
 #%% calibration func
@@ -1838,87 +1841,88 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     except:
         pass
     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
-                                 accelerate=False,
-                                 accelerate_when_stable=True,
-                                 plot_cobweb=False,
-                                 plot_convergence=False,
-                                 cobweb_qty='phi',
-                                 disp_summary=False,
-                                 safe_convergence=0.001,
-                                 max_count=1e3,
-                                 accel_memory = 50, 
-                                 accel_type1=True, 
-                                 accel_regularization=1e-10,
-                                 accel_relaxation=0.5, 
-                                 accel_safeguard_factor=1, 
-                                 accel_max_weight_norm=1e6,
-                                 damping_post_acceleration=5
-                                 )
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=1e3,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=5
+                                  )
     if sol.status == 'failed': 
         sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-                                     accelerate=False,
-                                     accelerate_when_stable=True,
-                                     plot_cobweb=False,
-                                     plot_convergence=False,
-                                     cobweb_qty='phi',
-                                     disp_summary=False,
-                                     safe_convergence=0.001,
-                                     max_count=1e3,
-                                     accel_memory = 50, 
-                                     accel_type1=True, 
-                                     accel_regularization=1e-10,
-                                     accel_relaxation=0.5, 
-                                     accel_safeguard_factor=1, 
-                                     accel_max_weight_norm=1e6,
-                                     damping_post_acceleration=5
-                                     )
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=1e3,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
                             
     if sol.status == 'failed':
         print('trying with good guess without acceleration')
         sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-                                     accelerate=False,
-                                     accelerate_when_stable=False,
-                                     plot_cobweb=False,
-                                     plot_convergence=False,
-                                     cobweb_qty='phi',
-                                     disp_summary=False,
-                                     safe_convergence=0.001,
-                                     max_count=5e3)
+                                      accelerate=False,
+                                      accelerate_when_stable=False,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=5e3)
     if sol.status == 'failed':
         print('trying with standard guess')
         sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
-                                     accelerate=False,
-                                     accelerate_when_stable=True,
-                                     plot_cobweb=False,
-                                     plot_convergence=False,
-                                     cobweb_qty='phi',
-                                     disp_summary=False,
-                                     safe_convergence=0.001,
-                                     max_count=1e3,
-                                     accel_memory = 50, 
-                                     accel_type1=True, 
-                                     accel_regularization=1e-10,
-                                     accel_relaxation=0.5, 
-                                     accel_safeguard_factor=1, 
-                                     accel_max_weight_norm=1e6,
-                                     damping_post_acceleration=5
-                                     )
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=1e3,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
        
     if sol.status == 'failed':
         print('trying with standard guess without acceleration')
         sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
-                                     accelerate=False,
-                                     accelerate_when_stable=False,
-                                     plot_cobweb=False,
-                                     plot_convergence=False,
-                                     cobweb_qty='phi',
-                                     disp_summary=False,
-                                     safe_convergence=0.001,
-                                     max_count=5e3
-                                     ) 
+                                      accelerate=False,
+                                      accelerate_when_stable=False,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=5e3
+                                      ) 
     # sol_c = var.var_from_vector(sol.x, sol.p)   
-    sol_c.scale_tau(p)
+    # sol_c.scale_tau(p)
     sol_c.scale_P(p)
+    sol_c.scale_Z(p)
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_Z(sol_c,p)
@@ -1956,19 +1960,22 @@ new_run = True
 if new_run:
     p = parameters(n=7,s=2)
     # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-    p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu','nu_tilde','zeta']
+    p.calib_parameters = ['eta','delta','fe','fo','g_0','nu','nu_tilde','zeta']
+    # p.calib_parameters = ['T']
     # p.load_data('calibration_results_matched_trade_flows/history27/6/')
     start_time = time.perf_counter()
 
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
-list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
-                   'SINNOVPATEU']
+list_of_moments = ['GPDIFF','GROWTH', 'KM', 'RD', 'RP',
+                    'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
+                    'SINNOVPATEU']
+# list_of_moments = ['SDOMTFLOW']
 m = moments(list_of_moments)
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
+# m.SDOMTFLOW_target = np.random.rand(p.N*p.S).reshape(p.N,p.S)*100
 bounds = p.make_parameters_bounds()
 # collec_of_guess = load_collection_of_guess()
 cond = True
@@ -1991,7 +1998,7 @@ while cond:
                         gtol=1e-14,
                         # f_scale=scale,
                         verbose = 2)
-    cond = test_ls.cost>1 and test_ls.nfev>30
+    cond = test_ls.cost>0.0001 and test_ls.nfev>3
     iterations += 1
 finish_time = time.perf_counter()
 print('minimizing time',finish_time-start_time)
@@ -2022,8 +2029,8 @@ sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                         )
 
 sol_c = var.var_from_vector(sol.x, p_sol)    
-sol_c.scale_tau(p_sol)
-sol_c.scale_P(p_sol)
+# sol_c.scale_tau(p_sol)
+# sol_c.scale_P(p_sol)
 sol_c.compute_non_solver_quantities(p_sol) 
 m.compute_moments(sol_c,p)
 m.compute_Z(sol_c,p)
@@ -2211,28 +2218,28 @@ for i in range(7):
 
 domestic_phi = pd.DataFrame(data = np.diagonal(sol_c.phi).transpose().ravel(), columns = ['phi'], 
                             index = pd.MultiIndex.from_product([p.countries,p.sectors],
-                                                               names=['country','sector']))
+                                                                names=['country','sector']))
 
 tau_df = pd.DataFrame(data = sol_c.tau.ravel(), columns = ['tau'],
                       index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
-                                                         names=['destination','origin','sector']))
+                                                          names=['destination','origin','sector']))
 
 tau_smaller_than_one = tau_df[tau_df['tau'] < 1-1e-10]
 
 phi_df = pd.DataFrame(data = sol_c.phi.ravel(), columns = ['phi'], 
-                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 
 phi_corresponding = phi_df.loc[[idx for idx in tau_smaller_than_one.index]]
 
 trade_shares_origin = pd.DataFrame(columns = ['trade_shares_origin'], 
-                                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 trade_shares_origin['trade_shares_origin'] = (sol_c.X/np.diagonal(sol_c.X).transpose()[None,:,:]).ravel()
 corresponding_trade_shares_origin = trade_shares_origin.loc[[idx for idx in tau_smaller_than_one.index]]
 
 trade_shares_destination = pd.DataFrame(columns = ['trade_shares_destination'], 
-                                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 trade_shares_destination['trade_shares_destination'] = (sol_c.X/np.diagonal(sol_c.X).transpose()[:,None,:]).ravel()
 corresponding_trade_shares_destination = trade_shares_destination.loc[[idx for idx in tau_smaller_than_one.index]]
@@ -2265,7 +2272,7 @@ plt.show()
 
 #%%
 m35.list_of_moments = ['GROWTH','SRDUS', 'KM',
-                   'OUT','RD','RP','SPFLOW','SRGDP','STFLOW']
+                    'OUT','RD','RP','SPFLOW','SRGDP','STFLOW']
 
 grad, jac = load_grad_jac('./calibration_results/35/')
 # grad, jac = load_grad_jac('./calibration_results/35/')
@@ -2285,16 +2292,16 @@ plt.show()
 #%%
 
 pd.DataFrame(test_ls.grad, index = p.get_signature_list()
-             ).to_csv('calibration_results_matched_trade_flows/16/grad.csv')
+              ).to_csv('calibration_results_matched_trade_flows/16/grad.csv')
 pd.DataFrame(test_ls.jac, 
-             columns = p.get_signature_list(), 
-             index=m.get_signature_list()
-             ).to_csv('calibration_results_matched_trade_flows/16/jac.csv')
+              columns = p.get_signature_list(), 
+              index=m.get_signature_list()
+              ).to_csv('calibration_results_matched_trade_flows/16/jac.csv')
 
 #%%
 jac = optimize.approx_fprime(p_sol.make_p_vector(), 
-                             calibration_func,1e-16,
-                             p,m,p.guess,hist,start_time,False)
+                              calibration_func,1e-16,
+                              p,m,p.guess,hist,start_time,False)
 
 signature_p = []
 for param in p.calib_parameters: 
@@ -2381,13 +2388,13 @@ for T in np.linspace(1.297,1.3,1001):
         pass
     p.T = np.ones(p.N)*T
     sol = fixed_point_solver(p,x0,cobweb_anim=False,
-                             accelerate=False,
-                             accelerate_when_stable=True,
-                             cobweb_qty='psi_star',
-                             plot_cobweb=False,
-                             plot_convergence=False,
-                             # apply_bound_psi_star=True
-                             )
+                              accelerate=False,
+                              accelerate_when_stable=True,
+                              cobweb_qty='psi_star',
+                              plot_cobweb=False,
+                              plot_convergence=False,
+                              # apply_bound_psi_star=True
+                              )
     sol_c = var.var_from_vector(sol.x, sol.p)   
     sol_c.num_scale_solution(p)
     if sol_c.Z.sum() > p.expenditure.sum():
@@ -2399,8 +2406,8 @@ sol_c.compute_non_solver_quantities(p)
 fig,ax = plt.subplots(figsize = (12,8))
   
 ax.plot([T.mean() for T in list_T],
-         [sol.Z.sum()*p.unit for sol in list_sol], lw =3
-         )
+          [sol.Z.sum()*p.unit for sol in list_sol], lw =3
+          )
 ax.set_xlabel('Average technology T', fontsize = 20)
 ax.set_ylabel('World gross expenditure Z', fontsize = 20)
 ax.tick_params(axis='both', which='major', labelsize=20)
@@ -2418,12 +2425,12 @@ def calibration_func(T,p,x0=None):
     except:
         pass
     sol = fixed_point_solver(p,x0,tol=1e-14,
-                             accelerate=False,
-                             accelerate_when_stable=True,
-                             plot_cobweb=False,
-                             plot_convergence=False,
-                             disp_summary=False,
-                             )
+                              accelerate=False,
+                              accelerate_when_stable=True,
+                              plot_cobweb=False,
+                              plot_convergence=False,
+                              disp_summary=False,
+                              )
     print(sol.time)
     # p.guess = sol.x
     # try:
@@ -2461,12 +2468,12 @@ finish = time.perf_counter()
 print('minimizing time',finish-start)
 p.T = test_ls.x
 test_sol = fixed_point_solver(p,x0=p.guess,
-                         accelerate=False,
-                         accelerate_when_stable=True,
-                         plot_cobweb=False,
-                         plot_convergence=False,
-                         disp_summary=True,
-                         )
+                          accelerate=False,
+                          accelerate_when_stable=True,
+                          plot_cobweb=False,
+                          plot_convergence=False,
+                          disp_summary=True,
+                          )
 test_sol_c = var.var_from_vector(test_sol.x, p)
 test_sol_c.compute_non_solver_quantities(p)
 
@@ -2491,14 +2498,14 @@ plt.show()
 
 if np.any(np.isnan(sol.x)):
     sol = fixed_point_solver(p,x0=None,tol=1e-14,
-                                 accelerate=False,
-                                 accelerate_when_stable=True,
-                                 plot_cobweb=False,
-                                 plot_convergence=False,
-                                 cobweb_qty='l_R',
-                                 disp_summary=False,
-                                 safe_convergence=0.001
-                                 )   
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='l_R',
+                                  disp_summary=False,
+                                  safe_convergence=0.001
+                                  )   
 new_guess = 0
 while np.any(np.isnan(sol.x)) and new_guess<len(collec_of_guess):
     # print(new_guess)
