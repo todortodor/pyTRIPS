@@ -38,8 +38,8 @@ class parameters:
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
         self.fe = np.ones(S)  # could be over one
         self.fo = np.ones(S)*0  # could be over one
-        self.sigma = np.ones(S)*3  #
-        self.theta = np.ones(S)*8   #
+        self.sigma = np.ones(S)*1.8125  #
+        self.theta = np.ones(S)*5   #
         self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
         self.beta = self.beta / self.beta.sum()
         # self.zeta = np.ones(S)*0.01
@@ -94,7 +94,7 @@ class parameters:
         co = 1e-6
         cou = 1e5
         self.lb_dict = {'sigma':1,
-                        'theta':co,
+                        'theta':4,
                         'rho':co,
                         'gamma':co,
                         'zeta':0,
@@ -111,7 +111,7 @@ class parameters:
                          'T':co,
                          'eta':co}
         self.ub_dict = {'sigma':cou,
-                        'theta':cou,
+                        'theta':6,
                         'rho':cou,
                         'gamma':cou,
                         'zeta':1,
@@ -944,8 +944,8 @@ class moments:
         self.weights_dict = {'GPDIFF':1, 
                              'GROWTH':1, 
                              'KM':5, 
-                             'OUT':3, 
-                             'RD':2, 
+                             'OUT':4, 
+                             'RD':3, 
                              'RP':3, 
                              'SPFLOW':1, 
                              'SRDUS':1, 
@@ -956,7 +956,7 @@ class moments:
                               'Z':1,
                              # 'SDOMTFLOW':1,
                              'SINNOVPATEU':1,
-                              'NUR':0.1
+                              'NUR':1
                              }
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
@@ -2066,9 +2066,12 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
 new_run = True
 if new_run:
     p = parameters(n=7,s=2)
-    # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
-    p.calib_parameters = ['eta','delta','fe','T',
-                          'g_0','nu','nu_tilde','zeta','k']
+    # p.calib_parameters = ['eta',     'k',     'rho',     'alpha',     'fe',
+     # 'T',     'fo',     'sigma',     'theta',     'beta',
+     # 'zeta',     'g_0',     'kappa','gamma',
+     # 'delta',     'nu',     'nu_tilde']
+    p.calib_parameters = ['eta','k','fe','T','theta','zeta','g_0',
+                          'delta','nu','nu_tilde']
     # p.calib_parameters = ['T']
     # p.load_data('calibration_results_matched_trade_flows/history27/6/')
     start_time = time.perf_counter()
@@ -2268,6 +2271,26 @@ p31, sol31, m31 = full_load_parameters_set('calibration_results_matched_economy/
                                            ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                                                                'SPFLOW', 'SRGDP', 'JUPCOST',
                                                                'SINNOVPATEU'])
+p32, sol32, m32 = full_load_parameters_set('calibration_results_matched_economy/32/',
+                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
+                                                               'SINNOVPATEU'])
+p33, sol33, m33 = full_load_parameters_set('calibration_results_matched_economy/33/',
+                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
+                                                               'SINNOVPATEU','NUR'])
+p34, sol34, m34 = full_load_parameters_set('calibration_results_matched_economy/34/',
+                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
+                                                               'SINNOVPATEU','NUR'])
+p35, sol35, m35 = full_load_parameters_set('calibration_results_matched_economy/35/',
+                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
+                                                               'SINNOVPATEU','NUR'])
+p36, sol36, m36 = full_load_parameters_set('calibration_results_matched_economy/36/',
+                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
+                                                               'SINNOVPATEU','NUR'])
 # for m in [m4,m6,m7,m10,m11,m12,m13]:
 #     m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                         'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
@@ -2280,12 +2303,12 @@ p31, sol31, m31 = full_load_parameters_set('calibration_results_matched_economy/
 
 #%% writing results as excel
 
-commentary = 'No SRDUS moment'
+commentary = 'calibrated nu higher weight, calibrated k and sigma'
 write_calibration_results(
-    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/24',
-    p24,m24,sol24,commentary = commentary)
-m24.plot_moments(m24.list_of_moments, 
-                save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/24')
+    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/36',
+    p36,m36,sol36,commentary = commentary)
+m36.plot_moments(m36.list_of_moments, 
+                save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/36')
 # commentary = 'Square root weights on dimension'
 # write_calibration_results(
 #     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/3',
@@ -2331,52 +2354,62 @@ m24.plot_moments(m24.list_of_moments,
 dic = {#'3 : lin weights on dim':m3,
        # '4 : sqrt weights on dim':m4,
        # '6 : delta US free, SRDUS divided by 2':m6,
-        '7 : delta US free':m7,
+        '7 : free nu, nu ='+str(p7.nu[1]):m7,
        # '10 : Nu_tilde = nu*5':m10,
        # '11 : Nu_tilde = nu*10':m11,
-       # '12 : Nu_tilde = nu, growth = 1.69%':m12,
+        # '12 : Nu_tilde = nu, growth = 1.69%':m12,
        # '13 : Nu_tilde = nu/5':m13,
        # '14 : Ratio of nu targeted as a moment, target 1':m14,
        # '15 : Ratio of nu targeted as a moment, low weight':m15,
        # '16 : Growth = growth*2':m16,
        # '17 : Growth = growth*4':m17,
        # '18 : Growth = growth*10':m18,
-       # '19 : Fixed nu = 0.1':m19,
+        '19 : Fixed nu = 0.1':m19,
        # '20 : Fixed nu = nu_tilde = 0.1':m20,
        # '21 : domestic flows targeted':m21,
        # '22 : total number of patents targeted':m22,
        # '23 : total number of patents targeted, higher weights on RD':m23,
-       '30 : equivalent to 7, nu = nu_tilde, theta = 8':m30,
-       '31 : equivalent to 7, theta = 8':m31
+       # '30 : equivalent to 7, nu = nu_tilde, theta = 8':m30,
+       # '31 : equivalent to 7, theta = 8':m31,
+       # '32 : calibrated k, theta = 8':m32,
+       # '33 : calibrated nu low weight, calibrated k':m33,
+       # '34 : calibrated nu higher weight':m34,
+       '35 : calibrated nu calibrated k and sigma, nu ='+str(p35.nu[1]):m35,
+       '36 : calibrated nu higher weight, calibrated k and sigma, nu ='+str(p36.nu[1]):m36
        }
 
 
-# moments.compare_moments(dic,
-#     save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/fixed_or_calibrated_nu/')
-moments.compare_moments(dic)
+moments.compare_moments(dic,
+    save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/nu_calibration/')
+# moments.compare_moments(dic)
 
 #%% compare params
 
 dic = {#'3 : lin weights on dim':p3,
         # '4 : sqrt weights on dim':p4,
         # '6 : delta US free, SRDUS divided by 2':p6,
-        '7 : delta US free':p7,
+        '7 : free nu, nu ='+str(p7.nu[1]):p7,
        #  '10 : Nu_tilde = nu*5':p10,
        #  '11 : Nu_tilde = nu*10':p11,
-       # '12 : Nu_tilde = nu, growth = 1.69%':p12,
+        # '12 : Nu_tilde = nu, growth = 1.69%':p12,
        #  '13 : Nu_tilde = nu/5':p13,
        #  '14 : Ratio of nu targeted as a moment, target 1':p14,
        #  '15 : Ratio of nu targeted as a moment, low weight':p15,
        # '16 : Growth = growth*2':p16,
        # '17 : Growth = growth*4':p17,
        # '18 : Growth = growth*10':p18,
-       # '19 : Fixed nu = 0.1':p19,
+        '19 : Fixed nu = 0.1':p19,
        # '20 : Fixed nu = nu_tilde = 0.1':p20,
-       '31 : equivalent to 7':p31
+       # '31 : equivalent to 7':p31,
+       # '32 : calibrated k, theta = 8':p32,
+       # '33 : calibrated nu low weight, calibrated k':p33,
+       # '34 : calibrated nu higher weight':p34,
+       '35 : calibrated nu calibrated k and sigma, nu ='+str(p35.nu[1]):p35,
+       '36 : calibrated nu higher weight, calibrated k and sigma, nu ='+str(p36.nu[1]):p36
        }
 
-save = False
-save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/fixed_or_calibrated_nu/'
+save = True
+save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/nu_calibration/'
 
 fig,ax = plt.subplots(figsize = (12,8))
 title = 'Delta of the countries' 
@@ -2450,7 +2483,7 @@ plt.show()
 
 
 
-p = p14.copy()
+p = p36.copy()
 
 sol, baseline = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-15,
@@ -2481,7 +2514,7 @@ baseline.compute_non_solver_quantities(p)
 for j,c in enumerate(p.countries):
     p = p14.copy()
     sols_c = []
-    deltas = np.logspace(-1,1,111)
+    deltas = np.logspace(-1,1,11)
     for delt in deltas:
         print(delt)
         p.delta[j,1] = p14.delta[j,1] * delt
@@ -2540,8 +2573,8 @@ for j,c in enumerate(p.countries):
     ax.set_xlabel('Change in delta '+c, fontsize = 20)
     ax.set_ylabel('Consumption equivalent welfare', fontsize = 20)
     # ax.scatter(CE.idxmax(),CE.max(),color=[mcolors.BASE_COLORS[k] for k in list(mcolors.BASE_COLORS.keys())[:CE.shape[1]]])
-    CE.to_csv('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection/'+c+'.csv')
-    ax.figure.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection/'+c)
+    # CE.to_csv('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection/'+c+'.csv')
+    # ax.figure.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection/'+c)
 
 #%% plot counterfactual
 
