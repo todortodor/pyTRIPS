@@ -29,7 +29,7 @@ class parameters:
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         S = len(self.sectors)
         self.S = S
-        self.eta = np.ones((N, S))*1 # could be over one
+        self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
         self.T = np.ones((N, S))*1.5  # could be anything >0
         # self.T = np.ones(N)*1.5  # could be anything >0
@@ -44,7 +44,7 @@ class parameters:
         self.beta = self.beta / self.beta.sum()
         # self.zeta = np.ones(S)*0.01
         self.zeta = np.ones(S)*0.01
-        self.g_0 = 0.0168692  # makes sense to be low
+        self.g_0 = 0.01  # makes sense to be low
         self.kappa = 0.5            #
         self.gamma = 0.5       #
         self.delta = np.ones((N, S))*0.05
@@ -98,14 +98,14 @@ class parameters:
                         'rho':co,
                         'gamma':co,
                         'zeta':0,
-                        'nu':co,
-                        'nu_tilde':co,
+                        'nu':0,
+                        'nu_tilde':0,
                         'kappa':0,
-                        'k':1+co,
+                        'k':1.1,
                         'fe':co,
                         'fo':0,
-                        'delta':co,
-                        'g_0':0.001,
+                        'delta':1e-2,
+                        'g_0':0,
                         'alpha':co,
                          'beta':co,
                          'T':co,
@@ -118,11 +118,11 @@ class parameters:
                         'nu':cou,
                         'nu_tilde':cou,
                         'kappa':1-cou,
-                        'k':cou,
+                        'k':1.5,
                         'fe':cou,
                         'fo':cou,
                         'delta':cou,
-                        'g_0':0.05,
+                        'g_0':cou,
                         'alpha':1,
                          'beta':1,
                          'T':np.inf,
@@ -945,10 +945,10 @@ class moments:
                              'GROWTH':1, 
                              'KM':5, 
                              'OUT':3, 
-                             'RD':5, 
-                             'RP':1, 
+                             'RD':2, 
+                             'RP':3, 
                              'SPFLOW':1, 
-                             'SRDUS':10, 
+                             'SRDUS':1, 
                              'SRGDP':1, 
                              # 'STFLOW':1,
                              'JUPCOST':1,
@@ -956,8 +956,7 @@ class moments:
                               'Z':1,
                              # 'SDOMTFLOW':1,
                              'SINNOVPATEU':1,
-                             # 'NUR':0.1,
-                             'RDGDPUS':10
+                              'NUR':0.1
                              }
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
@@ -983,7 +982,7 @@ class moments:
                     # 'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
                     #                                  , names=['country','sector']),
                     'SINNOVPATEU':pd.Index(['scalar']),
-                    'RDGDPUS':pd.Index(['scalar'])}
+                    'NUR':pd.Index(['scalar'])}
     
     def get_signature_list(self):
         l = []
@@ -998,7 +997,7 @@ class moments:
         #         'SINNOVPATEU']
         return ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SPFLOW', 
                 'SRDUS', 'SRGDP', 'JUPCOST', 'TP', 'Z', 
-                'SINNOVPATEU','RDGDPUS']
+                'SINNOVPATEU','NUR']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -1025,10 +1024,7 @@ class moments:
         self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
                             /(self.c_moments.gdp/self.c_moments.price_level).sum()
         self.RP_target = self.c_moments.price_level.values
-        # self.RD_target = self.c_moments.rnd_gdp.values
-        rnd = self.c_moments.rnd_gdp.values*self.c_moments.gdp.values
-        self.RD_target = rnd/rnd[0]
-        self.RDGDPUS_target = self.c_moments.rnd_gdp.values[0]
+        self.RD_target = self.c_moments.rnd_gdp.values
         self.KM_target = self.moments.loc['KM'].value
         self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
@@ -1224,17 +1220,9 @@ class moments:
     def compute_RD(self,var,p):
         numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
             + np.einsum('n,ins->is',var.w,var.l_Ao)
-        # self.RD = np.einsum('is,i->i',
-        #                     numerator,
-        #                     1/var.gdp)
-        self.RD = numerator.sum(axis=1)/numerator.sum(axis=1)[0]
-        
-    def compute_RDGDPUS(self,var,p):
-        numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
-            + np.einsum('n,ins->is',var.w,var.l_Ao)
-        self.RDGDPUS = np.einsum('is,i->i',
+        self.RD = np.einsum('is,i->i',
                             numerator,
-                            1/var.gdp)[0]
+                            1/var.gdp)
     
     def compute_KM(self,var,p):
         denominatorA = var.r+p.zeta[None,1:]+p.delta[:,1:]-var.g+var.g_s[None,1:]
@@ -1273,7 +1261,7 @@ class moments:
         self.SINNOVPATEU = var.share_innov_patented[1,1]
         
     def compute_NUR(self,var,p):
-        self.NUR = p.nu_tilde[1]/p.nu[1]
+        self.NUR = p.nu[1]
         
     def compute_moments(self,var,p):
         # self.compute_STFLOW(var, p)
@@ -1292,7 +1280,6 @@ class moments:
         # self.compute_SDOMTFLOW(var,p)
         self.compute_SINNOVPATEU(var,p)
         self.compute_NUR(var,p)
-        self.compute_RDGDPUS(var, p)
         
     def compute_moments_deviations(self):
         # for mom in self.get_list_of_moments():
@@ -1912,7 +1899,7 @@ m.plot_moments(m.list_of_moments)
 
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
-    p.nu_tilde = p.nu
+    # p.nu_tilde = p.nu
     try:
         v0 = p.guess
     except:
@@ -2059,7 +2046,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
             hist.plot()
         if hist.count%200==0:
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
-                  , 'nu : ', p.nu, 'nu_tilde : ', p.nu_tilde)
+                  , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k)
         if hist.count%200==0:
             hist.save(path = './calibration_results_matched_trade_flows/history105/', p = p)
     hist.count += 1
@@ -2081,7 +2068,7 @@ if new_run:
     p = parameters(n=7,s=2)
     # p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
     p.calib_parameters = ['eta','delta','fe','T',
-                          'g_0','zeta','nu']
+                          'g_0','nu','nu_tilde','zeta','k']
     # p.calib_parameters = ['T']
     # p.load_data('calibration_results_matched_trade_flows/history27/6/')
     start_time = time.perf_counter()
@@ -2095,7 +2082,7 @@ if new_run:
 #                     'SINNOVPATEU']
 list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                     'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                    'SINNOVPATEU','RDGDPUS']
+                    'SINNOVPATEU','NUR']
 # list_of_moments = ['TP']
 m = moments(list_of_moments)
 if new_run:
@@ -2273,16 +2260,14 @@ p24, sol24, m24 = full_load_parameters_set('calibration_results_matched_economy/
                                            ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                                                                'SPFLOW', 'SRGDP', 'JUPCOST',
                                                                'SINNOVPATEU'])
-p25, sol25, m25 = full_load_parameters_set('calibration_results_matched_economy/25/',
+p30, sol30, m30 = full_load_parameters_set('calibration_results_matched_economy/30/',
                                            ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                                                                'SPFLOW', 'SRGDP', 'JUPCOST',
                                                                'SINNOVPATEU'])
-p27, sol27, m27 = full_load_parameters_set('calibration_results_matched_economy/25/',
+p31, sol31, m31 = full_load_parameters_set('calibration_results_matched_economy/31/',
                                            ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
                                                                'SPFLOW', 'SRGDP', 'JUPCOST',
                                                                'SINNOVPATEU'])
-
-
 # for m in [m4,m6,m7,m10,m11,m12,m13]:
 #     m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                         'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
@@ -2295,12 +2280,12 @@ p27, sol27, m27 = full_load_parameters_set('calibration_results_matched_economy/
 
 #%% writing results as excel
 
-commentary = 'Fixing both delta_US, nu and nu_tilde'
+commentary = 'No SRDUS moment'
 write_calibration_results(
-    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/25',
-    p25,m25,sol25,commentary = commentary)
-m25.plot_moments(m25.list_of_moments, 
-                save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/25')
+    '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/24',
+    p24,m24,sol24,commentary = commentary)
+m24.plot_moments(m24.list_of_moments, 
+                save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/24')
 # commentary = 'Square root weights on dimension'
 # write_calibration_results(
 #     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/3',
@@ -2361,7 +2346,8 @@ dic = {#'3 : lin weights on dim':m3,
        # '21 : domestic flows targeted':m21,
        # '22 : total number of patents targeted':m22,
        # '23 : total number of patents targeted, higher weights on RD':m23,
-       '27 : same as 7':m27
+       '30 : equivalent to 7, nu = nu_tilde, theta = 8':m30,
+       '31 : equivalent to 7, theta = 8':m31
        }
 
 
@@ -2384,9 +2370,9 @@ dic = {#'3 : lin weights on dim':p3,
        # '16 : Growth = growth*2':p16,
        # '17 : Growth = growth*4':p17,
        # '18 : Growth = growth*10':p18,
-       '19 : Fixed nu = 0.1':p19,
-       '20 : Fixed nu = nu_tilde = 0.1':p20,
-       '20 : Fixed nu = nu_tilde = 0.1':p20
+       # '19 : Fixed nu = 0.1':p19,
+       # '20 : Fixed nu = nu_tilde = 0.1':p20,
+       '31 : equivalent to 7':p31
        }
 
 save = False
