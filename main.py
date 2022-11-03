@@ -17,12 +17,6 @@ from scipy import optimize
 import time
 import sys
 import os
-import matplotlib.colors as mcolors
-import matplotlib as mpl
-import seaborn as sns
-# sns.set()
-# sns.set_context('talk')
-# sns.set_style('white')
 
 class parameters:     
     def __init__(self, n=7, s=2):
@@ -35,26 +29,24 @@ class parameters:
         self.S = S
         self.eta = np.ones((N, S))*0.02  # could be over one
         self.eta[:, 0] = 0
-        self.T = np.ones((N, S))*1.5  # could be anything >0
-        # self.T = np.ones(N)*1.5  # could be anything >0
+        self.T = np.ones(N)*1.5  # could be anything >0
         self.k = 1.33350683                 #
         self.rho = 0.02  # 0.001 - 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
         self.fe = np.ones(S)  # could be over one
-        self.fo = np.ones(S)*0  # could be over one
+        self.fo = np.ones(S)  # could be over one
         self.sigma = np.ones(S)*3  #
         self.theta = np.ones(S)*5   #
         self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
         self.beta = self.beta / self.beta.sum()
         # self.zeta = np.ones(S)*0.01
-        self.zeta = np.ones(S)*0.01
+        self.zeta = np.ones(S)*0
         self.g_0 = 0.01  # makes sense to be low
         self.kappa = 0.5            #
         self.gamma = 0.5       #
-        self.delta = np.ones((N, S))*0.05
-        self.nu = np.ones(S)*0.1 #
-        self.nu_tilde = np.ones(S)*0.1
-        self.nu_R = np.array(1)
+        self.delta = np.ones((N, S))
+        self.nu = np.ones(S)*0.5   #
+        self.nu_tilde = np.ones(S)*0.5
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -62,13 +54,9 @@ class parameters:
         # self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
         # self.diag_mask = np.invert(self.off_diag_mask)
         
-        self.unit = 1e6
-        
-        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
+        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/1e6
         self.trade_flows = self.trade_flows.reshape((N,N,S))
-        self.OUT = self.trade_flows.sum()
-        # self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
-        self.trade_shares = self.trade_flows/self.trade_flows.sum()
+        self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
         # self.trade_shares = (self.trade_flows).reshape((N,N,S))
         
         self.data = pd.read_csv('data/country_moments.csv',index_col=[0])
@@ -90,39 +78,39 @@ class parameters:
               )[:n]
         self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
         
-        self.deficit_share_world_output = self.deficit_raw/self.data.output.sum() 
+        self.deficit_share_world_gdp = self.deficit_raw/self.data.output.sum() 
         
         # self.unit = self.gdp_raw.mean()
-        
+        self.unit = 1e6
         
         co = 1e-6
         cou = 1e5
         self.lb_dict = {'sigma':1,
-                        'theta':3,
-                        'rho':0,
+                        'theta':co,
+                        'rho':co,
                         'gamma':co,
                         'zeta':0,
                         'nu':0,
                         'nu_tilde':0,
-                        'kappa':co,
+                        'kappa':0,
                         'k':1+co,
                         'fe':co,
-                        'fo':0,
-                        'delta':1e-2,
+                        'fo':co,
+                        'delta':co,
                         'g_0':0,
                         'alpha':co,
                          'beta':co,
                          'T':co,
                          'eta':co}
-        self.ub_dict = {'sigma':5,
-                        'theta':30,
-                        'rho':0.5,
+        self.ub_dict = {'sigma':cou,
+                        'theta':cou,
+                        'rho':cou,
                         'gamma':cou,
-                        'zeta':1,
+                        'zeta':cou,
                         'nu':cou,
                         'nu_tilde':cou,
-                        'kappa':1-co,
-                        'k':1.5,
+                        'kappa':1-cou,
+                        'k':cou,
                         'fe':cou,
                         'fo':cou,
                         'delta':cou,
@@ -150,9 +138,7 @@ class parameters:
                     'g_0':pd.Index(['scalar']),
                     'alpha':pd.Index(self.sectors, name='sector'),
                     'beta':pd.Index(self.sectors, name='sector'),
-                    'T':pd.MultiIndex.from_product([self.countries,self.sectors]
-                                                        , names=['country','sector']),
-                     # 'T':pd.Index(self.countries, name = 'country'),
+                     'T':pd.Index(self.countries, name='country'),
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
@@ -168,16 +154,16 @@ class parameters:
                     # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    'delta':[np.s_[::S]],#,np.s_[S-1]],
+                    'delta':[np.s_[::S]],#np.s_[S-1]],
                     'g_0':None,
                     'alpha':None,
                     'beta':None,
-                      'T':None,
+                     'T':None,
                      'eta':[np.s_[::S]]}
         
         self.mask = {}
         
-        for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
+        for par_name in ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta',
                          'g_0','kappa','gamma','delta','nu','nu_tilde']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
@@ -199,15 +185,9 @@ class parameters:
         frame = deepcopy(self)
         return frame
     
-    def get_signature_list(self):
-        signature_p = []
-        for param in self.calib_parameters: 
-            signature_p.extend([param]*np.array(getattr(self,param))[self.mask[param]].size)
-        return signature_p
-    
     @staticmethod
     def get_list_of_params():
-        return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
+        return ['eta','T','k','rho','alpha','fe','fo','sigma','theta','beta','zeta','g_0',
          'kappa','gamma','delta','nu','nu_tilde']
             
     def guess_from_params(self):
@@ -215,7 +195,7 @@ class parameters:
         Z_guess = self.data.expenditure.values/self.unit
         w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)*100
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
-        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*100
+        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*1000
         phi_guess = np.ones((self.N,self.N,self.S)).ravel()#*0.01
         vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
         return vec
@@ -232,9 +212,6 @@ class parameters:
             param[self.mask[p]] = vec[idx_from:idx_from+size]
             setattr(self,p,param)
             idx_from += size
-            
-    def update_sigma_with_SRDUS_target(self,m):
-        self.sigma[1] = 1+m.SRDUS_target/(m.sales_mark_up_US - 1)
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -395,9 +372,8 @@ class var:
             init.compute_growth(p)
             init.compute_aggregate_qualities(p)
             init.compute_sectoral_prices(p)
-            init.compute_trade_shares(p)
+            init.compute_trade_flows(p)
             init.compute_labor_allocations(p)
-            init.compute_price_indices(p)
         return init
     
     def vector_from_var(self):
@@ -434,26 +410,19 @@ class var:
         self.r = p.rho + self.g/p.gamma
         
     def check_PSI_CL(self,p):
-        # status = 'ok'
-        # self.psi_star[self.psi_star < 1] = 1
-        numerator = ((self.g_s + p.nu + p.zeta)*(self.g_s + p.nu_tilde + p.zeta))
-        denominator = (self.g_s[None, 1]+p.delta + p.nu_tilde[None, :]+p.zeta[None, :]) \
-            * (self.g_s[None, :]+p.delta + p.nu_tilde[None, :]+p.zeta[None, :])
-        psi_star_lim = ( (numerator[None, :]/denominator)**(1/(p.k-1)) )[:,None,:]
-        psi_star_lim = np.broadcast_to(psi_star_lim,self.psi_star.shape)
-        # if np.any(self.psi_star < psi_star_lim):
-        #     status = 'corrected'
-        #     print('corrected PSI', (self.psi_star[...,1] < psi_star_lim).sum(),self.psi_star.min())
-        #     self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = \
-        #         np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim] + \
-                #np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim]/100 
+        status = 'ok'
+        self.psi_star[self.psi_star < 1] = 1
+        numerator = ((self.g_s + p.nu + p.zeta)*(self.g_s + p.nu_tilde + p.zeta))[1]
+        denominator = (self.g_s[None, 1]+p.delta[:, 1] + p.nu_tilde[None, 1]+p.zeta[None, 1]) \
+            * (self.g_s[None, 1]+p.delta[:, 1] + p.nu_tilde[None, 1]+p.zeta[None, 1])
+        psi_star_lim = ( (numerator/denominator)**(1/(p.k-1)) )[:,None]
         if np.any(self.psi_star < psi_star_lim):
-            print('corrected PSI', (self.psi_star < psi_star_lim).sum(),(self.psi_star - psi_star_lim).min())
-            # self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim]*2
-            self.psi_star[self.psi_star<psi_star_lim] = psi_star_lim[self.psi_star<psi_star_lim]
-            print('post_correction', np.any(self.psi_star < psi_star_lim))
-        # return status
-        
+            status = 'corrected'
+            print('corrected PSI', (self.psi_star[...,1] < psi_star_lim).sum(),self.psi_star.min())
+            self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = \
+                np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim]# + \
+                #np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim]/100 
+        return status
     
     def check_PSI_CD(self,p):
         self.compute_aggregate_qualities(p)
@@ -555,8 +524,6 @@ class var:
         #                         (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :]),0)
         # print(self.psi_star[...,1].min())
         self.PSI_CL[:, :, 0] = 0
-        # self.PSI_CL[self.PSI_CL<0] = 0 #!!!!
-        # print(self.PSI_CL.min())
         # assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
         # assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'PSI_M,CL too high'
         # print((np.einsum('njs->ns', self.PSI_M) +
@@ -588,30 +555,39 @@ class var:
 
         self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
 
-    def compute_trade_shares(self, p):
-        # numerator_prefact_A = np.einsum('nis,nis->nis',
-        #                       self.PSI_M,
-        #                       self.phi**(p.sigma-1)[None, None, :])
-        denominator_M = np.zeros((p.N, p.N, p.S))
-        denominator_M[..., 1:] = np.einsum('nis,ns,ns->nis',
-                                self.PSI_M[..., 1:],
-                                1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CL = np.zeros((p.N, p.N, p.S))
-        denominator_CL[..., 1:] = np.einsum('nis,ns,ns->nis',
-                                self.PSI_CL[..., 1:],
-                                1/((self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                self.P_CL[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CD = np.einsum('nis,ns,ns->nis',
-                                   self.phi**(p.theta-(p.sigma-1))[None,None,:],
-                                   1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-                                   self.P_CD**(1-p.sigma[None,:])
-                                   )
-        self.X_M = denominator_M/(denominator_M + denominator_CL + denominator_CD)
-        self.X_CL = denominator_CL/(denominator_M + denominator_CL + denominator_CD)
-        self.X_CD = denominator_CD/(denominator_M + denominator_CL + denominator_CD)
+    def compute_trade_flows(self, p):
+        numerator = np.einsum('nis,nis->nis',
+                              self.PSI_M,
+                              self.phi**(p.sigma-1)[None, None, :])
+        self.X_M = np.zeros((p.N, p.N, p.S))
+        self.X_M[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
+                                      numerator[..., 1:],
+                                      1/(numerator[..., 1:].sum(axis=1)),
+                                      self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
+                                      p.beta[1:],
+                                      self.Z
+                                      )
+        numerator = np.einsum('nis,nis->nis',
+                              self.PSI_CL,
+                              self.phi**(p.sigma-1)[None, None, :])
+        self.X_CL = np.zeros((p.N, p.N, p.S))
+        self.X_CL[..., 1:] = np.einsum('nis,ns,ns,s,n->nis',
+                                       numerator[..., 1:],
+                                       1/(numerator[..., 1:].sum(axis=1)),
+                                       self.P_CL[...,1:]**(1-p.sigma[None, 1:]),
+                                       p.beta[1:],
+                                       self.Z
+                                       )
+        # assert np.isnan(self.X_CL).sum() == 0, 'nan in X_CL'
+        self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
+                              self.phi**p.theta[None,None,:],
+                              1/((self.phi**p.theta[None,None,:]).sum(axis=1)),
+                              (self.P_CD**(1-p.sigma[None, :])),
+                              p.beta,
+                              self.Z
+                              )
+        
+        self.X = self.X_CD+self.X_CL+self.X_M
 
     def compute_labor_allocations(self, p, l_R=None, assign=True):
         if l_R is None:
@@ -652,7 +628,7 @@ class var:
             return l_P
 
     def compute_wage(self, p):
-        wage = (p.alpha[None, :] * (p.trade_shares*self.Z.sum()*(1 - (1/p.sigma[None, None, :])*self.X_M)).sum(axis=0)
+        wage = (p.alpha[None, :] * (self.X - (1/p.sigma[None, None, :])*self.X_M).sum(axis=0)
                 ).sum(axis=1)/self.l_P
         # assert np.isnan(wage).sum() == 0, 'nan in wage'
         # assert np.all(self.l_P > 0), 'non positive production labor'
@@ -660,9 +636,9 @@ class var:
         return wage
 
     def compute_expenditure(self, p):
-        A = np.einsum('nis->i', p.trade_shares*self.Z.sum())
+        A = np.einsum('nis->i', self.X_CD+self.X_CL+self.X_M)
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = np.einsum('i,n->i', p.deficit_share_world_output, self.Z)
+        C = np.einsum('i,n->i', p.deficit_share_world_gdp, self.Z)
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
         Z = (A+B-(C+D))
         # assert np.isnan(Z).sum() == 0, 'nan in Z'
@@ -670,8 +646,7 @@ class var:
     
             
     def compute_labor_research(self, p):
-        A = np.einsum('nis,nis,s,i,nis,s->is',
-                      p.trade_shares*self.Z.sum(),
+        A = np.einsum('nis,s,i,nis,s->is',
                       self.X_M,
                       1/p.sigma,
                       1/self.w,
@@ -692,14 +667,13 @@ class var:
         return l_R
 
     def compute_psi_star(self, p):
-        psi_star = np.einsum('s,i,nis,s,nis,nis,nis,ns,ns -> nis',
+        psi_star = np.einsum('s,i,nis,s,nis,nis,ns,ns -> nis',
                              p.sigma,
                              self.w,
                              self.PSI_M,
                              1/p.nu,
                              np.divide(1, self.X_M, out=np.full_like(
                                  self.X_M, np.inf), where=self.X_M != 0),
-                             1/(p.trade_shares*self.Z.sum()),
                              p.fo[None, None, :]+np.einsum('n,i,s -> nis',
                                                            self.w,
                                                            1/self.w,
@@ -712,39 +686,14 @@ class var:
         return psi_star
         
     def compute_phi(self, p):
-        denominator_M = np.zeros((p.N, p.N, p.S))
-        denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-                                self.PSI_M[..., 1:],
-                                self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-                                1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CL = np.zeros((p.N, p.N, p.S))
-        denominator_CL[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-                                self.PSI_CL[..., 1:],
-                                self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-                                1/((self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                self.P_CL[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CD = np.einsum('ns,ns->ns',
-                                   1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-                                   self.P_CD**(1-p.sigma[None,:])
-                                   )
-        one_over_denominator = 1/(denominator_M + denominator_CL + denominator_CD[:,None,:])
-        phi = np.einsum('nis,,s,n,nis->nis',
-                        p.trade_shares,
-                        self.Z.sum(),
-                        1/p.beta,
-                        1/self.Z,
-                        one_over_denominator)**(1/p.theta)[None,None,:]
-        
-        phi = np.einsum('nis,ns,ns,ns,ns->nis',
-                phi,
-                1/np.diagonal(phi).transpose(),
-                p.T**(1/p.theta[None,:]),
-                self.w[:,None]**(-p.alpha[None,:]),
-                self.price_indices[:,None]**(p.alpha[None,:]-1))
-        
+        # phi = np.ones_like(self.phi)
+        # phi[self.diag_mask] = (p.T[:, None] * \
+        #     (self.w[:, None]**p.alpha[None, :]* self.price_indices[:, None]**(1-p.alpha[None, :]))**(-p.theta[None, :])
+        #     ).ravel()
+        # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
+        # phi[self.off_diag_mask] = (p.trade_shares*self.phi*self.X.sum()/self.X)[self.off_diag_mask]
+        # phi = self.phi*self.X/(p.trade_shares*(np.diagonal(self.X).transpose())[:,None,:])
+        phi = self.phi*p.trade_shares*(np.diagonal(self.X).transpose())[:,None,:]/self.X
         return phi
     
     def compute_price_indices(self, p, assign = True):
@@ -760,63 +709,40 @@ class var:
         else:
             return price_indices
     
-    # def compute_tau(self,p, assign = True, price_to_compute = None):
-    #     # self.tau = np.ones((p.N,p.N,p.S))
-    #     if price_to_compute is None:
-    #         price_to_compute = self.price_indices
-    #     if p.T.size == p.N:
-    #         tau = np.einsum('nis,is,is,is->nis',
-    #                         1/self.phi,
-    #                         p.T[:,None]**(1/p.theta[None,:]),
-    #                         self.w[:,None]**(-p.alpha[None,:]),
-    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
-    #     else:
-    #         tau = np.einsum('nis,is,is,is->nis',
-    #                         1/self.phi,
-    #                         p.T**(1/p.theta[None,:]),
-    #                         self.w[:,None]**(-p.alpha[None,:]),
-    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
-    #     if assign:
-    #         self.tau = tau
-    #     else:
-    #         return tau
-    
-    def compute_tau(self,p, assign = True):
+    def compute_tau(self,p, assign = True, price_to_compute = None):
         # self.tau = np.ones((p.N,p.N,p.S))
-        tau = np.diagonal(self.phi).transpose()[None,:,:]/self.phi
+        if price_to_compute is None:
+            price_to_compute = self.price_indices
+        tau = np.einsum('nis,is,is,is->nis',
+                        1/self.phi,
+                        p.T[:,None]**(1/p.theta[None,:]),
+                        self.w[:,None]**(-p.alpha[None,:]),
+                        price_to_compute[:,None]**(p.alpha[None,:]-1))
         if assign:
             self.tau = tau
         else:
             return tau
-        
-    # def compute_T(self,p, assign = True):
-    #     # self.tau = np.ones((p.N,p.N,p.S))
-    #     T = np.diagonal(self.phi).transpose()*self.w[:,None]**p.alpha[None,:]*self.w[:,None]**(1-p.alpha[None,:])
-    #     if assign:
-    #         self.T = T
-    #     else:
-    #         return T
     
-    # def scale_tau(self, p):
-    #     try:
-    #         price_to_compute = self.compute_price_indices(p, assign = False)
-    #     except:
-    #         self.compute_growth(p)
-    #         self.compute_aggregate_qualities(p)
-    #         price_to_compute = self.compute_price_indices(p, assign = False)
+    def scale_tau(self, p):
+        try:
+            price_to_compute = self.compute_price_indices(p, assign = False)
+        except:
+            self.compute_growth(p)
+            self.compute_aggregate_qualities(p)
+            price_to_compute = self.compute_price_indices(p, assign = False)
             
-    #     tau = self.compute_tau(p, assign = False, price_to_compute = price_to_compute)
+        tau = self.compute_tau(p, assign = False, price_to_compute = price_to_compute)
 
-    #     diag_tau = np.diagonal(tau).transpose()
-    #     # B = np.ones((p.N,p.S))
-    #     # B[:,0] = ( diag_tau[:,0]**(1+p.beta[1]*(p.alpha[1]-1)) / diag_tau[:,1]**(p.beta[1]*(p.alpha[0]-1)) )**(1/(p.alpha*p.beta).sum())
-    #     # B[:,1] = ( diag_tau[:,1]**(1+p.beta[0]*(p.alpha[0]-1)) / diag_tau[:,0]**(p.beta[0]*(p.alpha[1]-1)) )**(1/(p.alpha*p.beta).sum())
+        diag_tau = np.diagonal(tau).transpose()
+        # B = np.ones((p.N,p.S))
+        # B[:,0] = ( diag_tau[:,0]**(1+p.beta[1]*(p.alpha[1]-1)) / diag_tau[:,1]**(p.beta[1]*(p.alpha[0]-1)) )**(1/(p.alpha*p.beta).sum())
+        # B[:,1] = ( diag_tau[:,1]**(1+p.beta[0]*(p.alpha[0]-1)) / diag_tau[:,0]**(p.beta[0]*(p.alpha[1]-1)) )**(1/(p.alpha*p.beta).sum())
         
-    #     B = diag_tau * ( (diag_tau**p.beta[None,:]).prod(axis=1))[:,None]**((1-p.alpha[None,:])/(p.alpha*p.beta).sum() )
+        B = diag_tau * ( (diag_tau**p.beta[None,:]).prod(axis=1))[:,None]**((1-p.alpha[None,:])/(p.alpha*p.beta).sum() )
         
-    #     self.phi = self.phi*B[:,None,:]
-    #     self.compute_sectoral_prices(p)
-    #     self.compute_trade_flows(p)
+        self.phi = self.phi*B[:,None,:]
+        self.compute_sectoral_prices(p)
+        self.compute_trade_flows(p)
     
     def scale_P(self, p):
         try:
@@ -825,26 +751,17 @@ class var:
             self.compute_growth(p)
             self.compute_aggregate_qualities(p)
             price_to_compute = self.compute_price_indices(p, assign = False)
-
         numeraire = price_to_compute[0]
         
         self.w = self.w / numeraire
         self.Z = self.Z / numeraire
         self.phi = self.phi * numeraire
-        # p.trade_flows = p.trade_flows / numeraire
         
         self.compute_sectoral_prices(p)
-        # self.compute_trade_shares(p)
-        
-    def scale_Z(self,p):
-        fact = p.OUT/self.Z.sum()
-        self.w = self.w * fact
-        self.Z = self.Z * fact
-        
         self.compute_trade_flows(p)
     
     def compute_nominal_value_added(self,p):
-        self.nominal_value_added = p.alpha[None, :]*(p.trade_shares*self.Z.sum()*(1-self.X_M/p.sigma[None, None, :])).sum(axis=0)
+        self.nominal_value_added = p.alpha[None, :]*(self.X-self.X_M/p.sigma[None, None, :]).sum(axis=0)
     
     def compute_nominal_intermediate_input(self,p):
         self.nominal_intermediate_input = np.einsum('s,is->is',
@@ -853,15 +770,13 @@ class var:
     
     def compute_nominal_final_consumption(self,p):
         self.nominal_final_consumption = self.Z - self.nominal_intermediate_input.sum(axis=1)
-        self.cons = self.nominal_final_consumption/self.price_indices
         
     def compute_gdp(self,p):
-        self.gdp = self.nominal_final_consumption + p.deficit_share_world_output*self.Z.sum() + self.w*(p.labor - self.l_P)
+        self.gdp = self.nominal_final_consumption + p.deficit_share_world_gdp*self.w*p.labor + self.w*(p.labor - self.l_P)
     
     def compute_profit(self,p):
-        self.profit = np.einsum('nis,nis,s,i,nis->nis',
+        self.profit = np.einsum('nis,s,i,nis->nis',
                                 self.X_M,
-                                p.trade_shares*self.Z.sum(),
                                 1/p.sigma,
                                 1/self.w,
                                 np.divide(1, self.PSI_M, out=np.zeros_like(
@@ -878,45 +793,11 @@ class var:
         self.share_innov_patented = self.psi_star[...,1]**(-p.k)
     
     def compute_welfare(self,p):
-        exp = 1-1/p.gamma
-        self.U = self.cons**(exp)/(p.rho-self.g*exp)/exp
-    
-    def compute_non_solver_aggregate_qualities(self,p): 
-        prefact = p.k * p.eta * self.l_R**(1-p.kappa)/(p.k-1)
-        A = (self.g_s + p.nu + p.zeta)
-        A_tilde = (self.g_s + p.nu_tilde + p.zeta)
-        self.PSI_MPND = np.einsum('is,nis,ns->nis',
-                                  prefact,
-                                  np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                                      self.psi_star), where=self.psi_star != np.inf),
-                                  1/(A[None,:]+p.delta))
-        self.PSI_MPL = np.einsum('s,nis,ns->nis',
-                                 p.nu,
-                                 self.PSI_MPND,
-                                 1/(A_tilde[None,:]+p.delta))
-        self.PSI_MPD = np.einsum('s,nis,ns->nis',
-                                 p.nu,
-                                 self.PSI_MPL,
-                                 1/(p.delta+self.g_s[None,:]+p.zeta[None,:]))
-        numerator_A = np.einsum('is,nis->nis',
-                                prefact,
-                                1 - np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                                    self.psi_star), where=self.psi_star != np.inf))
-        numerator_B= np.einsum('ns,nis->nis',
-                               p.delta,
-                               self.PSI_MPND)
-        self.PSI_MNP = (numerator_A + numerator_B)/A[None,None,:]
-        
-    
-    def compute_consumption_equivalent_welfare(self,p,baseline):
-        self.cons_eq_welfare = self.cons*\
-            ((p.rho-baseline.g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
-                /baseline.cons
+        self.U = self.nominal_final_consumption/self.price_indices
     
     def compute_non_solver_quantities(self,p):
         self.compute_price_indices(p)
         self.compute_tau(p)
-        # self.compute_T(p)
         self.compute_nominal_value_added(p)
         self.compute_nominal_intermediate_input(p)
         self.compute_nominal_final_consumption(p)
@@ -924,8 +805,6 @@ class var:
         self.compute_profit(p)
         self.compute_pflow(p)      
         self.compute_share_of_innovations_patented(p)
-        self.compute_welfare(p)
-        self.compute_non_solver_aggregate_qualities(p)
 
     def check_solution(self, p, return_checking_copy = False, assertions = True):
         check = self.copy()
@@ -965,61 +844,32 @@ class var:
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)
     return np.squeeze(removed)
-
-def eps(x):
-    return 1-np.exp(-x)
     
 class moments:
     def __init__(self,list_of_moments = None, n=7, s=2):
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'RD', 'RP',
-                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                               'SINNOVPATUS','TO','TE']
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+                               'SINNOVPATEU']
         else:
             self.list_of_moments = list_of_moments
-        # self.weights_dict = {'GPDIFF':1, 
-        #                      'GROWTH':1, 
-        #                      'KM':5, 
-        #                      'OUT':4, 
-        #                      'RD':5, 
-        #                      'RP':3, 
-        #                      'SPFLOW':1, 
-        #                      'SRDUS':3, 
-        #                      'SRGDP':1, 
-        #                      # 'STFLOW':1,
-        #                      'JUPCOST':1,
-        #                       'TP':1,
-        #                       'Z':1,
-        #                      # 'SDOMTFLOW':1,
-        #                      'SINNOVPATEU':1,
-        #                      'SINNOVPATUS':1,
-        #                       'NUR':1,
-        #                       'TO':3,
-        #                       'TE':3
-        #                      }
         self.weights_dict = {'GPDIFF':1, 
                              'GROWTH':1, 
-                             'KM':5, 
-                             'OUT':4, 
-                             'RD':3, 
-                             'RP':3, 
+                             'KM':1, 
+                             'OUT':1, 
+                             'RD':1, 
+                             'RP':1, 
                              'SPFLOW':1, 
-                             'SPFLOWDOM':1, 
-                             'SRDUS':1,
+                             'SRDUS':1, 
                              'SRGDP':1, 
-                             # 'STFLOW':1,
+                             'STFLOW':1,
                              'JUPCOST':1,
-                              'TP':1,
-                              'Z':1,
-                             # 'SDOMTFLOW':1,
-                             'SINNOVPATEU':1,
-                             'SINNOVPATUS':1,
-                              'NUR':1,
-                              'TO':3,
-                              'TE':3
-                             }
+                             'TP':1,
+                             'Z':1,
+                             'SDOMTFLOW':1,
+                             'SINNOVPATEU':1}
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
         
@@ -1031,27 +881,18 @@ class moments:
                     'RP':pd.Index(self.countries, name='country'), 
                     'SPFLOW':pd.MultiIndex.from_tuples([(c1,c2) for c1 in self.countries for c2 in self.countries if c1 != c2]
                                             , names=['destination','origin']),
-                    'SPFLOWDOM':pd.MultiIndex.from_product([self.countries,self.countries]
-                                                      , names=['destination','origin']),
+                    # 'SPFLOW':pd.MultiIndex.from_product([self.countries,self.countries]
+                    #                                  , names=['destination','origin']),
                     'SRDUS':pd.Index(['scalar']), 
                     'JUPCOST':pd.Index(['scalar']), 
                     'SRGDP':pd.Index(self.countries, name='country'), 
-                    # 'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
-                    #                                  , names=['destination','origin','sector']),
+                    'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                     , names=['destination','origin','sector']),
                     'TP':pd.Index(['scalar']),
                     'Z':pd.Index(self.countries, name='country'),
-                    'turnover':pd.Index(self.countries, name='country'),
-                    # 'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
-                    #                                  , names=['country','sector']),
-                    'SINNOVPATEU':pd.Index(['scalar']),
-                    'SINNOVPATUS':pd.Index(['scalar']),
-                    'TO':pd.Index(['scalar']),
-                    'TE':pd.Index(['scalar']),
-                    'NUR':pd.Index(['scalar'])}
-        
-        self.shapes = {'SPFLOW':(len(self.countries),len(self.countries)-1),
-                       'SPFLOWDOM':(len(self.countries),len(self.countries)),
-                       }
+                    'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
+                                                     , names=['country','sector']),
+                    'SINNOVPATEU':pd.Index(['scalar'])}
     
     def get_signature_list(self):
         l = []
@@ -1061,9 +902,9 @@ class moments:
     
     @staticmethod
     def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SPFLOW', 'SPFLOWDOM',
-                'SRDUS', 'SRGDP', 'JUPCOST', 'TP', 'Z', 
-                'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR']
+        return ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SPFLOW', 
+                'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP', 'Z', 'SDOMTFLOW', 
+                'SINNOVPATEU']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -1079,54 +920,28 @@ class moments:
         N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
         S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
         self.unit = 1e6
-        # self.STFLOW_target = (self.ccs_moments.trade/
-        #                       self.ccs_moments.trade.sum()).values.reshape(N,N,S)
+        
+        self.STFLOW_target = (self.ccs_moments.trade/
+                              self.ccs_moments.trade.sum()).values.reshape(N,N,S)
         self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
         self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
-        self.SPFLOWDOM_target = self.cc_moments['patent flows'].values
-        self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N))/self.SPFLOWDOM_target.sum()
+        # self.SPFLOW_target = self.cc_moments['patent flows'].values
+        # self.SPFLOW_target = self.SPFLOW_target.reshape((N,N))/self.SPFLOW_target.sum()
         self.OUT_target = self.c_moments.expenditure.sum()/self.unit
         self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
                             /(self.c_moments.gdp/self.c_moments.price_level).sum()
         self.RP_target = self.c_moments.price_level.values
         self.RD_target = self.c_moments.rnd_gdp.values
         self.KM_target = self.moments.loc['KM'].value
-        self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
         self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
-        self.TE_target = self.moments.loc['TE'].value 
-        self.TO_target = np.array(0.05)
-        # self.GROWTH_target = self.GROWTH_target*10
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
         self.TP_target = self.moments.loc['TP'].value
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
-        self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
-        # self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values#/self.ccs_moments.trade.sum()
-        # self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)/self.unit
-        self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
-    
-    def load_run(self,path):
-        df = pd.read_csv(path+'list_of_moments.csv')
-        self.list_of_moments = df['moments'].tolist()
-        df.set_index('moments',inplace=True)
-        for mom in self.list_of_moments:
-            self.weights_dict[mom] = df.loc[mom, 'weights']
-            df_mom = pd.read_csv(path+mom+'.csv')
-            if len(df) == 1:
-                mom_target = df_mom.iloc[0].target
-                mom_value = df_mom.iloc[0].value
-            else:
-                mom_target = df_mom['target'].values
-                mom_value = df_mom['moment'].values
-            try:
-                mom_target = mom_target.reshape(self.shapes[mom])
-                mom_value = mom_value.reshape(self.shapes[mom])
-            except:
-                pass
-            setattr(self,mom+'_target',mom_target)
-            setattr(self,mom,mom_value)
+        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
+        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)
     
     def plot_moments(self, list_of_moments, plot = True, save_plot = None):
         scalar_moments = []
@@ -1137,8 +952,7 @@ class moments:
                       mom+' target  : ',
                       getattr(self,mom+'_target'))
                 scalar_moments.append(mom)
-                # scalar_moments_ratio.append(getattr(self,mom)/getattr(self,mom+'_target'))
-                scalar_moments_ratio.append(getattr(self,mom+'_deviation'))
+                scalar_moments_ratio.append(getattr(self,mom)/getattr(self,mom+'_target'))
             else:
                 if plot == True:
                     if mom != 'STFLOW' and mom != 'SDOMTFLOW':
@@ -1149,7 +963,7 @@ class moments:
                                 ,[0,
                                   getattr(self,mom+'_target').max()])
                         ax.set_xlabel('target')
-                        if mom != 'SPFLOW' and  mom != 'SPFLOWDOM':
+                        if mom != 'SPFLOW' :
                             texts = [plt.text(getattr(self,mom+'_target')[i],getattr(self,mom)[i],idx) 
                                      for i,idx in enumerate(self.idx[mom])]   
                         else:
@@ -1209,33 +1023,30 @@ class moments:
                
         fig,ax = plt.subplots(figsize = (12,8))
         ax.scatter(scalar_moments,scalar_moments_ratio)
-        ax.plot(scalar_moments,np.zeros_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        # if np.any(np.array(scalar_moments_ratio)>10):
-        #     plt.yscale('log')
-        plt.title('scalar moments, deviation')
+        ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
+        if np.any(np.array(scalar_moments_ratio)>10):
+            plt.yscale('log')
+        plt.title('scalar moments, ratio of moment over moment_target')
         if save_plot is not None:
             plt.savefig(save_plot+'_scalar_moments')
         plt.show()
             
-    def write_moments(self, path):
-        for mom in self.list_of_moments:
+    def write_moments(self, path, list_of_moments):
+        for mom in list_of_moments:
             df = pd.DataFrame(data = {'target':getattr(m,mom+'_target').ravel(),
                                       'moment':getattr(m,mom).ravel()})
             df.to_csv(path+mom+'.csv',index=False)
-        df = pd.DataFrame(data = {'moments':self.list_of_moments,
-                                  'weights':[self.weights_dict[mom] for mom in self.list_of_moments]})
+        df = pd.DataFrame(data = self.list_of_moments)
         df.to_csv(path+'list_of_moments.csv',index=False)
     
     @staticmethod
-    def compare_moments(dic = None, lis = None, save_path = None, contin_cmap = False):
+    def compare_moments(dic = None, lis = None, save_path = None):
         if dic is None and lis is not None:
             coms = ['m'+str(i) for i,_ in enumerate(lis)]
             moms_c = lis
         elif lis is None and dic is not None:
             coms = [k for k in dic.keys()]
             moms_c = [v for v in dic.values()]
-        n_col = int(np.floor(len(dic)/25))+1
-        colors = sns.color_palette("Spectral", n_colors = len(dic))
         scalar_moments_collection = [ [] for _ in range(len(coms)) ]
         scalar_moments = []
         for mom in moms_c[0].list_of_moments:
@@ -1244,24 +1055,19 @@ class moments:
                 scalar_moments.append(mom)
                 print('\n'+mom+' target :',getattr(moms_c[0],mom+'_target'))
                 for i,mom_c in enumerate(moms_c):
-                    # scalar_moments_collection[i].append(getattr(mom_c,mom)/getattr(mom_c,mom+'_target'))
-                    scalar_moments_collection[i].append(getattr(mom_c,mom+'_deviation')**2)
+                    scalar_moments_collection[i].append(getattr(mom_c,mom)/getattr(mom_c,mom+'_target'))
                     print(coms[i]+' : ',getattr(mom_c,mom))
             else:
                 fig,ax = plt.subplots(figsize = (12,8))
                 for i,mom_c in enumerate(moms_c):
-                    if contin_cmap:
-                        ax.scatter(getattr(mom_c,mom+'_target').ravel(),getattr(mom_c,mom).ravel()
-                                   ,label = coms[i],lw=2,marker = 'x',color=colors[i])
-                    else:
-                        ax.scatter(getattr(mom_c,mom+'_target').ravel(),getattr(mom_c,mom).ravel()
-                                   ,label = coms[i],lw=2,marker = 'x')
+                    ax.scatter(getattr(mom_c,mom+'_target').ravel(),getattr(mom_c,mom).ravel()
+                               ,label = coms[i],lw=2,marker = 'x')
                 ax.plot([getattr(mom_c,mom+'_target').min(),
                           getattr(mom_c,mom+'_target').max()]
                         ,[getattr(mom_c,mom+'_target').min(),
                           getattr(mom_c,mom+'_target').max()], 
                         ls = '--', lw=1, color = 'k')
-                if mom != 'SPFLOWDOM' and mom != 'SPFLOW' and mom != 'STFLOW' and mom != 'SDOMTFLOW':
+                if mom != 'SPFLOW' and mom != 'STFLOW' and mom != 'SDOMTFLOW':
                     texts = [plt.text(getattr(mom_c,mom+'_target')[i],getattr(mom_c,mom)[i],idx) 
                               for i,idx in enumerate(mom_c.idx[mom])]
                 # ax.plot([0,
@@ -1272,44 +1078,21 @@ class moments:
                 plt.title(mom+' targeting')
                 plt.yscale('log')
                 plt.xscale('log')
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-                if save_path is not None:
-                    plt.tight_layout()
-                    plt.savefig(save_path+mom)
-                plt.show()
-            if mom == 'TO':
-                fig,ax = plt.subplots(figsize = (12,8))
-                for i,mom_c in enumerate(moms_c):
-                    if contin_cmap:
-                        ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2,color=colors[i])
-                    else:
-                        ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2)
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-                plt.title('turnover')
-                if save_path is not None:
-                    plt.tight_layout()
-                    plt.savefig(save_path+'turnover')
+                plt.legend()
                 plt.show()
         fig,ax = plt.subplots(figsize = (12,8))
         for i,scalars_of_one_run in enumerate(scalar_moments_collection):
-            if contin_cmap:
-                ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i],color=colors[i])
-            else:
-                ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i])
-        # ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        ax.plot(scalar_moments,np.zeros_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        # if np.any([np.any(np.array(scalars_of_one_run)>10) 
-        #            for scalars_of_one_run in scalar_moments_collection]):
-        #     plt.yscale('log')
-        plt.title('scalar moments deviation')
-        plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-        if save_path is not None:
-            plt.tight_layout()
-            plt.savefig(save_path+'scalar_moments')
+            ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i])
+        ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
+        if np.any([np.any(np.array(scalars_of_one_run)>10) 
+                   for scalars_of_one_run in scalar_moments_collection]):
+            plt.yscale('log')
+        plt.title('scalar moments, ratio of moment over moment_target')
+        plt.legend()
         plt.show()
         
-    # def compute_STFLOW(self,var,p):
-    #     self.STFLOW = (var.X_M+var.X_CL+var.X_CD)/var.Z.sum()
+    def compute_STFLOW(self,var,p):
+        self.STFLOW = (var.X_M+var.X_CL+var.X_CD)/var.Z.sum()
         
     def compute_SPFLOW(self,var,p):
         # numerator = np.einsum('nis,is,is->nis',
@@ -1318,14 +1101,8 @@ class moments:
         #                       var.l_R[...,1:]**(1-p.k)
         #                       )
         # numerator = remove_diag(numerator)
-        # pflow = remove_diag(var.pflow)
-        pflow = var.pflow
-        self.SPFLOWDOM = pflow/pflow.sum()
-        inter_pflow = remove_diag(var.pflow)
-        self.SPFLOW = inter_pflow/inter_pflow.sum()
-        
-    # def compute_SPFLOWRUS(self,var,p):
-        
+        pflow = remove_diag(var.pflow)
+        self.SPFLOW = pflow/pflow.sum()
         
     def compute_OUT(self,var,p):
         self.OUT = var.Z.sum()
@@ -1356,7 +1133,7 @@ class moments:
             )/var.l_R[0,1:].sum()
         
     def compute_SRDUS(self,var,p):
-        self.SRDUS = (var.X_M[:,0,1]*p.trade_shares[:,0,1]*var.Z.sum()).sum()/(p.trade_shares[:,0,1]*var.Z.sum()).sum()
+        self.SRDUS = var.X_M[:,0,1].sum()/var.X[:,0,1].sum()
     
     def compute_GPDIFF(self,var,p):
         price_index_growth_rate = var.g_s/(1-p.sigma)+p.alpha*var.g
@@ -1374,114 +1151,14 @@ class moments:
     def compute_TP(self,var,p):
         self.TP = var.pflow.sum()
         
-    # def compute_SDOMTFLOW(self,var,p):
-    #     self.SDOMTFLOW = np.diagonal(var.X).transpose()#/var.X.sum()
+    def compute_SDOMTFLOW(self,var,p):
+        self.SDOMTFLOW = np.diagonal(var.X).transpose()/var.X.sum()
     
     def compute_SINNOVPATEU(self,var,p):
         self.SINNOVPATEU = var.share_innov_patented[1,1]
         
-    def compute_SINNOVPATUS(self,var,p):
-        self.SINNOVPATUS = var.share_innov_patented[0,0]
-        
-    def compute_TO(self,var,p):
-        delt = 5
-        self.delta_t = delt
-        PHI = var.phi**p.theta[None,None,:]
-        
-        num_brack_A = var.PSI_CL*eps(p.nu_tilde*delt)[None,None,:]
-        num_brack_B = var.PSI_MNP*(eps(p.nu_tilde*delt)*eps(p.nu*delt))[None,None,:]
-        num_brack_C = var.PSI_MPND*(eps(p.delta*delt)
-                                    *eps(p.nu*delt)[None,:]
-                                    *eps(p.nu_tilde*delt)[None,:])[:,None,:]
-        num_brack_D = var.PSI_MPL*(eps(p.delta*delt)
-                                    *eps(p.nu_tilde*delt)[None,:])[:,None,:]
-        num_brack_E = var.PSI_MPD*eps(p.nu*delt)[None,None,:]
-        
-        num_brack = (num_brack_A +num_brack_B + num_brack_C + num_brack_D + num_brack_E)
-        
-        num_sum = np.einsum('nis,njs->ns',
-                            num_brack,
-                            PHI
-                            ) - \
-                  np.einsum('nis,ns->ns',
-                            num_brack,
-                            np.diagonal(PHI).transpose()
-                            ) - \
-                  np.einsum('nis,nis->ns',
-                            num_brack,
-                            PHI
-                            ) + \
-                  np.einsum('ns,ns->ns',
-                            np.diagonal(num_brack).transpose(),
-                            np.diagonal(PHI).transpose(),
-                            )
-                  
-        num = np.einsum('ns,ns->ns',
-                        PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
-                        num_sum
-                        )
-        
-        denom_A = np.einsum('nis,ns,ns->nis',
-                                  PHI,
-                                  var.PSI_CD,
-                                  PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:]
-                                  )
-        
-        denom_B_a = var.PSI_MNP*np.exp(-delt*p.nu)[None,None,:]
-        denom_B_b = var.PSI_MPND*(np.exp(-delt*p.nu)[None,:]
-                                  +eps(p.nu*delt)[None,:]*np.exp(-delt*p.delta))[:,None,:]
-        denom_B_c = (var.PSI_MPL+var.PSI_MPD)*np.exp(-delt*p.delta)[:,None,:]
-        denom_B = np.einsum('nis,nis,s->nis',
-                            denom_B_a + denom_B_b + denom_B_c,
-                            var.phi**(p.sigma-1)[None,None,:],
-                            (p.sigma/(p.sigma-1))**(1-p.sigma)
-                            )
-        
-        denom_C_a = var.PSI_CL*np.exp(-delt*p.nu_tilde)[None,None,:]
-        denom_C_b = var.PSI_MNP*(np.exp(-delt*p.nu_tilde)*eps(delt*p.nu))[None,None,:]
-        denom_C_c = var.PSI_MPND*(eps(p.delta*delt)
-                                    *eps(p.nu*delt)[None,:]
-                                    *np.exp(-p.nu_tilde*delt)[None,:])[:,None,:]
-        denom_C_d = var.PSI_MPL*(eps(p.delta*delt)
-                                    *np.exp(-p.nu_tilde*delt)[None,:])[:,None,:]
-        denom_C = np.einsum('nis,nis->nis',
-                            denom_C_a + denom_C_b + denom_C_c + denom_C_d,
-                            var.phi**(p.sigma-1)[None,None,:]
-                            )
-        
-        denom_D_sum = np.einsum('nis,njs->nis',
-                                num_brack,
-                                PHI
-                                ) - \
-                      np.einsum('nis,ns->nis',
-                                num_brack,
-                                np.diagonal(PHI).transpose()
-                                )
-        
-        denom_D = np.einsum('ns,nis->nis',
-                        PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
-                        denom_D_sum
-                        )
-        
-        denom = np.einsum('nis->ns',
-                          denom_A + denom_B + denom_C + denom_D
-                          )
-        
-        self.turnover = num/denom
-        self.TO = self.turnover[0,1]
-        
-    def compute_TE(self,var,p):
-        out_diag_trade_flows_shares = remove_diag(var.X_M + var.X_CL)
-        self.TE = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
-                                                    p.theta-(p.sigma-1),
-                                                    out_diag_trade_flows_shares)
-                    ).sum(axis=1).sum(axis=0) )[1]/(p.N*(p.N-1))
-        
-    def compute_NUR(self,var,p):
-        self.NUR = p.nu[1]
-        
     def compute_moments(self,var,p):
-        # self.compute_STFLOW(var, p)
+        self.compute_STFLOW(var, p)
         self.compute_SPFLOW(var, p)
         self.compute_OUT(var, p)
         self.compute_SRGDP(var, p)
@@ -1494,12 +1171,8 @@ class moments:
         self.compute_JUPCOST(var, p)
         self.compute_TP(var,p)
         self.compute_Z(var,p)
-        # self.compute_SDOMTFLOW(var,p)
+        self.compute_SDOMTFLOW(var,p)
         self.compute_SINNOVPATEU(var,p)
-        self.compute_SINNOVPATUS(var,p)
-        self.compute_NUR(var,p)
-        self.compute_TO(var,p)
-        self.compute_TE(var,p)
         
     def compute_moments_deviations(self):
         # for mom in self.get_list_of_moments():
@@ -1515,25 +1188,20 @@ class moments:
         #             /(getattr(self,mom+'_target').size)
         #             )
         for mom in self.get_list_of_moments():
-            if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE':
+            if mom != 'GPDIFF':
                 # setattr(self,
                 #         mom+'_deviation',
                 #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
                 #         /np.log(getattr(self,mom+'_target').size+1)
                 #         )
-                # setattr(self,
-                #         mom+'_deviation',
-                #         self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
-                #         )
                 setattr(self,
                         mom+'_deviation',
-                        self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
-                        /getattr(self,mom+'_target').size**(1/2)
+                        self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
                         )
             else:
                 mo = getattr(self,mom)
                 tar = getattr(self,mom+'_target')
-                # i = 5 #
+                i = 5 #
                 # while mo/(i*tar)+(i-1)/i <= 0:
                 #     i += 1
                 # setattr(self,
@@ -1541,22 +1209,15 @@ class moments:
                 #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
                 #         /np.log(getattr(self,mom+'_target').size+1)
                 #         )
-                # setattr(self,
-                #         mom+'_deviation',
-                #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
-                #         )
-                # setattr(self,
-                #         mom+'_deviation',
-                #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
-                #         /getattr(self,mom+'_target').size
-                #         )
                 setattr(self,
                         mom+'_deviation',
-                        self.weights_dict[mom]*np.abs(mo-tar)/tar
+                        self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
                         /getattr(self,mom+'_target').size
                         )
-                # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
-                
+                # setattr(self,
+                #         mom+'_deviation',
+                #         self.weights_dict[mom]*np.log(mo/(i*tar)+(i-1)/i)
+                #         )
             
     def deviation_vector(self,list_of_moments = None):
         if list_of_moments is None:
@@ -1664,11 +1325,11 @@ def deviation_norm(x,p):
     return np.linalg.norm(deviation(x,p))
 
 def bound_psi_star(x,p,hit_the_bound=None):
-    x_psi_star = x[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2]
+    x_psi_star = x[p.N*3+p.N*(p.S-1):]
     if np.any(x_psi_star<1):
         hit_the_bound += 1
         x_psi_star[x_psi_star<1] = 1
-    x[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2] = x_psi_star
+    x[p.N*3+p.N*(p.S-1):] = x_psi_star
     return x, hit_the_bound
 
 def bound_research_labor(x,p,hit_the_bound=None):
@@ -1733,7 +1394,7 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     
     scalar_moments = pd.DataFrame(columns=['model','target'])
     for mom in m.get_list_of_moments():
-        # print(mom)
+        print(mom)
         if np.array(getattr(m,mom)).size == 1:
             scalar_moments.loc[mom] = [getattr(m,mom),getattr(m,mom+'_target')]
         else:
@@ -1768,20 +1429,20 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df_psi_star['psi_star'] = sol_c.psi_star.ravel()
     df_psi_star.to_excel(writer,sheet_name='psi_star')
     
-    df_sales = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
-    df_sales['M share of sales'] = sol_c.X_M[:,:,1].ravel()
-    df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].ravel()
-    df_sales['CD share of sales'] = sol_c.X_CD[:,:,1].ravel()
+    df_sales = pd.DataFrame(index=pd.Index(p.countries,name='country'))
+    df_sales['M share of sales'] = sol_c.X_M[:,:,1].sum(axis=0) / sol_c.X[:,:,1].sum(axis=0) 
+    df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].sum(axis=0) / sol_c.X[:,:,1].sum(axis=0) 
+    df_sales['CD share of sales'] = sol_c.X_CD[:,:,1].sum(axis=0) / sol_c.X[:,:,1].sum(axis=0) 
     df_sales['total to check'] = df_sales['M share of sales'] + df_sales['CL share of sales'] + df_sales['CD share of sales']
-    df_sales.to_excel(writer,sheet_name='monopolistic_competitive_shares')
+    df_sales.to_excel(writer,sheet_name='sales_shares')
     
-    # df_expenditure = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
-    # df_expenditure['M share of expenditure'] = sol_c.X_M[:,:,1]
-    # df_expenditure['CL share of expenditure'] = sol_c.X_CL[:,:,1]
-    # df_expenditure['CD share of expenditure'] = sol_c.X_CD[:,:,1].sum(axis=1)
-    # df_expenditure['total check'] = df_expenditure['M share of expenditure']\
-    #     + df_expenditure['CL share of expenditure'] + df_expenditure['CD share of expenditure']
-    # df_expenditure.to_excel(writer,sheet_name='expenditures_shares')    
+    df_expenditure = pd.DataFrame(index=pd.Index(p.countries,name='country'))
+    df_expenditure['M share of expenditure'] = sol_c.X_M[:,:,1].sum(axis=1) / sol_c.X[:,:,1].sum(axis=1) 
+    df_expenditure['CL share of expenditure'] = sol_c.X_CL[:,:,1].sum(axis=1) / sol_c.X[:,:,1].sum(axis=1) 
+    df_expenditure['CD share of expenditure'] = sol_c.X_CD[:,:,1].sum(axis=1) / sol_c.X[:,:,1].sum(axis=1) 
+    df_expenditure['total check'] = df_expenditure['M share of expenditure']\
+        + df_expenditure['CL share of expenditure'] + df_expenditure['CD share of expenditure']
+    df_expenditure.to_excel(writer,sheet_name='expenditures_shares')    
     
     df_qualities = pd.DataFrame(index=pd.Index(p.countries,name='country'))
     df_qualities['PSI_M'] = sol_c.PSI_M[...,1].sum(axis=1)
@@ -1817,9 +1478,7 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     
     writer.save()
     
-def full_load_parameters_set(path,list_of_moments = None):
-    if list_of_moments is None:
-        list_of_moments = moments.get_list_of_moments()
+def full_load_parameters_set(path):
     p = parameters()
     p.load_data(path)
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
@@ -1844,11 +1503,10 @@ def full_load_parameters_set(path,list_of_moments = None):
                               # apply_bound_psi_star=True
                             )
     sol_c = var.var_from_vector(sol.x, p)    
-    # sol_c.scale_tau(p)
+    sol_c.scale_tau(p)
     sol_c.scale_P(p)
-    sol_c.compute_price_indices
     sol_c.compute_non_solver_quantities(p)
-    m = moments(list_of_moments)
+    m = moments()
     m.load_data()
     m.compute_moments(sol_c,p)
     m.compute_Z(sol_c,p)
@@ -1904,84 +1562,7 @@ def iter_once(x,p, check_feasibility = False, normalize = False):
     # print(numeraire)
     # print(phi.max()/numeraire**p.theta[0])
     vec = np.concatenate((price,w,Z,l_R,psi_star,phi), axis=0)
-    return vec, modified_guess    
-
-def compare_params(dic, save=False, save_path=None):
-    n_col = round(len(dic)/25)
-    colors = sns.color_palette("Spectral", n_colors = len(dic))
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Delta of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'delta')
-    plt.show()    
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'One over delta of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,1/par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'one_over_delta')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T non patenting sector of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.T[:,0],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'T_non_patenting')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T patenting sector of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.T[:,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'T_patenting')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Eta of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.eta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'eta')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    ax2 = ax.twinx()
-    title = 'fo, fe, nu, nu_tilde' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.scatter(['fe', 'nu'],
-                   [par.fe[1], par.nu[1]],label=com,color=colors[i])
-        ax2.scatter(['nu_tilde'], par.nu_tilde[1], label = com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    ax.set_ylabel('fo, fe, nu')
-    ax2.set_yscale('log')
-    ax2.set_ylabel('nu_tilde')
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'scalar_params')
-    plt.show()            
+    return vec, modified_guess            
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
@@ -2017,85 +1598,123 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     
     while condition and count < max_count and np.all(x_old<1e40):
         # print(count)
-        
-        
         if count != 0:
             if accelerate:
                 aa_wrk.apply(x_new, x_old)
             x_new = smooth_large_jumps(x_new,x_old)
             x_old = (x_new+(damping-1)*x_old)/damping
-        # x_new, modified_x_old  = iter_once(x_old, p, 
-        #                                    normalize = False, 
-        #                                    check_feasibility = False)
         if apply_bound_zero:
             x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
         if apply_bound_psi_star:
             x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
         if apply_bound_research_labor:
             x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
-            
+        # x_new, modified_x_old  = iter_once(x_old, p, 
+        #                                    normalize = False, 
+        #                                    check_feasibility = False)
         init = var.var_from_vector(x_old,p,compute=False)
-        init.compute_growth(p)
-        # init.psi_star[init.psi_star < 1] = 1 
-        # print(init.psi_star.min())
-        # init.check_PSI_CL(p)
-        # if count>1e3:
-        #     # damping = 1
-        #     plt.plot(x_old)
-        #     plt.show()
-        # init.phi = init.phi/np.diagonal(init.phi).transpose()[:,None,:]
-        # init.phi = init.phi/init.phi.mean()
+        # init.compute_growth(p)
+        # psi_CL_check = init.check_PSI_CL(p)
+        # init.check_PSI_CD(p)
+        # if np.any(init.PSI_CD<=0):
+        #     print('problem')
+        # # labor_check = init.check_labor(p)
         # x_old = init.vector_from_var()
-        # if count>1e4:
-        #     # damping = 1
-        #     plt.plot(x_old)
-        #     plt.show()
-        # init.scale_P(p)
-        # init.scale_Z(p)
-        
-        init.compute_aggregate_qualities(p)
-        init.compute_sectoral_prices(p)
-        init.compute_trade_shares(p)
+
         init.compute_labor_allocations(p)
-        init.compute_price_indices(p)
+        # correc_count = 0
+        # psi_bound = np.einsum('n,s,is->nis',
+        #                       2/p.labor,
+        #                       p.fe,
+        #                       init.l_R**(1-p.kappa))**(1/p.k)
+        # # while np.any(init.l_Ae > p.labor[None,:,None]/2):
+        # while np.any(init.psi_star < psi_bound):
+        #     correc_count += 1
+        #     # temp_phi = init.phi.transpose((1,0,2))
+        #     # temp_phi[init.l_Ae > p.labor[None,:,None]/2] = temp_phi[init.l_Ae > p.labor[None,:,None]/2]*2
+        #     # init.phi = temp_phi.transpose((1,0,2))
+        #     # phi_bound = np.einsum('n,s,is->',
+        #     #                       2/p.labor,
+        #     #                       p.fe,
+        #     #                       init.l_R**(1-p.kappa))**(1/p.k)
+        #     # init.phi[init.psi_star < psi_bound] = psi_bound[init.psi_star < psi_bound]
+        #     init.phi[init.psi_star < psi_bound] = init.phi[init.psi_star < psi_bound]*2
+        #     init.compute_labor_allocations(p)
+        #     print('correcting psi',correc_count,(init.l_Ae/p.labor[None,:,None]).max())
+        # correc_count = 0
+        # while np.any(init.l_P < 0):
+        #     correc_count += 1
+        #     print('correcting labor',correc_count)
+        #     init.l_R[...,1][init.l_P < 0] = init.l_R[...,1][init.l_P < 0]/2
+        #     init.compute_labor_allocations(p)
+            
+        # init.phi = init.phi / np.diagonal(init.phi).transpose()[:,None,:]
+        init.compute_growth(p)
+        init.compute_aggregate_qualities(p)
+        # plt.plot(1/init.w)
+        # plt.show()
+        init.scale_tau(p)
+        init.scale_P(p)
+        x_old = init.vector_from_var()
+        # init.compute_growth(p)
+        # init.compute_aggregate_qualities(p)
+        init.compute_sectoral_prices(p)
+        init.compute_trade_flows(p)
         
         w = init.compute_wage(p)
         Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         psi_star = init.compute_psi_star(p)[...,1:].ravel()
-        # psi_star[psi_star < 1] = 1
         phi = init.compute_phi(p).ravel()
-        # phi = phi/(np.diagonal(phi).transpose()[:,None,:])
-        # phi = (phi/phi.mean())
-        # phi = phi.ravel()
-        
+        # phi = (phi / np.diagonal(phi).transpose()[:,None,:]).ravel()
         x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
-        # temp = var.var_from_vector(x_new,p,compute=False)
-        # temp.scale_P(p)
-        # temp.scale_Z(p)
-        # temp.compute_price_indices(p)
-        # x_new = temp.vector_from_var()
+        # print(w[0],l_R[0],p.labor[0])
+        # if np.any(w<0):
+        #     break
+        temp = var.var_from_vector(x_new,p,compute=False)
+        temp.scale_tau(p)
+        temp.scale_P(p)
+        x_new = temp.vector_from_var()
+        # print(x_new)
+        
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
-        # if count>500:
-        #     # damping = 1
-        #     # plt.scatter(init.X,p.trade_flows)
-        #     plt.plot(x_new_decomp[cobweb_qty])
-        #     plt.show()
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
                       for qty in ['w','Z','psi_star','l_R','phi']]
+        # conditions = [np.linalg.norm((x_new_decomp[qty] - x_old_decomp[qty])/x_old_decomp[qty]) > tol
+        #               for qty in ['w','Z','psi_star','l_R','phi']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        # print(convergence[-1])
         count += 1
         if np.all(np.array(convergence[-10:])<safe_convergence):
             if accelerate_when_stable:
                 accelerate = True
-                damping = damping_post_acceleration
-        norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+            damping = damping_post_acceleration
+        norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).min() )
         history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
         history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
-        # print(convergence[-1])
-        # print(init.price_indices[0])
+        # history_old.append(get_vec_qty(x_old,p)[cobweb_qty][1,...])
+        # history_new.append(get_vec_qty(x_new,p)[cobweb_qty][1,...])
+        # if count > 1000 and count%1000==0:
+        #     print(count)
+        # if count > 100 and count%100==0:
+        #     # plt.plot(get_vec_qty(x_new,p)[cobweb_qty].ravel())
+        #     # plt.show()
+        #     # damping = 3
+        #     # plt.semilogy(convergence)
+        #     plt.semilogy(norm)
+        #     # plt.semilogy(history_old)
+        #     plt.title(count)
+        #     plt.show()
+            # x_new = x_new*(0.5+np.random.rand(x_new.size))**10
+        # if count > -1:# and count%10==0:
+        #     cob.append_old_new(history_old[-1],history_new[-1])
+        #     pause = 0.1
+        #     # if count == 20:
+        #     #     pause = 1
+        #     cob.plot(count=count, window = 100,pause = pause)
+        # print(get_vec_qty(x_old,p)['psi_star'].max())
     
     finish = time.perf_counter()
     solving_time = finish-start
@@ -2120,7 +1739,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             cob.append_old_new(history_old[i],history_new[i])
             if cobweb_anim:
                 cob.plot(count=i, window = 100,pause = 0.05) 
-        cob.plot(count = count, window = 200)
+        cob.plot(count = count, window = None)
             
     if plot_convergence:
         plt.semilogy(convergence, label = 'convergence')
@@ -2131,9 +1750,8 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
 
 #%% fixed point solver
 p = parameters(n=7,s=2)
-# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde','zeta']
-# p.load_data('calibration_results_matched_economy/14/',p.get_list_of_params())
-# p.delta[0,1] = 0.05
+# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
+p.load_data('calibration_results_matched_trade_flows/18/',p.get_list_of_params())
 # Z_guess = p.data.expenditure.values/p.unit
 # w_guess = p.data.gdp.values*p.unit_labor/(p.data.labor.values*p.unit)*100
 # l_R_guess = np.repeat(p.labor[:,None]/200, p.S-1, axis=1).ravel()
@@ -2141,124 +1759,117 @@ p = parameters(n=7,s=2)
 # phi_guess = np.ones((p.N,p.N,p.S)).ravel()#*0.01
 # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
 # guess = np.random.rand(p.guess_from_params().size).reshape(p.guess_from_params().shape)
-sol, sol_c = fixed_point_solver(p,#x0=p.guess,
+sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='psi_star',
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
                         plot_convergence=True,
                         plot_cobweb=True,
-                        safe_convergence=0.01,
+                        safe_convergence=0.001,
                         disp_summary=True,
                         damping = 10,
-                        max_count = 5000,
-                        accel_memory = 10, 
+                        max_count = 3e3,
+                        accel_memory = 50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
+                        damping_post_acceleration=5
                         # damping=10
                           # apply_bound_psi_star=True
                         )
 
 sol_c = var.var_from_vector(sol.x, p)    
-# sol_c.scale_tau(p)
+sol_c.scale_tau(p)
 sol_c.scale_P(p)
-# sol_c.compute_growth(p)
-# sol_c.compute_aggregate_qualities(p)
-# sol_c.compute_sectoral_prices(p)
-# sol_c.compute_trade_shares(p)
-# sol_c.compute_labor_allocations(p)
-sol_c.compute_price_indices(p)
-# # sol_c.scale_Z(p)
-# # sol_c.compute_growth(p)
-# # sol_c.compute_aggregate_qualities(p)
-# # sol_c.compute_sectoral_prices(p)
-# # sol_c.compute_trade_flows(p)
-# # sol_c.compute_labor_allocations(p)
 sol_c.compute_non_solver_quantities(p) 
 
-# # sol_c.compute_non_solver_quantities(p)
+# sol_c.compute_non_solver_quantities(p)
 list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                    'SRDUS', 'SPFLOWDOM', 'SRGDP', 'JUPCOST',
-                    'SINNOVPATUS','TO']
+                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+                   'SINNOVPATEU']
 m = moments(list_of_moments)
 m.load_data()
 m.compute_moments(sol_c,p)
-# m.compute_Z(sol_c,p)
+m.compute_Z(sol_c,p)
 m.compute_moments_deviations()
-# m.plot_moments(m.list_of_moments)
+m.plot_moments(m.list_of_moments)
 # p.guess = sol_c.vector_from_var()
 
-#%% calibration func
+#%% calibration
 
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
-    # p.nu_tilde = p.nu
     try:
         v0 = p.guess
     except:
         pass
-    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
-                                  accelerate=False,
-                                  accelerate_when_stable=True,
-                                  plot_cobweb=False,
-                                  plot_convergence=False,
-                                  cobweb_qty='phi',
-                                  disp_summary=False,
-                                  safe_convergence=0.1,
-                                  max_count=2e3,
-                                  accel_memory = 50, 
-                                  accel_type1=True, 
-                                  accel_regularization=1e-10,
-                                  accel_relaxation=0.5, 
-                                  accel_safeguard_factor=1, 
-                                  accel_max_weight_norm=1e6,
-                                  damping_post_acceleration=5
-                                  )
-    if sol.status == 'failed': 
-        # print('trying less precise 1')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-                                      accelerate=False,
-                                      accelerate_when_stable=True,
-                                      plot_cobweb=False,
-                                      plot_convergence=False,
-                                      cobweb_qty='phi',
-                                      disp_summary=False,
-                                      safe_convergence=0.001,
-                                      max_count=2e3,
-                                      accel_memory = 50, 
-                                      accel_type1=True, 
-                                      accel_regularization=1e-10,
-                                      accel_relaxation=0.5, 
-                                      accel_safeguard_factor=1, 
-                                      accel_max_weight_norm=1e6,
-                                      damping_post_acceleration=5
-                                      )
-    
+    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+                                 accelerate=False,
+                                 accelerate_when_stable=True,
+                                 plot_cobweb=False,
+                                 plot_convergence=False,
+                                 cobweb_qty='phi',
+                                 disp_summary=False,
+                                 safe_convergence=0.001,
+                                 max_count=1e3,
+                                 accel_memory = 50, 
+                                 accel_type1=True, 
+                                 accel_regularization=1e-10,
+                                 accel_relaxation=0.5, 
+                                 accel_safeguard_factor=1, 
+                                 accel_max_weight_norm=1e6,
+                                 damping_post_acceleration=5
+                                 )
+                                
+    if sol.status == 'failed':
+        print('trying with good guess without acceleration')
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-10,
+                                     accelerate=False,
+                                     accelerate_when_stable=False,
+                                     plot_cobweb=False,
+                                     plot_convergence=False,
+                                     cobweb_qty='phi',
+                                     disp_summary=False,
+                                     safe_convergence=0.001,
+                                     max_count=5e3)
     if sol.status == 'failed':
         print('trying with standard guess')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
-                                      accelerate=False,
-                                      accelerate_when_stable=True,
-                                      plot_cobweb=False,
-                                      plot_convergence=False,
-                                      cobweb_qty='phi',
-                                      disp_summary=False,
-                                      safe_convergence=0.001,
-                                      max_count=1e3,
-                                      accel_memory = 50, 
-                                      accel_type1=True, 
-                                      accel_regularization=1e-10,
-                                      accel_relaxation=0.5, 
-                                      accel_safeguard_factor=1, 
-                                      accel_max_weight_norm=1e6,
-                                      damping_post_acceleration=5
-                                      )
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+                                     accelerate=False,
+                                     accelerate_when_stable=True,
+                                     plot_cobweb=False,
+                                     plot_convergence=False,
+                                     cobweb_qty='phi',
+                                     disp_summary=False,
+                                     safe_convergence=0.001,
+                                     max_count=1e3,
+                                     accel_memory = 50, 
+                                     accel_type1=True, 
+                                     accel_regularization=1e-10,
+                                     accel_relaxation=0.5, 
+                                     accel_safeguard_factor=1, 
+                                     accel_max_weight_norm=1e6,
+                                     damping_post_acceleration=5
+                                     )
+       
+    if sol.status == 'failed':
+        print('trying with standard guess without acceleration')
+        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-10,
+                                     accelerate=False,
+                                     accelerate_when_stable=False,
+                                     plot_cobweb=False,
+                                     plot_convergence=False,
+                                     cobweb_qty='phi',
+                                     disp_summary=False,
+                                     safe_convergence=0.001,
+                                     max_count=5e3
+                                     ) 
+    # sol_c = var.var_from_vector(sol.x, sol.p)   
+    sol_c.scale_tau(p)
     sol_c.scale_P(p)
-    sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_Z(sol_c,p)
@@ -2272,94 +1883,59 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
             hist.time = time.perf_counter() - start_time
         # if hist.count%100 == 0:
         #     m.plot_moments(m.list_of_moments)
-        if hist.count%100 == 0:
+        if hist.count%40 == 0:
             hist.plot()
         if hist.count%200==0:
-            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
-                  , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
-                  , 'theta :', p.theta[1], 'zeta :', p.zeta[1]
-                  , 'rho :', p.rho, 'kappa :', p.kappa)
-        # if hist.count%200==0:
-        #     hist.save(path = './calibration_results_matched_trade_flows/history105/', p = p)
+            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta_US : ', p.delta[0,1])
+        if hist.count%200==0:
+            hist.save(path = './calibration_results_matched_trade_flows/history9/', p = p)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
     # print(hist.count)
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None
-        # hist.save(path = './calibration_results/fails2/', p = p)
+        hist.save(path = './calibration_results/fails2/', p = p)
         return np.full_like(m.deviation_vector(),1e10)
-        # return m.deviation_vector() 
     else:
         return m.deviation_vector() 
 
-#%% calibration   
+#%%    
+p = parameters(n=7,s=2)
+# p.calib_parameters = ['eta','delta','fe','tau','T','fo','g_0','nu','nu_tilde']
+p.calib_parameters = ['eta','delta','fe','T','fo','g_0','nu']
+# p.load_data('calibration_results/history38/188/')
+start_time = time.perf_counter()
 
-new_run = True
-if new_run:
-    p = parameters(n=7,s=2)
-    # p.calib_parameters = ['eta',     'k',     'rho',     'alpha',     'fe',
-     # 'T',     'fo',     'sigma',     'theta',     'beta',
-     # 'zeta',     'g_0',     'kappa','gamma',
-     # 'delta',     'nu',     'nu_tilde']
-    # p.calib_parameters = ['T']
-    # p.load_data('calibration_results_matched_economy/43/')
-    p.calib_parameters = ['eta','k','fe','T','theta','zeta','g_0',
-                          'delta','nu','nu_tilde']
-    start_time = time.perf_counter()
-# p.calib_parameters = ['eta','delta','fe','T',
-#                       'g_0','zeta','nu','nu_tilde']
-# list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                    # 'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                    # 'SINNOVPATEU','NUR']
-# list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-#                     'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-#                     'SINNOVPATEU']
-list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                    'SRDUS','SPFLOWDOM', 'SRGDP', 'JUPCOST',
-                    'SINNOVPATUS','TE','TO']
-
-# list_of_moments = ['TP']
+# list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+#                    'SPFLOW', 'SRDUS', 'SRGDP', 'STFLOW', 'JUPCOST', 'TP']
+list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+                   'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST','SDOMTFLOW',
+                   'SINNOVPATEU']
 m = moments(list_of_moments)
-if new_run:
-    hist = history(*tuple(m.list_of_moments+['objective']))
+hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
-p.update_sigma_with_SRDUS_target(m)
-# m.load_run('calibration_results_matched_trade_flows/43/')
-# m.SDOMTFLOW_target = np.random.rand(p.N*p.S).reshape(p.N,p.S)*100
 bounds = p.make_parameters_bounds()
 # collec_of_guess = load_collection_of_guess()
-cond = True
-iterations = 0
-while cond:
-    if iterations == 0:
-        x0 = p.make_p_vector()
-    else:
-        x0 = test_ls.x
-    test_ls = optimize.least_squares(fun = calibration_func,    
-                        x0 = x0, 
-                        args = (p,m,p.guess,hist,start_time), 
-                        bounds = bounds,
-                        # method= 'dogbox',
-                        # loss='arctan',
-                        # jac='3-point',
-                        max_nfev=1e8,
-                        # ftol=1e-14, 
-                        xtol=1e-11, 
-                        # gtol=1e-14,
-                        # f_scale=scale,
-                        verbose = 2)
-    cond = test_ls.cost>0.0001 and test_ls.nfev>30
-    cond= False
-    iterations += 1
+
+test_ls = optimize.least_squares(fun = calibration_func,    
+                    x0 = p.make_p_vector(), 
+                    args = (p,m,p.guess,hist,start_time), 
+                    bounds = bounds,
+                    # method= 'dogbox',
+                    # loss='arctan',
+                    # jac='3-point',
+                    max_nfev=1e8,
+                    ftol=1e-14, 
+                    xtol=1e-14, 
+                    gtol=1e-14,
+                    # f_scale=scale,
+                    verbose = 2)
 finish_time = time.perf_counter()
 print('minimizing time',finish_time-start_time)
 
-p_sol = p.copy()
-p_sol.update_parameters(test_ls.x)
-
-sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
-                        cobweb_anim=False,tol =1e-15,
+sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                        cobweb_anim=False,tol =1e-10,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -2380,239 +1956,10 @@ sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                           # apply_bound_psi_star=True
                         )
 
-sol_c = var.var_from_vector(sol.x, p_sol)    
-# sol_c.scale_tau(p_sol)
-sol_c.scale_P(p_sol)
-sol_c.compute_price_indices(p)
-sol_c.compute_non_solver_quantities(p_sol) 
-m.compute_moments(sol_c,p_sol)
-m.compute_moments_deviations()
-m.plot_moments(m.list_of_moments)
-
-#%% make calibration runs for different moment(s) target
-
-dic_runs = {'SRDUS':np.arange(0.1,0.71,0.025),
-            'KM':np.arange(0.3,0.9,0.025),
-            'JUPCOST':np.arange(0.0005,0.001001,0.000025),
-            'SINNOVPATUS':np.arange(0.2,0.65,0.01)
-            }
-
-for k, v in dic_runs.items():
-    print(k)
-    print(v)
-    moment_to_change = k
-    target_list = v
-    baseline_path = 'calibration_results_matched_economy/43/'
-    result_path = 'calibration_results_matched_economy/'+moment_to_change+'/'
-    dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'+moment_to_change+'/'
-    
-    try:
-        os.mkdir(result_path)
-    except:
-        pass
-    try:
-        os.mkdir(dropbox_path)
-    except:
-        pass
-    
-    for i,target in enumerate(target_list):
-        print(k)
-        print(v)
-        print(target)
-        m = moments()
-        m.load_data()
-        m.load_run(baseline_path)
-        p = parameters(n=7,s=2)
-        p.load_data(baseline_path)
-        setattr(m,moment_to_change+'_target',target)
-        bounds = p.make_parameters_bounds()
-        start_time = time.perf_counter()
-        hist = history(*tuple(m.list_of_moments+['objective']))
-        test_ls = optimize.least_squares(fun = calibration_func,    
-                            x0 = p.make_p_vector(), 
-                            args = (p,m,p.guess,hist,start_time), 
-                            bounds = bounds,
-                            max_nfev=1e8,
-                            # ftol=1e-14, 
-                            xtol=1e-12, 
-                            # gtol=1e-14,
-                            verbose = 2)
-        p_sol = p.copy()
-        p_sol.update_parameters(test_ls.x)
-        sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
-                                cobweb_anim=False,tol =1e-15,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
-                                disp_summary=True,
-                                damping = 10,
-                                max_count = 3e3,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
-                                # damping=10
-                                  # apply_bound_psi_star=True
-                                )
-    
-        sol_c = var.var_from_vector(sol.x, p_sol)    
-        # sol_c.scale_tau(p_sol)
-        sol_c.scale_P(p_sol)
-        sol_c.compute_price_indices(p)
-        sol_c.compute_non_solver_quantities(p_sol) 
-        m.compute_moments(sol_c,p_sol)
-        m.compute_moments_deviations()
-        
-        p_sol.write_params(result_path+str(i)+'/')
-        m.write_moments(result_path+str(i)+'/')
-        
-        write_calibration_results(dropbox_path+str(i),p_sol,m,sol_c,commentary = '')
-        m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
-
-#%% write summaries calibration runs for one moment target change
-
-# moment_to_change = 'SRDUS'
-for moment_to_change in ['SRDUS','KM','JUPCOST','SINNOVPATUS']:
-# for moment_to_change in ['SINNOVPATUS']:
-    print(moment_to_change)
-    baseline_path = 'calibration_results_matched_economy/43/'
-    result_path = 'calibration_results_matched_economy/'+moment_to_change+'/'
-    dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'+moment_to_change+'/'
-    
-    try:
-        os.mkdir(result_path+'summary/')
-    except:
-        pass
-    try:
-        os.mkdir(dropbox_path+'summary/')
-    except:
-        pass
-    
-    dic_p = {}
-    dic_m = {}
-    dic_sol = {}
-    
-    files_in_dir = next(os.walk(result_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list.sort(key=float)
-    
-    for run in run_list:
-        run_path = result_path+run+'/'
-        p = parameters(n=7,s=2)
-        p.load_data(run_path)
-        m = moments()
-        m.load_data()
-        m.load_run(run_path)
-        sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                cobweb_anim=False,tol =1e-15,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='phi',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                safe_convergence=0.001,
-                                disp_summary=False,
-                                damping = 10,
-                                max_count = 3e3,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
-                                )
-        sol_c = var.var_from_vector(sol.x, p)    
-        sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
-        sol_c.compute_non_solver_quantities(p) 
-        m.compute_moments(sol_c,p)
-        m.compute_moments_deviations()
-        
-        run_name = run+': '+moment_to_change+str(getattr(m,moment_to_change+'_target'))
-        dic_m[run_name] = m
-        dic_p[run_name] = p
-        dic_sol[run_name] = sol_c
-    
-    # moments.compare_moments(dic_m, contin_cmap=True)
-    # compare_params(dic_p)
-    moments.compare_moments(dic_m, contin_cmap=True, save_path = dropbox_path+'summary/')
-    compare_params(dic_p, save = True, save_path = dropbox_path+'summary/')
-    
-    fig,ax = plt.subplots(figsize=(12,8))
-    ax2 = ax.twinx()
-    targets = [getattr(m,moment_to_change+'_target') for m in dic_m.values()]
-    nus = [p.nu[1] for p in dic_p.values()]
-    deltas_US = [p.delta[0,1] for p in dic_p.values()]
-    deltas_mean = [p.delta[:,1].mean() for p in dic_p.values()]
-    
-    ax.plot(targets,nus,color=sns.color_palette()[0],label='nu')
-    ax2.plot(targets,deltas_US,color=sns.color_palette()[1],label='delta_US')
-    ax2.plot(targets,deltas_mean,color=sns.color_palette()[2],label='delta_average')
-    
-    ax.legend(bbox_to_anchor=(-0.04, 1), loc="upper right")
-    ax2.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
-    ax.set_xlabel(moment_to_change+'_target',fontsize = 15)
-    ax.set_ylabel('Nu',fontsize = 15)
-    ax2.set_ylabel('Delta',fontsize = 15)
-    plt.tight_layout()
-    plt.savefig(dropbox_path+'summary/nu_and_delta.png')
-    
-    plt.show()
-
-
-#%% writing results as excel
-
-commentary = 'Calibrating more parameters (kappa and rho), with Trade elasticity moment, TO moment, no targeting domestic patent flows'
-path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/67'
-write_calibration_results(path,p_sol,m,sol_c,commentary = commentary)
-m.plot_moments(m.list_of_moments, save_plot = path)
-# commentary = 'Square root weights on dimension'
-# write_calibration_results(
-#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/3',
-#     p3,m3,sol3,commentary = commentary)
-# m3.plot_moments(m3.list_of_moments, 
-#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/3')
-# commentary = 'Delta US free, SRDUS divided by 2'
-# write_calibration_results(
-#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/6',
-#     p6,m6,sol6,commentary = commentary)
-# m6.plot_moments(m6.list_of_moments, 
-#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/6')
-# commentary = 'Delta US free'
-# write_calibration_results(
-#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/7',
-#     p7,m7,sol7,commentary = commentary)
-# m7.plot_moments(m7.list_of_moments, 
-#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/7')
-# runs = [10,11,12,13,14]
-# comments = ['Nu_tilde = nu*5',
-#             'Nu_tilde = nu*10',
-#             'Nu_tilde = Nu',
-#             'Nu_tilde = Nu/5',
-#             'Ratio of nu targeted as a moment, target 1']
-# runs = [16,17,18]
-# ps = [p16,p17,p18]
-# ms = [m16,m17,m18]
-# solss = [sol16,sol17,sol18]
-# comments = ['Growth = growth*2', 'Growth = growth*4','Growth = growth*10']
-# path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
-
-# for i, run in enumerate(runs):
-#     # p, sol, m = full_load_parameters_set('calibration_results_matched_economy/'+str(run)+'/')
-#     write_calibration_results(
-#         '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'+str(run),
-#         ps[i],ms[i],solss[i],commentary = comments[i])
-#     ms[i].plot_moments(ms[i].list_of_moments, 
-#                     save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'+str(run))
-
-
+sol_c = var.var_from_vector(sol.x, p)    
+sol_c.scale_tau(p)
+sol_c.scale_P(p)
+sol_c.compute_non_solver_quantities(p) 
 
 #%% load parameters sets
 
@@ -2623,715 +1970,168 @@ m.plot_moments(m.list_of_moments, save_plot = path)
 # p6, sol6, m6 = full_load_parameters_set('./calibration_results_matched_trade_flows/6/')
 # p7, sol7, m7 = full_load_parameters_set('./calibration_results_matched_trade_flows/7/')
 # p8, sol8, m8 = full_load_parameters_set('calibration_results_matched_trade_flows/history3/778/')
-# p14, sol14, m14 = full_load_parameters_set('calibration_results_matched_trade_flows/14/')
-# p15, sol15, m15 = full_load_parameters_set('calibration_results_matched_trade_flows/15/')
-# p16, sol16, m16 = full_load_parameters_set('calibration_results_matched_trade_flows/16/')
-# p17, sol17, m17 = full_load_parameters_set('calibration_results_matched_trade_flows/17/')
-# p18, sol18, m18 = full_load_parameters_set('calibration_results_matched_trade_flows/18/')
-# p27, sol27, m27 = full_load_parameters_set('calibration_results_matched_trade_flows/27/')
-# p24, sol24, m24 = full_load_parameters_set('calibration_results_matched_trade_flows/24/')
-# p21, sol21, m21 = full_load_parameters_set('calibration_results_matched_trade_flows/21/')
-# p22, sol22, m22 = full_load_parameters_set('calibration_results_matched_trade_flows/22/')
-# p1, sol1, m1 = full_load_parameters_set('calibration_results_matched_economy/1/')
-# p2, sol2, m2 = full_load_parameters_set('calibration_results_matched_economy/2/')
-# p3, sol3, m3 = full_load_parameters_set('calibration_results_matched_economy/3/')
-p4, sol4, m4 = full_load_parameters_set('calibration_results_matched_economy/4/',
-                                        ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                            'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                            'SINNOVPATEU'])
-p6, sol6, m6 = full_load_parameters_set('calibration_results_matched_economy/6/',
-                                        ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                            'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                            'SINNOVPATEU'])
-m6.SRDUS_target = np.array(0.325)
-m6.compute_moments(sol6, p6)
-m6.compute_moments_deviations()
-p7, sol7, m7 = full_load_parameters_set('calibration_results_matched_economy/7/',
-                                        ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                            'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                            'SINNOVPATEU'])
-# p8, sol8, m8 = full_load_parameters_set('calibration_results_matched_economy/8/')
-# p9, sol9, m9 = full_load_parameters_set('calibration_results_matched_economy/9/')
-p10, sol10, m10 = full_load_parameters_set('calibration_results_matched_economy/10/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p11, sol11, m11 = full_load_parameters_set('calibration_results_matched_economy/11/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p12, sol12, m12 = full_load_parameters_set('calibration_results_matched_economy/12/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p13, sol13, m13 = full_load_parameters_set('calibration_results_matched_economy/13/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p14, sol14, m14 = full_load_parameters_set('calibration_results_matched_economy/14/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p15, sol15, m15 = full_load_parameters_set('calibration_results_matched_economy/15/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p16, sol16, m16 = full_load_parameters_set('calibration_results_matched_economy/16/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-m16.GROWTH_target = m16.GROWTH_target*2
-m16.compute_moments(sol16, p16)
-m16.compute_moments_deviations()
-p17, sol17, m17 = full_load_parameters_set('calibration_results_matched_economy/17/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-m17.GROWTH_target = m17.GROWTH_target*4
-m17.compute_moments(sol17, p17)
-m17.compute_moments_deviations()
-p18, sol18, m18 = full_load_parameters_set('calibration_results_matched_economy/18/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])       
-m18.GROWTH_target = m18.GROWTH_target*10
-m18.compute_moments(sol18, p18)
-m18.compute_moments_deviations()
-p19, sol19, m19 = full_load_parameters_set('calibration_results_matched_economy/19/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p20, sol20, m20 = full_load_parameters_set('calibration_results_matched_economy/20/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p21, sol21, m21 = full_load_parameters_set('calibration_results_matched_economy/21/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p22, sol22, m22 = full_load_parameters_set('calibration_results_matched_economy/22/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'TP','SINNOVPATEU'])
-p23, sol23, m23 = full_load_parameters_set('calibration_results_matched_economy/23/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'TP','SINNOVPATEU'])
-p24, sol24, m24 = full_load_parameters_set('calibration_results_matched_economy/24/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p30, sol30, m30 = full_load_parameters_set('calibration_results_matched_economy/30/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p31, sol31, m31 = full_load_parameters_set('calibration_results_matched_economy/31/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p32, sol32, m32 = full_load_parameters_set('calibration_results_matched_economy/32/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU'])
-p33, sol33, m33 = full_load_parameters_set('calibration_results_matched_economy/33/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p34, sol34, m34 = full_load_parameters_set('calibration_results_matched_economy/34/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p35, sol35, m35 = full_load_parameters_set('calibration_results_matched_economy/35/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p36, sol36, m36 = full_load_parameters_set('calibration_results_matched_economy/36/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                                               'SPFLOW', 'SRGDP', 'JUPCOST',
-                                                               'SINNOVPATEU','NUR'])
-p40, sol40, m40 = full_load_parameters_set('calibration_results_matched_economy/40/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m40.TO_target = np.array(0.1)
-m40.compute_moments(sol40, p40)
-m40.compute_moments_deviations()
-p41, sol41, m41 = full_load_parameters_set('calibration_results_matched_economy/41/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m41.TO_target = np.array(0.2)
-m41.compute_moments(sol41, p41)
-m41.compute_moments_deviations()
-p42, sol42, m42 = full_load_parameters_set('calibration_results_matched_economy/42/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m42.TO_target = np.array(0.3)
-m42.compute_moments(sol42, p42)
-m42.compute_moments_deviations()
-p43, sol43, m43 = full_load_parameters_set('calibration_results_matched_economy/43/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m43.TO_target = np.array(0.05)
-m43.compute_moments(sol43, p43)
-m43.compute_moments_deviations()
-p44, sol44, m44 = full_load_parameters_set('calibration_results_matched_economy/44/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m44.TO_target = np.array(0.075)
-m44.compute_moments(sol44, p44)
-m44.compute_moments_deviations()
-p45, sol45, m45 = full_load_parameters_set('calibration_results_matched_economy/45/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m45.TO_target = np.array(0.025)
-m45.compute_moments(sol45, p45)
-m45.compute_moments_deviations()
-p46, sol46, m46 = full_load_parameters_set('calibration_results_matched_economy/46/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m46.TO_target = np.array(0.04)
-m46.compute_moments(sol46, p46)
-m46.compute_moments_deviations()
-p47, sol47, m47 = full_load_parameters_set('calibration_results_matched_economy/47/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m47.TO_target = np.array(0.06)
-m47.compute_moments(sol47, p47)
-m47.compute_moments_deviations()
-p48, sol48, m48 = full_load_parameters_set('calibration_results_matched_economy/48/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m48.TO_target = np.array(0.01)
-m48.compute_moments(sol48, p48)
-m48.compute_moments_deviations()
-p50, sol50, m50 = full_load_parameters_set('calibration_results_matched_economy/48/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS'])
-p51, sol51, m51 = full_load_parameters_set('calibration_results_matched_economy/51/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m51.TO_target = np.array(0.05)
-m51.compute_moments(sol51, p51)
-m51.compute_moments_deviations()
-p52, sol52, m52 = full_load_parameters_set('calibration_results_matched_economy/52/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m52.TO_target = np.array(0.1)
-m52.compute_moments(sol52, p52)
-m52.compute_moments_deviations()
-p53, sol53, m53 = full_load_parameters_set('calibration_results_matched_economy/53/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m53.TO_target = np.array(0.2)
-m53.compute_moments(sol53, p53)
-m53.compute_moments_deviations()
-p54, sol54, m54 = full_load_parameters_set('calibration_results_matched_economy/54/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m54.TO_target = np.array(0.075)
-m54.compute_moments(sol54, p54)
-m54.compute_moments_deviations()
-p55, sol55, m55 = full_load_parameters_set('calibration_results_matched_economy/55/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m55.TO_target = np.array(0.025)
-m55.compute_moments(sol55, p55)
-m55.compute_moments_deviations()
-p56, sol56, m56 = full_load_parameters_set('calibration_results_matched_economy/56/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO'])
-m56.TO_target = np.array(0.01)
-m56.compute_moments(sol56, p56)
-m56.compute_moments_deviations()
-# for m in [m4,m6,m7,m10,m11,m12,m13]:
-#     m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-#                         'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-#                         'SINNOVPATEU']
-# for m in [m14,m15]:
-#     m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-#                         'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
-#                         'SINNOVPATEU','NUR']
-p65, sol65, m65 = full_load_parameters_set('calibration_results_matched_economy/65/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOWDOM', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO','TE'])
-m65.TO_target = np.array(0.05)
-m65.compute_moments(sol65, p65)
-m65.compute_moments_deviations()
+p14, sol14, m14 = full_load_parameters_set('calibration_results_matched_trade_flows/14/')
+p15, sol15, m15 = full_load_parameters_set('calibration_results_matched_trade_flows/15/')
+p16, sol16, m16 = full_load_parameters_set('calibration_results_matched_trade_flows/16/')
+p17, sol17, m17 = full_load_parameters_set('calibration_results_matched_trade_flows/17/')
+p18, sol18, m18 = full_load_parameters_set('calibration_results_matched_trade_flows/18/')
 
-p66, sol66, m66 = full_load_parameters_set('calibration_results_matched_economy/66/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO','TE'])
-m66.TO_target = np.array(0.05)
-m66.compute_moments(sol66, p66)
-m66.compute_moments_deviations()
-p67, sol67, m67 = full_load_parameters_set('calibration_results_matched_economy/67/',
-                                           ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
-                                            'SINNOVPATUS','TO','TE'])
-m67.TO_target = np.array(0.05)
-m67.compute_moments(sol67, p67)
-m67.compute_moments_deviations()
+#%% writing results as excel
 
+# commentary = 'Fixed delta_US = 0.05, nu = 0.05, nu_tilde = 0.05'
+# write_calibration_results(
+#     '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/18',
+#     p,m,sol_c,commentary = commentary)
+# m8.plot_moments(m8.list_of_moments, 
+#                 save_plot = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/8')
 
-#%% build dic compare moments
+#%% build dic
 
-# dic = {#'3 : lin weights on dim':m3,
-#        # '4 : sqrt weights on dim':m4,
-#        # '6 : delta US free, SRDUS divided by 2':m6,
-#         '7 : free nu, nu ='+str(p7.nu[1]):m7,
-#        # '10 : Nu_tilde = nu*5':m10,
-#        # '11 : Nu_tilde = nu*10':m11,
-#         # '12 : Nu_tilde = nu, growth = 1.69%':m12,
-#        # '13 : Nu_tilde = nu/5':m13,
-#        # '14 : Ratio of nu targeted as a moment, target 1':m14,
-#        # '15 : Ratio of nu targeted as a moment, low weight':m15,
-#        # '16 : Growth = growth*2':m16,
-#        # '17 : Growth = growth*4':m17,
-#        # '18 : Growth = growth*10':m18,
-#         '19 : Fixed nu = 0.1':m19,
-#        # '20 : Fixed nu = nu_tilde = 0.1':m20,
-#        # '21 : domestic flows targeted':m21,
-#        # '22 : total number of patents targeted':m22,
-#        # '23 : total number of patents targeted, higher weights on RD':m23,
-#        # '30 : equivalent to 7, nu = nu_tilde, theta = 8':m30,
-#        # '31 : equivalent to 7, theta = 8':m31,
-#        # '32 : calibrated k, theta = 8':m32,
-#        # '33 : calibrated nu low weight, calibrated k':m33,
-#        # '34 : calibrated nu higher weight':m34,
-#        '35 : calibrated nu calibrated k and sigma, nu ='+str(p35.nu[1]):m35,
-#        '36 : calibrated nu higher weight, calibrated k and sigma, nu ='+str(p36.nu[1]):m36
-#        }
-# dic = {
-#         '40 : Turnover US, weight 3, target 0.1':m40,
-#         '41 : Turnover US, weight 3, target 0.2':m41,
-#         '42 : Turnover US, weight 3, target 0.3':m42,
-#         '43 : Turnover US, weight 3, target 0.05':m43,
-#         '44 : Turnover US, weight 3, target 0.075':m44,
-#         '45 : Turnover US, weight 3, target 0.025':m45,
-#         '46 : Turnover US, weight 3, target 0.04':m46,
-#         '47 : Turnover US, weight 3, target 0.06':m47,
-#         '48 : Turnover US, weight 3, target 0.01':m48,
-#         '50 : No turnover target, benchmark':m50
+# dic = {'previous benchmark':m23,
+#         'delta_US = 0.05 fixed':m24, 
+#         'tau < 20':m27, 
+#         'better tau guess':m28,
+#         'sigma = 3':m29,
+#         'sigma = 3, more precise gradient':m30,
+#         'log loss function, no weight on dimension of moment':m31,
+#         'log loss function, log weight on dimension of moment':m32,
+#         'log loss function, linear weight on dimension of moment':m33,
+#         'starting from 13 and reasonable delta_US':m34,
+#         'Not targeting GPDIFF, linear weights on dimensions':m35
 #         }
-
 # dic = {
-#         '51 : Turnover US, fixed nu, target 0.05':m51,
-#         '52 : Turnover US, fixed nu, target 0.1':m52,
-#         '53 : Turnover US, fixed nu, target 0.2':m53,
-#         '54 : Turnover US, fixed nu, target 0.075':m54,
-#         '55 : Turnover US, fixed nu, target 0.025':m55,
-#         '56 : Turnover US, fixed nu, target 0.01':m56
+#         'log loss function, no weight on dimension of moment':m31,
+#         'log loss function, log weight on dimension of moment':m32,
+#         'log loss function, linear weight on dimension of moment':m33,
+#         'starting from 13 and reasonable delta_US':m34,
+#         'Not targeting GPDIFF, linear weights on dimensions':m35,
 #         }
-
+# dic = {
+#         'tau calibrated':m99,
+#         'initial':m188
+#         }
 dic = {
-        '50 : No turnover target, no TO moment, no TE moment':m50,
-        '43 : Turnover US targeted 0.05, no TE moment, theta fixed':m43,
-        '65 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows targeted, theta calibrated = '+str(p65.theta[1].round(3)):m65,
-        '66 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows not targeted, theta calibrated = '+str(p66.theta[1].round(3)):m66,
-        '67 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows not targeted, theta calibrated = '+str(p67.theta[1].round(3))+'kappa rho calibrated':m67
+        '14 : No fixed quantity':m14,
+        '15 : fixed nu = 0.1, nu_tilde = 0.05':m15,
+        '16 : fixed nu = 0.05, nu_tilde = 0.01':m16,
+        '17 : fixed delta_US = 0.05':m17,
+        '18 : fixed nu = nu_tilde = delta_US = 0.05':m18
         }
 
-moments.compare_moments(dic,
-    save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/trade_elasticity_calibration/')
 
-# moments.compare_moments(dic)
-
-#%% compare params
-
-# dic = {#'3 : lin weights on dim':p3,
-#         # '4 : sqrt weights on dim':p4,
-#         # '6 : delta US free, SRDUS divided by 2':p6,
-#         '7 : free nu, nu ='+str(p7.nu[1]):p7,
-#        #  '10 : Nu_tilde = nu*5':p10,
-#        #  '11 : Nu_tilde = nu*10':p11,
-#         # '12 : Nu_tilde = nu, growth = 1.69%':p12,
-#        #  '13 : Nu_tilde = nu/5':p13,
-#        #  '14 : Ratio of nu targeted as a moment, target 1':p14,
-#        #  '15 : Ratio of nu targeted as a moment, low weight':p15,
-#        # '16 : Growth = growth*2':p16,
-#        # '17 : Growth = growth*4':p17,
-#        # '18 : Growth = growth*10':p18,
-#         '19 : Fixed nu = 0.1':p19,
-#        # '20 : Fixed nu = nu_tilde = 0.1':p20,
-#        # '31 : equivalent to 7':p31,
-#        # '32 : calibrated k, theta = 8':p32,
-#        # '33 : calibrated nu low weight, calibrated k':p33,
-#        # '34 : calibrated nu higher weight':p34,
-#        '35 : calibrated nu calibrated k and sigma, nu ='+str(p35.nu[1]):p35,
-#        '36 : calibrated nu higher weight, calibrated k and sigma, nu ='+str(p36.nu[1]):p36
-#        }
-# dic = {
-#        '40 : Turnover US, weight 3, target 0.1':p40,
-#        '41 : Turnover US, weight 3, target 0.2':p41,
-#        '42 : Turnover US, weight 3, target 0.3':p42,
-#        '43 : Turnover US, weight 3, target 0.05':p43,
-#        '44 : Turnover US, weight 3, target 0.075':p44,
-#        '45 : Turnover US, weight 3, target 0.025':p45,
-#        '46 : Turnover US, weight 3, target 0.04':p46,
-#        '47 : Turnover US, weight 3, target 0.06':p47,
-#        '48 : Turnover US, weight 3, target 0.01':p48,
-#        '50 : No turnover target, benchmark':p50
-#        }
-
-# dic = {
-#         '51 : Turnover US, fixed nu, target 0.05':p51,
-#         '52 : Turnover US, fixed nu, target 0.1':p52,
-#         '53 : Turnover US, fixed nu, target 0.2':p53,
-#         '54 : Turnover US, fixed nu, target 0.075':p54,
-#         '55 : Turnover US, fixed nu, target 0.025':p55,
-#         '56 : Turnover US, fixed nu, target 0.01':p56
-#         }
-
-dic = {
-        '50 : No turnover target, no TO moment, no TE moment':p50,
-        '43 : Turnover US targeted 0.05, no TE moment':p43,
-        '65 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows targeted, theta calibrated = '+str(p65.theta[1].round(3)):p65,
-        '66 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows not targeted, theta calibrated = '+str(p66.theta[1].round(3)):p66,
-        '67 : Turnover US targeted 0.05, TE targeted 5, \n domestic pflows not targeted, theta calibrated = '+str(p67.theta[1].round(3))+'kappa rho calibrated':p67
-        }
-
-save = True
-save_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/trade_elasticity_calibration/'
-
-def compare_params(dic, save=False, save_path=None):
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Delta of the countries' 
-    for com,par in dic.items():
-        ax.plot(par.countries,par.delta[...,1],label=com)
-    plt.legend()
-    plt.title(title)
-    if save:
-        plt.savefig(save_path+'delta')
-    plt.show()    
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'One over delta of the countries' 
-    for com,par in dic.items():
-        ax.plot(par.countries,1/par.delta[...,1],label=com)
-    plt.legend()
-    plt.title(title)
-    if save:
-        plt.savefig(save_path+'one_over_delta')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T non patenting sector of the countries' 
-    for com,par in dic.items():
-        ax.plot(par.countries,par.T[:,0],label=com)
-    plt.legend()
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.savefig(save_path+'T_non_patenting')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T patenting sector of the countries' 
-    for com,par in dic.items():
-        ax.plot(par.countries,par.T[:,1],label=com)
-    plt.legend()
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.savefig(save_path+'T_patenting')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Eta of the countries' 
-    for com,par in dic.items():
-        ax.plot(par.countries,par.eta[...,1],label=com)
-    plt.legend()
-    plt.title(title)
-    if save:
-        plt.savefig(save_path+'eta')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    ax2 = ax.twinx()
-    title = 'fo, fe, nu, nu_tilde' 
-    for com,par in dic.items():
-        ax.scatter(['fo','fe', 'nu'],
-                   [par.fo[1], par.fe[1], par.nu[1]],label=com)
-        ax2.scatter(['nu_tilde'], par.nu_tilde[1], label = com)
-    plt.legend()
-    plt.title(title)
-    ax.set_ylabel('fo, fe, nu')
-    ax2.set_yscale('log')
-    ax2.set_ylabel('nu_tilde')
-    if save:
-        plt.savefig(save_path+'scalar_params')
-    plt.show()     
+moments.compare_moments(dic)
 
 #%%
+dic = {
+        '14 : No fixed quantity':p14,
+        '15 : fixed nu = 0.1, nu_tilde = 0.05':p15,
+        '16 : fixed nu = 0.05, nu_tilde = 0.01':p16,
+        '17 : fixed delta_US = 0.05':p17,
+        '18 : fixed nu = nu_tilde = delta_US = 0.05':p18
+        }
 
-# ps = [p40,p41,p42,p43,p44,p45,p46,p47,p48]
-# ms = [m40,m41,m42,m43,m44,m45,m46,m47,m48]
-# sols = [sol40,sol41,sol42,sol43,sol44,sol45,sol46,sol47,sol48]
-ps = [p56,p55,p51,p54,p52,p53]
-ms = [m56,m55,m51,m54,m52,m53]
-sols = [sol56,sol55,sol51,sol54,sol52,sol53]
+fig,ax = plt.subplots(figsize = (12,8))
+title = 'Delta of the countries' 
+for com,par in dic.items():
+    ax.plot(par.countries,par.delta[...,1],label=com)
+plt.legend()
+plt.title(title)
+plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/delta')
+plt.show()    
 
-fig, ax = plt.subplots(figsize = (12,8))
-ax2 = ax.twinx()
-ax.plot([m.TO_target for m in ms],[p.nu_tilde[1] for p in ps], label = 'nu_tilde', color = 'r',lw=3)
-# ax.plot(sorted([m.TO_target for m in ms]),sorted([p.nu[1] for p in ps]), 
-#         label = 'nu', color = 'r',lw=3)
-ax2.plot(sorted([m.TO_target for m in ms]),sorted([p.delta[0,1] for p in ps]), label = 'delta_US')
-ax2.plot(sorted([m.TO_target for m in ms]),sorted([p.delta[:,1].mean() for p in ps]), label = 'mean_delta')
-ax.set_xlabel('Turnover US target',fontsize=20)
-ax.set_ylabel('nu_tilde',fontsize=20)
-# ax.set_yticks(np.linspace(0,1,11))
-ax.set_yscale('log')
-ax2.set_ylabel('delta',fontsize=20)
-ax2.grid(None)
-ax.legend(fontsize=15)
-ax2.legend(loc='lower right',fontsize=20)
-plt.savefig(save_path+'nu_tilde_function_of_TO_target')
-plt.show()
+fig,ax = plt.subplots(figsize = (12,8))
+title = 'One over delta of the countries' 
+for com,par in dic.items():
+    ax.plot(par.countries,1/par.delta[...,1],label=com)
+plt.legend()
+plt.title(title)
+plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/one_over_delta')
+plt.show()   
 
-# fig, ax = plt.subplots(figsize = (12,8))
-# # ax2 = ax.twinx()
+fig,ax = plt.subplots(figsize = (12,8))
+title = 'T of the countries' 
+for com,par in dic.items():
+    ax.plot(par.countries,par.T,label=com)
+plt.legend()
+plt.yscale('log')
+plt.title(title)
+plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/T')
+plt.show()   
 
-# # ax.plot(sorted([m.TO_target for m in ms]),sorted([p.nu[1] for p in ps]), 
-# #         label = 'nu', color = 'r',lw=3)
-# ax.plot([m.TO_target for m in ms],[p.nu_tilde[1] for p in ps], label = 'nu_tilde')
-# # ax2.plot(sorted([m.TO_target for m in ms]),sorted([p.delta[:,1].mean() for p in ps]), label = 'mean_delta')
-# ax.set_xlabel('Turnover US target',fontsize=20)
-# ax.set_ylabel('nu_tilde',fontsize=20)
-# # ax.set_yticks(np.linspace(0,1,11))
-# # ax2.set_ylabel('delta',fontsize=20)
-# ax.set_yscale('log')
-# # ax2.grid(None)
-# ax.legend(fontsize=15)
-# # ax2.legend(loc='center right',fontsize=20)
-# # plt.savefig(save_path+'nu_and_nu_tilde')
-# plt.show()
-
-# for p, m, sol in zip(ps, ms, sols):
+fig,ax = plt.subplots(figsize = (12,8))
+title = 'Eta of the countries' 
+for com,par in dic.items():
+    ax.plot(par.countries,par.eta[...,1],label=com)
+plt.legend()
+plt.title(title)
+plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_trade_flows/eta')
+plt.show()   
 
 #%% counterfactual
 
-mpl.rc_file_defaults()
-parameters = p43.copy()
+p = p17.copy()
+sols_c = []
 
-p = parameters
+for delta in np.linspace(0.1,0.9,100):
+    p.delta[0,1] = delta
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=True,
+                            plot_cobweb=True,
+                            safe_convergence=0.001,
+                            disp_summary=True,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
 
-sol, baseline = fixed_point_solver(p,x0=p.guess,
-                        cobweb_anim=False,tol =1e-15,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='phi',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=True,
-                        damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
-                        # damping=10
-                          # apply_bound_psi_star=True
-                        )
-
-baseline.scale_P(p)
-baseline.compute_price_indices(p)
-baseline.compute_non_solver_quantities(p)
-
-counterfactuals_by_country = {}
-
-for c in p.countries:
-    p = parameters.copy()
-    sols_c = []
-    deltas = np.logspace(-1,1,111)
-    for delt in deltas:
-        print(delt)
-        p.delta[p.countries.index(c),1] = parameters.delta[p.countries.index(c),1] * delt
-        # print(p.guess)
-        sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                cobweb_anim=False,tol =1e-15,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='phi',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                safe_convergence=0.001,
-                                disp_summary=True,
-                                damping = 10,
-                                max_count = 3e3,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
-                                # damping=10
-                                  # apply_bound_psi_star=True
-                                )
-        
+    sol_c = var.var_from_vector(sol.x, p)    
+    sol_c.scale_tau(p)
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    p.guess = sol_c.vector_from_var()
     
-        sol_c = var.var_from_vector(sol.x, p)    
-        # sol_c.scale_tau(p)
-        sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
-        sol_c.compute_non_solver_quantities(p)
-        # sol_c.compute_welfare(p)
-        sol_c.compute_consumption_equivalent_welfare(p,baseline)
-        if sol.status == 'success':
-            p.guess = sol_c.vector_from_var()
-        else:
-            p.guess = None
-        
-        sols_c.append(sol_c)
-    counterfactuals_by_country[c] = sols_c
-
-# utilities = pd.DataFrame(index = deltas, columns = p.countries, data = np.array([sol.U for sol in sols_c]))
-# (utilities/np.abs(utilities.iloc[5])).plot(figsize=(12,8),logx=True)
-# consumptions = pd.DataFrame(index = deltas, columns = p.countries, data = np.array([sol.nominal_final_consumption/sol.price_indices for sol in sols_c]))
-# (consumptions/consumptions.iloc[5]).plot(figsize=(12,8),logx=True)
-# CE = pd.DataFrame(index = deltas, 
-#               columns = p.countries, 
-#               data = np.array([sol.cons_eq_welfare for sol in sols_c]))
-# CE
-# ax = CE.plot(figsize=(16,12),logx=True,
-#          fontsize = 20,color=sns.color_palette()[:CE.shape[1]])
-# idxmaxes = CE.idxmax()
-# maxes = CE.max()
-# CE_max = pd.DataFrame({'idx' : idxmaxes, 'values' : maxes})
-# CE_max.plot.scatter('idx','values',
-#                     ax = ax,color=sns.color_palette()[:CE.shape[1]])
-# ax.set_xlabel('Change in delta '+c, fontsize = 20)
-# ax.set_ylabel('Consumption equivalent welfare', fontsize = 20)
-# ax.scatter(CE.idxmax(),CE.max(),color=[mcolors.BASE_COLORS[k] for k in list(mcolors.BASE_COLORS.keys())[:CE.shape[1]]])
-# CE.to_csv('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection_43/'+c+'.csv')
-# ax.figure.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection_43/'+c)
-
-#%% plot counterfactual
-for c in p.countries:
-    consumption = {}
-    consumption_eq_welfare = {}
-    for j,c2 in enumerate(p.countries):
-        consumption[c2] = [(sol.nominal_final_consumption[j]/sol.price_indices[j])
-                           /(baseline.nominal_final_consumption[j]/baseline.price_indices[j])
-                           for sol in counterfactuals_by_country[c]]
-        consumption_eq_welfare[c2] = [sol.cons_eq_welfare[j]
-                           for sol in counterfactuals_by_country[c]] 
-    growth_rate = [sol.g for sol in counterfactuals_by_country[c]]
-    fig,ax = plt.subplots(2,1,figsize = (10,14),constrained_layout=True)
-    ax2 = ax[0].twinx()
-    ax3 = ax[1].twinx()
-    ax[0].set_xscale('log')
-    ax[1].set_xscale('log')
-    ax2.plot(deltas,growth_rate, color='k', ls = '--', label = 'Growth rate')
-    # ax2.set_ylim(0.016,0.026)
-    ax3.plot(deltas,growth_rate, color='k', ls = '--', label = 'Growth rate')
-    # ax3.set_ylim(0.016,0.026)
-    ax2.set_ylabel('Growth rate')
-    ax3.legend(loc = (1,1.05))
-    ax[0].set_ylabel('Normalized consumption')
-    ax3.set_ylabel('Growth rate')
-    ax[1].set_ylabel('Consumption equivalent welfare')
-    for j,c2 in enumerate(p.countries):
-        ax[0].plot(deltas,consumption[c2],label = c2,color = sns.color_palette()[j])
-        ax[1].plot(deltas,consumption_eq_welfare[c2],label = c2,color = sns.color_palette()[j])
-    ax[0].legend(loc = 'center right')
-    ax[0].scatter([deltas[np.argmax(consumption[c3])] for c3 in p.countries],
-                  [max(consumption[c3]) for c3 in p.countries],
-                  color=sns.color_palette()[:len(p.countries)])
-    ax[1].scatter([deltas[np.argmax(consumption_eq_welfare[c3])] for c3 in p.countries],
-                  [max(consumption_eq_welfare[c3]) for c3 in p.countries],
-                  color=sns.color_palette()[:len(p.countries)])
-    # ax[1].legend()
-    plt.title('Counterfactual - patent protection '+c,pad = 20)
-    plt.savefig('/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilateral_patent_protection_43/'+c)
-    plt.show()
-
-
-
-#%% plot counterfactual
-
-fig,ax = plt.subplots(figsize = (12,8))
-ax2 = ax.twinx()
-# deltas = np.linspace(0.1,0.9,100)
-# utilities = np.array([sol.U for sol in sols_c])
-utilities = pd.DataFrame(index = deltas, columns = p.countries, data = np.array([sol.U for sol in sols_c]))
-# utilities['delta_US'] = deltas
-for i in range(7):
-    print(max([sol.U[i] for sol in sols_c]),[sol.U[i] for sol in sols_c][-1])
-    # ax.plot(deltas, [sol.U[i]/sols_c[5].U[i]/(sol.U[1]/sols_c[5].U[0]) for sol in sols_c], label = p.countries[i])    
-    ax.plot(deltas, [sol.U[i]/sols_c[5].U[i] for sol in sols_c], label = p.countries[i])    
-ax2.plot(deltas, [sol.g for sol in sols_c], label = 'growth rate',color = 'k')
-ax.legend()
-ax2.legend()
-plt.show()
-
-# fig,ax = plt.subplots(figsize = (12,8))
-# for i in range(7):
-#     # print(max([sol.U[i] for sol in sols_c]),[sol.U[i] for sol in sols_c][-1])
-#     # ax.plot(deltas, [sol.U[i]/sols_c[5].U[i]/(sol.U[1]/sols_c[5].U[0]) for sol in sols_c], label = p.countries[i])    
-#     ax.plot(deltas, [sol.l_R[i,1] for sol in sols_c], label = p.countries[i])    
-# # ax2.plot(deltas, [sol.g for sol in sols_c], label = 'growth rate',color = 'k')
-# ax.legend()
-# # ax2.legend()
-# plt.show()
-
-# fig,ax = plt.subplots(figsize = (12,8))
-# # deltas = np.linspace(0.1,0.9,100)
-# for i in range(7):
-#     # print(max([sol.U[i] for sol in sols_c]),[sol.U[i] for sol in sols_c][-1])
-# ax.plot(deltas, [sol.g[i] for sol in sols_c], label = p.countries[i])    
-# plt.legend()
-# plt.show()
+    sols_c.append(sol_c)
+    
 
 
 #%% tau smaller than one discussion
 
 domestic_phi = pd.DataFrame(data = np.diagonal(sol_c.phi).transpose().ravel(), columns = ['phi'], 
                             index = pd.MultiIndex.from_product([p.countries,p.sectors],
-                                                                names=['country','sector']))
+                                                               names=['country','sector']))
 
 tau_df = pd.DataFrame(data = sol_c.tau.ravel(), columns = ['tau'],
                       index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
-                                                          names=['destination','origin','sector']))
+                                                         names=['destination','origin','sector']))
 
 tau_smaller_than_one = tau_df[tau_df['tau'] < 1-1e-10]
 
 phi_df = pd.DataFrame(data = sol_c.phi.ravel(), columns = ['phi'], 
-                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 
 phi_corresponding = phi_df.loc[[idx for idx in tau_smaller_than_one.index]]
 
 trade_shares_origin = pd.DataFrame(columns = ['trade_shares_origin'], 
-                                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 trade_shares_origin['trade_shares_origin'] = (sol_c.X/np.diagonal(sol_c.X).transpose()[None,:,:]).ravel()
 corresponding_trade_shares_origin = trade_shares_origin.loc[[idx for idx in tau_smaller_than_one.index]]
 
 trade_shares_destination = pd.DataFrame(columns = ['trade_shares_destination'], 
-                                    index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
+                                   index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],
                                                       names=['destination','origin','sector']))
 trade_shares_destination['trade_shares_destination'] = (sol_c.X/np.diagonal(sol_c.X).transpose()[:,None,:]).ravel()
 corresponding_trade_shares_destination = trade_shares_destination.loc[[idx for idx in tau_smaller_than_one.index]]
@@ -3364,7 +2164,7 @@ plt.show()
 
 #%%
 m35.list_of_moments = ['GROWTH','SRDUS', 'KM',
-                    'OUT','RD','RP','SPFLOW','SRGDP','STFLOW']
+                   'OUT','RD','RP','SPFLOW','SRGDP','STFLOW']
 
 grad, jac = load_grad_jac('./calibration_results/35/')
 # grad, jac = load_grad_jac('./calibration_results/35/')
@@ -3383,87 +2183,9 @@ plt.show()
 
 #%%
 
-pd.DataFrame(test_ls.grad, index = p.get_signature_list()
-              ).to_csv('calibration_results_matched_trade_flows/16/grad.csv')
-pd.DataFrame(test_ls.jac, 
-              columns = p.get_signature_list(), 
-              index=m.get_signature_list()
-              ).to_csv('calibration_results_matched_trade_flows/16/jac.csv')
-
-#%%
-jac = optimize.approx_fprime(p_sol.make_p_vector(), 
-                              calibration_func,1e-16,
-                              p,m,p.guess,hist,start_time,False)
-
-signature_p = []
-for param in p.calib_parameters: 
-    signature_p.extend([param]*np.array(getattr(p,param))[p.mask[param]].size)
-
-fig, ax = plt.subplots(figsize = (14,10))
-ax.plot(jac[-1,:])
-plt.xticks([i for i in range(len(signature_p))])
-ax.set_xticklabels(signature_p, fontsize = 20, rotation = 90)
-ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-plt.title('Derivatives of the deviation of the moment OUT with respect to the parameters :', fontsize = 20)
-plt.savefig('calibration_results_matched_trade_flows/out_study/OUT derivatives')
-plt.show()
-
-signature_m = m.get_signature_list()
-fig, ax = plt.subplots(figsize = (18,10))
-ax.plot(jac[:,14])
-plt.xticks([i for i in range(len(signature_m))])
-ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fe', fontsize = 20)
-plt.show()
-
-signature_m = m.get_signature_list()
-fig, ax = plt.subplots(figsize = (18,10))
-ax.plot(jac[:,22])
-plt.xticks([i for i in range(len(signature_m))])
-ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-plt.title('Derivatives of the  deviations of the moments with respect to the parameter : fo', fontsize = 20)
-plt.show()
-
-signature_m = m.get_signature_list()
-fig, ax = plt.subplots(figsize = (18,10))
-ax.plot(jac[:,23])
-plt.xticks([i for i in range(len(signature_m))])
-ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-plt.title('Derivatives of the  deviations of the moments with respect to the parameter : g_o', fontsize = 20)
-plt.show()
-
-for i in range(7):
-    signature_m = m.get_signature_list()
-    fig, ax = plt.subplots(figsize = (18,10))
-    ax.plot(jac[:,15+i])
-    plt.xticks([i for i in range(len(signature_m))])
-    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : T_'+str(i), fontsize = 20)
-    plt.show()
-    
-for i in range(7):
-    signature_m = m.get_signature_list()
-    fig, ax = plt.subplots(figsize = (18,10))
-    ax.plot(jac[:,i])
-    plt.xticks([i for i in range(len(signature_m))])
-    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : eta_'+str(i), fontsize = 20)
-    plt.show()
-    
-for i in range(7):
-    signature_m = m.get_signature_list()
-    fig, ax = plt.subplots(figsize = (18,10))
-    ax.plot(jac[:,7+i])
-    plt.xticks([i for i in range(len(signature_m))])
-    ax.set_xticklabels(signature_m, fontsize = 10, rotation = 90)
-    ax.hlines(xmin=0,xmax=25,y=0,ls='--',color='k')
-    plt.title('Derivatives of the  deviations of the moments with respect to the parameter : delta_'+str(i), fontsize = 20)
-    plt.show()
+jac = optimize._numdiff.approx_derivative(fun = calibration_func,
+                                    x0 = p.make_p_vector(), 
+                                    args = (p,m,p.guess,hist,start_time,collec_of_guess))
 
 #%% dependance on T
 
@@ -3480,13 +2202,13 @@ for T in np.linspace(1.297,1.3,1001):
         pass
     p.T = np.ones(p.N)*T
     sol = fixed_point_solver(p,x0,cobweb_anim=False,
-                              accelerate=False,
-                              accelerate_when_stable=True,
-                              cobweb_qty='psi_star',
-                              plot_cobweb=False,
-                              plot_convergence=False,
-                              # apply_bound_psi_star=True
-                              )
+                             accelerate=False,
+                             accelerate_when_stable=True,
+                             cobweb_qty='psi_star',
+                             plot_cobweb=False,
+                             plot_convergence=False,
+                             # apply_bound_psi_star=True
+                             )
     sol_c = var.var_from_vector(sol.x, sol.p)   
     sol_c.num_scale_solution(p)
     if sol_c.Z.sum() > p.expenditure.sum():
@@ -3498,8 +2220,8 @@ sol_c.compute_non_solver_quantities(p)
 fig,ax = plt.subplots(figsize = (12,8))
   
 ax.plot([T.mean() for T in list_T],
-          [sol.Z.sum()*p.unit for sol in list_sol], lw =3
-          )
+         [sol.Z.sum()*p.unit for sol in list_sol], lw =3
+         )
 ax.set_xlabel('Average technology T', fontsize = 20)
 ax.set_ylabel('World gross expenditure Z', fontsize = 20)
 ax.tick_params(axis='both', which='major', labelsize=20)
@@ -3517,12 +2239,12 @@ def calibration_func(T,p,x0=None):
     except:
         pass
     sol = fixed_point_solver(p,x0,tol=1e-14,
-                              accelerate=False,
-                              accelerate_when_stable=True,
-                              plot_cobweb=False,
-                              plot_convergence=False,
-                              disp_summary=False,
-                              )
+                             accelerate=False,
+                             accelerate_when_stable=True,
+                             plot_cobweb=False,
+                             plot_convergence=False,
+                             disp_summary=False,
+                             )
     print(sol.time)
     # p.guess = sol.x
     # try:
@@ -3560,12 +2282,12 @@ finish = time.perf_counter()
 print('minimizing time',finish-start)
 p.T = test_ls.x
 test_sol = fixed_point_solver(p,x0=p.guess,
-                          accelerate=False,
-                          accelerate_when_stable=True,
-                          plot_cobweb=False,
-                          plot_convergence=False,
-                          disp_summary=True,
-                          )
+                         accelerate=False,
+                         accelerate_when_stable=True,
+                         plot_cobweb=False,
+                         plot_convergence=False,
+                         disp_summary=True,
+                         )
 test_sol_c = var.var_from_vector(test_sol.x, p)
 test_sol_c.compute_non_solver_quantities(p)
 
@@ -3590,14 +2312,14 @@ plt.show()
 
 if np.any(np.isnan(sol.x)):
     sol = fixed_point_solver(p,x0=None,tol=1e-14,
-                                  accelerate=False,
-                                  accelerate_when_stable=True,
-                                  plot_cobweb=False,
-                                  plot_convergence=False,
-                                  cobweb_qty='l_R',
-                                  disp_summary=False,
-                                  safe_convergence=0.001
-                                  )   
+                                 accelerate=False,
+                                 accelerate_when_stable=True,
+                                 plot_cobweb=False,
+                                 plot_convergence=False,
+                                 cobweb_qty='l_R',
+                                 disp_summary=False,
+                                 safe_convergence=0.001
+                                 )   
 new_guess = 0
 while np.any(np.isnan(sol.x)) and new_guess<len(collec_of_guess):
     # print(new_guess)
