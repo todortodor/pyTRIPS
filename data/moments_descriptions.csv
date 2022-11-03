@@ -6,6 +6,7 @@ OUT;Total world output
 RD;RD expenditures to GDP ratio 
 RP;Relative prices 
 SPFLOW;Ratio of international bilateral patent flows to international world patenting
+SPFLOWDOM;Ratio of patent flows to world patenting
 SRDUS;Share of sector 1 produced by firms performing R&D in the US 
 SRGDP;Share of world real GDP 
 STFLOW;Ratio of bilateral trade flow to world output
@@ -14,3 +15,8 @@ TP;Total number of patents in the world
 Z;country expenditure
 SDOMTFLOW; Sector specific domestic trade flows as shares of total economy
 SINNOVPATEU; Share of innovations patented in Europe
+SINNOVPATUS; Share of innovations patented in the US
+NUR; Ratio of diffusion : Nu_tilde/Nu
+RDGDPUS; RD spending as share of gdp in the US
+TO; Turnover
+TE; Trade elasticity
