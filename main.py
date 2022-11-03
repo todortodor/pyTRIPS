@@ -115,7 +115,7 @@ class parameters:
                          'T':co,
                          'eta':co}
         self.ub_dict = {'sigma':5,
-                        'theta':20,
+                        'theta':30,
                         'rho':0.5,
                         'gamma':cou,
                         'zeta':1,
@@ -232,6 +232,9 @@ class parameters:
             param[self.mask[p]] = vec[idx_from:idx_from+size]
             setattr(self,p,param)
             idx_from += size
+            
+    def update_sigma_with_SRDUS_target(self,m):
+        self.sigma[1] = 1+m.SRDUS_target/(m.sales_mark_up_US - 1)
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -1102,6 +1105,7 @@ class moments:
         self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
         # self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values#/self.ccs_moments.trade.sum()
         # self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)/self.unit
+        self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
     
     def load_run(self,path):
         df = pd.read_csv(path+'list_of_moments.csv')
@@ -1230,6 +1234,7 @@ class moments:
         elif lis is None and dic is not None:
             coms = [k for k in dic.keys()]
             moms_c = [v for v in dic.values()]
+        n_col = int(np.floor(len(dic)/25))+1
         colors = sns.color_palette("Spectral", n_colors = len(dic))
         scalar_moments_collection = [ [] for _ in range(len(coms)) ]
         scalar_moments = []
@@ -1267,7 +1272,7 @@ class moments:
                 plt.title(mom+' targeting')
                 plt.yscale('log')
                 plt.xscale('log')
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
                 if save_path is not None:
                     plt.tight_layout()
                     plt.savefig(save_path+mom)
@@ -1279,7 +1284,7 @@ class moments:
                         ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2,color=colors[i])
                     else:
                         ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2)
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
                 plt.title('turnover')
                 if save_path is not None:
                     plt.tight_layout()
@@ -1297,7 +1302,7 @@ class moments:
         #            for scalars_of_one_run in scalar_moments_collection]):
         #     plt.yscale('log')
         plt.title('scalar moments deviation')
-        plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+        plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
         if save_path is not None:
             plt.tight_layout()
             plt.savefig(save_path+'scalar_moments')
@@ -1902,12 +1907,13 @@ def iter_once(x,p, check_feasibility = False, normalize = False):
     return vec, modified_guess    
 
 def compare_params(dic, save=False, save_path=None):
+    n_col = round(len(dic)/25)
     colors = sns.color_palette("Spectral", n_colors = len(dic))
     fig,ax = plt.subplots(figsize = (12,8))
     title = 'Delta of the countries' 
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.title(title)
     if save:
         plt.tight_layout()
@@ -1918,7 +1924,7 @@ def compare_params(dic, save=False, save_path=None):
     title = 'One over delta of the countries' 
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,1/par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.title(title)
     if save:
         plt.tight_layout()
@@ -1929,7 +1935,7 @@ def compare_params(dic, save=False, save_path=None):
     title = 'T non patenting sector of the countries' 
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,par.T[:,0],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.yscale('log')
     plt.title(title)
     if save:
@@ -1941,7 +1947,7 @@ def compare_params(dic, save=False, save_path=None):
     title = 'T patenting sector of the countries' 
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,par.T[:,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.yscale('log')
     plt.title(title)
     if save:
@@ -1953,7 +1959,7 @@ def compare_params(dic, save=False, save_path=None):
     title = 'Eta of the countries' 
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,par.eta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.title(title)
     if save:
         plt.tight_layout()
@@ -1967,7 +1973,7 @@ def compare_params(dic, save=False, save_path=None):
         ax.scatter(['fe', 'nu'],
                    [par.fe[1], par.nu[1]],label=com,color=colors[i])
         ax2.scatter(['nu_tilde'], par.nu_tilde[1], label = com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
     plt.title(title)
     ax.set_ylabel('fo, fe, nu')
     ax2.set_yscale('log')
@@ -2232,57 +2238,6 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                       damping_post_acceleration=5
                                       )
     
-    # if sol.status == 'failed': 
-    #     print('trying less precise 2')
-    #     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-    #                                   accelerate=False,
-    #                                   accelerate_when_stable=True,
-    #                                   plot_cobweb=False,
-    #                                   plot_convergence=False,
-    #                                   cobweb_qty='phi',
-    #                                   disp_summary=False,
-    #                                   safe_convergence=0.001,
-    #                                   max_count=2e3,
-    #                                   accel_memory = 50, 
-    #                                   accel_type1=True, 
-    #                                   accel_regularization=1e-10,
-    #                                   accel_relaxation=0.5, 
-    #                                   accel_safeguard_factor=1, 
-    #                                   accel_max_weight_norm=1e6,
-    #                                   damping_post_acceleration=5
-    #                                   )
-    
-    # if sol.status == 'failed': 
-    #     print('trying less precise 3')
-    #     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-    #                                   accelerate=False,
-    #                                   accelerate_when_stable=True,
-    #                                   plot_cobweb=False,
-    #                                   plot_convergence=False,
-    #                                   cobweb_qty='phi',
-    #                                   disp_summary=False,
-    #                                   safe_convergence=0.001,
-    #                                   max_count=5e3,
-    #                                   accel_memory = 50, 
-    #                                   accel_type1=True, 
-    #                                   accel_regularization=1e-10,
-    #                                   accel_relaxation=0.5, 
-    #                                   accel_safeguard_factor=1, 
-    #                                   accel_max_weight_norm=1e6,
-    #                                   damping_post_acceleration=5
-    #                                   )
-                            
-    # if sol.status == 'failed':
-    #     print('trying with good guess without acceleration')
-    #     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
-    #                                   accelerate=False,
-    #                                   accelerate_when_stable=False,
-    #                                   plot_cobweb=False,
-    #                                   plot_convergence=False,
-    #                                   cobweb_qty='phi',
-    #                                   disp_summary=False,
-    #                                   safe_convergence=0.001,
-    #                                   max_count=5e3)
     if sol.status == 'failed':
         print('trying with standard guess')
         sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
@@ -2302,24 +2257,8 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                       accel_max_weight_norm=1e6,
                                       damping_post_acceleration=5
                                       )
-       
-    # if sol.status == 'failed':
-    #     print('trying with standard guess without acceleration')
-    #     sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
-    #                                   accelerate=False,
-    #                                   accelerate_when_stable=False,
-    #                                   plot_cobweb=False,
-    #                                   plot_convergence=False,
-    #                                   cobweb_qty='phi',
-    #                                   disp_summary=False,
-    #                                   safe_convergence=0.001,
-    #                                   max_count=5e3
-    #                                   ) 
-    # sol_c = var.var_from_vector(sol.x, sol.p)   
-    # sol_c.scale_tau(p)
     sol_c.scale_P(p)
     sol_c.compute_price_indices(p)
-    # sol_c.scale_Z(p)
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_Z(sol_c,p)
@@ -2363,10 +2302,10 @@ if new_run:
      # 'T',     'fo',     'sigma',     'theta',     'beta',
      # 'zeta',     'g_0',     'kappa','gamma',
      # 'delta',     'nu',     'nu_tilde']
+    # p.calib_parameters = ['T']
+    # p.load_data('calibration_results_matched_economy/43/')
     p.calib_parameters = ['eta','k','fe','T','theta','zeta','g_0',
                           'delta','nu','nu_tilde']
-    # p.calib_parameters = ['T']
-    # p.load_data('calibration_results_matched_trade_flows/history27/6/')
     start_time = time.perf_counter()
 # p.calib_parameters = ['eta','delta','fe','T',
 #                       'g_0','zeta','nu','nu_tilde']
@@ -2377,7 +2316,7 @@ if new_run:
 #                     'SRDUS', 'SPFLOW', 'SRGDP', 'JUPCOST',
 #                     'SINNOVPATEU']
 list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                    'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
+                    'SRDUS','SPFLOWDOM', 'SRGDP', 'JUPCOST',
                     'SINNOVPATUS','TE','TO']
 
 # list_of_moments = ['TP']
@@ -2385,7 +2324,8 @@ m = moments(list_of_moments)
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
 m.load_data()
-m.TO_target = np.array(0.05)
+p.update_sigma_with_SRDUS_target(m)
+# m.load_run('calibration_results_matched_trade_flows/43/')
 # m.SDOMTFLOW_target = np.random.rand(p.N*p.S).reshape(p.N,p.S)*100
 bounds = p.make_parameters_bounds()
 # collec_of_guess = load_collection_of_guess()
@@ -2539,7 +2479,7 @@ for k, v in dic_runs.items():
 
 # moment_to_change = 'SRDUS'
 for moment_to_change in ['SRDUS','KM','JUPCOST','SINNOVPATUS']:
-# for moment_to_change in ['SRDUS']:
+# for moment_to_change in ['SINNOVPATUS']:
     print(moment_to_change)
     baseline_path = 'calibration_results_matched_economy/43/'
     result_path = 'calibration_results_matched_economy/'+moment_to_change+'/'
@@ -2601,7 +2541,7 @@ for moment_to_change in ['SRDUS','KM','JUPCOST','SINNOVPATUS']:
         dic_sol[run_name] = sol_c
     
     # moments.compare_moments(dic_m, contin_cmap=True)
-    # compare_params(dic_p, save = True)
+    # compare_params(dic_p)
     moments.compare_moments(dic_m, contin_cmap=True, save_path = dropbox_path+'summary/')
     compare_params(dic_p, save = True, save_path = dropbox_path+'summary/')
     
@@ -2928,7 +2868,7 @@ m56.compute_moments_deviations()
 #                         'SINNOVPATEU','NUR']
 p65, sol65, m65 = full_load_parameters_set('calibration_results_matched_economy/65/',
                                            ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                                            'SRDUS','SPFLOW', 'SRGDP', 'JUPCOST',
+                                            'SRDUS','SPFLOWDOM', 'SRGDP', 'JUPCOST',
                                             'SINNOVPATUS','TO','TE'])
 m65.TO_target = np.array(0.05)
 m65.compute_moments(sol65, p65)
