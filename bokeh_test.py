@@ -11,6 +11,12 @@ from bokeh.sampledata.iris import flowers
 
 from bokeh.plotting import figure, show, output_file
 from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.palettes import Spectral6
+from bokeh.transform import factor_cmap
+from bokeh.embed import components
+from bokeh.embed import file_html
+from bokeh.resources import CDN
+from bokeh.layouts import row
 
 colormap = {'setosa': 'red', 'versicolor': 'green', 'virginica': 'blue'}
 flowers['colors'] = [colormap[x] for x in flowers['species']]
@@ -32,11 +38,8 @@ p.circle('petal_length', 'petal_width', color='colors',
 
 # output_file('index.html')
 
-show(p)
+# show(p)
 #%%
-
-from bokeh.palettes import Spectral6
-from bokeh.transform import factor_cmap
 
 fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
 counts = [5, 3, 4, 2, 4, 6]
@@ -53,7 +56,11 @@ q.y_range.end = 9
 # q.legend.orientation = "horizontal"
 # q.legend.location = "top_center"
 
-from bokeh.embed import components
+# script, div = components([p, q])
+# print(script, div[0], div[1])
+test = row(p,q)
+show(test)
+html = file_html(test,CDN)
 
-script, div = components([p, q])
-# print script, div[0], div[1]
+with open("index.html", "w") as t_html:
+    t_html.write(html)
