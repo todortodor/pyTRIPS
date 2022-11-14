@@ -6,3 +6,5 @@
     seamless="seamless"
     frameborder="0">
 </iframe>
+
+{% include /custom/bokeh_demo.html %}
