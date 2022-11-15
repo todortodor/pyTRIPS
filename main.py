@@ -29,15 +29,15 @@ def get_dataset(src, name, distribution):
     return ColumnDataSource(data=df)
 
 def make_plot(source, title):
-    plot = figure(x_axis_type="datetime", plot_width=800, tools="", toolbar_location=None)
+    plot = figure(x_axis_type="datetime", width=800, tools="", toolbar_location=None)
     plot.title.text = title
 
     plot.quad(top='record_max_temp', bottom='record_min_temp', left='left', right='right',
-              color=Blues4[2], source=source, legend="Record")
+              color=Blues4[2], source=source)
     plot.quad(top='average_max_temp', bottom='average_min_temp', left='left', right='right',
-              color=Blues4[1], source=source, legend="Average")
+              color=Blues4[1], source=source)
     plot.quad(top='actual_max_temp', bottom='actual_min_temp', left='left', right='right',
-              color=Blues4[0], alpha=0.5, line_color="black", source=source, legend="Actual")
+              color=Blues4[0], alpha=0.5, line_color="black", source=source)
 
     # fixed attributes
     plot.xaxis.axis_label = None
