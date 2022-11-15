@@ -76,7 +76,7 @@ cities = {
 city_select = Select(value=city, title='City', options=sorted(cities.keys()))
 distribution_select = Select(value=distribution, title='Distribution', options=['Discrete', 'Smoothed'])
 
-df = pd.read_csv(join(dirname(__file__), 'data/2015_weather.csv'))
+df = pd.read_csv(join(dirname(__file__), 'bokeh-app/data/2015_weather.csv'))
 source = get_dataset(df, cities[city]['airport'], distribution)
 plot = make_plot(source, "Weather data for " + cities[city]['title'])
 
