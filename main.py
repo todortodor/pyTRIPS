@@ -50,7 +50,7 @@ def make_plot(source, title):
 
 def update_plot(attrname, old, new):
     city = city_select.value
-    plot.title.text = "Weather data for " + cities[city]['title']
+    plot.title.text = "TEST Weather data for " + cities[city]['title']
 
     src = get_dataset(df, cities[city]['airport'], distribution_select.value)
     source.data.update(src.data)
