@@ -70,7 +70,6 @@ scipy==1.9.3
 seaborn==0.11.2
 Send2Trash==1.8.0
 six==1.16.0
-sklearn==0.0
 statsmodels==0.13.0
 tenacity==8.0.1
 terminado==0.12.1
