@@ -190,6 +190,8 @@ def compare_params(dic, save=False, save_path=None, color_gradient = True):
     
     fig,ax = plt.subplots(figsize = (12,8))
     title = 'Eta of the countries' 
+
+
     for i,(com,par) in enumerate(dic.items()):
         ax.plot(par.countries,par.eta[...,1],label=com,color=colors[i])
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
@@ -214,4 +216,7 @@ def compare_params(dic, save=False, save_path=None, color_gradient = True):
     if save:
         plt.tight_layout()
         plt.savefig(save_path+'scalar_params')
-    plt.show()        
+    plt.show()    
+
+# def get_dataframes_for_baseline_variation(m,p):
+    
