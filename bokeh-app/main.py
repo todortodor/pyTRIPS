@@ -139,12 +139,14 @@ comments_dic = {'baseline':'baseline',
                 '3.1':'3.1: added DOMPATUS',
                 '3.2':'3.2: added DOMPATEU',
                 '3.3':'3.3: added DOMPATUS and DOMPATUS',
-                '4.1':'4.1: 21 and drop South in RD',
-                '4.2':'4.2: 22 and drop South in RD',
-                '4.3':'4.3: 23 and drop South in RD',
+                '4.1':'4.1: 2.1 and drop South in RD',
+                '4.2':'4.2: 2.2 and drop South in RD',
+                '4.3':'4.3: 2.3 and drop South in RD',
                 '5':'5: patent cost relative to RD_US (JUPCOSTRD)',
                 '6':'6: fix delta_US = 0.05 and drop JUPCOST',
-                '7':'7: drop SRDUS'
+                '7':'7: drop SRDUS',
+                '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
+                '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW'
                 }
 
 

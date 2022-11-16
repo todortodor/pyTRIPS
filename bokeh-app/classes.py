@@ -1024,8 +1024,8 @@ class moments:
                               'TO':3,
                               'TE':3,
                               'DOMPATRATUSEU':2,
-                              'DOMPATUS':3,
-                              'DOMPATEU':3,
+                              'DOMPATUS':1,
+                              'DOMPATEU':1,
                               'SPATORIG':2,
                               'SPATDEST':2,
                               'TWSPFLOW':1,
@@ -1232,7 +1232,7 @@ class moments:
                         plt.yscale('log')
                         plt.xscale('log')
                         if save_plot is not None:
-                            plt.savefig(save_plot+'_'+mom)
+                            plt.savefig(save_plot+'_'+mom+'.png')
                         plt.show()
                     elif mom == 'STFLOW':
                         fig,ax = plt.subplots(figsize = (12,8))
@@ -1252,7 +1252,7 @@ class moments:
                         plt.yscale('log')
                         plt.xscale('log')
                         if save_plot is not None:
-                            plt.savefig(save_plot+'_'+mom)
+                            plt.savefig(save_plot+'_'+mom+'.png')
                         plt.show()
                     
                     elif mom == 'SDOMTFLOW':
@@ -1275,7 +1275,7 @@ class moments:
                         plt.yscale('log')
                         plt.xscale('log')
                         if save_plot is not None:
-                            plt.savefig(save_plot+'_'+mom)
+                            plt.savefig(save_plot+'_'+mom+'.png')
                         plt.show()
                
         fig,ax = plt.subplots(figsize = (12,8))
@@ -1285,7 +1285,7 @@ class moments:
         #     plt.yscale('log')
         plt.title('scalar moments, deviation')
         if save_plot is not None:
-            plt.savefig(save_plot+'_scalar_moments')
+            plt.savefig(save_plot+'_scalar_moments'+'.png')
         plt.show()
             
     def write_moments(self, path):

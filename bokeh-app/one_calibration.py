@@ -14,7 +14,7 @@ from data_funcs import write_calibration_results, compare_params
 import os
 
 new_run = True
-baseline_number = '104'
+baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -39,12 +39,16 @@ if 'theta' in p.calib_parameters:
 
 # p.calib_parameters.append('fo')
 # p.calib_parameters.remove('nu_tilde')
-m.list_of_moments.remove('JUPCOST')
-m.list_of_moments.append('JUPCOSTRD')
+m.list_of_moments.append('DOMPATUS')
+m.list_of_moments.append('DOMPATEU')
+# m.list_of_moments.remove('JUPCOST')
+# m.list_of_moments.append('JUPCOSTRD')
 # m.weights_dict['SPFLOW'] = 10
+m.weights_dict['SPFLOW'] = 3
+m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.02)
 # m.KM_target = np.array(0.2)
-# m.drop_CHN_IND_BRA_ROW_from_RD = True
+m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
 if new_run:
@@ -103,13 +107,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'JUPCOSTRD moment'
+commentary = 'drop South, DOMPAT moments, weight3 SPFLOW'
 # commentary = ''
 dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 5
+run_number = 8.2
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 # path = dropbox_path
