@@ -27,6 +27,21 @@ m_baseline = moments()
 m_baseline.load_data()
 m_baseline.load_run(baseline_path)
 
+comments_dic = {'1':'1 : drop South in RD targeting',
+                '2.1':'2.1 : added domestic US to patent flow moment',
+                '2.2':'2.2 : added domestic EU to patent flow moment',
+                '2.3':'2.3 : added domestic US and EU to patent flow moment',
+                '3.1':'3.1 : added DOMPATUS',
+                '3.2':'3.2 : added DOMPATEU',
+                '3.3':'3.3 : added DOMPATUS and DOMPATUS',
+                '4.1':'4.1 : 21 and drop South in RD',
+                '4.2':'4.2 : 22 and drop South in RD',
+                '4.3':'4.3 : 23 and drop South in RD',
+                '5':'5 : patent cost relative to RD_US (JUPCOSTRD)',
+                '6':'6 : fix delta_US = 0.05 and drop JUPCOST',
+                '7':'7 : drop SRDUS'
+                }
+
 moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS','sales_mark_up_US']
 parameters_to_change = ['kappa','gamma','rho','zeta']
 

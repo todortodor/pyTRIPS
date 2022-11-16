@@ -1150,7 +1150,7 @@ class moments:
         # self.GROWTH_target = self.GROWTH_target*10
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
-        self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp'])
+        self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
         self.TP_data = self.cc_moments['patent flows'].sum()
         self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
@@ -1638,36 +1638,37 @@ class moments:
         #             /(getattr(self,mom+'_target').size)
         #             )
         for mom in self.get_list_of_moments():
-            if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH':
-                # setattr(self,
-                #         mom+'_deviation',
-                #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
-                #         /np.log(getattr(self,mom+'_target').size+1)
-                #         )
-                # setattr(self,
-                #         mom+'_deviation',
-                #         self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
-                #         )
-                setattr(self,
-                        mom+'_deviation',
-                        self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
-                        /getattr(self,mom+'_target').size**(1/2)
-                        )
-            # elif mom == 'SPFLOW':
-            #     setattr(self,
-            #             mom+'_deviation',
-            #             self.weights_dict[mom]*np.abs(getattr(self,mom)/getattr(self,mom+'_target')-1)
-            #             /getattr(self,mom+'_target').size**(1/2)
-            #             )
-            else:
-                mo = getattr(self,mom)
-                tar = getattr(self,mom+'_target')
-                setattr(self,
-                        mom+'_deviation',
-                        self.weights_dict[mom]*np.abs(mo-tar)/tar
-                        /getattr(self,mom+'_target').size
-                        )
-                # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
+            if hasattr(self, mom):
+                if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH':
+                    # setattr(self,
+                    #         mom+'_deviation',
+                    #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
+                    #         /np.log(getattr(self,mom+'_target').size+1)
+                    #         )
+                    # setattr(self,
+                    #         mom+'_deviation',
+                    #         self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))**(1/2)
+                    #         )
+                    setattr(self,
+                            mom+'_deviation',
+                            self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
+                            /getattr(self,mom+'_target').size**(1/2)
+                            )
+                # elif mom == 'SPFLOW':
+                #     setattr(self,
+                #             mom+'_deviation',
+                #             self.weights_dict[mom]*np.abs(getattr(self,mom)/getattr(self,mom+'_target')-1)
+                #             /getattr(self,mom+'_target').size**(1/2)
+                #             )
+                else:
+                    mo = getattr(self,mom)
+                    tar = getattr(self,mom+'_target')
+                    setattr(self,
+                            mom+'_deviation',
+                            self.weights_dict[mom]*np.abs(mo-tar)/tar
+                            /getattr(self,mom+'_target').size
+                            )
+                    # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
         if self.drop_CHN_IND_BRA_ROW_from_RD:
             self.RD_deviation = self.RD_deviation[:3]
             self.RD_RUS_deviation = self.RD_RUS_deviation[:3]    

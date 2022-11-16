@@ -10,7 +10,7 @@ from scipy import optimize
 import time
 from classes import moments, parameters,  var, history
 from solver_funcs import calibration_func, fixed_point_solver
-from data_funcs import write_calibration_results
+from data_funcs import write_calibration_results, compare_params
 import os
 
 new_run = True
@@ -39,8 +39,8 @@ if 'theta' in p.calib_parameters:
 
 # p.calib_parameters.append('fo')
 # p.calib_parameters.remove('nu_tilde')
-# m.list_of_moments.remove('SRDUS')
-# m.list_of_moments.append('DOMPATUS')
+m.list_of_moments.remove('JUPCOST')
+m.list_of_moments.append('JUPCOSTRD')
 # m.weights_dict['SPFLOW'] = 10
 # m.TO_target = np.array(0.02)
 # m.KM_target = np.array(0.2)
@@ -92,7 +92,7 @@ sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
-
+p_sol.guess = sol.x
 sol_c = var.var_from_vector(sol.x, p_sol)    
 sol_c.scale_P(p_sol)
 sol_c.compute_price_indices(p)
@@ -103,12 +103,16 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'added DOMPATUS and DOMPATEU moment'
+commentary = 'JUPCOSTRD moment'
+# commentary = ''
 dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
+# local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 33
+run_number = 5
+# run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
+# path = dropbox_path
 try:
     os.mkdir(path)
 except:
