@@ -5,7 +5,7 @@ Created on Sun Nov 13 21:27:06 2022
 
 @author: simonl
 """
-from os.path import dirname
+# from os.path import dirname
 import numpy as np
 from copy import deepcopy
 # import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import pandas as pd
 from scipy.special import gamma
 import time
 import os
-import seaborn as sns
+# import seaborn as sns
 
 class parameters:     
     def __init__(self, n=7, s=2, data_path = None):
