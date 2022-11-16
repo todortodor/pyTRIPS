@@ -1,5 +1,12 @@
-# from os.path import join, dirname
+from os.path import dirname, join
+import os
+import sys
+# import __main__
 # import datetime
+# os.chdir(dirname(__file__))
+# os.path.realpath("__file__")
+# if __name__ == "__main__":
+#     print("__file__")
 
 import pandas as pd
 # from scipy.signal import savgol_filter
@@ -12,7 +19,7 @@ from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
 from bokeh.plotting import figure, show
 from classes import parameters, moments, var
-import os
+
 import numpy as np
 from bokeh.models import LogScale, LinearScale
 import itertools
@@ -20,8 +27,8 @@ from bokeh.palettes import Category10
 # import numpy as np
 
 
-def load(path):
-    p = parameters(n=7,s=2)
+def load(path, data_path=None):
+    p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
     sol = var.var_from_vector(p.guess, p, compute=True)
     sol.compute_non_solver_aggregate_qualities(p)
@@ -30,7 +37,7 @@ def load(path):
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
     m = moments()
-    m.load_data()
+    m.load_data(data_path)
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
@@ -143,11 +150,15 @@ comments_dic = {'baseline':'baseline',
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
+path_tfs = dirname(__file__)+'/'
+data_path = join(dirname(__file__), 'data/')
+results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
+print(data_path)
 for baseline_nbr in ['101','102','104']:
-    baseline_path = 'calibration_results_matched_economy/'+baseline_nbr+'/'
-    baseline_variations_path = 'calibration_results_matched_economy/baseline_'+baseline_nbr+'_variations/'
+    baseline_path = results_path+baseline_nbr+'/'
+    baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
-    p_baseline,m_baseline,sol_baseline = load(baseline_path)
+    p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path)
     baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr] = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments)
     
     files_in_dir = next(os.walk(baseline_variations_path))[1]
@@ -155,7 +166,7 @@ for baseline_nbr in ['101','102','104']:
     run_list.sort(key=float)
     
     for run in run_list:
-        p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/')
+        p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
         a, b  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                         baselines_dic_mom[baseline_nbr], p_to_add, m_to_add, run)
         baselines_dic_param[baseline_nbr] = a

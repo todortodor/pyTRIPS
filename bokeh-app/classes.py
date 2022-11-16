@@ -5,6 +5,7 @@ Created on Sun Nov 13 21:27:06 2022
 
 @author: simonl
 """
+from os.path import dirname
 import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -15,7 +16,9 @@ import os
 import seaborn as sns
 
 class parameters:     
-    def __init__(self, n=7, s=2):
+    def __init__(self, n=7, s=2, data_path = None):
+        if data_path is None:
+            data_path = 'data/'
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         N = len(self.countries)
         self.N = N
@@ -53,15 +56,15 @@ class parameters:
         # self.diag_mask = np.invert(self.off_diag_mask)
         
         self.unit = 1e6
-        
-        self.trade_flows = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
+        # print(data_path)
+        self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
         self.trade_flows = self.trade_flows.reshape((N,N,S))
         self.OUT = self.trade_flows.sum()
         # self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
         # self.trade_shares = (self.trade_flows).reshape((N,N,S))
         
-        self.data = pd.read_csv('data/country_moments.csv',index_col=[0])
+        self.data = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
         
         self.labor_raw = np.concatenate(
             (self.data.labor.values,np.ones(n)*self.data.labor.values[-1])
@@ -1108,12 +1111,14 @@ class moments:
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
     
-    def load_data(self):
-        self.c_moments = pd.read_csv('data/country_moments.csv',index_col=[0])
-        self.cc_moments = pd.read_csv('data/country_country_moments.csv',index_col=[1,0]).sort_index()
-        self.ccs_moments = pd.read_csv('data/country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
-        self.moments = pd.read_csv('data/scalar_moments.csv',index_col=[0])
-        self.description = pd.read_csv('data/moments_descriptions.csv',sep=';',index_col=[0])
+    def load_data(self,data_path = None):
+        if data_path is None:
+            data_path = 'data/'
+        self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
+        self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
+        self.ccs_moments = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
+        self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
+        self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
         
         N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
         S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
