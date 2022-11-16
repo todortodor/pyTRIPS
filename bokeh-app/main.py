@@ -1,6 +1,6 @@
 from os.path import dirname, join
 import os
-import sys
+# import sys
 # import __main__
 # import datetime
 # os.chdir(dirname(__file__))
@@ -14,14 +14,14 @@ import pandas as pd
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
 from bokeh.models import ColumnDataSource, LabelSet, Select, DataTable, TableColumn, HoverTool, Slope
-from bokeh.models.formatters import NumeralTickFormatter
-from bokeh.models.widgets.tables import NumberFormatter
+# from bokeh.models.formatters import NumeralTickFormatter
+# from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
-from bokeh.plotting import figure, show
+from bokeh.plotting import figure
 from classes import parameters, moments, var
 
-import numpy as np
-from bokeh.models import LogScale, LinearScale
+# import numpy as np
+# from bokeh.models import LogScale, LinearScale
 import itertools
 from bokeh.palettes import Category10
 # import numpy as np
