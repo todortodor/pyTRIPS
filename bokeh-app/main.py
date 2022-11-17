@@ -125,6 +125,12 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     return dic_df_param, dic_df_mom
 
+data_path = join(dirname(__file__), 'data/')
+results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
+# print(data_path)
+
+#%% moments / parameters for variations
+
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
@@ -149,13 +155,9 @@ comments_dic = {'baseline':'baseline',
                 '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW'
                 }
 
-
 baselines_dic_param = {}
 baselines_dic_mom = {}
-path_tfs = dirname(__file__)+'/'
-data_path = join(dirname(__file__), 'data/')
-results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
-print(data_path)
+
 for baseline_nbr in ['101','102','104']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
@@ -174,7 +176,7 @@ for baseline_nbr in ['101','102','104']:
         baselines_dic_param[baseline_nbr] = a
         baselines_dic_mom[baseline_nbr] = b
 
-#%%
+
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
 baseline_mom = '101'
@@ -295,8 +297,64 @@ baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
-curdoc().add_root(row(column(controls_mom,p_mom,data_table_mom),column(controls_par, p_par, data_table_par)))
+moment_report = column(controls_mom,p_mom,data_table_mom)
+param_report = column(controls_par, p_par, data_table_par)
+first_panel = row(moment_report,param_report)
 
+# curdoc().add_root(row(column(controls_mom,p_mom,data_table_mom),column(controls_par, p_par, data_table_par)))
+
+#%% sensitivities
+
+baselines_dic_sensi = {}
+
+for baseline_nbr in ['101','102','104']:
+    baselines_dic_sensi[baseline_nbr] = {}
+    baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
+    files_in_dir = os.listdir(baseline_sensi_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
+    
+baseline_sensi = '101'
+qty_sensi = 'delta US over nu'
+
+baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
+qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
+
+ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
+p_sensi = figure(title="Sensitivity", 
+               width = 900,
+               height = 600,
+               x_axis_label='Change in moment or parameter',
+               y_axis_label='Value',
+               tools = TOOLS)
+
+colors_sensi = itertools.cycle(Category10[10])
+
+for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
+    p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+
+p_sensi.legend.click_policy="hide"
+p_sensi.legend.label_text_font_size = '8pt'
+p_sensi.add_layout(p_sensi.legend[0], 'right')
+
+def update_baseline_sensi(attrname, old, new):
+    qty_sensi = qty_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
+    
+def update_qty_sensi(attrname, old, new):
+    baseline_sensi = baseline_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
+
+controls_sensi = row(baseline_sensi_select, qty_sensi_select)
+# controls_mom.sizing_mode = 'scale_width'
+
+baseline_sensi_select.on_change('value', update_baseline_sensi)
+qty_sensi_select.on_change('value', update_qty_sensi)
+
+sensitivity_report = column(controls_sensi,p_sensi)
+
+curdoc().add_root(column(first_panel,sensitivity_report))
 
 #%%
 

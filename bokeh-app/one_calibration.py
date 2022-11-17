@@ -14,7 +14,7 @@ from data_funcs import write_calibration_results, compare_params
 import os
 
 new_run = True
-baseline_number = '101'
+baseline_number = '104'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -45,6 +45,7 @@ m.list_of_moments.append('DOMPATEU')
 # m.list_of_moments.append('JUPCOSTRD')
 # m.weights_dict['SPFLOW'] = 10
 m.weights_dict['SPFLOW'] = 3
+m.weights_dict['SPFLOW_US'] = 3
 m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.02)
 # m.KM_target = np.array(0.2)

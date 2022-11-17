@@ -30,7 +30,9 @@ comments_dic = {'1':'1 : drop South in RD targeting',
                 '4.3':'4.3 : 23 and drop South in RD',
                 '5':'5 : patent cost relative to RD_US (JUPCOSTRD)',
                 '6':'6 : fix delta_US = 0.05 and drop JUPCOST',
-                '7':'7 : drop SRDUS'
+                '7':'7 : drop SRDUS',
+                '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
+                '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW'
                 }
 #%%
 # baseline_number = '101'

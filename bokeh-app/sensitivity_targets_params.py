@@ -16,10 +16,11 @@ import seaborn as sns
 from classes import moments, parameters, var, history
 from solver_funcs import calibration_func, fixed_point_solver
 from data_funcs import write_calibration_results, compare_params
+from functools import reduce
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '104'
+baseline = '101'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -27,22 +28,22 @@ m_baseline = moments()
 m_baseline.load_data()
 m_baseline.load_run(baseline_path)
 
-comments_dic = {'1':'1 : drop South in RD targeting',
-                '2.1':'2.1 : added domestic US to patent flow moment',
-                '2.2':'2.2 : added domestic EU to patent flow moment',
-                '2.3':'2.3 : added domestic US and EU to patent flow moment',
-                '3.1':'3.1 : added DOMPATUS',
-                '3.2':'3.2 : added DOMPATEU',
-                '3.3':'3.3 : added DOMPATUS and DOMPATUS',
-                '4.1':'4.1 : 21 and drop South in RD',
-                '4.2':'4.2 : 22 and drop South in RD',
-                '4.3':'4.3 : 23 and drop South in RD',
-                '5':'5 : patent cost relative to RD_US (JUPCOSTRD)',
-                '6':'6 : fix delta_US = 0.05 and drop JUPCOST',
-                '7':'7 : drop SRDUS'
-                }
+# comments_dic = {'1':'1 : drop South in RD targeting',
+#                 '2.1':'2.1 : added domestic US to patent flow moment',
+#                 '2.2':'2.2 : added domestic EU to patent flow moment',
+#                 '2.3':'2.3 : added domestic US and EU to patent flow moment',
+#                 '3.1':'3.1 : added DOMPATUS',
+#                 '3.2':'3.2 : added DOMPATEU',
+#                 '3.3':'3.3 : added DOMPATUS and DOMPATUS',
+#                 '4.1':'4.1 : 21 and drop South in RD',
+#                 '4.2':'4.2 : 22 and drop South in RD',
+#                 '4.3':'4.3 : 23 and drop South in RD',
+#                 '5':'5 : patent cost relative to RD_US (JUPCOSTRD)',
+#                 '6':'6 : fix delta_US = 0.05 and drop JUPCOST',
+#                 '7':'7 : drop SRDUS'
+#                 }
 
-moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS','sales_mark_up_US']
+moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS']
 parameters_to_change = ['kappa','gamma','rho','zeta']
 
 dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
@@ -54,6 +55,7 @@ parent_param_result_path = 'calibration_results_matched_economy/baseline_'+basel
 parent_param_dropbox_path = dropbox_path+'baseline_'+baseline+'_parameters_variation/'
 
 sensitivity_path = dropbox_path+'baseline_'+baseline+'_sensitivities/'
+sensitivity_tables_path = 'calibration_results_matched_economy/baseline_'+baseline+'_sensitivity_tables/'
 
 def make_dirs(list_of_paths):
     for path in list_of_paths:
@@ -66,6 +68,8 @@ def GetSpacedElements(array, numElems = 13):
     idx = np.round(np.linspace(0, len(array)-1, numElems)).astype(int)
     out = array[idx]
     return out, idx
+
+#%%
 
 make_dirs([parent_moment_result_path,
            parent_moment_dropbox_path,
@@ -1097,3 +1101,55 @@ for c_spec_par in ['delta']:
             ax.legend()
             plt.savefig(sensitivity_path+baseline+'_'+c_spec_par+'_'+c)
             plt.show()
+            
+#%% write the tables to be used by bokeh
+
+make_dirs([sensitivity_tables_path])
+
+df_dic = {}
+
+for s_spec_par in ['theta','fe','zeta','nu','nu_tilde']:
+    list_of_dfs = []
+    for qty,variation_dic in dic_of_variation_dics.items():
+        df = pd.DataFrame()
+        df['Change'] = [round(change) for change in variation_dic['change'].values()]
+        df[qty] = [getattr(p,s_spec_par)[1] for p in variation_dic['p'].values()]
+        list_of_dfs.append(df)
+    big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
+    df_dic[s_spec_par] = big_df
+        
+for scal_par in ['g_0','k',]:
+    list_of_dfs = []
+    for qty,variation_dic in dic_of_variation_dics.items():
+        df = pd.DataFrame()
+        df['Change'] = [round(change) for change in variation_dic['change'].values()]
+        df[qty] = [getattr(p,scal_par) for p in variation_dic['p'].values()]
+        list_of_dfs.append(df)
+    big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
+    df_dic[scal_par] = big_df
+    
+        
+for c_spec_par in ['delta']:
+    for i,c in enumerate(['US']):
+        list_of_dfs = []
+        for qty,variation_dic in dic_of_variation_dics.items():
+            df = pd.DataFrame()
+            df['Change'] = [round(change) for change in variation_dic['change'].values()]
+            df[qty] = [getattr(p,c_spec_par)[0,1] for p in variation_dic['p'].values()]
+            list_of_dfs.append(df)
+        big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
+        df_dic['delta US'] = big_df
+        
+        list_of_dfs = []
+        for qty,variation_dic in dic_of_variation_dics.items():
+            df = pd.DataFrame()
+            df['Change'] = [round(change) for change in variation_dic['change'].values()]
+            df[qty] = [getattr(p,c_spec_par)[0,1]/p.nu[1] for p in variation_dic['p'].values()]
+            list_of_dfs.append(df)
+        big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
+        df_dic[c_spec_par+' '+c+' '+'over nu'] = big_df
+        
+for k,df in df_dic.items():
+    df.to_csv(sensitivity_tables_path+k+'.csv')
+        
+        
