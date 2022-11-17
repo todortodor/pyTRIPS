@@ -152,7 +152,9 @@ comments_dic = {'baseline':'baseline',
                 '6':'6: fix delta_US = 0.05 and drop JUPCOST',
                 '7':'7: drop SRDUS',
                 '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
-                '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW'
+                '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
+                '10.1':'10.1: SPFLOWDOM instead',
+                '10.2':'10.2: SPFLOWDOM and drop South in RD'
                 }
 
 baselines_dic_param = {}
