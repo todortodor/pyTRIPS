@@ -47,28 +47,32 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
     dic_df_param = {}
     dic_df_mom = {}
     params = p_baseline.calib_parameters
+    params.append('d*fe')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
     df_scalar_params.index.name='x'
     
     for param in params:
         # print(param)
         # print(getattr(p_baseline,param)[p_baseline.mask[param]].squeeze().shape == (14,))
-        if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 1:
-            if param == 'k':
-                df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
-            else:
-                df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])
-        if param in ['eta','delta']:
-            df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
-            df.index.name='x'
-            dic_df_param[param] = df
-        if param in ['T']:
-            df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,0])
-            df.index.name='x'
-            dic_df_param[param+' non patent sector'] = df
-            df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
-            df.index.name='x'
-            dic_df_param[param+' patent sector'] = df
+        if hasattr(p_baseline,param):
+            if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 1:
+                if param == 'k':
+                    df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
+                else:
+                    df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])
+            if param in ['eta','delta']:
+                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
+                df.index.name='x'
+                dic_df_param[param] = df
+            if param in ['T']:
+                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,0])
+                df.index.name='x'
+                dic_df_param[param+' non patent sector'] = df
+                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
+                df.index.name='x'
+                dic_df_param[param+' patent sector'] = df
+        elif param == 'd*fe':
+            df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'d')[p_baseline.mask['d']])*float(getattr(p_baseline,'fe')[p_baseline.mask['fe']])
     dic_df_param['scalars'] = df_scalar_params
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
@@ -104,9 +108,13 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
     for k in dic_df_param.keys():
         if k == 'scalars':
             for i in dic_df_param[k].index:
-                dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])
                 if i == 'k':
                     dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])-1
+                elif i == 'd*fe':
+                    dic_df_param[k].loc[i,run_name] = float(getattr(p,'d')[p.mask['d']])*float(getattr(p,'fe')[p.mask['fe']])
+                else:
+                    dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])
+                
         if k in ['eta','delta']:
             dic_df_param[k][run_name] = getattr(p,k)[...,1]
         if k == 'T non patent sector':
@@ -154,7 +162,14 @@ comments_dic = {'baseline':'baseline',
                 '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
                 '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
                 '10.1':'10.1: SPFLOWDOM instead',
-                '10.2':'10.2: SPFLOWDOM and drop South in RD'
+                '10.2':'10.2: SPFLOWDOM and drop South in RD',
+                '11.1':'11.1: baseline with new parameter d',
+                '11.2':'11.2: 10.1 with new parameter d',
+                '11.3':'11.3: 1 with new parameter d',
+                '11.4':'11.4: 10.2 with new parameter d',
+                '11.5':'11.5: 2.3 with new param d',
+                '11.6':'11.6: 4.3 with new param d',
+                '11.7':'11.7: 8.1 with new param d',
                 }
 
 baselines_dic_param = {}
@@ -189,8 +204,8 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
-               width = 900,
-               height = 600,
+               width = 1200,
+               height = 800,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -202,7 +217,7 @@ hover_tool_mom.tooltips = [
     ("(target,value)", "($x,$y)"),
     ]
 labels = LabelSet(x='target', y='baseline', text='x',
-              x_offset=2, y_offset=2, source=ds_mom, text_font_size="6pt")
+              x_offset=2, y_offset=2, source=ds_mom, text_font_size="7pt")
 p_mom.add_layout(labels)
 p_mom.add_tools(hover_tool_mom)
 # p_mom.sizing_mode = 'scale_width'
@@ -213,27 +228,36 @@ p_mom.add_layout(slope)
 # colors_mom = itertools.cycle(Category20.values()(len(baselines_dic_mom[baseline_mom][mom].columns)))
 colors_mom = itertools.cycle(Category10[10])
 
-for col in baselines_dic_mom[baseline_mom][mom].columns[1:]:
-    p_mom.circle('target', col, source = ds_mom , size=5, color=next(colors_mom), legend_label=comments_dic[col])
+# for col in baselines_dic_mom[baseline_mom][mom].columns[1:]:
+for col in ds_mom.data.keys():
+    if col not in ['x','target']:
+        p_mom.circle('target', col, source = ds_mom , size=5, color=next(colors_mom), legend_label=comments_dic[col])
 # p_mom.line('target','target',source = ds_mom , color = 'black', line_alpha = 0.1)
 # p_mom.ray(x=1e-15, y=1e-15, length=0, angle_units = "deg",
 #       angle = 45)
 
 p_mom.legend.click_policy="hide"
 p_mom.legend.label_text_font_size = '8pt'
+# p_mom.legend.label_height = 0
+# p_mom.legend.glyph_height = 0
+p_mom.legend.spacing = 0
+# p_mom.legend.
 p_mom.add_layout(p_mom.legend[0], 'right')
 
-columns_mom = [
-        TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in baselines_dic_mom[baseline_mom][mom].columns]
-
+# columns_mom = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in baselines_dic_mom[baseline_mom][mom].columns]
+columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
 data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=900, height=400)
+# data_table_mom = DataTable(source=ds_mom, width=900, height=400)
+# data_table_mom = DataTable(source=ds_mom.data, width=900, height=400)
 
 def update_baseline_mom(attrname, old, new):
     mom = mom_select.value
-    ds_mom .data = baselines_dic_mom[new][mom]
+    ds_mom.data = baselines_dic_mom[new][mom]
     
 def update_mom(attrname, old, new):
+    # p_mom.legend.items = []
     baseline_mom = baseline_mom_select.value
     ds_mom.data = baselines_dic_mom[baseline_mom][new]
 
@@ -254,8 +278,8 @@ par_select = Select(value=par, title='Quantity', options=sorted(baselines_dic_pa
 x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
-               width = 900,
-               height = 600,
+               width = 1200,
+               height = 800,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -275,7 +299,9 @@ for col in baselines_dic_param[baseline_par][par].columns:
     
 p_par.legend.click_policy="hide"
 p_par.legend.label_text_font_size = '8pt'
+p_par.legend.spacing = 0
 p_par.add_layout(p_par.legend[0], 'right')
+
 
 columns_par = [
         TableColumn(field="x"),
@@ -299,7 +325,9 @@ baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
+# moment_report = column(controls_mom,p_mom)
 moment_report = column(controls_mom,p_mom,data_table_mom)
+# param_report = column(controls_par, p_par)
 param_report = column(controls_par, p_par, data_table_par)
 first_panel = row(moment_report,param_report)
 
@@ -325,8 +353,8 @@ qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(base
 
 ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
 p_sensi = figure(title="Sensitivity", 
-               width = 900,
-               height = 600,
+               width = 1200,
+               height = 800,
                x_axis_label='Change in moment or parameter',
                y_axis_label='Value',
                tools = TOOLS)

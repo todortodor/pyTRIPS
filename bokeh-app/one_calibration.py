@@ -14,7 +14,7 @@ from data_funcs import write_calibration_results, compare_params
 import os
 
 new_run = True
-baseline_number = '102'
+baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -37,14 +37,14 @@ if 'theta' in p.calib_parameters:
 #                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
 #                     'SINNOVPATUS','TO']
 
-# p.calib_parameters.append('fo')
+p.calib_parameters.append('d')
 # p.calib_parameters.remove('nu_tilde')
-# m.list_of_moments.append('DOMPATUS')
-# m.list_of_moments.append('DOMPATEU')
-m.list_of_moments.remove('SPFLOW_US')
-m.list_of_moments.remove('SPFLOW_RUS')
-m.list_of_moments.append('SPFLOWDOM_US')
-m.list_of_moments.append('SPFLOWDOM_RUS')
+m.list_of_moments.append('DOMPATUS')
+m.list_of_moments.append('DOMPATEU')
+# m.list_of_moments.remove('SPFLOW')
+# m.list_of_moments.remove('SPFLOW_RUS')
+# m.list_of_moments.append('SPFLOWDOM')
+# m.list_of_moments.append('SPFLOWDOM_RUS')
 # m.weights_dict['SPFLOW'] = 10
 # m.weights_dict['SPFLOW'] = 3
 # m.weights_dict['SPFLOW_US'] = 3
@@ -68,7 +68,7 @@ test_ls = optimize.least_squares(fun = calibration_func,
                         # jac='3-point',
                         max_nfev=1e8,
                         # ftol=1e-14, 
-                        xtol=1e-11, 
+                        xtol=1e-15, 
                         # gtol=1e-14,
                         # f_scale=scale,
                         verbose = 2)
@@ -110,13 +110,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'SPFLOWDOM and drop South in RD'
+commentary = 'Added d parameter and DOMPAT moments, drop RD South'
 # commentary = ''
 dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 10.2
+run_number = 11.7
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 # path = dropbox_path

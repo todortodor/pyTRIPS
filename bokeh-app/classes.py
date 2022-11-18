@@ -48,6 +48,7 @@ class parameters:
         self.nu = np.ones(S)*0.1 #
         self.nu_tilde = np.ones(S)*0.1
         self.nu_R = np.array(1)
+        self.d = 1.0
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -106,7 +107,8 @@ class parameters:
                         'alpha':co,
                          'beta':co,
                          'T':co,
-                         'eta':co}
+                         'eta':co,
+                         'd':0.5}
         self.ub_dict = {'sigma':5,
                         'theta':30,
                         'rho':0.5,
@@ -123,7 +125,8 @@ class parameters:
                         'alpha':1,
                          'beta':1,
                          'T':np.inf,
-                         'eta':cou}
+                         'eta':cou,
+                         'd':cou}
         
         self.idx = {'sigma':pd.Index(self.sectors, name='sector'),
                     'theta':pd.Index(self.sectors, name='sector'),
@@ -133,6 +136,7 @@ class parameters:
                     'nu':pd.Index(self.sectors, name='sector'),
                     'nu_tilde':pd.Index(self.sectors, name='sector'),
                     'kappa':pd.Index(['scalar']),
+                    'd':pd.Index(['scalar']),
                     'k':pd.Index(['scalar']),
                     # 'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                     #                                  , names=['destination','origin','sector']),
@@ -163,6 +167,7 @@ class parameters:
                     'fo':[np.s_[0]],
                     'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
+                    'd':None,
                     'alpha':None,
                     'beta':None,
                       'T':None,
@@ -171,7 +176,7 @@ class parameters:
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
-                         'g_0','kappa','gamma','delta','nu','nu_tilde']:
+                         'g_0','kappa','gamma','delta','nu','nu_tilde','d']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
                 self.mask[par_name] = np.ones_like(par,bool).ravel()
@@ -201,7 +206,7 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
-         'kappa','gamma','delta','nu','nu_tilde']
+         'kappa','gamma','delta','nu','nu_tilde','d']
             
     def guess_from_params(self):
         # price_guess = self.data.price_level.values
@@ -219,11 +224,11 @@ class parameters:
     
     def update_parameters(self,vec):
         idx_from = 0
-        for p in self.calib_parameters:
-            param = np.array(getattr(self,p))
-            size = param[self.mask[p]].size
-            param[self.mask[p]] = vec[idx_from:idx_from+size]
-            setattr(self,p,param)
+        for par in self.calib_parameters:
+            param = np.array(getattr(self,par))
+            size = param[self.mask[par]].size
+            param[self.mask[par]] = vec[idx_from:idx_from+size]
+            setattr(self,par,param)
             idx_from += size
             
     def update_sigma_with_SRDUS_target(self,m):
@@ -269,8 +274,15 @@ class parameters:
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
         for pa_name in list_of_params:
-            df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-            setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
+            try:
+                df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
+                setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
+            except:
+                if pa_name == 'd':
+                    self.d = np.array(1.0)
+                else:
+                    pass
+            
         try:
             df = pd.read_csv(path+'guess.csv',header=None)
             setattr(self,'guess',df.values.squeeze())
@@ -609,7 +621,11 @@ class var:
     def compute_labor_allocations(self, p, l_R=None, assign=True):
         if l_R is None:
             l_R = self.l_R
-        l_Ae = np.einsum('s,is,is,nis -> ins',
+        # print(p.d_np)
+        d_np = (p.d-1)*np.identity(p.N)+1
+        
+        l_Ae = np.einsum('ni,s,is,is,nis -> ins',
+                         d_np, #!!!
                          p.fe,
                          p.eta,
                          l_R**(1-p.kappa),
@@ -619,7 +635,7 @@ class var:
         l_Ao = np.einsum('ins,s,s -> ins',
                          l_Ae,
                          p.fo,
-                         1/p.fe   #!!!!
+                         1/p.fe
                          )
         l_P = p.labor - np.einsum('is->i',
                                   np.einsum('ins->is', l_Ao)+np.einsum('nis->is',l_Ae)+l_R)
@@ -663,6 +679,8 @@ class var:
     
             
     def compute_labor_research(self, p):
+        d_np = (p.d-1)*np.identity(p.N)+1
+        # d_np = np.ones((p.N,p.N))
         A = np.einsum('nis,nis,s,i,nis,s->is',
                       p.trade_shares*self.Z.sum(),
                       self.X_M,
@@ -673,9 +691,10 @@ class var:
                       p.k/(self.r+p.zeta+p.nu-self.g+self.g_s)
                       )
         B = np.einsum('nis,nis->is',
-                      p.fo+np.einsum('n,i,s->nis',
+                      p.fo+np.einsum('n,i,ni,s->nis',
                                      self.w,
                                      1/self.w,
+                                     d_np,  #!!!
                                      p.fe),
                       np.divide(
                           1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star != np.inf)
@@ -685,6 +704,8 @@ class var:
         return l_R
 
     def compute_psi_star(self, p):
+        d_np = (p.d-1)*np.identity(p.N)+1
+        # d_np = np.ones((p.N,p.N))
         psi_star = np.einsum('s,i,nis,s,nis,nis,nis,ns,ns -> nis',
                              p.sigma,
                              self.w,
@@ -693,9 +714,10 @@ class var:
                              np.divide(1, self.X_M, out=np.full_like(
                                  self.X_M, np.inf), where=self.X_M != 0),
                              1/(p.trade_shares*self.Z.sum()),
-                             p.fo[None, None, :]+np.einsum('n,i,s -> nis',
+                             p.fo[None, None, :]+np.einsum('n,i,ni,s -> nis',
                                                            self.w,
                                                            1/self.w,
+                                                           d_np,
                                                            p.fe),
                              self.r+p.zeta[None, :]+p.delta - self.g+self.g_s[None, :],
                              self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta

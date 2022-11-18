@@ -172,6 +172,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
 
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
+    # print(vec_parameters)
     try:
         v0 = p.guess
     except:
@@ -288,7 +289,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
                   , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
-                  , 'rho :', p.rho, 'kappa :', p.kappa)
+                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
