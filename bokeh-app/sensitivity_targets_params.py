@@ -46,7 +46,7 @@ m_baseline.load_run(baseline_path)
 moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS']
 parameters_to_change = ['kappa','gamma','rho','zeta']
 
-dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
+dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 
 parent_moment_result_path = 'calibration_results_matched_economy/baseline_'+baseline+'_targets_variations/'
 parent_moment_dropbox_path = dropbox_path+'baseline_'+baseline+'_targets_variation/'

@@ -38,7 +38,7 @@ comments_dic = {'1':'1 : drop South in RD targeting',
 # baseline_number = '101'
 for baseline_number in ['101','102','104']:
     path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-    dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
+    dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
     
     moments_runs = []
     params_runs = []

@@ -73,6 +73,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
                 dic_df_param[param+' patent sector'] = df
         elif param == 'd*fe':
             df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'d')[p_baseline.mask['d']])*float(getattr(p_baseline,'fe')[p_baseline.mask['fe']])
+        elif param == 'deltaUS/nu':
+            df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'d')[p_baseline.mask['d']])*float(getattr(p_baseline,'fe')[p_baseline.mask['fe']])
     dic_df_param['scalars'] = df_scalar_params
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
@@ -161,6 +163,7 @@ comments_dic = {'baseline':'baseline',
                 '7':'7: drop SRDUS',
                 '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
                 '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
+                '9.1':'9.1: drop KM moment, TO target divided by 2',
                 '10.1':'10.1: SPFLOWDOM instead',
                 '10.2':'10.2: SPFLOWDOM and drop South in RD',
                 '11.1':'11.1: baseline with new parameter d',

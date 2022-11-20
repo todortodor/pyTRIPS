@@ -6,14 +6,6 @@ Created on Tue Nov 15 14:05:41 2022
 @author: simonl
 """
 
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Nov 13 22:00:03 2022
-
-@author: simonl
-"""
-
 from scipy import optimize
 import time
 from classes import moments, parameters,  var, history

@@ -23,7 +23,7 @@ m_baseline.load_data()
 m_baseline.load_run(baseline_path)
 
 save = True
-dropbox_path = '/Users/simonl/Dropbox/TRIPS/simon_version/code/counterfactuals/unilaterat_patent_protection_'+baseline+'/'
+dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/counterfactuals/unilaterat_patent_protection_'+baseline+'/'
 
 try:
     os.mkdir(dropbox_path)
