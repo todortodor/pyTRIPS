@@ -48,6 +48,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
     dic_df_mom = {}
     params = p_baseline.calib_parameters
     params.append('d*fe')
+    params.append('nu/deltaUS')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
     df_scalar_params.index.name='x'
     
@@ -73,8 +74,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
                 dic_df_param[param+' patent sector'] = df
         elif param == 'd*fe':
             df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'d')[p_baseline.mask['d']])*float(getattr(p_baseline,'fe')[p_baseline.mask['fe']])
-        elif param == 'deltaUS/nu':
-            df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'d')[p_baseline.mask['d']])*float(getattr(p_baseline,'fe')[p_baseline.mask['fe']])
+        elif param == 'nu/deltaUS':
+            df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,'nu')[1])/float(getattr(p_baseline,'delta')[0,1])
     dic_df_param['scalars'] = df_scalar_params
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
@@ -114,6 +115,8 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
                     dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])-1
                 elif i == 'd*fe':
                     dic_df_param[k].loc[i,run_name] = float(getattr(p,'d')[p.mask['d']])*float(getattr(p,'fe')[p.mask['fe']])
+                elif i == 'nu/deltaUS':
+                    dic_df_param[k].loc[i,run_name] = float(getattr(p,'nu')[1])/float(getattr(p,'delta')[0,1])
                 else:
                     dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])
                 
