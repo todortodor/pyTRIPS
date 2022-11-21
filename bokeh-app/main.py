@@ -235,9 +235,15 @@ p_mom.add_layout(slope)
 colors_mom = itertools.cycle(Category10[10])
 
 # for col in baselines_dic_mom[baseline_mom][mom].columns[1:]:
+lines_mom = {}
 for col in ds_mom.data.keys():
     if col not in ['x','target']:
-        p_mom.circle('target', col, source = ds_mom , size=5, color=next(colors_mom), legend_label=comments_dic[col])
+        lines_mom[col] = p_mom.circle('target', col, 
+                                      source = ds_mom, 
+                                      size=5, color=next(colors_mom), 
+                                      legend_label=comments_dic[col])
+        if col != 'baseline':
+            lines_mom[col].visible = False
 # p_mom.line('target','target',source = ds_mom , color = 'black', line_alpha = 0.1)
 # p_mom.ray(x=1e-15, y=1e-15, length=0, angle_units = "deg",
 #       angle = 45)
@@ -299,9 +305,13 @@ p_par.add_tools(hover_tool_par)
 # p_par.sizing_mode = 'scale_width'
 # colors_par = itertools.cycle(Category20.values()(len(baselines_dic_param[baseline_par][par].columns)))
 colors_par = itertools.cycle(Category10[10])
+lines_par = {}
 
 for col in baselines_dic_param[baseline_par][par].columns:
-    p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),line_width = 2, legend_label=comments_dic[col])
+    lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
+                                line_width = 2, legend_label=comments_dic[col])
+    if col != 'baseline':
+        lines_par[col].visible = False
     
 p_par.legend.click_policy="hide"
 p_par.legend.label_text_font_size = '8pt'
