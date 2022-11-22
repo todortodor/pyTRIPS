@@ -5,4 +5,4 @@
 legacy_funcs.py
 *.pyc
 *.pyc
-counterfactual_results/
+bokeh-app/counterfactual_results/
