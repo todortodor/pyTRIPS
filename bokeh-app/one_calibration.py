@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '104'
+baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -46,12 +46,12 @@ if 'theta' in p.calib_parameters:
 # m.list_of_moments.remove('SPFLOW_RUS')
 # m.list_of_moments.append('SPFLOWDOM')
 # m.list_of_moments.append('SPFLOWDOM_RUS')
-m.list_of_moments.remove('KM')
+# m.list_of_moments.remove('KM')
 # m.weights_dict['SPFLOW'] = 10
 # m.weights_dict['SPFLOW'] = 3
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
-m.TO_target = np.array(0.01)
+# m.TO_target = np.array(0.01)
 # m.KM_target = np.array(0.2)
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.add_domestic_US_to_SPFLOW = True

@@ -560,7 +560,7 @@ class var:
         #                         (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :]),0)
         # print(self.psi_star[...,1].min())
         self.PSI_CL[:, :, 0] = 0
-        # self.PSI_CL[self.PSI_CL<0] = 0 #!!!!
+        self.PSI_CL[self.PSI_CL<0] = 0 #!!!!
         # print(self.PSI_CL.min())
         # assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
         # assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'PSI_M,CL too high'

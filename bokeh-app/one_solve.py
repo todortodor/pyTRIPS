@@ -12,19 +12,19 @@ import numpy as np
 
 p = parameters(n=7,s=2)
 p.load_data('calibration_results_matched_economy/101/')
-# p.d = 2
+p.delta[0,1] = 0.1*p.delta[0,1]
 # p.d_np = np.ones((p.N,p.N))
 # np.fill_diagonal(p.d_np,p.d)
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='psi_star',
+                        accelerate_when_stable=True,
+                        cobweb_qty='l_R',
                         plot_convergence=True,
                         plot_cobweb=True,
                         safe_convergence=0.01,
                         disp_summary=True,
-                        damping = 10,
+                        damping = 20,
                         max_count = 50000,
                         accel_memory = 10, 
                         accel_type1=True, 
@@ -48,4 +48,4 @@ m = moments(list_of_moments)
 m.load_data()
 m.compute_moments(sol_c,p)
 m.compute_moments_deviations()
-m.plot_moments(m.list_of_moments)
+# m.plot_moments(m.list_of_moments)

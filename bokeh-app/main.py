@@ -13,7 +13,7 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import DataRange1d, LinearAxis, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
@@ -142,6 +142,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
 
 data_path = join(dirname(__file__), 'data/')
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
+cf_path = join(dirname(__file__), 'counterfactual_recaps/unilateral_patent_protection/')
 # print(data_path)
 
 #%% moments / parameters for variations
@@ -269,7 +270,7 @@ p_mom.add_layout(legend_mom, 'right')
 #         TableColumn(field="x"),
 #     ]+[TableColumn(field=col) for col in baselines_dic_mom[baseline_mom][mom].columns]
 columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
-data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=900, height=400)
+data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1200, height=400)
 # data_table_mom = DataTable(source=ds_mom, width=900, height=400)
 # data_table_mom = DataTable(source=ds_mom.data, width=900, height=400)
 
@@ -341,7 +342,7 @@ columns_par = [
         TableColumn(field="x"),
     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
 
-data_table_par = DataTable(source=ds_par, columns = columns_par, width=900, height=400)
+data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
 
 def update_baseline_par(attrname, old, new):
     par = par_select.value
@@ -421,86 +422,81 @@ qty_sensi_select.on_change('value', update_qty_sensi)
 
 sensitivity_report = column(controls_sensi,p_sensi)
 
-curdoc().add_root(column(first_panel,sensitivity_report))
+#%% countarfactuals
 
-#%%
+baseline_cf = '101'
+country_cf = 'USA'
 
-# STATISTICS = ['record_min_temp', 'actual_min_temp', 'average_min_temp', 'average_max_temp', 'actual_max_temp', 'record_max_temp']
+p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-# def get_dataset(src, name, distribution):
-#     df = src[src.airport == name].copy()
-#     del df['airport']
-#     df['date'] = pd.to_datetime(df.date)
-#     # timedelta here instead of pd.DateOffset to avoid pandas bug < 0.18 (Pandas issue #11925)
-#     df['left'] = df.date - datetime.timedelta(days=0.5)
-#     df['right'] = df.date + datetime.timedelta(days=0.5)
-#     df = df.set_index(['date'])
-#     df.sort_index(inplace=True)
-#     if distribution == 'Smoothed':
-#         window, order = 51, 3
-#         for key in STATISTICS:
-#             df[key] = savgol_filter(df[key], window, order)
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=sorted(['101','102','104']))
+country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries)
 
-#     return ColumnDataSource(data=df)
+def get_data_cf(baseline,country):
+    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+    df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[df_cf.delt == 1].growth.values
+    df_cf.set_index('delt',inplace=True)
+    return df_cf
 
-# def make_plot(source, title):
-#     plot = figure(x_axis_type="datetime", width=800, tools="", toolbar_location=None)
-#     plot.title.text = title
+def build_max(df_cf):
+    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[p_baseline.countries]
+    df_max['colors'] = Category10[10][:len(df_max)]
+    return df_max
 
-#     plot.quad(top='record_max_temp', bottom='record_min_temp', left='left', right='right',
-#               color=Blues4[2], source=source)
-#     plot.quad(top='average_max_temp', bottom='average_min_temp', left='left', right='right',
-#               color=Blues4[1], source=source)
-#     plot.quad(top='actual_max_temp', bottom='actual_min_temp', left='left', right='right',
-#               color=Blues4[0], alpha=0.5, line_color="black", source=source)
+df_cf = get_data_cf(baseline_cf,country_cf)
+ds_cf = ColumnDataSource(df_cf)
+df_cf_max = build_max(df_cf)
+ds_cf_max = ColumnDataSource(df_cf_max)
 
-#     # fixed attributes
-#     plot.xaxis.axis_label = None
-#     plot.yaxis.axis_label = "Temperature (F)"
-#     plot.axis.axis_label_text_font_style = "bold"
-#     plot.x_range = DataRange1d(range_padding=0.0)
-#     plot.grid.grid_line_alpha = 0.3
+colors_cf = itertools.cycle(Category10[10])
+colors_cf_max = itertools.cycle(Category10[10])
 
-#     return plot
+p_cf = figure(title="Unilateral patent protection counterfactual", 
+               width = 1200,
+               height = 800,
+               x_axis_label='Change in delta',
+               y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+               tools = TOOLS) 
 
-# def update_plot(attrname, old, new):
-#     city = city_select.value
-#     plot.title.text = "TEST Weather data for " + cities[city]['title']
+for col in df_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
-#     src = get_dataset(df, cities[city]['airport'], distribution_select.value)
-#     source.data.update(src.data)
+p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
 
-# city = 'Austin'
-# distribution = 'Discrete'
+# p_cf.extra_y_ranges['growth'] = DataRange1d()
+# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+     
+p_cf.legend.click_policy="hide"
+p_cf.legend.label_text_font_size = '8pt'
+p_cf.add_layout(p_cf.legend[0], 'right')
 
-# cities = {
-#     'Austin': {
-#         'airport': 'AUS',
-#         'title': 'Austin, TX',
-#     },
-#     'Boston': {
-#         'airport': 'BOS',
-#         'title': 'Boston, MA',
-#     },
-#     'Seattle': {
-#         'airport': 'SEA',
-#         'title': 'Seattle, WA',
-#     }
-# }
+def update_baseline_cf(attrname, old, new):
+    country_cf = country_cf_select.value
+    ds_cf.data = get_data_cf(new,country_cf)
+    df_cf = get_data_cf(new,country_cf)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    
+def update_country_cf(attrname, old, new):
+    baseline_cf = baseline_cf_select.value
+    df_cf = get_data_cf(baseline_cf,new)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    # ds_cf.data = get_data_cf(baseline_cf,new)
+    
+controls_cf = row(baseline_cf_select, country_cf_select)
+# controls_mom.sizing_mode = 'scale_width'
 
-# city_select = Select(value=city, title='City', options=sorted(cities.keys()))
-# distribution_select = Select(value=distribution, title='Distribution', options=['Discrete', 'Smoothed'])
+baseline_cf_select.on_change('value', update_baseline_cf)
+country_cf_select.on_change('value', update_country_cf)
 
-# df = pd.read_csv(join(dirname(__file__), 'bokeh-app/data/2015_weather.csv'))
-# source = get_dataset(df, cities[city]['airport'], distribution)
-# plot = make_plot(source, "Weather data for " + cities[city]['title'])
+counterfactuals_report = column(controls_cf,p_cf)
 
-# city_select.on_change('value', update_plot)
-# distribution_select.on_change('value', update_plot)
+second_panel = row(sensitivity_report,counterfactuals_report)
 
-# controls = column(city_select, distribution_select)
-
-# curdoc().add_root(row(plot, controls))
-# curdoc().title = "Weather"
-
-# show(plot)
+curdoc().add_root(column(first_panel,second_panel))
