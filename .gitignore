@@ -5,3 +5,4 @@
 legacy_funcs.py
 *.pyc
 *.pyc
+/counterfactual_results
