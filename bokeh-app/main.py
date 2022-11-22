@@ -13,7 +13,7 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import ColumnDataSource, LabelSet, Select, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
@@ -138,6 +138,8 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     return dic_df_param, dic_df_mom
 
+#%%
+
 data_path = join(dirname(__file__), 'data/')
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
 # print(data_path)
@@ -238,23 +240,30 @@ colors_mom = itertools.cycle(Category10[10])
 lines_mom = {}
 for col in ds_mom.data.keys():
     if col not in ['x','target']:
+        # lines_mom[col] = p_mom.circle('target', col, 
+        #                               source = ds_mom, 
+        #                               size=5, color=next(colors_mom), 
+        #                               legend_label=comments_dic[col])
         lines_mom[col] = p_mom.circle('target', col, 
                                       source = ds_mom, 
-                                      size=5, color=next(colors_mom), 
-                                      legend_label=comments_dic[col])
+                                      size=5, color=next(colors_mom))
         if col != 'baseline':
             lines_mom[col].visible = False
+            
+legend_items_mom = [LegendItem(label=comments_dic[col], renderers=[lin_mom]) for col, lin_mom in lines_mom.items()]
+legend_mom = Legend(items=legend_items_mom, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+p_mom.add_layout(legend_mom, 'right')
 # p_mom.line('target','target',source = ds_mom , color = 'black', line_alpha = 0.1)
 # p_mom.ray(x=1e-15, y=1e-15, length=0, angle_units = "deg",
 #       angle = 45)
 
-p_mom.legend.click_policy="hide"
-p_mom.legend.label_text_font_size = '8pt'
-# p_mom.legend.label_height = 0
-# p_mom.legend.glyph_height = 0
-p_mom.legend.spacing = 0
-# p_mom.legend.
-p_mom.add_layout(p_mom.legend[0], 'right')
+# p_mom.legend.click_policy="hide"
+# p_mom.legend.label_text_font_size = '8pt'
+# # p_mom.legend.label_height = 0
+# # p_mom.legend.glyph_height = 0
+# p_mom.legend.spacing = 0
+# # p_mom.legend.
+# p_mom.add_layout(p_mom.legend[0], 'right')
 
 # columns_mom = [
 #         TableColumn(field="x"),
@@ -267,6 +276,9 @@ data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=900, heig
 def update_baseline_mom(attrname, old, new):
     mom = mom_select.value
     ds_mom.data = baselines_dic_mom[new][mom]
+    legend_items_mom = [LegendItem(label=comments_dic[col], renderers=[lines_mom[col]]) for col in ds_mom.data if col not in ['x','target']]
+    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
+    p_mom.legend.items = legend_items_mom
     
 def update_mom(attrname, old, new):
     # p_mom.legend.items = []
@@ -308,15 +320,21 @@ colors_par = itertools.cycle(Category10[10])
 lines_par = {}
 
 for col in baselines_dic_param[baseline_par][par].columns:
+    # lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
+    #                             line_width = 2, legend_label=comments_dic[col])
     lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
-                                line_width = 2, legend_label=comments_dic[col])
+                                line_width = 2)
     if col != 'baseline':
         lines_par[col].visible = False
-    
-p_par.legend.click_policy="hide"
-p_par.legend.label_text_font_size = '8pt'
-p_par.legend.spacing = 0
-p_par.add_layout(p_par.legend[0], 'right')
+
+legend_items_par = [LegendItem(label=comments_dic[col], renderers=[lin_par]) for col, lin_par in lines_par.items()]
+legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+p_par.add_layout(legend_par, 'right')
+# p_par.legend.click_policy="hide"
+# p_par.legend.label_text_font_size = '8pt'
+# p_par.legend.spacing = 0
+# p_par.add_layout(p_par.legend[0], 'right')
+
 
 
 columns_par = [
@@ -328,6 +346,9 @@ data_table_par = DataTable(source=ds_par, columns = columns_par, width=900, heig
 def update_baseline_par(attrname, old, new):
     par = par_select.value
     ds_par.data = baselines_dic_param[new][par]
+    legend_items_par = [LegendItem(label=comments_dic[col], renderers=[lines_par[col]]) for col in ds_par.data if col not in ['x']]
+    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
+    p_par.legend.items = legend_items_par
     
 def update_par(attrname, old, new):
     baseline_par = baseline_par_select.value

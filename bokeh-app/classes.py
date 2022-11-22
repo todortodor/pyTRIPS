@@ -1458,8 +1458,10 @@ class moments:
         self.RP = var.price_indices/var.price_indices[0]
         
     def compute_RD(self,var,p):
+        # numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
+        #     + np.einsum('n,ins->is',var.w,var.l_Ao)
         numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
-            + np.einsum('n,ins->is',var.w,var.l_Ao)
+            + np.einsum('n,ins->is',var.w,var.l_Ae)
         self.RD = np.einsum('is,i->i',
                             numerator,
                             1/var.gdp)
