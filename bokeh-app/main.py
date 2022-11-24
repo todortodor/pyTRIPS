@@ -429,7 +429,7 @@ country_cf = 'USA'
 
 p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=sorted(['101','102','104']))
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in os.listdir(cf_path)])
 country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries)
 
 def get_data_cf(baseline,country):

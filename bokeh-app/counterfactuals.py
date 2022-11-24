@@ -15,8 +15,28 @@ from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 
 # baseline = '101'
-for baseline in ['102','101', '104']:
-    baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
+# baseline_dics = [
+#                 {'baseline':'101',
+#                   'variation':None},
+#                 {'baseline':'102',
+#                   'variation':None},
+#                 {'baseline':'104',
+#                   'variation':None},
+#                 {'baseline':'101',
+#                   'variation':'11.7'}
+#                  ]
+baseline_dics = [
+                {'baseline':'101',
+                  'variation':'7'}
+                 ]
+for baseline_dic in baseline_dics:
+    if baseline_dic['variation'] is None:
+        baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
+    else:
+        # baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'_'+baseline_dic['variation']+'/'
+        baseline_path = \
+            f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
+    print(baseline_path)
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
     m_baseline = moments()
@@ -25,8 +45,11 @@ for baseline in ['102','101', '104']:
     
     # save = True
     # dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/counterfactuals/unilaterat_patent_protection_'+baseline+'/'
-    local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
-    
+    if baseline_dic['variation'] is None:
+        local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
+    else:
+        local_path = \
+            f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
     # try:
     #     os.mkdir(dropbox_path)
     # except:
@@ -132,9 +155,17 @@ except:
     pass
 
 # baseline = '101'
-for baseline in ['102','101','104']:
-    baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
-    local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
+baseline_dics = [
+                {'baseline':'101',
+                  'variation':'7'}
+                 ]
+for baseline_dic in baseline_dics:
+    if baseline_dic['variation'] is None:
+        baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
+    else:
+        # baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'_'+baseline_dic['variation']+'/'
+        baseline_path = \
+            f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
     m_baseline = moments()
@@ -145,7 +176,10 @@ for baseline in ['102','101','104']:
     sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
-    recap_path = recaps_path+'baseline_'+baseline+'/'
+    if baseline_dic['variation'] is None:
+        recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
+    else:
+        recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
     
     try:
         os.mkdir(recap_path)
