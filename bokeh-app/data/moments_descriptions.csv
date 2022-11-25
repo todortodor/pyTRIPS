@@ -2,6 +2,7 @@ moment;description
 GPDIFF;Difference between sectors price index growth rate
 GROWTH;Growth rate
 KM;Kogan Moment
+KM_GDP;Kogan Moment relative to GDP of the US
 OUT;Total world output
 RD;RD expenditures to GDP ratio 
 RD_US;US RD expenditures to GDP ratio 

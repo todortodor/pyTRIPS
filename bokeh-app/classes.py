@@ -989,7 +989,7 @@ class moments:
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'RD','RD_US','RD_RUS', 'RP',
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
                                'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
                                'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
@@ -1019,6 +1019,7 @@ class moments:
         self.weights_dict = {'GPDIFF':1, 
                              'GROWTH':1, 
                              'KM':5, 
+                             'KM_GDP':5,
                              'OUT':4, 
                              'RD':3, 
                              'RD_US':3, 
@@ -1059,6 +1060,7 @@ class moments:
         self.idx = {'GPDIFF':pd.Index(['scalar']), 
                     'GROWTH':pd.Index(['scalar']), 
                     'KM':pd.Index(['scalar']), 
+                    'KM_GDP':pd.Index(['scalar']), 
                     'OUT':pd.Index(['scalar']), 
                     'RD':pd.Index(self.countries, name='country'), 
                     'RD_US':pd.Index(['scalar']), 
@@ -1122,7 +1124,7 @@ class moments:
     
     @staticmethod
     def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
+        return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'TP', 'Z', 
@@ -1168,6 +1170,7 @@ class moments:
         self.RD_US_target = self.RD_target[0]
         self.RD_RUS_target = self.RD_target/self.RD_US_target
         self.KM_target = self.moments.loc['KM'].value
+        self.KM_GDP_target = self.KM_target*self.RD_US_target
         self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
         self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
@@ -1478,6 +1481,7 @@ class moments:
             var.profit[:,0,1:],
             bracket,
             )/var.l_R[0,1:].sum()
+        self.KM_GDP = self.KM*self.RD_US
         
     def compute_SRDUS(self,var,p):
         self.SRDUS = (var.X_M[:,0,1]*p.trade_shares[:,0,1]*var.Z.sum()).sum()/(p.trade_shares[:,0,1]*var.Z.sum()).sum()

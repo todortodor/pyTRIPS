@@ -147,7 +147,7 @@ cf_path = join(dirname(__file__), 'counterfactual_recaps/unilateral_patent_prote
 
 #%% moments / parameters for variations
 
-list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
+list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
  'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
  'SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'SINNOVPATUS', 'TO',
@@ -179,6 +179,8 @@ comments_dic = {'baseline':'baseline',
                 '11.5':'11.5: 2.3 with new param d',
                 '11.6':'11.6: 4.3 with new param d',
                 '11.7':'11.7: 8.1 with new param d',
+                '12':'12: replace KM moment by KM_GDP',
+                '12.1':'12.1: 11.7 but replace KM moment by KM_GDP'
                 }
 
 baselines_dic_param = {}
@@ -214,7 +216,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
                width = 1200,
-               height = 800,
+               height = 850,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -304,7 +306,7 @@ x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
                width = 1200,
-               height = 800,
+               height = 850,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -392,7 +394,7 @@ qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(base
 ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
 p_sensi = figure(title="Sensitivity", 
                width = 1200,
-               height = 800,
+               height = 850,
                x_axis_label='Change in moment or parameter',
                y_axis_label='Value',
                tools = TOOLS)
@@ -429,7 +431,7 @@ country_cf = 'USA'
 
 p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in os.listdir(cf_path)])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path))])
 country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries)
 
 def get_data_cf(baseline,country):
@@ -456,7 +458,7 @@ colors_cf_max = itertools.cycle(Category10[10])
 
 p_cf = figure(title="Unilateral patent protection counterfactual", 
                width = 1200,
-               height = 800,
+               height = 850,
                x_axis_label='Change in delta',
                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
                tools = TOOLS) 
