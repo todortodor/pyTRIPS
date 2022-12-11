@@ -27,7 +27,7 @@ from solver_funcs import fixed_point_solver
 #                  ]
 baseline_dics = [
                 {'baseline':'101',
-                  'variation':'9.1'}
+                  'variation':'12.2'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -157,7 +157,7 @@ except:
 # baseline = '101'
 baseline_dics = [
                 {'baseline':'101',
-                  'variation':'9.1'}
+                  'variation':'12.2'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:

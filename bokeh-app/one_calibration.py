@@ -46,14 +46,14 @@ m.list_of_moments.append('DOMPATEU')
 # m.list_of_moments.remove('SPFLOW_RUS')
 # m.list_of_moments.append('SPFLOWDOM')
 # m.list_of_moments.append('SPFLOWDOM_RUS')
-m.list_of_moments.remove('KM')
-m.list_of_moments.append('KM_GDP')
+# m.list_of_moments.remove('KM')
+# m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SPFLOW'] = 10
 # m.weights_dict['SPFLOW'] = 3
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.01)
-# m.KM_target = np.array(0.2)
+m.KM_target = m.KM_target*100
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
@@ -113,13 +113,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7 but replace KM moment by KM_GDP'
+commentary = '11.7 but drop KM moment'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 12.1
+run_number = 12.2
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 # path = dropbox_path

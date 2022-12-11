@@ -180,7 +180,8 @@ comments_dic = {'baseline':'baseline',
                 '11.6':'11.6: 4.3 with new param d',
                 '11.7':'11.7: 8.1 with new param d',
                 '12':'12: replace KM moment by KM_GDP',
-                '12.1':'12.1: 11.7 but replace KM moment by KM_GDP'
+                '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
+                '12.2':'12.2: 11.7 but drop KM moment'
                 }
 
 baselines_dic_param = {}
