@@ -138,7 +138,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     return dic_df_param, dic_df_mom
 
-#%%
+#%% path
 
 data_path = join(dirname(__file__), 'data/')
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
@@ -502,4 +502,98 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 second_panel = row(sensitivity_report,counterfactuals_report)
 
-curdoc().add_root(column(first_panel,second_panel))
+#%% Kogan paper
+
+# TOOLS="pan,wheel_zoom,box_zoom,reset"
+
+colors_kog = itertools.cycle(Category10[10])
+
+df_kog = pd.read_csv(data_path+'koga_updated.csv')
+ds_kog = ColumnDataSource(df_kog)
+
+p_kog = figure(title="Kogan moment updated / extrapolated", 
+               width = 1200,
+               height = 850,
+               x_axis_label='Issue Date',
+               y_axis_type="log",
+               # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+               tools = TOOLS) 
+
+l_kog = {}
+
+for i,col in enumerate(df_kog.columns):
+    if col not in ['issue_date']:
+        l_kog[i] = p_kog.line(x='issue_date', y=col, 
+                  source = ds_kog, 
+                  line_width = 2, legend_label=col, color=next(colors_kog),
+                  name = col)
+
+hover_tool_kog = HoverTool(
+    # line_policy='nearest',
+    tooltips = [
+        ("Issue date", "$x"),
+        ('ValuePerPatent', '@ValuePerPatent'),
+        ('CostPerPatent', '@CostPerPatent'),
+        ('KM_article', '@KM_article'),
+        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
+        ],
+    mode='vline',
+    renderers = [l_kog[3]]
+)
+p_kog.add_tools(hover_tool_kog)
+# hover_tool_kog.renderers.append(l_kog[0])
+
+p_kog.legend.click_policy="hide"
+p_kog.legend.label_text_font_size = '8pt'
+p_kog.add_layout(p_kog.legend[0], 'right')
+
+
+#
+colors_kog2 = itertools.cycle(Category10[10])
+
+df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
+ds_kog2 = ColumnDataSource(df_kog2)
+
+p_kog2 = figure(title="Kogan moment", 
+               width = 1200,
+               height = 850,
+               x_axis_label='Market Prior',
+               # y_axis_type="log",
+               # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+               tools = TOOLS) 
+
+l_kog2 = {}
+
+for i,col in enumerate(df_kog2.columns):
+    if col not in ['market prior']:
+        l_kog2[i] = p_kog2.line(x='market prior', y=col, 
+                  source = ds_kog2, 
+                  line_width = 2, legend_label=col, color=next(colors_kog2))
+
+hover_tool_kog2 = HoverTool(
+    # line_policy='nearest',
+    tooltips = [
+        ("market prior", "$x"),
+        ('1950 to 2007', '@from1950to2007'),
+        ('1980 to 2007', '@from1980to2007'),
+        ('1995 to 2007', '@from1995to2007'),
+        ('2002 to 2007', '@from2002to2007'),
+        ('1950 to 2020', '@from1950to2020'),
+        ('1980 to 2020', '@from1980to2020'),
+        ('1995 to 2020', '@from1995to2020'),
+        ('2002 to 2020', '@from2002to2020'),
+        ],
+    mode='vline',
+    renderers = [l_kog2[3]]
+)
+
+p_kog2.legend.click_policy="hide"
+p_kog2.legend.label_text_font_size = '8pt'
+p_kog2.add_layout(p_kog2.legend[0], 'right')
+p_kog2.add_tools(hover_tool_kog2)
+
+third_panel = row(p_kog,p_kog2)
+
+curdoc().add_root(column(first_panel,second_panel, third_panel))
