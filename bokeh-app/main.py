@@ -540,7 +540,7 @@ hover_tool_kog = HoverTool(
         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
         ],
     mode='vline',
-    renderers = [l_kog[3]]
+    renderers = [l_kog[4]]
 )
 p_kog.add_tools(hover_tool_kog)
 # hover_tool_kog.renderers.append(l_kog[0])
@@ -586,7 +586,7 @@ hover_tool_kog2 = HoverTool(
         ('2002 to 2020', '@from2002to2020'),
         ],
     mode='vline',
-    renderers = [l_kog2[3]]
+    renderers = [l_kog2[4]]
 )
 
 p_kog2.legend.click_policy="hide"
