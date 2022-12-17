@@ -143,6 +143,8 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
 data_path = join(dirname(__file__), 'data/')
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
 cf_path = join(dirname(__file__), 'counterfactual_recaps/unilateral_patent_protection/')
+nash_eq_path = join(dirname(__file__), 'nash_eq_recaps/')
+coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 # print(data_path)
 
 #%% moments / parameters for variations
@@ -502,6 +504,101 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 second_panel = row(sensitivity_report,counterfactuals_report)
 
+#%% Nash / coop equilibrium
+
+# nash_eq_path = 'nash_eq_recaps/'
+# coop_eq_path = 'coop_eq_recaps/'
+
+welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+                           'variation'],keep='last')
+welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+                           'variation'],keep='last')
+
+welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+
+welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
+welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+
+ds_coop = ColumnDataSource(welf_coop)
+ds_nash = ColumnDataSource(welf_nash)
+
+colors_coop = itertools.cycle(Category10[10])
+colors_nash = itertools.cycle(Category10[10])
+
+x_range = welf_coop['run'].to_list()
+
+p_eq = figure(title="Cooperative and Nash equilibrium", 
+               width = 1400,
+               height = 850,
+               x_range = x_range,
+               # x_axis_label='Run',
+               y_axis_label='Consumption eqivalent welfare change',
+                tools = TOOLS
+               ) 
+p_eq.xaxis.major_label_orientation = 3.14/3
+
+for col in p_baseline.countries+['pop w av']:
+    p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
+    p_eq.line(x='run', y=col, source = ds_coop, color=next(colors_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+    
+p_eq.legend.click_policy="hide"
+p_eq.legend.label_text_font_size = '8pt'
+p_eq.add_layout(p_eq.legend[0], 'right')    
+
+data_table_eq = dict(
+        runs=[run for run in comments_dic.keys()],
+        comments=[comment for comment in comments_dic.values()],
+    )
+source_table_eq = ColumnDataSource(data_table_eq)
+
+columns = [
+        TableColumn(field="runs", title="Runs"),
+        TableColumn(field="comments", title="Description"),
+    ]
+data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=850,
+                           # autosize_mode="force_fit"
+                          )
+
+# p_eq.show()
+
+deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+                           'variation'],keep='last')
+deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+                           'variation'],keep='last')
+
+deltas_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
+deltas_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+
+ds_deltas_coop = ColumnDataSource(deltas_coop)
+ds_deltas_nash = ColumnDataSource(deltas_nash)
+
+colors_deltas_coop = itertools.cycle(Category10[10])
+colors_deltas_nash = itertools.cycle(Category10[10])
+
+x_range = deltas_nash['run'].to_list()
+
+p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
+               width = 1400,
+               height = 850,
+               x_range = x_range,
+               y_axis_type="log",
+               # x_axis_label='Run',
+               y_axis_label='Delta',
+                tools = TOOLS
+               ) 
+p_deltas_eq.xaxis.major_label_orientation = 3.14/3
+
+for col in p_baseline.countries:
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_nash, color=next(colors_deltas_nash),line_width = 2, legend_label=col+' Nash')
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_coop, color=next(colors_deltas_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+    
+p_deltas_eq.legend.click_policy="hide"
+p_deltas_eq.legend.label_text_font_size = '8pt'
+p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')    
+
+second_panel_bis = column(row(p_eq,data_table_eq),row(p_deltas_eq,data_table_eq))
+
 #%% Kogan paper
 
 # TOOLS="pan,wheel_zoom,box_zoom,reset"
@@ -596,4 +693,4 @@ p_kog2.add_tools(hover_tool_kog2)
 
 third_panel = row(p_kog,p_kog2)
 
-curdoc().add_root(column(first_panel,second_panel, third_panel))
+curdoc().add_root(column(first_panel, second_panel, second_panel_bis, third_panel))

@@ -10,11 +10,12 @@ from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 import numpy as np
 
-p = parameters(n=7,s=2)
-p.load_data('calibration_results_matched_economy/101/')
-p.delta[0,1] = 0.1*p.delta[0,1]
+# p = parameters(n=7,s=2)
+# p.load_data('calibration_results_matched_economy/101/')
+# p.delta[0,1] = 0.1*p.delta[0,1]
 # p.d_np = np.ones((p.N,p.N))
 # np.fill_diagonal(p.d_np,p.d)
+p = p_it_baseline
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
@@ -41,11 +42,11 @@ sol_c = var.var_from_vector(sol.x, p)
 sol_c.scale_P(p)
 sol_c.compute_price_indices(p)
 sol_c.compute_non_solver_quantities(p) 
-list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
-                    'SRDUS', 'SPFLOWDOM', 'SRGDP', 'JUPCOST',
-                    'SINNOVPATUS','TO']
-m = moments(list_of_moments)
-m.load_data()
-m.compute_moments(sol_c,p)
-m.compute_moments_deviations()
+# list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
+#                     'SRDUS', 'SPFLOWDOM', 'SRGDP', 'JUPCOST',
+#                     'SINNOVPATUS','TO']
+# m = moments(list_of_moments)
+# m.load_data()
+# m.compute_moments(sol_c,p)
+# m.compute_moments_deviations()
 # m.plot_moments(m.list_of_moments)

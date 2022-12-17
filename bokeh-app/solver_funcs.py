@@ -48,17 +48,19 @@ def bound_zero(x, cutoff=1e-8, hit_the_bound=None):
 def smooth_large_jumps(x_new,x_old):
     high_jumps_too_big = x_new > 1000*x_old
     while np.any(high_jumps_too_big):
+        # print(x_new.max())
         x_new = x_old*1/2+x_new*1/2
         high_jumps_too_big = x_new > 1000*x_old
     low_jumps_too_big = x_new < x_old/1000
     while np.any(low_jumps_too_big):
+        # print('bip')
         x_new = x_old*1/2+x_new*1/2
         low_jumps_too_big = x_new < x_old/1000
     return x_new
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
-                       plot_cobweb = True, cobweb_anim=False, cobweb_qty='psi_star',
+                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='psi_star',
                        cobweb_coord = 1, plot_convergence = True, apply_bound_zero = True, 
                        apply_bound_psi_star = False, apply_bound_research_labor = False,
                        accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
@@ -90,7 +92,8 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         norm = []
     damping = damping
     
-    while condition and count < max_count and np.all(x_old<1e40): 
+    while condition and count < max_count: 
+        
         if count != 0:
             if accelerate:
                 aa_wrk.apply(x_new, x_old)
@@ -116,9 +119,13 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         psi_star = init.compute_psi_star(p)[...,1:].ravel()
+        psi_star[psi_star<1] = 1
         phi = init.compute_phi(p).ravel()
         
         x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
+        
+        # print(x_new)
+        
 
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
@@ -126,6 +133,11 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                       for qty in ['w','Z','psi_star','l_R','phi']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        # print(count)
+        if plot_live and count>1000:
+            plt.semilogy(convergence)
+            plt.show()
+        
         count += 1
         if np.all(np.array(convergence[-10:])<safe_convergence):
             if accelerate_when_stable:
@@ -142,6 +154,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
     solving_time = finish-start
     # dev_norm = deviation_norm(x_new,p)
     dev_norm = 'TODO'
+    # print(w,Z,l_R,psi_star,phi)
     if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40) and np.all(x_new > 0):
         status = 'successful'
     else:
