@@ -546,6 +546,13 @@ p_eq.legend.click_policy="hide"
 p_eq.legend.label_text_font_size = '8pt'
 p_eq.add_layout(p_eq.legend[0], 'right')    
 
+hover_tool_eq = HoverTool()
+hover_tool_eq.tooltips = [
+    ("run", "@run"),
+    ("value", "$y")
+    ] 
+p_eq.add_tools(hover_tool_eq)
+
 data_table_eq = dict(
         runs=[run for run in comments_dic.keys()],
         comments=[comment for comment in comments_dic.values()],
@@ -595,7 +602,13 @@ for col in p_baseline.countries:
     
 p_deltas_eq.legend.click_policy="hide"
 p_deltas_eq.legend.label_text_font_size = '8pt'
-p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')    
+p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
+hover_tool_deltas_eq = HoverTool()
+hover_tool_deltas_eq.tooltips = [
+    ("run", "@run"),
+    ("value", "$y")
+    ] 
+p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
 second_panel_bis = column(row(p_eq,data_table_eq),row(p_deltas_eq,data_table_eq))
 
