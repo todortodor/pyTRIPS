@@ -13,6 +13,7 @@ import os
 import seaborn as sns
 from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
+import time
 
 # baseline = '101'
 # baseline_dics = [
@@ -26,8 +27,10 @@ from solver_funcs import fixed_point_solver
 #                   'variation':'11.7'}
 #                  ]
 baseline_dics = [
-                {'baseline':'101',
-                  'variation':'12.2'}
+                # {'baseline':'101',
+                #   'variation':'13.1'},
+                {'baseline':'104',
+                  'variation':'13.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -101,9 +104,11 @@ for baseline_dic in baseline_dics:
         p = p_baseline.copy()
         # sols_c = []
         deltas = np.logspace(-1,1,111)
+        idx_country = p_baseline.countries.index(c)
         for i,delt in enumerate(deltas):
             print(delt)
             p.delta[p.countries.index(c),1] = p_baseline.delta[p.countries.index(c),1] * delt
+            # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
             # print(p.guess)
             sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     cobweb_anim=False,tol =1e-15,
@@ -156,8 +161,10 @@ except:
 
 # baseline = '101'
 baseline_dics = [
-                {'baseline':'101',
-                  'variation':'12.2'}
+                {'baseline':'104',
+                  'variation':'13.1'}
+                #, {'baseline':'104',
+                #   'variation':'13.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -166,8 +173,15 @@ for baseline_dic in baseline_dics:
         # baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'_'+baseline_dic['variation']+'/'
         baseline_path = \
             f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
+    print(baseline_path)
+    if baseline_dic['variation'] is None:
+        local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
+    else:
+        local_path = \
+            f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
+    # print(p_baseline.delta)
     m_baseline = moments()
     m_baseline.load_data()
     m_baseline.load_run(baseline_path)
@@ -195,9 +209,12 @@ for baseline_dic in baseline_dics:
         run_list = [f for f in files_in_dir if f[0].isnumeric()]
         run_list.sort(key=float)
         for run in run_list:
-            # print(run)
+            # print(run) 
             p = parameters(n=7,s=2)
             p.load_data(country_path+run+'/')
+            # print(p.delta)
+            # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
+            # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)

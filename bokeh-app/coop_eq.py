@@ -56,19 +56,26 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     
     return -(sol_c.cons_eq_welfare*p.data.labor.values).sum()/p.data.labor.values.sum()
 
-baseline_dics = []
+# baseline_dics = []
 
-for baseline_number in ['101','102','104']:
-    baseline_dics.append({'baseline':baseline_number,
-                      'variation':'baseline'})
+# for baseline_number in ['101','102','104']:
+#     baseline_dics.append({'baseline':baseline_number,
+#                       'variation':'baseline'})
     
-    files_in_dir = next(os.walk('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list.sort(key=float)
+#     files_in_dir = next(os.walk('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'))[1]
+#     run_list = [f for f in files_in_dir if f[0].isnumeric()]
+#     run_list.sort(key=float)
     
-    for run in run_list:
-        baseline_dics.append({'baseline':baseline_number,
-                          'variation':run})
+#     for run in run_list:
+#         baseline_dics.append({'baseline':baseline_number,
+#                           'variation':run})
+        
+baseline_dics = [
+                # {'baseline':'101',
+                #   'variation':'13.1'},
+                {'baseline':'104',
+                  'variation':'11.7'}
+                 ]
         
 lb_delta = 0.01
 ub_delta = 100

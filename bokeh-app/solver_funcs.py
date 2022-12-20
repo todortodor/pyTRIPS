@@ -11,6 +11,8 @@ import aa
 import matplotlib.pyplot as plt
 import time
 from classes import cobweb, var, sol_class, moments, parameters
+# import pandas as pd
+from scipy import optimize
 
 def get_vec_qty(x,p):
     res = {'w':x[0:p.N],
@@ -119,7 +121,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         psi_star = init.compute_psi_star(p)[...,1:].ravel()
-        psi_star[psi_star<1] = 1
+        # psi_star[psi_star<1] = 1
         phi = init.compute_phi(p).ravel()
         
         x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
@@ -183,7 +185,37 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         plt.show()
     return sol_inst, init
 
-def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0):
+    epsilon = 1e-2
+    back_up_delta = p.delta[0,1]
+    p.delta[0,1] = p.delta[0,1]*(1+epsilon)
+    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=2e3,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=5
+                                  )
+    sol_c.scale_P(p)
+    sol_c.compute_price_indices(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    p.delta[0,1] = back_up_delta
+    
+    return (sol_c.cons_eq_welfare[0]-1)/epsilon
+
+def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
+                     avoid_bad_nash=False,bad_nash_weight = None):
     p.update_parameters(vec_parameters)
     # print(vec_parameters)
     try:
@@ -226,7 +258,6 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                       accel_max_weight_norm=1e6,
                                       damping_post_acceleration=5
                                       )
-    
     if sol.status == 'failed':
         print('trying with standard guess')
         sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
@@ -265,7 +296,6 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                                       accel_max_weight_norm=1e6,
                                       damping_post_acceleration=5
                                       )
-        
     if sol.status == 'failed':
         print('trying with no acceleration')
         sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-13,
@@ -290,6 +320,9 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_moments_deviations()
+    if avoid_bad_nash:
+        US_deriv_w_to_d = np.array(compute_deriv_welfare_to_patent_protec_US(sol_c,p,v0))
+        US_cost_w_to_d = (US_deriv_w_to_d<0)*np.abs(US_deriv_w_to_d)*bad_nash_weight
     if hist is not None:
         if hist.count%1 == 0:
             hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
@@ -303,6 +336,8 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                   , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
                   , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d)
+        if avoid_bad_nash and hist.count%10==0:
+            print('Nash : ',US_deriv_w_to_d, 'Cost : ', US_cost_w_to_d)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
@@ -310,7 +345,10 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         p.guess = None
         return np.full_like(m.deviation_vector(),1e10)
     else:
-        return m.deviation_vector() 
+        if avoid_bad_nash:
+            return np.concatenate([m.deviation_vector(), US_cost_w_to_d[None]])
+        else:
+            return m.deviation_vector()
     
 def full_load_and_solve(path,list_of_moments = None):
     if list_of_moments is None:
@@ -350,3 +388,351 @@ def full_load_and_solve(path,list_of_moments = None):
     # m.compute_Z(sol_c,p)
     m.compute_moments_deviations()
     return p,sol_c,m    
+    
+def is_oscillating(deltas,column,window):
+    a = deltas[column].values[-window:]
+    a = a-a.mean()
+    sign_changes = np.where(np.sign(a[:-1]) != np.sign(a[1:]))
+    # return ((window_values-window_values.mean())>=0).sum() >= window/2 and ((window_values-window_values.mean())<=0).sum() >= window/2
+    # if a.shape == sign_changes.shape:
+    #     return np.allclose(np.where(np.sign(a[:-1]) != np.sign(a[1:])) , np.arange(window-1))
+    return (sign_changes[0].shape[0] >= window-2) or (np.all(a == 0))
+
+def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
+    # print('solving')
+    back_up_delta_value = p.delta[p.countries.index(c),1]
+    # p.delta[p.countries.index(c),1] = 10**delta
+    p.delta[p.countries.index(c),1] = delta
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            # plot_live=True,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 1e4,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    sol_c = var.var_from_vector(sol.x, p)    
+    sol_c.scale_P(p)
+    sol_c.compute_price_indices(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_it_baseline)
+    p.delta[p.countries.index(c),1] = back_up_delta_value
+    p.guess = sol.x
+    
+    return -sol_c.cons_eq_welfare[p.countries.index(c)]
+    
+
+# def compute_new_deltas_Newton(p, sol_it_baseline, small_change, lb_delta, ub_delta):
+    
+#     new_deltas = pd.Series(index = p.countries, dtype = float)
+
+#     for c in p.countries:
+#         back_up_delta_value = p.delta[p.countries.index(c),1]
+#         p.delta[p.countries.index(c),1] = p.delta[p.countries.index(c),1] * (1+small_change)
+#         sol, sol_c = fixed_point_solver(p,x0=p.guess,
+#                                 cobweb_anim=False,tol =1e-15,
+#                                 accelerate=False,
+#                                 accelerate_when_stable=True,
+#                                 cobweb_qty='phi',
+#                                 plot_convergence=False,
+#                                 plot_cobweb=False,
+#                                 safe_convergence=0.001,
+#                                 disp_summary=False,
+#                                 damping = 10,
+#                                 max_count = 1e4,
+#                                 accel_memory = 50, 
+#                                 accel_type1=True, 
+#                                 accel_regularization=1e-10,
+#                                 accel_relaxation=0.5, 
+#                                 accel_safeguard_factor=1, 
+#                                 accel_max_weight_norm=1e6,
+#                                 damping_post_acceleration=5
+#                                 # damping=10
+#                                   # apply_bound_psi_star=True
+#                                 )
+    
+#         sol_c = var.var_from_vector(sol.x, p)    
+#         sol_c.scale_P(p)
+#         sol_c.compute_price_indices(p)
+#         sol_c.compute_non_solver_quantities(p)
+#         sol_c.compute_consumption_equivalent_welfare(p,sol_it_baseline)
+        
+#         if sol_c.cons_eq_welfare[p.countries.index(c)] > 1:
+#             new_deltas.loc[c] = min(back_up_delta_value * (1+small_change),ub_delta)
+        
+#         elif sol_c.cons_eq_welfare[p.countries.index(c)] < 1:
+#             new_deltas.loc[c] = max(back_up_delta_value * (1-small_change),lb_delta)
+        
+#         else:
+#             new_deltas.loc[c] = back_up_delta_value
+        
+#         p.delta[p.countries.index(c),1] = back_up_delta_value
+    
+#     return new_deltas
+    
+def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta):
+    new_deltas = np.zeros(len(p.countries))
+    for i,c in enumerate(p.countries):
+        delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta,
+                                             method='bounded',
+                                             # bounds=(np.log10(lb_delta), np.log10(ub_delta)),
+                                             bounds=(lb_delta, ub_delta),
+                                             args = (p,c,sol_it_baseline),
+                                             options={'disp':3},
+                                             # tol=0.01
+                                             )
+        # new_deltas[i] = 10**delta_min.x
+        new_deltas[i] = delta_min.x
+    return new_deltas
+
+def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
+                 plot_convergence = False,solver_options=None,tol=5e-3,window=4,
+                 initial_small_change_newton=0.5,damping = 1):
+    
+    if solver_options is None:
+        solver_options = dict(cobweb_anim=False,tol =1e-15,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=True,
+                                damping = 10,
+                                max_count = 3e3,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5)
+    
+    sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                            **solver_options
+                            )
+    
+    sol_baseline.scale_P(p_baseline)
+    sol_baseline.compute_price_indices(p_baseline)
+    sol_baseline.compute_non_solver_quantities(p_baseline)    
+
+    condition = True
+    deltas = p_baseline.delta[...,1][:,None]
+    welfares = np.ones(len(p_baseline.countries))[:,None]
+    p_it_baseline = p_baseline.copy()
+    sol_it_baseline = sol_baseline.copy()
+    # all_oscillating = False
+    # buffer = 0
+
+    it = 0
+    # small_change = initial_small_change_newton   
+    
+    if method == 'fixed_point':
+        x_old = p_baseline.delta[...,1]
+        convergence = []
+        new_deltas = None
+        
+        accel_memory = 10
+        accel_type1=False
+        accel_regularization=1e-12
+        accel_relaxation=1
+        accel_safeguard_factor=1 
+        accel_max_weight_norm=1e6
+        aa_options = {'dim': len(x_old),
+                    'mem': accel_memory,
+                    'type1': accel_type1,
+                    'regularization': accel_regularization,
+                    'relaxation': accel_relaxation,
+                    'safeguard_factor': accel_safeguard_factor,
+                    'max_weight_norm': accel_max_weight_norm}
+        aa_wrk = aa.AndersonAccelerator(**aa_options)
+        while condition:
+            print(it)
+            if it != 0:
+                aa_wrk.apply(new_deltas, x_old)
+                x_old = (new_deltas+(damping-1)*x_old)/damping
+                p_it_baseline.delta[...,1] = x_old
+                
+            sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+                                    cobweb_anim=False,tol =1e-15,
+                                    accelerate=False,
+                                    accelerate_when_stable=True,
+                                    cobweb_qty='phi',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    safe_convergence=0.001,
+                                    disp_summary=False,
+                                    damping = 10,
+                                    max_count = 1e4,
+                                    accel_memory = 50, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=0.5, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=5
+                                    # damping=10
+                                      # apply_bound_psi_star=True
+                                    )
+            sol_it_baseline = var.var_from_vector(sol.x, p_it_baseline)    
+            sol_it_baseline.scale_P(p_it_baseline)
+            sol_it_baseline.compute_price_indices(p_it_baseline)
+            sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
+            sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
+                
+            # new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_it_baseline, lb_delta, ub_delta)
+            new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, ub_delta)
+            
+            p_it_baseline.delta[...,1] = new_deltas
+            sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+                                    cobweb_anim=False,tol =1e-15,
+                                    accelerate=False,
+                                    accelerate_when_stable=True,
+                                    cobweb_qty='phi',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    safe_convergence=0.001,
+                                    disp_summary=False,
+                                    damping = 10,
+                                    max_count = 1e4,
+                                    accel_memory = 50, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=0.5, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=5
+                                    # damping=10
+                                      # apply_bound_psi_star=True
+                                    )
+            sol_it_baseline = var.var_from_vector(sol.x, p_it_baseline)    
+            sol_it_baseline.scale_P(p_it_baseline)
+            sol_it_baseline.compute_price_indices(p_it_baseline)
+            sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
+            sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
+            
+            deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
+            welfares = np.concatenate([welfares,sol_it_baseline.cons_eq_welfare[:,None]],axis=1)
+            
+            condition = np.linalg.norm((new_deltas-x_old)/x_old)> tol
+            
+            convergence.append(np.linalg.norm(new_deltas - x_old)/np.linalg.norm(x_old))
+            
+            print(convergence)
+            print((new_deltas-x_old)/x_old)
+            
+            it += 1
+            
+            if it>10:
+                damping = 2
+            
+            if plot_convergence:
+                    fig,ax = plt.subplots()
+                    
+                    ax2 = ax.twinx()
+                    ax.semilogy(deltas.transpose())
+                    ax2.plot(welfares.transpose(), ls = '--')
+                    plt.legend(labels = p_baseline.countries)
+                    # deltas.plot(logy=True,ax=ax, xlabel = 'Iteration', 
+                    #               ylabel = 'Delta', 
+                    #               title = 'Convergence to Nash equilibrium')
+                    # welfares.plot(ax=ax2, ls = '--', ylabel = 'Consumption eq. welfare')
+                    
+                    plt.show()
+        return deltas, welfares
+            
+            
+    # while condition:
+    #     print(it)
+    #     if method == 'newton':
+    #         deltas.loc[it] = compute_new_deltas_Newton(p_it_baseline, sol_it_baseline, 
+    #                                                    small_change, lb_delta, ub_delta)
+    #     if method == 'fixed_point':
+    #         deltas.loc[it] = compute_new_deltas_fixed_point(p_it_baseline, 
+    #                                                         sol_it_baseline, 
+    #                                                         lb_delta, 
+    #                                                         ub_delta)
+        
+    #     p_it_baseline.delta[...,1] = deltas.loc[it].values
+        
+    #     sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+    #                             cobweb_anim=False,tol =1e-15,
+    #                             accelerate=False,
+    #                             accelerate_when_stable=True,
+    #                             cobweb_qty='phi',
+    #                             plot_convergence=False,
+    #                             plot_cobweb=False,
+    #                             safe_convergence=0.001,
+    #                             disp_summary=False,
+    #                             damping = 10,
+    #                             max_count = 1e4,
+    #                             accel_memory = 50, 
+    #                             accel_type1=True, 
+    #                             accel_regularization=1e-10,
+    #                             accel_relaxation=0.5, 
+    #                             accel_safeguard_factor=1, 
+    #                             accel_max_weight_norm=1e6,
+    #                             damping_post_acceleration=5
+    #                             # damping=10
+    #                               # apply_bound_psi_star=True
+    #                             )
+    #     sol_it_baseline = var.var_from_vector(sol.x, p_it_baseline)    
+    #     # sol_c.scale_tau(p)
+    #     sol_it_baseline.scale_P(p_it_baseline)
+    #     sol_it_baseline.compute_price_indices(p_it_baseline)
+    #     sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
+    #     sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
+        
+    #     welfares.loc[it] = sol_it_baseline.cons_eq_welfare
+        
+    #     p_it_baseline.guess = sol.x
+        
+    #     if it>window:
+    #         all_oscillating = np.array([is_oscillating(deltas,c,window) for c in deltas.columns]).prod()
+        
+    #     if all_oscillating:
+    #         # if small_change<0.01:
+    #         #     print('checking')
+    #         #     condition = np.linalg.norm(deltas.loc[it].values-deltas.loc[it-1].values)\
+    #         #         /np.linalg.norm(deltas.loc[it].values) < 1e-4
+    #         # else:
+    #         buffer += 1
+    #         if buffer >= window:
+    #             small_change = small_change/2
+    #             buffer = 0
+                
+    #         # print(small_change)
+    #     # condition = np.linalg.norm(deltas.loc[it].values-deltas.loc[it-1].values)\
+    #     #     /np.linalg.norm(deltas.loc[it].values) > 1e-3
+    #     if it != 0:
+    #         condition = np.linalg.norm((deltas.loc[it].values-deltas.loc[it-1].values)/
+    #                                    deltas.loc[it].values)> tol
+    #     it +=1
+        
+    #     if plot_convergence:
+    #         fig,ax = plt.subplots()
+            
+    #         ax2 = ax.twinx()
+            
+    #         deltas.plot(logy=True,ax=ax, xlabel = 'Iteration', 
+    #                       ylabel = 'Delta', 
+    #                       title = 'Convergence to Nash equilibrium')
+    #         welfares.plot(ax=ax2, ls = '--', ylabel = 'Consumption eq. welfare')
+            
+    #         plt.show()
+                
+    return deltas, welfares

@@ -20,7 +20,7 @@ from bokeh.models import DataRange1d, LinearAxis, ColumnDataSource, LabelSet, Se
 from bokeh.plotting import figure
 from classes import parameters, moments, var
 
-# import numpy as np
+import numpy as np
 # from bokeh.models import LogScale, LinearScale
 import itertools
 from bokeh.palettes import Category10
@@ -183,7 +183,8 @@ comments_dic = {'baseline':'baseline',
                 '11.7':'11.7: 8.1 with new param d',
                 '12':'12: replace KM moment by KM_GDP',
                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
-                '12.2':'12.2: 11.7 but drop KM moment'
+                '12.2':'12.2: 11.7 but drop KM moment',
+                '13.1':'13.1: 11.7 but preventing "bad" Nash'
                 }
 
 baselines_dic_param = {}
@@ -219,7 +220,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
                width = 1200,
-               height = 850,
+               height = 900,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -309,7 +310,7 @@ x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
                width = 1200,
-               height = 850,
+               height = 900,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -439,7 +440,7 @@ country_cf_select = Select(value=country_cf, title='Country', options=p_baseline
 
 def get_data_cf(baseline,country):
     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[df_cf.delt == 1].growth.values
+    df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
     df_cf.set_index('delt',inplace=True)
     return df_cf
 
@@ -510,9 +511,9 @@ second_panel = row(sensitivity_report,counterfactuals_report)
 # coop_eq_path = 'coop_eq_recaps/'
 
 welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                           'variation'],keep='last')
+                           'variation'],keep='last').sort_values(['baseline','variation'])
 welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                           'variation'],keep='last')
+                           'variation'],keep='last').sort_values(['baseline','variation'])
 
 welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
 welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
@@ -520,13 +521,19 @@ welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.da
 welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
 welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
+welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0').astype(float)
+welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0').astype(float)
+
+welf_coop = welf_coop.sort_values(['baseline','sorting'])
+welf_nash = welf_nash.sort_values(['baseline','sorting'])
+
 ds_coop = ColumnDataSource(welf_coop)
 ds_nash = ColumnDataSource(welf_nash)
 
 colors_coop = itertools.cycle(Category10[10])
 colors_nash = itertools.cycle(Category10[10])
 
-x_range = welf_coop['run'].to_list()
+x_range = welf_nash['run'].to_list()
 
 p_eq = figure(title="Cooperative and Nash equilibrium", 
                width = 1400,
@@ -567,15 +574,42 @@ data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, he
                            # autosize_mode="force_fit"
                           )
 
+data_table_welfares = pd.concat([welf_nash.set_index('run'),
+             welf_coop.set_index('run')],
+            axis=0,
+            keys=['Nash','Coop'],
+            names=['type','run'],
+            sort=False
+            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['pop w av']]
+
+source_table_welfares = ColumnDataSource(data_table_welfares)
+columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['pop w av']]
+
+table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=850, height=400,
+                           # autosize_mode="force_fit"
+                          )
+
+# columns_par = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
+
+data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
+
 # p_eq.show()
 
 deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                           'variation'],keep='last')
+                           'variation'],keep='last').sort_values(['baseline','variation'])
 deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                           'variation'],keep='last')
+                           'variation'],keep='last').sort_values(['baseline','variation'])
 
-deltas_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
-deltas_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
+deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
+
+deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0').astype(float)
+deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0').astype(float)
+
+deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
+deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
 
 ds_deltas_coop = ColumnDataSource(deltas_coop)
 ds_deltas_nash = ColumnDataSource(deltas_nash)
@@ -610,7 +644,22 @@ hover_tool_deltas_eq.tooltips = [
     ] 
 p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
-second_panel_bis = column(row(p_eq,data_table_eq),row(p_deltas_eq,data_table_eq))
+data_table_deltas = pd.concat([deltas_nash.set_index('run'),
+             deltas_coop.set_index('run')],
+            axis=0,
+            keys=['Nash','Coop'],
+            names=['type','run'],
+            sort=False
+            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
+
+source_table_deltas = ColumnDataSource(data_table_deltas)
+columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries]
+
+table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=850, height=400,
+                           # autosize_mode="force_fit"
+                          )
+
+second_panel_bis = column(row(p_eq,data_table_eq),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
 #%% Kogan paper
 
