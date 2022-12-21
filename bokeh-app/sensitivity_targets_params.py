@@ -14,9 +14,10 @@ import time
 import os
 import seaborn as sns
 from classes import moments, parameters, var, history
-from solver_funcs import calibration_func, fixed_point_solver
+from solver_funcs import calibration_func, fixed_point_solver, compute_deriv_welfare_to_patent_protec_US
 from data_funcs import write_calibration_results, compare_params
 from functools import reduce
+from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
@@ -27,6 +28,29 @@ p_baseline.load_data(baseline_path)
 m_baseline = moments()
 m_baseline.load_data()
 m_baseline.load_run(baseline_path)
+sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 5e4,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_baseline = var.var_from_vector(sol.x, p_baseline)    
+sol_baseline.scale_P(p_baseline)
+sol_baseline.compute_price_indices(p_baseline)
+sol_baseline.compute_non_solver_quantities(p_baseline) 
 
 # comments_dic = {'1':'1 : drop South in RD targeting',
 #                 '2.1':'2.1 : added domestic US to patent flow moment',
@@ -1151,5 +1175,14 @@ for c_spec_par in ['delta']:
         
 for k,df in df_dic.items():
     df.to_csv(sensitivity_tables_path+k+'.csv')
-        
+    
+#%%
+
+list_of_dfs = []
+for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
+    df = pd.DataFrame()
+    df['Change'] = [round(change) for change in variation_dic['change'].values()]
+    df[qty] = [compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None) for p in variation_dic['p'].values()]
+    list_of_dfs.append(df)
+big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)    
         
