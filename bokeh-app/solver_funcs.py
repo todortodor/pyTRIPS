@@ -214,6 +214,35 @@ def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None):
     
     return (sol_c.cons_eq_welfare[0]-1)/epsilon
 
+def compute_deriv_growth_to_patent_protec_US(sol_baseline,p,v0=None):
+    epsilon = 1e-2
+    back_up_delta = p.delta[0,1]
+    p.delta[0,1] = p.delta[0,1]*(1+epsilon)
+    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=2e3,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=5
+                                  )
+    sol_c.scale_P(p)
+    sol_c.compute_price_indices(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    p.delta[0,1] = back_up_delta
+    
+    return (sol_c.g-sol_baseline.g)/epsilon
+
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                      avoid_bad_nash=False,bad_nash_weight = None):
     p.update_parameters(vec_parameters)

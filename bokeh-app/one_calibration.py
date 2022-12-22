@@ -15,7 +15,7 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = True
+new_run = False
 baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
@@ -47,7 +47,7 @@ if 'theta' in p.calib_parameters:
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 avoid_bad_nash = False
-
+p.kappa = 0.75
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('SPFLOW_RUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -59,7 +59,7 @@ avoid_bad_nash = False
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.01)
-m.GROWTH_target = np.array(0.03)
+# m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
 
