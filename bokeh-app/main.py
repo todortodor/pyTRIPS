@@ -184,7 +184,8 @@ comments_dic = {'baseline':'baseline',
                 '12':'12: replace KM moment by KM_GDP',
                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
                 '12.2':'12.2: 11.7 but drop KM moment',
-                '13.1':'13.1: 11.7 but preventing "bad" Nash'
+                '13.1':'13.1: 11.7 but preventing "bad" Nash',
+                '14.1':'14.1: 11.7 with kappa=0.75'
                 }
 
 baselines_dic_param = {}

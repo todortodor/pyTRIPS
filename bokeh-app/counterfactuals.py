@@ -27,10 +27,10 @@ import time
 #                   'variation':'11.7'}
 #                  ]
 baseline_dics = [
-                # {'baseline':'101',
-                #   'variation':'13.1'},
+                {'baseline':'101',
+                  'variation':'14.1'},
                 {'baseline':'104',
-                  'variation':'13.1'}
+                  'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -161,10 +161,10 @@ except:
 
 # baseline = '101'
 baseline_dics = [
+                {'baseline':'101',
+                  'variation':'14.1'},
                 {'baseline':'104',
-                  'variation':'13.1'}
-                #, {'baseline':'104',
-                #   'variation':'13.1'}
+                  'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:

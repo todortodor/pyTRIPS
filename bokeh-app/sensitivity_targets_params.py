@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '101'
+baseline = '104'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -1180,7 +1180,16 @@ for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
     df[qty] = [compute_deriv_welfare_to_patent_protec_US(variation_dic['sol'][r],variation_dic['p'][r],v0=None) for r in variation_dic['p'].keys()]
     list_of_dfs.append(df)
 big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
-df_dic['d_W_US/d_delta_US'] = big_df 
+df_dic['d_W_US_d_delta_US'] = big_df 
+
+list_of_dfs = []
+for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
+    df = pd.DataFrame()
+    df['Change'] = [round(change) for change in variation_dic['change'].values()]
+    df[qty] = [compute_deriv_growth_to_patent_protec_US(variation_dic['sol'][r],variation_dic['p'][r],v0=None) for r in variation_dic['p'].keys()]
+    list_of_dfs.append(df)
+big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
+df_dic['d_g_d_delta_US'] = big_df 
         
 for k,df in df_dic.items():
     df.to_csv(sensitivity_tables_path+k+'.csv')
@@ -1188,4 +1197,5 @@ for k,df in df_dic.items():
 #%%
 
 # big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
+big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
         

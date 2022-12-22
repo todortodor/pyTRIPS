@@ -15,11 +15,12 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = False
-baseline_number = '101'
+new_run = True
+baseline_number = '104'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/14.1')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -40,14 +41,14 @@ if 'theta' in p.calib_parameters:
 #                     'SINNOVPATUS','TO']
 
 # uncomment following for run 11.7
-# if 'd' not in p.calib_parameters:
-#     p.calib_parameters.append('d')
-# m.list_of_moments.append('DOMPATUS')
-# m.list_of_moments.append('DOMPATEU')
-# m.drop_CHN_IND_BRA_ROW_from_RD = True
+if 'd' not in p.calib_parameters:
+    p.calib_parameters.append('d')
+m.list_of_moments.append('DOMPATUS')
+m.list_of_moments.append('DOMPATEU')
+m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 avoid_bad_nash = False
-p.kappa = 0.75
+p.kappa = np.array(0.75)
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('SPFLOW_RUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -120,7 +121,7 @@ while cond:
         cond = US_deriv_w_to_d<-1e-8
         bad_nash_weight = bad_nash_weight*5
     else:
-        cond = False
+        cond = test_ls.nfev>15
         
     cost = test_ls.cost
 finish_time = time.perf_counter()
@@ -176,13 +177,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '8.1 but added parameter d'
+commentary = '11.7 with kappa=0.75'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 11.7
+run_number = 14.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

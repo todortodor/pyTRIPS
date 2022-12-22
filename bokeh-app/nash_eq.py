@@ -29,10 +29,10 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-                # {'baseline':'101',
-                #   'variation':'13.1'},
+                {'baseline':'101',
+                  'variation':'14.1'},
                 {'baseline':'104',
-                  'variation':'11.7'}
+                  'variation':'14.1'}
                  ]
 
 # for baseline_number in ['101','102','104']:
