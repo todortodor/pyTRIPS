@@ -1173,16 +1173,19 @@ for c_spec_par in ['delta']:
         big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
         df_dic[c_spec_par+' '+c+' '+'over nu'] = big_df
         
+list_of_dfs = []
+for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
+    df = pd.DataFrame()
+    df['Change'] = [round(change) for change in variation_dic['change'].values()]
+    df[qty] = [compute_deriv_welfare_to_patent_protec_US(variation_dic['p'][r],variation_dic['p'][r],v0=None) for r in variation_dic['p'].keys()]
+    list_of_dfs.append(df)
+big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
+df_dic['d_W_US/d_delta_US'] = big_df 
+        
 for k,df in df_dic.items():
     df.to_csv(sensitivity_tables_path+k+'.csv')
     
 #%%
 
-list_of_dfs = []
-for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
-    df = pd.DataFrame()
-    df['Change'] = [round(change) for change in variation_dic['change'].values()]
-    df[qty] = [compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None) for p in variation_dic['p'].values()]
-    list_of_dfs.append(df)
-big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)    
+big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
         

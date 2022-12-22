@@ -185,7 +185,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         plt.show()
     return sol_inst, init
 
-def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0):
+def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None):
     epsilon = 1e-2
     back_up_delta = p.delta[0,1]
     p.delta[0,1] = p.delta[0,1]*(1+epsilon)
