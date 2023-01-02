@@ -464,7 +464,7 @@ ds_cf_max = ColumnDataSource(df_cf_max)
 colors_cf = itertools.cycle(Category10[10])
 colors_cf_max = itertools.cycle(Category10[10])
 
-p_cf = figure(title="Unilateral patent protection counterfactual", 
+p_cf = figure(title="Patent protection counterfactual", 
                width = 1200,
                height = 850,
                x_axis_label='Change in delta',
