@@ -37,18 +37,18 @@ baseline_dics = [
                   'variation':'11.7'},
                 {'baseline':'101',
                   'variation':'12.2'},
-                {'baseline':'101',
-                  'variation':'13.1'},
-                {'baseline':'101',
-                  'variation':'14.1'},
+                # {'baseline':'101',
+                #   'variation':'13.1'},
+                # {'baseline':'101',
+                #   'variation':'14.1'},
                 {'baseline':'102',
                   'variation':None},
                 {'baseline':'104',
                   'variation':None},
-                {'baseline':'104',
-                  'variation':'13.1'},
-                {'baseline':'104',
-                  'variation':'14.1'}
+                # {'baseline':'104',
+                #   'variation':'13.1'},
+                # {'baseline':'104',
+                #   'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -165,60 +165,60 @@ for baseline_dic in baseline_dics:
     #         # print(p.guess)
     #         p.write_params(country_path+'/'+str(i)+'/')
         
-    # c = 'World'    
+    c = 'World'    
     
-    # country_path = local_path+c+'/'
-    # try:
-    #     os.mkdir(country_path)
-    # except:
-    #     pass
+    country_path = local_path+c+'/'
+    try:
+        os.mkdir(country_path)
+    except:
+        pass
 
-    # print(c)
-    # p = p_baseline.copy()
-    # # sols_c = []
-    # deltas = np.logspace(-1,1,111)
-    # # idx_country = p_baseline.countries.index(c)
-    # for i,delt in enumerate(deltas):
-    #     print(delt)
-    #     p.delta[:,1] = p_baseline.delta[:,1] * delt
-    #     # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
-    #     # print(p.guess)
-    #     sol, sol_c = fixed_point_solver(p,x0=p.guess,
-    #                             cobweb_anim=False,tol =1e-15,
-    #                             accelerate=False,
-    #                             accelerate_when_stable=True,
-    #                             cobweb_qty='phi',
-    #                             plot_convergence=False,
-    #                             plot_cobweb=False,
-    #                             safe_convergence=0.001,
-    #                             disp_summary=False,
-    #                             damping = 10,
-    #                             max_count = 1e4,
-    #                             accel_memory = 50, 
-    #                             accel_type1=True, 
-    #                             accel_regularization=1e-10,
-    #                             accel_relaxation=0.5, 
-    #                             accel_safeguard_factor=1, 
-    #                             accel_max_weight_norm=1e6,
-    #                             damping_post_acceleration=5
-    #                             # damping=10
-    #                               # apply_bound_psi_star=True
-    #                             )
-    #     # print(sol.status)
+    print(c)
+    p = p_baseline.copy()
+    # sols_c = []
+    deltas = np.logspace(-1,1,111)
+    # idx_country = p_baseline.countries.index(c)
+    for i,delt in enumerate(deltas):
+        print(delt)
+        p.delta[:,1] = p_baseline.delta[:,1] * delt
+        # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
+        # print(p.guess)
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                cobweb_anim=False,tol =1e-15,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                # damping=10
+                                  # apply_bound_psi_star=True
+                                )
+        # print(sol.status)
     
-    #     sol_c = var.var_from_vector(sol.x, p)    
-    #     # sol_c.scale_tau(p)
-    #     sol_c.scale_P(p)
-    #     sol_c.compute_price_indices(p)
-    #     sol_c.compute_non_solver_quantities(p)
-    #     # sol_c.compute_welfare(p)
-    #     # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
-    #     if sol.status == 'successful':
-    #         p.guess = sol_c.vector_from_var()
-    #     else:
-    #         p.guess = None
-    #     # print(p.guess)
-    #     p.write_params(country_path+'/'+str(i)+'/')
+        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c.scale_tau(p)
+        sol_c.scale_P(p)
+        sol_c.compute_price_indices(p)
+        sol_c.compute_non_solver_quantities(p)
+        # sol_c.compute_welfare(p)
+        # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+        if sol.status == 'successful':
+            p.guess = sol_c.vector_from_var()
+        else:
+            p.guess = None
+        # print(p.guess)
+        p.write_params(country_path+'/'+str(i)+'/')
         
     c = 'Harmonizing'    
     
@@ -299,18 +299,18 @@ baseline_dics = [
                   'variation':'11.7'},
                 {'baseline':'101',
                   'variation':'12.2'},
-                {'baseline':'101',
-                  'variation':'13.1'},
-                {'baseline':'101',
-                  'variation':'14.1'},
+                # {'baseline':'101',
+                #   'variation':'13.1'},
+                # {'baseline':'101',
+                #   'variation':'14.1'},
                 {'baseline':'102',
                   'variation':None},
                 {'baseline':'104',
                   'variation':None},
-                {'baseline':'104',
-                  'variation':'13.1'},
-                {'baseline':'104',
-                  'variation':'14.1'}
+                # {'baseline':'104',
+                #   'variation':'13.1'},
+                # {'baseline':'104',
+                #   'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -331,7 +331,28 @@ for baseline_dic in baseline_dics:
     m_baseline = moments()
     m_baseline.load_data()
     m_baseline.load_run(baseline_path)
-    sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True)
+    # sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True)
+    sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=True,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
     sol_baseline.scale_P(p_baseline)
     sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
@@ -395,7 +416,7 @@ for baseline_dic in baseline_dics:
                 sol = var.var_from_vector(p.guess, p, compute=True)
                 sol.compute_non_solver_aggregate_qualities(p)
                 sol.compute_non_solver_quantities(p)
-                sol.scale_P(p)
+                sol.scale_P(p)  
                 sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
