@@ -429,7 +429,7 @@ qty_sensi_select.on_change('value', update_qty_sensi)
 
 sensitivity_report = column(controls_sensi,p_sensi)
 
-#%% countarfactuals
+#%% counterfactuals
 
 baseline_cf = '101'
 country_cf = 'USA'
@@ -437,11 +437,14 @@ country_cf = 'USA'
 p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path))])
-country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries)
+country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries+['World','Harmonizing'])
 
 def get_data_cf(baseline,country):
     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+    if country != 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
     df_cf.set_index('delt',inplace=True)
     return df_cf
 

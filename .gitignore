@@ -6,3 +6,4 @@ legacy_funcs.py
 *.pyc
 *.pyc
 bokeh-app/counterfactual_results/
+bokeh-app/explore_patents_view_data.py
