@@ -10,12 +10,13 @@ from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 import numpy as np
 
-# p = parameters(n=7,s=2)
+p = parameters(n=7,s=2)
 # p.load_data('calibration_results_matched_economy/101/')
+p.load_data('calibration_results_matched_economy/baseline_101_variations/14.1/')
 # p.delta[0,1] = 0.1*p.delta[0,1]
 # p.d_np = np.ones((p.N,p.N))
 # np.fill_diagonal(p.d_np,p.d)
-p = p_it_baseline
+# p = p_it_baseline
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,

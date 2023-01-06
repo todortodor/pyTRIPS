@@ -16,11 +16,11 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '104'
+baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
-    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/14.1')
+    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -43,12 +43,21 @@ if 'theta' in p.calib_parameters:
 # uncomment following for run 11.7
 if 'd' not in p.calib_parameters:
     p.calib_parameters.append('d')
-m.list_of_moments.append('DOMPATUS')
-m.list_of_moments.append('DOMPATEU')
+if 'DOMPATEU' not in m.list_of_moments:
+    m.list_of_moments.append('DOMPATEU')
+if 'DOMPATUS' not in m.list_of_moments:
+    m.list_of_moments.append('DOMPATUS')
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
+if 'kappa' not in p.calib_parameters:
+    p.calib_parameters.append('kappa')
+    
+if 'ERDUS' not in m.list_of_moments:
+    m.list_of_moments.append('ERDUS')
+    m.weights_dict['ERDUS'] = 5
+
 avoid_bad_nash = False
-p.kappa = np.array(0.75)
+# p.kappa = np.array(0.75)
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('SPFLOW_RUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -74,19 +83,34 @@ iterations = 0
 #     x0 = np.concatenate([p.make_p_vector()
 
 while cond:
-    test_ls = optimize.least_squares(fun = calibration_func,    
-                            x0 = p.make_p_vector(), 
-                            args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
-                            bounds = bounds,
-                            # method= 'dogbox',
-                            # loss='arctan',
-                            # jac='3-point',
-                            max_nfev=1e8,
-                            # ftol=1e-14, 
-                            xtol=1e-16, 
-                            # gtol=1e-14,
-                            # f_scale=scale,
-                            verbose = 2)
+    if iterations < 3:
+        test_ls = optimize.least_squares(fun = calibration_func,    
+                                x0 = p.make_p_vector(), 
+                                args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
+                                bounds = bounds,
+                                # method= 'dogbox',
+                                # loss='arctan',
+                                # jac='3-point',
+                                max_nfev=1e8,
+                                # ftol=1e-14, 
+                                # xtol=1e-16, 
+                                # gtol=1e-14,
+                                # f_scale=scale,
+                                verbose = 2)
+    else:
+        test_ls = optimize.least_squares(fun = calibration_func,    
+                                x0 = p.make_p_vector(), 
+                                args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
+                                bounds = bounds,
+                                # method= 'dogbox',
+                                # loss='arctan',
+                                # jac='3-point',
+                                max_nfev=1e8,
+                                # ftol=1e-14, 
+                                xtol=1e-16, 
+                                # gtol=1e-14,
+                                # f_scale=scale,
+                                verbose = 2)
     if avoid_bad_nash:
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
@@ -121,7 +145,9 @@ while cond:
         cond = US_deriv_w_to_d<-1e-8
         bad_nash_weight = bad_nash_weight*5
     else:
-        cond = test_ls.nfev>15
+        # cond = test_ls.nfev>15
+        cond = iterations < 4    
+        iterations += 1
         
     cost = test_ls.cost
 finish_time = time.perf_counter()

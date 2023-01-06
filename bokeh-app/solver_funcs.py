@@ -121,7 +121,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         psi_star = init.compute_psi_star(p)[...,1:].ravel()
-        psi_star[psi_star<1] = 1
+        # psi_star[psi_star<1] = 1
         phi = init.compute_phi(p).ravel()
         
         x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)

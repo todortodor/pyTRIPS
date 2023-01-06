@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '104'
+baseline = '101'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -47,10 +47,13 @@ sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                         accel_max_weight_norm=1e6,
                         damping_post_acceleration=5
                         )
+
 sol_baseline = var.var_from_vector(sol.x, p_baseline)    
 sol_baseline.scale_P(p_baseline)
 sol_baseline.compute_price_indices(p_baseline)
 sol_baseline.compute_non_solver_quantities(p_baseline) 
+
+m_baseline.compute_moments(sol_baseline, p_baseline)
 
 # comments_dic = {'1':'1 : drop South in RD targeting',
 #                 '2.1':'2.1 : added domestic US to patent flow moment',
@@ -67,7 +70,8 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 #                 '7':'7 : drop SRDUS'
 #                 }
 
-moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS']
+moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS','ERDUS']
+# moments_to_change = ['ERDUS']
 parameters_to_change = ['kappa','gamma','rho','zeta']
 
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
@@ -106,6 +110,9 @@ make_dirs([parent_moment_result_path,
 dic_runs = dict([(mom, np.linspace(getattr(m_baseline,mom+'_target')*0.5,getattr(m_baseline,mom+'_target')*1.5,11))
                  for mom in moments_to_change])
 
+if 'ERDUS' in moments_to_change:
+    dic_runs['ERDUS'] = np.linspace(getattr(m_baseline,'ERDUS')*0.5,getattr(m_baseline,'ERDUS')*1.5,11)
+
 for k, v in dic_runs.items():
     print(k)
     print(v)
@@ -132,6 +139,10 @@ for k, v in dic_runs.items():
         m.load_run(baseline_path)
         p = parameters(n=7,s=2)
         p.load_data(baseline_path)
+        if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
+            m.list_of_moments.append('ERDUS')
+            if 'kappa' not in p.calib_parameters:
+                p.calib_parameters.append('kappa')
         setattr(m,moment_to_change+'_target',target)
         if 'theta' in p_baseline.calib_parameters:
             p.update_sigma_with_SRDUS_target(m)
@@ -839,6 +850,8 @@ for moment_to_change in moments_to_change:
     result_path = parent_moment_result_path+moment_to_change+'/'
     
     baseline_moment = getattr(m_baseline, moment_to_change+'_target')
+    if moment_to_change == 'ERDUS':
+        baseline_moment = getattr(m_baseline, moment_to_change)
     
     dic_p = {}
     dic_m = {}
@@ -1142,7 +1155,7 @@ for s_spec_par in ['theta','fe','zeta','nu','nu_tilde']:
     big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
     df_dic[s_spec_par] = big_df
         
-for scal_par in ['g_0','k',]:
+for scal_par in ['g_0','k','kappa']:
     list_of_dfs = []
     for qty,variation_dic in dic_of_variation_dics.items():
         df = pd.DataFrame()
@@ -1197,5 +1210,5 @@ for k,df in df_dic.items():
 #%%
 
 # big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
-big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
+# big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
         

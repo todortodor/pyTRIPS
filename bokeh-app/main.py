@@ -43,9 +43,10 @@ def load(path, data_path=None):
     m.compute_moments_deviations()
     return p,m,sol
 
-def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
+def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments):
     dic_df_param = {}
     dic_df_mom = {}
+    dic_df_sol = {}
     params = p_baseline.calib_parameters
     params.append('d*fe')
     params.append('nu/deltaUS')
@@ -103,11 +104,28 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments):
                 dic_df_mom[mom] = df
             except:
                 pass
+            
+    for sol_qty in ['semi_elast_RD_delta','DT']:
+        df = pd.DataFrame(index = p_baseline.countries, 
+                          columns = ['baseline'], 
+                          )
+        df.index.name='x'
+        df['baseline'] = getattr(sol_baseline,sol_qty)[...,1]
+        dic_df_sol[sol_qty] = df
+        
+    for sol_qty in ['l_R']:
+        df = pd.DataFrame(index = p_baseline.countries, 
+                          columns = ['baseline'], 
+                          )
+        df.index.name='x'
+        df['baseline'] = getattr(sol_baseline,sol_qty)[...,1]/p_baseline.labor
+        dic_df_sol[sol_qty] = df
+    
     dic_df_mom['scalars'] = df_scalar_moments
     # dic_df_mom['scalar deviations'] = df_scalar_moments_deviation
-    return dic_df_param, dic_df_mom
+    return dic_df_param, dic_df_mom, dic_df_sol
 
-def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_name):
+def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol, p, m, sol, run_name):
     for k in dic_df_param.keys():
         if k == 'scalars':
             for i in dic_df_param[k].index:
@@ -136,7 +154,14 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, p, m, run_
                 dic_df_mom[k].loc[i,run_name] = float(getattr(m,i+'_deviation'))/m.weights_dict[i]
         if k not in ['scalars','scalar deviations']:
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
-    return dic_df_param, dic_df_mom
+    
+    for k in dic_df_sol.keys():
+        if k in ['semi_elast_RD_delta','DT']:
+            dic_df_sol[k][run_name] = getattr(sol,k)[...,1]
+        if k in ['l_R']:
+            dic_df_sol[k][run_name] = getattr(sol,k)[...,1]/p.labor
+            
+    return dic_df_param, dic_df_mom, dic_df_sol
 
 #%% path
 
@@ -153,7 +178,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
  'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
  'SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'SINNOVPATUS', 'TO',
- 'DOMPATUS','DOMPATEU']
+ 'DOMPATUS','DOMPATEU','ERDUS']
 
 comments_dic = {'baseline':'baseline',
                 '1':'1: drop South\nin RD targeting',
@@ -190,24 +215,34 @@ comments_dic = {'baseline':'baseline',
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
+baselines_dic_sol_qty = {}
 
 for baseline_nbr in ['101','102','104']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path)
-    baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr] = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,list_of_moments)
+    baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr], baselines_dic_sol_qty[baseline_nbr]\
+        = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments)
     
     files_in_dir = next(os.walk(baseline_variations_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
     
     for run in run_list:
-        p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
-        a, b  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
-                                                        baselines_dic_mom[baseline_nbr], p_to_add, m_to_add, run)
-        baselines_dic_param[baseline_nbr] = a
-        baselines_dic_mom[baseline_nbr] = b
+        # print(run)
+        if run not in ['2.1','2.2','2.3']:
+            p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
+            a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
+                                                            baselines_dic_mom[baseline_nbr], 
+                                                            baselines_dic_sol_qty[baseline_nbr],
+                                                            p_to_add, 
+                                                            m_to_add, 
+                                                            sol_to_add,
+                                                            run)
+            baselines_dic_param[baseline_nbr] = a
+            baselines_dic_mom[baseline_nbr] = b
+            baselines_dic_sol_qty[baseline_nbr] = c
 
 
 TOOLS="pan,wheel_zoom,box_zoom,reset"
@@ -370,11 +405,81 @@ baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
+baseline_sol_qty = '101'
+sol_qty = 'semi_elast_RD_delta'
+
+baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
+sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baselines_dic_sol_qty[baseline_sol_qty].keys()))
+x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
+ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
+p_sol_qty = figure(title="Solution quantities", 
+               width = 1200,
+               height = 900,
+           x_range = x_range,
+           y_axis_label='Model implied',
+           tools = TOOLS)
+hover_tool_sol_qty = HoverTool()
+hover_tool_sol_qty.tooltips = [
+    ("index", "@x"),
+    ("value", "$y")
+    ]
+
+p_sol_qty.add_tools(hover_tool_sol_qty)
+# p_par.sizing_mode = 'scale_width'
+# colors_par = itertools.cycle(Category20.values()(len(baselines_dic_param[baseline_par][par].columns)))
+colors_sol_qty = itertools.cycle(Category10[10])
+lines_sol_qty = {}
+
+for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
+    # lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
+    #                             line_width = 2, legend_label=comments_dic[col])
+    lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, color=next(colors_sol_qty),
+                                line_width = 2)
+    if col != 'baseline':
+        lines_sol_qty[col].visible = False
+
+legend_items_sol_qty = [LegendItem(label=comments_dic[col], renderers=[lin_sol_qty]) for col, lin_sol_qty in lines_sol_qty.items()]
+legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+p_sol_qty.add_layout(legend_sol_qty, 'right')
+# p_par.legend.click_policy="hide"
+# p_par.legend.label_text_font_size = '8pt'
+# p_par.legend.spacing = 0
+# p_par.add_layout(p_par.legend[0], 'right')
+
+
+
+columns_sol_qty = [
+        TableColumn(field="x"),
+    ]+[TableColumn(field=col) for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns]
+
+data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1200, height=400)
+
+def update_baseline_sol_qty(attrname, old, new):
+    sol_qty = sol_qty_select.value
+    ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
+    legend_items_sol_qty = [LegendItem(label=comments_dic[col], renderers=[lines_sol_qty[col]]) for col in ds_sol_qty.data if col not in ['x']]
+    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
+    p_sol_qty.legend.items = legend_items_sol_qty
+    
+def update_sol_qty(attrname, old, new):
+    baseline_sol_qty = baseline_sol_qty_select.value
+    p_sol_qty.x_range.factors = baselines_dic_sol_qty[baseline_sol_qty][new].index.to_list()
+    ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new]
+
+controls_sol_qty = row(baseline_sol_qty_select, sol_qty_select)
+# controls_par.sizing_mode = 'scale_width'
+
+baseline_sol_qty_select.on_change('value', update_baseline_sol_qty)
+sol_qty_select.on_change('value', update_sol_qty)
+# p_par.add_layout(p_par.legend[0], 'bottom right')
+
+
 # moment_report = column(controls_mom,p_mom)
 moment_report = column(controls_mom,p_mom,data_table_mom)
 # param_report = column(controls_par, p_par)
 param_report = column(controls_par, p_par, data_table_par)
-first_panel = row(moment_report,param_report)
+sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
+first_panel = row(moment_report,param_report,sol_qty_report)
 
 # curdoc().add_root(row(column(controls_mom,p_mom,data_table_mom),column(controls_par, p_par, data_table_par)))
 
@@ -437,7 +542,9 @@ country_cf = 'USA'
 p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path))])
-country_cf_select = Select(value=country_cf, title='Country', options=p_baseline.countries+['World','Harmonizing'])
+country_cf_select = Select(value=country_cf, 
+                           title='Country', 
+                           options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
 
 def get_data_cf(baseline,country):
     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')

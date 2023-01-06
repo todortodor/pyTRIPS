@@ -37,3 +37,4 @@ TWSPFLOW; trade weighted ratio of international bilateral patent flows to intern
 TWSPFLOWDOM; trade weighted ratio of patent flows to world patenting
 DOMPATEU; domestic patent EU as share of EU patents
 DOMPATUS; domestic patent US as share of US patents
+ERDUS; semi elasticity of RD with respect to delta in the US

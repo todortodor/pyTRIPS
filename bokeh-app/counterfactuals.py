@@ -27,28 +27,28 @@ import time
 #                   'variation':'11.7'}
 #                  ]
 baseline_dics = [
-                {'baseline':'101',
-                  'variation':None},
-                {'baseline':'101',
-                  'variation':'7'},
-                {'baseline':'101',
-                  'variation':'9.1'},
-                {'baseline':'101',
-                  'variation':'11.7'},
-                {'baseline':'101',
-                  'variation':'12.2'},
                 # {'baseline':'101',
-                #   'variation':'13.1'},
+                #   'variation':None},
                 # {'baseline':'101',
-                #   'variation':'14.1'},
-                {'baseline':'102',
-                  'variation':None},
+                #   'variation':'7'},
+                # {'baseline':'101',
+                #   'variation':'9.1'},
+                # {'baseline':'101',
+                #   'variation':'11.7'},
+                # {'baseline':'101',
+                #   'variation':'12.2'},
+                {'baseline':'101',
+                  'variation':'13.1'},
+                {'baseline':'101',
+                  'variation':'14.1'},
+                # {'baseline':'102',
+                #   'variation':None},
+                # {'baseline':'104',
+                #   'variation':None},
                 {'baseline':'104',
-                  'variation':None},
-                # {'baseline':'104',
-                #   'variation':'13.1'},
-                # {'baseline':'104',
-                #   'variation':'14.1'}
+                  'variation':'13.1'},
+                {'baseline':'104',
+                  'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -81,7 +81,7 @@ for baseline_dic in baseline_dics:
     except:
         pass
     
-    recap = pd.DataFrame(columns = ['changed_quantity'])
+    # recap = pd.DataFrame(columns = ['changed_quantity'])
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                             cobweb_anim=False,tol =1e-15,
@@ -163,9 +163,9 @@ for baseline_dic in baseline_dics:
     #         else:
     #             p.guess = None
     #         # print(p.guess)
-    #         p.write_params(country_path+'/'+str(i)+'/')
+    #         p.write_params(country_path+'/'+str(i)+'/') 
         
-    c = 'World'    
+    c = 'World_2'    
     
     country_path = local_path+c+'/'
     try:
@@ -192,6 +192,7 @@ for baseline_dic in baseline_dics:
                                 plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
+                                apply_bound_psi_star = False,
                                 damping = 10,
                                 max_count = 1e4,
                                 accel_memory = 50, 
@@ -218,9 +219,9 @@ for baseline_dic in baseline_dics:
         else:
             p.guess = None
         # print(p.guess)
-        p.write_params(country_path+'/'+str(i)+'/')
+        p.write_params(country_path+'/'+str(i)+'/')#!!!!
         
-    c = 'Harmonizing'    
+    c = 'Harmonizing_2'    
     
     country_path = local_path+c+'/'
     try:
@@ -242,6 +243,7 @@ for baseline_dic in baseline_dics:
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
+                                apply_bound_psi_star = False,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
@@ -289,28 +291,28 @@ except:
 
 # baseline = '101'
 baseline_dics = [
-                {'baseline':'101',
-                  'variation':None},
-                {'baseline':'101',
-                  'variation':'7'},
-                {'baseline':'101',
-                  'variation':'9.1'},
-                {'baseline':'101',
-                  'variation':'11.7'},
-                {'baseline':'101',
-                  'variation':'12.2'},
                 # {'baseline':'101',
-                #   'variation':'13.1'},
+                #   'variation':None},
                 # {'baseline':'101',
-                #   'variation':'14.1'},
-                {'baseline':'102',
-                  'variation':None},
+                #   'variation':'7'},
+                # {'baseline':'101',
+                #   'variation':'9.1'},
+                # {'baseline':'101',
+                #   'variation':'11.7'},
+                # {'baseline':'101',
+                #   'variation':'12.2'},
+                {'baseline':'101',
+                  'variation':'13.1'},
+                {'baseline':'101',
+                  'variation':'14.1'},
+                # {'baseline':'102',
+                #   'variation':None},
+                # {'baseline':'104',
+                #   'variation':None},
                 {'baseline':'104',
-                  'variation':None},
-                # {'baseline':'104',
-                #   'variation':'13.1'},
-                # {'baseline':'104',
-                #   'variation':'14.1'}
+                  'variation':'13.1'},
+                {'baseline':'104',
+                  'variation':'14.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -423,7 +425,10 @@ for baseline_dic in baseline_dics:
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
                 recap.loc[run, 'growth'] = sol.g
                 recap.loc[run,p_baseline.countries] = sol.cons_eq_welfare
+                # recap.loc[run, 'psi_star_min'] = 1+np.log(1+np.log(sol.psi_star.min()))
         recap.to_csv(recap_path+c+'.csv', index=False)
+            # print(sol.psi_star.min())
+        # recap.plot()
         
     for c in ['Harmonizing']:
         recap = pd.DataFrame(columns = ['delt','growth']+p_baseline.countries)
@@ -453,6 +458,7 @@ for baseline_dic in baseline_dics:
                 recap.loc[run, 'growth'] = sol.g
                 recap.loc[run,p_baseline.countries] = sol.cons_eq_welfare
         recap.to_csv(recap_path+c+'.csv', index=False)
+            # print(sol.psi_star.min())
 
 # #%% plot counterfactual
 

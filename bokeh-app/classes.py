@@ -941,6 +941,35 @@ class var:
         # self.U = self.cons**(exp)/(p.rho-self.g*exp)/exp
         pass
     
+    def compute_semi_elast_RD_delta(self,p):
+        self.r_NP = np.zeros(p.S)
+        self.r_NP[1:] = self.r + p.zeta[1:] + p.nu[1:] - self.g + self.g_s[1:]
+        
+        self.DT = np.zeros((p.N,p.S))
+        self.DT[:,1:] = np.einsum('s,is,is->is',
+                            p.nu[1:],
+                            1/(self.r_NP[None,1:]-p.nu[None,1:]+p.delta[:,1:]),
+                            1/(self.r_NP[None,1:]+p.delta[:,1:]))
+        
+        self.semi_elast_RD_delta = np.zeros((p.N,p.S))
+        
+        numerator_prefact = p.k*np.einsum('is,is,is,is->is',
+                                      p.delta[:,1:]**2,
+                                      np.diagonal(self.profit[...,1:]).transpose(),
+                                      np.diagonal(self.psi_star[...,1:]).transpose()**(1-p.k),
+                                      self.DT[:,1:]
+                                      )
+        numerator_sum = 1/(self.r_NP[None,1:]-p.nu[None,1:]+p.delta[:,1:])\
+                            + 1/(self.r_NP[None,1:]+p.delta[:,1:])
+        denominator = p.kappa*np.einsum('mis,mis->is',
+                                self.profit[...,1:],
+                                p.k/self.r_NP[None,None,1:]+np.einsum('mis,is->mis',
+                                                                      self.psi_star[...,1:]**(1-p.k),
+                                                                      self.DT[:,1:]),
+                                )
+        
+        self.semi_elast_RD_delta[...,1:] = numerator_prefact*numerator_sum/denominator
+    
     def compute_non_solver_aggregate_qualities(self,p): 
         prefact = p.k * p.eta * self.l_R**(1-p.kappa)/(p.k-1)
         A = (self.g_s + p.nu + p.zeta)
@@ -986,6 +1015,7 @@ class var:
         self.compute_share_of_innovations_patented(p)
         self.compute_welfare(p)
         self.compute_non_solver_aggregate_qualities(p)
+        self.compute_semi_elast_RD_delta(p)
 
     def check_solution(self, p, return_checking_copy = False, assertions = True):
         check = self.copy()
@@ -1038,7 +1068,7 @@ class moments:
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
                                'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
                                'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
-                               'SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM']
+                               'SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
             self.list_of_moments = list_of_moments
         # self.weights_dict = {'GPDIFF':1, 
@@ -1098,6 +1128,7 @@ class moments:
                               'SPATDEST':2,
                               'TWSPFLOW':1,
                               'TWSPFLOWDOM':1,
+                              'ERDUS':3
                              }
         
         # self.total_weight = sum([self.weights_dict[mom] for mom in self.list_of_moments])
@@ -1147,7 +1178,9 @@ class moments:
                     'TE':pd.Index(['scalar']),
                     'DOMPATUS':pd.Index(['scalar']),
                     'DOMPATEU':pd.Index(['scalar']),
-                    'NUR':pd.Index(['scalar'])}
+                    'NUR':pd.Index(['scalar']),
+                    'ERDUS':pd.Index(['scalar'])
+                    }
         
         self.shapes = {'SPFLOW':(len(self.countries),len(self.countries)-1),
                        'SPFLOWDOM':(len(self.countries),len(self.countries)),
@@ -1174,7 +1207,7 @@ class moments:
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'TP', 'Z', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
-                'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM']
+                'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -1220,6 +1253,7 @@ class moments:
         self.SRDUS_target = self.moments.loc['SRDUS'].value
         self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
+        self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.TE_target = self.moments.loc['TE'].value 
         self.TO_target = np.array(0.05)
         # self.GROWTH_target = self.GROWTH_target*10
@@ -1675,6 +1709,9 @@ class moments:
     def compute_DOMPATUS(self,var,p):
         self.DOMPATUS = var.pflow[0,0]/var.pflow[:,0].sum()
         
+    def compute_ERDUS(self,var,p):
+        self.ERDUS = var.semi_elast_RD_delta[0,1]
+        
     def compute_moments(self,var,p):
         # self.compute_STFLOW(var, p)
         self.compute_SPFLOW(var, p)
@@ -1701,6 +1738,7 @@ class moments:
         self.compute_TWSPFLOW(var, p)
         self.compute_DOMPATEU(var, p)
         self.compute_DOMPATUS(var, p)
+        self.compute_ERDUS(var, p)
         
     def compute_moments_deviations(self):
         # for mom in self.get_list_of_moments():
