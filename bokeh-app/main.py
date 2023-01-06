@@ -48,6 +48,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     dic_df_mom = {}
     dic_df_sol = {}
     params = p_baseline.calib_parameters
+    params.append('kappa')
     params.append('d*fe')
     params.append('nu/deltaUS')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
@@ -210,7 +211,8 @@ comments_dic = {'baseline':'baseline',
                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
                 '12.2':'12.2: 11.7 but drop KM moment',
                 '13.1':'13.1: 11.7 but preventing "bad" Nash',
-                '14.1':'14.1: 11.7 with kappa=0.75'
+                '14.1':'14.1: 11.7 with kappa=0.75',
+                '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa'
                 }
 
 baselines_dic_param = {}

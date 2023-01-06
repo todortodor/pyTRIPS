@@ -83,7 +83,7 @@ iterations = 0
 #     x0 = np.concatenate([p.make_p_vector()
 
 while cond:
-    if iterations < 3:
+    if iterations < 9:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
@@ -105,7 +105,7 @@ while cond:
                                 # method= 'dogbox',
                                 # loss='arctan',
                                 # jac='3-point',
-                                max_nfev=1e8,
+                                max_nfev=200,
                                 # ftol=1e-14, 
                                 xtol=1e-16, 
                                 # gtol=1e-14,
@@ -146,8 +146,9 @@ while cond:
         bad_nash_weight = bad_nash_weight*5
     else:
         # cond = test_ls.nfev>15
-        cond = iterations < 4    
+        cond = iterations < 10
         iterations += 1
+        p.update_parameters(test_ls.x)
         
     cost = test_ls.cost
 finish_time = time.perf_counter()
@@ -203,13 +204,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7 with kappa=0.75'
+commentary = '11.7 with calibrated kappa and ERDUS'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 14.1
+run_number = 15.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

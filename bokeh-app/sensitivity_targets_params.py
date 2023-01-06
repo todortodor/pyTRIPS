@@ -1203,6 +1203,15 @@ for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
     list_of_dfs.append(df)
 big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
 df_dic['d_g_d_delta_US'] = big_df 
+
+list_of_dfs = []
+for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
+    df = pd.DataFrame()
+    df['Change'] = [round(change) for change in variation_dic['change'].values()]
+    df[qty] = [m.ERDUS for m in variation_dic['m'].values()]
+    list_of_dfs.append(df)
+big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
+df_dic['ERDUS'] = big_df 
         
 for k,df in df_dic.items():
     df.to_csv(sensitivity_tables_path+k+'.csv')
@@ -1211,4 +1220,5 @@ for k,df in df_dic.items():
 
 # big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
 # big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
+big_df.to_csv(sensitivity_tables_path+'ERDUS'+'.csv')   
         
