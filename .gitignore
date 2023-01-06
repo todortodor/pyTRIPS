@@ -7,3 +7,12 @@ legacy_funcs.py
 *.pyc
 bokeh-app/counterfactual_results/
 bokeh-app/explore_patents_view_data.py
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_101_13.1/Harmonizing_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_101_13.1/World_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_101_14.1/Harmonizing_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_101_14.1/World_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_13.1/Harmonizing_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_13.1/World_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_14.1/Harmonizing_2.csv
+bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_14.1/World_2.csv
+bokeh-app/explore_psi_star_min.py
