@@ -963,7 +963,7 @@ class var:
                             + 1/(self.r_NP[None,1:]+p.delta[:,1:])
         denominator = p.kappa*np.einsum('mis,mis->is',
                                 self.profit[...,1:],
-                                p.k/self.r_NP[None,None,1:]+np.einsum('mis,is->mis',
+                                p.k/self.r_NP[None,None,1:]+np.einsum('mis,ms->mis',
                                                                       self.psi_star[...,1:]**(1-p.k),
                                                                       self.DT[:,1:]),
                                 )
