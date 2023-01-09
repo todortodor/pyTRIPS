@@ -16,7 +16,7 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '101'
+baseline_number = '104'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -49,12 +49,12 @@ if 'DOMPATUS' not in m.list_of_moments:
     m.list_of_moments.append('DOMPATUS')
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
-if 'kappa' not in p.calib_parameters:
-    p.calib_parameters.append('kappa')
+# if 'kappa' not in p.calib_parameters:
+#     p.calib_parameters.append('kappa')
     
-if 'ERDUS' not in m.list_of_moments:
-    m.list_of_moments.append('ERDUS')
-    m.weights_dict['ERDUS'] = 5
+# if 'ERDUS' not in m.list_of_moments:
+#     m.list_of_moments.append('ERDUS')
+#     m.weights_dict['ERDUS'] = 5
 
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
@@ -83,7 +83,7 @@ iterations = 0
 #     x0 = np.concatenate([p.make_p_vector()
 
 while cond:
-    if iterations < 9:
+    if iterations < 14:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
@@ -93,7 +93,7 @@ while cond:
                                 # jac='3-point',
                                 max_nfev=1e8,
                                 # ftol=1e-14, 
-                                # xtol=1e-16, 
+                                xtol=1e-10, 
                                 # gtol=1e-14,
                                 # f_scale=scale,
                                 verbose = 2)
@@ -146,7 +146,7 @@ while cond:
         bad_nash_weight = bad_nash_weight*5
     else:
         # cond = test_ls.nfev>15
-        cond = iterations < 10
+        cond = iterations < 15
         iterations += 1
         p.update_parameters(test_ls.x)
         
@@ -204,13 +204,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7 with calibrated kappa and ERDUS'
+commentary = '11.7 with Hjort middle managers factors'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 15.1
+run_number = 16.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

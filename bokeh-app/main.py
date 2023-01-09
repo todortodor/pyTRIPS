@@ -212,7 +212,8 @@ comments_dic = {'baseline':'baseline',
                 '12.2':'12.2: 11.7 but drop KM moment',
                 '13.1':'13.1: 11.7 but preventing "bad" Nash',
                 '14.1':'14.1: 11.7 with kappa=0.75',
-                '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa'
+                '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
+                '16.1':'16.1: 11.7 with Hjort middle managers factors'
                 }
 
 baselines_dic_param = {}

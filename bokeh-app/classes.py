@@ -49,6 +49,7 @@ class parameters:
         self.nu_tilde = np.ones(S)*0.1
         self.nu_R = np.array(1)
         self.d = 1.0
+        self.khi = 0.16
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -74,7 +75,9 @@ class parameters:
         self.gdp_raw = np.concatenate(
             (self.data.gdp.values,np.ones(n)*self.data.gdp.values[-1])
             )[:n]
-
+        
+        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
+        
         # self.unit_labor = self.labor_raw.mean()
         self.unit_labor = 1e9
         self.labor = self.labor_raw/self.unit_labor
@@ -137,6 +140,7 @@ class parameters:
                     'nu_tilde':pd.Index(self.sectors, name='sector'),
                     'kappa':pd.Index(['scalar']),
                     'd':pd.Index(['scalar']),
+                    'khi':pd.Index(['scalar']),
                     'k':pd.Index(['scalar']),
                     # 'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                     #                                  , names=['destination','origin','sector']),
@@ -168,6 +172,7 @@ class parameters:
                     'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
+                    'khi':None,
                     'alpha':None,
                     'beta':None,
                       'T':None,
@@ -176,7 +181,7 @@ class parameters:
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
-                         'g_0','kappa','gamma','delta','nu','nu_tilde','d']:
+                         'g_0','kappa','gamma','delta','nu','nu_tilde','d','khi']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
                 self.mask[par_name] = np.ones_like(par,bool).ravel()
@@ -206,7 +211,7 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
-         'kappa','gamma','delta','nu','nu_tilde','d']
+         'kappa','gamma','delta','nu','nu_tilde','d','khi']
             
     def guess_from_params(self):
         # price_guess = self.data.price_level.values
@@ -233,6 +238,11 @@ class parameters:
             
     def update_sigma_with_SRDUS_target(self,m):
         self.sigma[1] = 1+m.SRDUS_target/(m.sales_mark_up_US_target - 1)
+        
+    def update_r_hjort_with_khi(self, new_khi):
+        #new_khi = 1 will remove the hjort factor
+        self.r_hjort = self.r_hjort**((1-new_khi)/(1-self.khi))
+        self.khi = new_khi
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -654,8 +664,9 @@ class var:
         # print(p.d_np)
         d_np = (p.d-1)*np.identity(p.N)+1
         
-        l_Ae = np.einsum('ni,s,is,is,nis -> ins',
+        l_Ae = np.einsum('ni,i,s,is,is,nis -> ins',
                          d_np, #!!!
+                         p.r_hjort,
                          p.fe,
                          p.eta,
                          l_R**(1-p.kappa),
@@ -721,10 +732,11 @@ class var:
                       p.k/(self.r+p.zeta+p.nu-self.g+self.g_s)
                       )
         B = np.einsum('nis,nis->is',
-                      p.fo+np.einsum('n,i,ni,s->nis',
+                      p.fo+np.einsum('n,i,ni,i,s->nis',
                                      self.w,
                                      1/self.w,
                                      d_np,  #!!!
+                                     p.r_hjort,
                                      p.fe),
                       np.divide(
                           1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star != np.inf)
@@ -744,10 +756,11 @@ class var:
                              np.divide(1, self.X_M, out=np.full_like(
                                  self.X_M, np.inf), where=self.X_M != 0),
                              1/(p.trade_shares*self.Z.sum()),
-                             p.fo[None, None, :]+np.einsum('n,i,ni,s -> nis',
+                             p.fo[None, None, :]+np.einsum('n,i,ni,i,s -> nis',
                                                            self.w,
                                                            1/self.w,
                                                            d_np,
+                                                           p.r_hjort,
                                                            p.fe),
                              self.r+p.zeta[None, :]+p.delta - self.g+self.g_s[None, :],
                              self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta
@@ -1576,7 +1589,7 @@ class moments:
         self.Z = var.Z
     
     def compute_JUPCOST(self,var,p):
-        self.JUPCOST = var.pflow[2,0]*(p.fo[1]*var.w[0] + p.fe[1]*var.w[2])
+        self.JUPCOST = var.pflow[2,0]*(p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_TP(self,var,p):
