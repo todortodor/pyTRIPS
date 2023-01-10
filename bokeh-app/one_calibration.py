@@ -20,7 +20,7 @@ baseline_number = '104'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -68,7 +68,9 @@ avoid_bad_nash = False
 # m.weights_dict['SPFLOW'] = 3
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
-# m.TO_target = np.array(0.01)
+m.TO_target = np.array(0.0465)
+m.KM_target = np.array(0.1322)
+m.GROWTH_target = np.array(0.02)
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
@@ -204,13 +206,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7 with Hjort middle managers factors'
+commentary = '16.1 with new TO, KM, G targets'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 16.1
+run_number = 17.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
