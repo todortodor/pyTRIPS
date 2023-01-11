@@ -77,7 +77,7 @@ avoid_bad_nash = False
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
-# p.calib_parameters.remove('eta')
+p.calib_parameters.remove('eta')
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -217,7 +217,7 @@ dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_resul
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 20.1
+run_number = 20.2
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
