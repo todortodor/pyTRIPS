@@ -49,7 +49,7 @@ class parameters:
         self.nu_tilde = np.ones(S)*0.1
         self.nu_R = np.array(1)
         self.d = 1.0
-        self.khi = 0.16
+        self.khi = 1.0
         
         # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         # self.off_diag_mask[np.s_[::(N+1)*S]] = False
@@ -239,10 +239,10 @@ class parameters:
     def update_sigma_with_SRDUS_target(self,m):
         self.sigma[1] = 1+m.SRDUS_target/(m.sales_mark_up_US_target - 1)
         
-    def update_r_hjort_with_khi(self, new_khi):
+    def update_khi_and_r_hjort(self, new_khi):
         #new_khi = 1 will remove the hjort factor
-        self.r_hjort = self.r_hjort**((1-new_khi)/(1-self.khi))
         self.khi = new_khi
+        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)**(1-self.khi)
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -284,20 +284,28 @@ class parameters:
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
         for pa_name in list_of_params:
-            try:
-                df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-                setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
-            except:
-                if pa_name == 'd':
-                    self.d = np.array(1.0)
-                else:
+            if pa_name == 'khi':
+                try:
+                    df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
+                    self.update_khi_and_r_hjort(df.values[0])
+                except:
                     pass
+            else:
+                try:
+                    df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
+                    setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
+                except:
+                    if pa_name == 'd':
+                        self.d = np.array(1.0)
+                    else:
+                        pass
             
         try:
             df = pd.read_csv(path+'guess.csv',header=None)
             setattr(self,'guess',df.values.squeeze())
         except:
             pass
+        
         try:
             df = pd.read_csv(path+'calib_parameters.csv',header=None)
             setattr(self,'calib_parameters',df[0].to_list())

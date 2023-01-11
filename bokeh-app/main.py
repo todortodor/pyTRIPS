@@ -31,8 +31,8 @@ def load(path, data_path=None):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
     sol = var.var_from_vector(p.guess, p, compute=True)
-    sol.compute_non_solver_aggregate_qualities(p)
-    sol.compute_non_solver_quantities(p)
+    # sol.compute_non_solver_aggregate_qualities(p)
+    # sol.compute_non_solver_quantities(p)
     sol.scale_P(p)
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
@@ -214,7 +214,8 @@ comments_dic = {'baseline':'baseline',
                 '14.1':'14.1: 11.7 with kappa=0.75',
                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
-                '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%'
+                '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%',
+                '18.1':'18.1: temp check',
                 }
 
 baselines_dic_param = {}
