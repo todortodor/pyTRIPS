@@ -56,7 +56,8 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 #     m.list_of_moments.append('ERDUS')
 #     m.weights_dict['ERDUS'] = 5
 
-p.update_khi_and_r_hjort(0.16)
+# p.update_khi_and_r_hjort(0.16)
+p.r_hjort[4] = 17.33029162
 
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
@@ -183,11 +184,11 @@ sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
-# p_sol.guess = sol.x
+p_sol.guess = sol.x
 # sol_c = var.var_from_vector(sol.x, p_sol)    
 # sol_c = var.var_from_vector(p_sol.guess, p_sol)    
 sol_c.scale_P(p_sol)
-sol_c.compute_price_indices(p)
+sol_c.compute_price_indices(p_sol)
 sol_c.compute_non_solver_quantities(p_sol) 
 m.compute_moments(sol_c,p_sol)
 m.compute_moments_deviations()
@@ -210,13 +211,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '16.1 with new TO, KM, G targets'
+commentary = '11.7, keep eta fixed add hjort factor only for China'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 18.1
+run_number = 19.2
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -230,8 +231,8 @@ try:
 except:
     pass
 
-# write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-# m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
+m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
 
 try:
     os.mkdir(local_path)
