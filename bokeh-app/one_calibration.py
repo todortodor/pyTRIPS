@@ -20,7 +20,7 @@ baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -32,7 +32,7 @@ if new_run:
 
 m = moments()
 m.load_data()
-m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
+m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
 # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
@@ -76,6 +76,7 @@ avoid_bad_nash = False
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
+p.calib_parameters.remove('eta')
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -215,7 +216,7 @@ dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_resul
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 17.1
+run_number = 18.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -229,8 +230,8 @@ try:
 except:
     pass
 
-write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+# write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
+# m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
 
 try:
     os.mkdir(local_path)

@@ -182,6 +182,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
  'DOMPATUS','DOMPATEU','ERDUS']
 
 comments_dic = {'baseline':'baseline',
+                '99':'silenced run',
                 '1':'1: drop South\nin RD targeting',
                 '2.1':'2.1: added domestic US to patent flow moment',
                 '2.2':'2.2: added domestic EU to patent flow moment',
@@ -215,7 +216,7 @@ comments_dic = {'baseline':'baseline',
                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
                 '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%',
-                '18.1':'18.1: temp check',
+                '18.1':'18.1: 11.7, then fix eta, add hjort factors',
                 }
 
 baselines_dic_param = {}
@@ -236,7 +237,7 @@ for baseline_nbr in ['101','102','104']:
     
     for run in run_list:
         # print(run)
-        if run not in ['2.1','2.2','2.3','3.1','3.2','3.3']:
+        if run not in ['2.1','2.2','2.3','3.1','3.2','3.3','99']:
             p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
             a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                             baselines_dic_mom[baseline_nbr], 
