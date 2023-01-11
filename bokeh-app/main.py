@@ -30,6 +30,10 @@ from bokeh.palettes import Category10
 def load(path, data_path=None):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
+    if path.endswith('20.1/') or path.endswith('20.2/'):
+        p.r_hjort[3] = 17.33029162
+    if path.endswith('19.1/') or path.endswith('19.2/'):
+        p.r_hjort[4] = 17.33029162
     sol = var.var_from_vector(p.guess, p, compute=True)
     # sol.compute_non_solver_aggregate_qualities(p)
     # sol.compute_non_solver_quantities(p)
@@ -217,8 +221,10 @@ comments_dic = {'baseline':'baseline',
                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
                 '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%',
                 '18.1':'18.1: 11.7, then fix eta, add hjort factors',
-                '19.1':'19.1: 11.7, add hjort factor only for China',
-                '19.2':'19.2: 11.7, all eta fixed add hjort factor CHN only',
+                '19.1':'19.1: 11.7, add hjort factor only for BRA',
+                '19.2':'19.2: 11.7, all eta fixed add hjort factor BRA only',
+                '20.1':'20.1: 11.7, add hjort factor only for CHN',
+                '20.2':'20.2: 11.7, all eta fixed add hjort factor CHN only',
                 }
 
 baselines_dic_param = {}
