@@ -219,6 +219,8 @@ comments_dic = {'baseline':'baseline',
                 '14.1':'14.1: 11.7 with kappa=0.75',
                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
+                '16.2':'16.2: 16.1 with higher weights on SPFLOW',
+                '16.3':'16.3: 16.2 with higher weights on SPFLOW',
                 '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%',
                 '18.1':'18.1: 11.7, then fix eta, add hjort factors',
                 '19.1':'19.1: 11.7, add hjort factor only for BRA',
@@ -245,7 +247,7 @@ for baseline_nbr in ['101','102','104']:
     
     for run in run_list:
         # print(run)
-        if run not in ['2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','99']:
+        if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
             p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
             a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                             baselines_dic_mom[baseline_nbr], 

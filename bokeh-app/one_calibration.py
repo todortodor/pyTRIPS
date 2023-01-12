@@ -20,7 +20,7 @@ baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -32,7 +32,7 @@ if new_run:
 
 m = moments()
 m.load_data()
-m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
+m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
 # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
@@ -56,8 +56,8 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 #     m.list_of_moments.append('ERDUS')
 #     m.weights_dict['ERDUS'] = 5
 
-# p.update_khi_and_r_hjort(0.16)
-p.r_hjort[3] = 17.33029162
+p.update_khi_and_r_hjort(0.16)
+# p.r_hjort[3] = 17.33029162
 
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
@@ -68,7 +68,7 @@ avoid_bad_nash = False
 # m.list_of_moments.remove('KM')
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SPFLOW'] = 10
-# m.weights_dict['SPFLOW'] = 3
+m.weights_dict['SPFLOW'] = 100
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.0465)
@@ -77,7 +77,7 @@ avoid_bad_nash = False
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
-p.calib_parameters.remove('eta')
+# p.calib_parameters.remove('eta')
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -211,13 +211,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7, keep eta fixed add hjort factor only for China'
+commentary = '16.1, higher weights on SPFLOW'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 20.2
+run_number = 16.3
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -242,49 +242,51 @@ p_sol.write_params(local_path+str(run_number)+'/')
 m.write_moments(local_path+str(run_number)+'/')
 
 #%%
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # jac = test_ls.jac
 # IND_idx = -4
-# m_sign_list = ['GPDIFF',
-#  'GROWTH',
-#  'KM',
-#  'OUT',
-#  'RD',
-#  'RD',
-#  'RD',
-#  'RP',
-#  'RP',
-#  'RP',
-#  'RP',
-#  'RP',
-#  'RP',
-#  'RP',
-#  'SRDUS',
-#  'SRGDP',
-#  'SRGDP',
-#  'SRGDP',
-#  'SRGDP',
-#  'SRGDP',
-#  'SRGDP',
-#  'SRGDP',
-#  'JUPCOST',
-#  'SINNOVPATUS',
-#  'TO',
-#  'SPFLOW USA_EUR', 'SPFLOW USA_JAP', 'SPFLOW USA_CHN', 'SPFLOW USA_BRA', 'SPFLOW USA_IND', 'SPFLOW USA_ROW', 'SPFLOW EUR_USA', 'SPFLOW EUR_JAP', 'SPFLOW EUR_CHN', 'SPFLOW EUR_BRA', 'SPFLOW EUR_IND', 'SPFLOW EUR_ROW', 'SPFLOW JAP_USA', 'SPFLOW JAP_EUR', 'SPFLOW JAP_CHN', 'SPFLOW JAP_BRA', 'SPFLOW JAP_IND', 'SPFLOW JAP_ROW', 'SPFLOW CHN_USA', 'SPFLOW CHN_EUR', 'SPFLOW CHN_JAP', 'SPFLOW CHN_BRA', 'SPFLOW CHN_IND', 'SPFLOW CHN_ROW', 'SPFLOW BRA_USA', 'SPFLOW BRA_EUR', 'SPFLOW BRA_JAP', 'SPFLOW BRA_CHN', 'SPFLOW BRA_IND', 'SPFLOW BRA_ROW', 'SPFLOW IND_USA', 'SPFLOW IND_EUR', 'SPFLOW IND_JAP', 'SPFLOW IND_CHN', 'SPFLOW IND_BRA', 'SPFLOW IND_ROW', 'SPFLOW ROW_USA', 'SPFLOW ROW_EUR', 'SPFLOW ROW_JAP', 'SPFLOW ROW_CHN', 'SPFLOW ROW_BRA', 'SPFLOW ROW_IND',
-#  'DOMPATEU',
-#  'DOMPATUS']
+m_sign_list = ['GPDIFF',
+  'GROWTH',
+  'KM',
+  'OUT',
+  'RD',
+  'RD',
+  'RD',
+  'RP',
+  'RP',
+  'RP',
+  'RP',
+  'RP',
+  'RP',
+  'RP',
+  'SRDUS',
+  'SRGDP',
+  'SRGDP',
+  'SRGDP',
+  'SRGDP',
+  'SRGDP',
+  'SRGDP',
+  'SRGDP',
+  'JUPCOST',
+  'SINNOVPATUS',
+  'TO',
+  'SPFLOW USA_EUR', 'SPFLOW USA_JAP', 'SPFLOW USA_CHN', 'SPFLOW USA_BRA', 'SPFLOW USA_IND', 'SPFLOW USA_ROW', 'SPFLOW EUR_USA', 'SPFLOW EUR_JAP', 'SPFLOW EUR_CHN', 'SPFLOW EUR_BRA', 'SPFLOW EUR_IND', 'SPFLOW EUR_ROW', 'SPFLOW JAP_USA', 'SPFLOW JAP_EUR', 'SPFLOW JAP_CHN', 'SPFLOW JAP_BRA', 'SPFLOW JAP_IND', 'SPFLOW JAP_ROW', 'SPFLOW CHN_USA', 'SPFLOW CHN_EUR', 'SPFLOW CHN_JAP', 'SPFLOW CHN_BRA', 'SPFLOW CHN_IND', 'SPFLOW CHN_ROW', 'SPFLOW BRA_USA', 'SPFLOW BRA_EUR', 'SPFLOW BRA_JAP', 'SPFLOW BRA_CHN', 'SPFLOW BRA_IND', 'SPFLOW BRA_ROW', 'SPFLOW IND_USA', 'SPFLOW IND_EUR', 'SPFLOW IND_JAP', 'SPFLOW IND_CHN', 'SPFLOW IND_BRA', 'SPFLOW IND_ROW', 'SPFLOW ROW_USA', 'SPFLOW ROW_EUR', 'SPFLOW ROW_JAP', 'SPFLOW ROW_CHN', 'SPFLOW ROW_BRA', 'SPFLOW ROW_IND',
+  'DOMPATEU',
+  'DOMPATUS']
 
-# # for i in range(3,6):
-# # fig,ax=plt.subplots(figsize = (20,10))
-# # ax.plot(jac[:,-4])
-# # ax.set_xticks(np.arange(len(jac[:,-4])))
-# # ax.set_xticklabels(m_sign_list,rotation = 45)
-# # plt.show()
-# fig,ax=plt.subplots(figsize = (15,20))
-# ax.plot(after-before,np.arange(len(jac[:,-4])))
-# ax.set_yticks(np.arange(len(jac[:,-4])))
-# ax.set_yticklabels(m_sign_list)
+# for i in range(3,6):
+# fig,ax=plt.subplots(figsize = (20,10))
+# ax.plot(jac[:,-4])
+# ax.set_xticks(np.arange(len(jac[:,-4])))
+# ax.set_xticklabels(m_sign_list,rotation = 45)
 # plt.show()
+fig,ax=plt.subplots(figsize = (15,20))
+ax.plot(m.deviation_vector()-m_back_up.deviation_vector(),np.arange(len(m.deviation_vector())))
+ax.set_yticks(np.arange(len(m.deviation_vector())))
+ax.set_yticklabels(m_sign_list)
+plt.grid()
+
+plt.show()
 
 # SPFLOW_sign = []
 # for c1 in p.countries:
