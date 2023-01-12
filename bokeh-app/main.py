@@ -183,7 +183,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
  'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
  'SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'SINNOVPATUS', 'TO',
- 'DOMPATUS','DOMPATEU','ERDUS']
+ 'DOMPATUS','DOMPATEU','ERDUS','TWSPFLOW','TWSPFLOWDOM']
 
 comments_dic = {'baseline':'baseline',
                 '99':'silenced run',
