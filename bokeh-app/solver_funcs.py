@@ -246,6 +246,8 @@ def compute_deriv_growth_to_patent_protec_US(sol_baseline,p,v0=None):
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                      avoid_bad_nash=False,bad_nash_weight = None):
     p.update_parameters(vec_parameters)
+    if 'khi' in p.calib_parameters:
+        p.update_khi_and_r_hjort(p.khi)
     # print(vec_parameters)
     try:
         v0 = p.guess
@@ -364,7 +366,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
                   , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
-                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d)
+                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort)
         if avoid_bad_nash and hist.count%10==0:
             print('Nash : ',US_deriv_w_to_d, 'Cost : ', US_cost_w_to_d)
     hist.count += 1

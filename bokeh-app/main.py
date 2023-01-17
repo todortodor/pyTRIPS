@@ -53,6 +53,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     dic_df_sol = {}
     params = p_baseline.calib_parameters
     params.append('kappa')
+    params.append('r_hjort')
+    # params.append('khi')
     params.append('d*fe')
     params.append('nu/deltaUS')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
@@ -62,6 +64,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         # print(param)
         # print(getattr(p_baseline,param)[p_baseline.mask[param]].squeeze().shape == (14,))
         if hasattr(p_baseline,param):
+            # print(param,getattr(p_baseline,param))
             if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 1:
                 if param == 'k':
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
@@ -69,6 +72,10 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])
             if param in ['eta','delta']:
                 df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
+                df.index.name='x'
+                dic_df_param[param] = df
+            if param in ['r_hjort']:
+                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param))
                 df.index.name='x'
                 dic_df_param[param] = df
             if param in ['T']:
@@ -145,6 +152,8 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
                 
         if k in ['eta','delta']:
             dic_df_param[k][run_name] = getattr(p,k)[...,1]
+        if k in ['r_hjort']:
+            dic_df_param[k][run_name] = getattr(p,k)
         if k == 'T non patent sector':
             dic_df_param[k][run_name] = getattr(p,'T')[...,0]
         if k == 'T patent sector':
@@ -212,6 +221,7 @@ comments_dic = {'baseline':'baseline',
                 '11.5':'11.5: 2.3 with new param d',
                 '11.6':'11.6: 4.3 with new param d',
                 '11.7':'11.7: 8.1 with new param d',
+                '11.8':'11.8: 11.7 with ratio loss func',
                 '12':'12: replace KM moment by KM_GDP',
                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
                 '12.2':'12.2: 11.7 but drop KM moment',
@@ -219,14 +229,9 @@ comments_dic = {'baseline':'baseline',
                 '14.1':'14.1: 11.7 with kappa=0.75',
                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
-                '16.2':'16.2: 16.1 with higher weights on SPFLOW',
-                '16.3':'16.3: 16.2 with higher weights on SPFLOW',
-                '17.1':'17.1: 16.1 with targets G=2% KM=0.132 TO=4.65%',
-                '18.1':'18.1: 11.7, then fix eta, add hjort factors',
-                '19.1':'19.1: 11.7, add hjort factor only for BRA',
-                '19.2':'19.2: 11.7, all eta fixed add hjort factor BRA only',
-                '20.1':'20.1: 11.7, add hjort factor only for CHN',
-                '20.2':'20.2: 11.7, all eta fixed add hjort factor CHN only',
+                '17.1':'17.1: 11.7, add hjort factor only for CHN',
+                '18.1':'18.1: 11.7, calibrated r_hjort-like patenting costs',
+                '19.1':'19.1: 11.7, calibrated hjort elasticity',
                 }
 
 baselines_dic_param = {}

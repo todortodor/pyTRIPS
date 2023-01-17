@@ -111,6 +111,8 @@ class parameters:
                          'beta':co,
                          'T':co,
                          'eta':co,
+                         'khi':0,
+                         'r_hjort':co,
                          'd':0.5}
         self.ub_dict = {'sigma':5,
                         'theta':30,
@@ -129,6 +131,8 @@ class parameters:
                          'beta':1,
                          'T':np.inf,
                          'eta':cou,
+                         'khi':1,
+                         'r_hjort':cou,
                          'd':cou}
         
         self.idx = {'sigma':pd.Index(self.sectors, name='sector'),
@@ -145,6 +149,7 @@ class parameters:
                     # 'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                     #                                  , names=['destination','origin','sector']),
                     'fe':pd.Index(self.sectors, name='sector'),
+                    'r_hjort':pd.Index(self.countries, name='country'),
                     'fo':pd.Index(self.sectors, name='sector'),
                     'delta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                        , names=['country','sector']),
@@ -176,12 +181,13 @@ class parameters:
                     'alpha':None,
                     'beta':None,
                       'T':None,
+                      'r_hjort':None,
                      'eta':[np.s_[::S]]}
         
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
-                         'g_0','kappa','gamma','delta','nu','nu_tilde','d','khi']:
+                         'g_0','kappa','gamma','delta','nu','nu_tilde','d','khi','r_hjort']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
                 self.mask[par_name] = np.ones_like(par,bool).ravel()
@@ -211,7 +217,7 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
-         'kappa','gamma','delta','nu','nu_tilde','d','khi']
+         'kappa','gamma','delta','nu','nu_tilde','d','khi','r_hjort']
             
     def guess_from_params(self):
         # price_guess = self.data.price_level.values
@@ -242,7 +248,7 @@ class parameters:
     def update_khi_and_r_hjort(self, new_khi):
         #new_khi = 1 will remove the hjort factor
         self.khi = new_khi
-        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)**(1-self.khi)
+        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -284,21 +290,14 @@ class parameters:
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
         for pa_name in list_of_params:
-            if pa_name == 'khi':
-                try:
-                    df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-                    self.update_khi_and_r_hjort(df.values[0])
-                except:
+            try:
+                df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
+                setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
+            except:
+                if pa_name == 'd':
+                    self.d = np.array(1.0)
+                else:
                     pass
-            else:
-                try:
-                    df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-                    setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
-                except:
-                    if pa_name == 'd':
-                        self.d = np.array(1.0)
-                    else:
-                        pass
             
         try:
             df = pd.read_csv(path+'guess.csv',header=None)
@@ -571,7 +570,7 @@ class var:
         self.PSI_CL = np.einsum('is,s,nis -> nis',
                                 prefact,
                                 1/A_tilde,
-                                (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :])
+                                (p.nu/A)[None, None,:]-B_tilde*A_tilde[None, None, :])#!!!
         # if np.any(np.isnan(self.PSI_CL)):
         #     print('prefact',prefact)
         #     print('A_tilde',A_tilde)
@@ -672,7 +671,7 @@ class var:
         # print(p.d_np)
         d_np = (p.d-1)*np.identity(p.N)+1
         
-        l_Ae = np.einsum('ni,i,s,is,is,nis -> ins',
+        l_Ae = np.einsum('ni,n,s,is,is,nis -> ins',
                          d_np, #!!!
                          p.r_hjort,
                          p.fe,
@@ -681,10 +680,12 @@ class var:
                          np.divide(
                              1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star != np.inf)
                          )
-        l_Ao = np.einsum('ins,s,s -> ins',
+        l_Ao = np.einsum('ins,s,i,s,n -> ins',
                          l_Ae,
                          p.fo,
-                         1/p.fe
+                         p.r_hjort,
+                         1/p.fe,
+                         1/p.r_hjort
                          )
         l_P = p.labor - np.einsum('is->i',
                                   np.einsum('ins->is', l_Ao)+np.einsum('nis->is',l_Ae)+l_R)
@@ -740,7 +741,10 @@ class var:
                       p.k/(self.r+p.zeta+p.nu-self.g+self.g_s)
                       )
         B = np.einsum('nis,nis->is',
-                      p.fo+np.einsum('n,i,ni,i,s->nis',
+                      np.einsum('s,i->is',
+                                p.fo,
+                                p.r_hjort)[None,:,:]+
+                      np.einsum('n,i,ni,n,s->nis',
                                      self.w,
                                      1/self.w,
                                      d_np,  #!!!
@@ -764,12 +768,15 @@ class var:
                              np.divide(1, self.X_M, out=np.full_like(
                                  self.X_M, np.inf), where=self.X_M != 0),
                              1/(p.trade_shares*self.Z.sum()),
-                             p.fo[None, None, :]+np.einsum('n,i,ni,i,s -> nis',
-                                                           self.w,
-                                                           1/self.w,
-                                                           d_np,
-                                                           p.r_hjort,
-                                                           p.fe),
+                             np.einsum('s,i->is',
+                                       p.fo,
+                                       p.r_hjort)[None,:,:]+
+                             np.einsum('n,i,ni,n,s->nis',
+                                            self.w,
+                                            1/self.w,
+                                            d_np,  #!!!
+                                            p.r_hjort,
+                                            p.fe),
                              self.r+p.zeta[None, :]+p.delta - self.g+self.g_s[None, :],
                              self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta
                              )
@@ -916,12 +923,12 @@ class var:
         self.compute_sectoral_prices(p)
         # self.compute_trade_shares(p)
         
-    def scale_Z(self,p):
-        fact = p.OUT/self.Z.sum()
-        self.w = self.w * fact
-        self.Z = self.Z * fact
+    # def scale_Z(self,p):
+    #     fact = p.OUT/self.Z.sum()
+    #     self.w = self.w * fact
+    #     self.Z = self.Z * fact
         
-        self.compute_trade_flows(p)
+    #     self.compute_trade_flows(p)
     
     def compute_nominal_value_added(self,p):
         self.nominal_value_added = p.alpha[None, :]*(p.trade_shares*self.Z.sum()*(1-self.X_M/p.sigma[None, None, :])).sum(axis=0)
@@ -1005,7 +1012,7 @@ class var:
                                  self.PSI_MPND,
                                  1/(A_tilde[None,:]+p.delta))
         self.PSI_MPD = np.einsum('s,nis,ns->nis',
-                                 p.nu,
+                                 p.nu_tilde,#!!!
                                  self.PSI_MPL,
                                  1/(p.delta+self.g_s[None,:]+p.zeta[None,:]))
         numerator_A = np.einsum('is,nis->nis',
@@ -1038,40 +1045,40 @@ class var:
         self.compute_non_solver_aggregate_qualities(p)
         self.compute_semi_elast_RD_delta(p)
 
-    def check_solution(self, p, return_checking_copy = False, assertions = True):
-        check = self.copy()
-        check.compute_growth(p)
-        check.compute_aggregate_qualities(p)
-        check.compute_phi(p)
-        check.price_indices = check.compute_price_indices(p)
-        check.compute_monopolistic_sectoral_prices(p)
-        check.compute_monopolistic_trade_flows(p)
-        check.psi_star = check.compute_psi_star(p)
-        check.l_R = check.compute_labor_research(p)
-        check.compute_competitive_sectoral_prices(p)
-        check.compute_competitive_trade_flows(p)
-        check.compute_labor_allocations(p)
-        check.w = check.compute_wage(p)
-        check.Z = check.compute_expenditure(p)
-        if assertions:
-            assert np.all(
-                np.isclose(check.price_indices, check.compute_price_indices(p))
-                ), 'check prices wrong'
-            assert np.all(
-                np.isclose(check.psi_star, check.compute_psi_star(p))
-                ), 'check psi star wrong'
-            assert np.all(
-                np.isclose(check.l_R, check.compute_labor_research(p))
-                ), 'check l_R wrong'
-            assert np.all(
-                np.isclose(check.w, check.compute_wage(p))
-                ), 'check w wrong'
-            assert np.all(
-                np.isclose(check.Z, check.compute_expenditure(p))
-                ), 'check Z wrong'
-            print('is a solution')
-        if return_checking_copy:
-            return check
+    # def check_solution(self, p, return_checking_copy = False, assertions = True):
+    #     check = self.copy()
+    #     check.compute_growth(p)
+    #     check.compute_aggregate_qualities(p)
+    #     check.compute_phi(p)
+    #     check.price_indices = check.compute_price_indices(p)
+    #     check.compute_monopolistic_sectoral_prices(p)
+    #     check.compute_monopolistic_trade_flows(p)
+    #     check.psi_star = check.compute_psi_star(p)
+    #     check.l_R = check.compute_labor_research(p)
+    #     check.compute_competitive_sectoral_prices(p)
+    #     check.compute_competitive_trade_flows(p)
+    #     check.compute_labor_allocations(p)
+    #     check.w = check.compute_wage(p)
+    #     check.Z = check.compute_expenditure(p)
+    #     if assertions:
+    #         assert np.all(
+    #             np.isclose(check.price_indices, check.compute_price_indices(p))
+    #             ), 'check prices wrong'
+    #         assert np.all(
+    #             np.isclose(check.psi_star, check.compute_psi_star(p))
+    #             ), 'check psi star wrong'
+    #         assert np.all(
+    #             np.isclose(check.l_R, check.compute_labor_research(p))
+    #             ), 'check l_R wrong'
+    #         assert np.all(
+    #             np.isclose(check.w, check.compute_wage(p))
+    #             ), 'check w wrong'
+    #         assert np.all(
+    #             np.isclose(check.Z, check.compute_expenditure(p))
+    #             ), 'check Z wrong'
+    #         print('is a solution')
+    #     if return_checking_copy:
+    #         return check
 
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)
@@ -1233,6 +1240,10 @@ class moments:
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
+            
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
     
     def load_data(self,data_path = None):
         if data_path is None:
@@ -1597,7 +1608,7 @@ class moments:
         self.Z = var.Z
     
     def compute_JUPCOST(self,var,p):
-        self.JUPCOST = var.pflow[2,0]*(p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
+        self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_TP(self,var,p):
@@ -1776,6 +1787,7 @@ class moments:
         #             )
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
+                
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH':
                     # setattr(self,
                     #         mom+'_deviation',
@@ -1805,6 +1817,13 @@ class moments:
                             self.weights_dict[mom]*np.abs(mo-tar)/tar
                             /getattr(self,mom+'_target').size
                             )
+                # mo = getattr(self,mom)
+                # tar = getattr(self,mom+'_target')
+                # setattr(self,
+                #         mom+'_deviation',
+                #         self.weights_dict[mom]*np.abs(mo-tar)/tar
+                #         /getattr(self,mom+'_target').size
+                #         )
                     # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
         if self.drop_CHN_IND_BRA_ROW_from_RD:
             self.RD_deviation = self.RD_deviation[:3]

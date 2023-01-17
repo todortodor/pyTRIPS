@@ -20,7 +20,7 @@ baseline_number = '101'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -32,7 +32,7 @@ if new_run:
 
 m = moments()
 m.load_data()
-m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/16.1/')
+m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
 # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
@@ -43,6 +43,10 @@ if 'theta' in p.calib_parameters:
 # uncomment following for run 11.7
 if 'd' not in p.calib_parameters:
     p.calib_parameters.append('d')
+# if 'r_hjort' not in p.calib_parameters:
+#     p.calib_parameters.append('r_hjort')
+if 'khi' not in p.calib_parameters:
+    p.calib_parameters.append('khi')
 if 'DOMPATEU' not in m.list_of_moments:
     m.list_of_moments.append('DOMPATEU')
 if 'DOMPATUS' not in m.list_of_moments:
@@ -57,7 +61,7 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 #     m.weights_dict['ERDUS'] = 5
 
 p.update_khi_and_r_hjort(0.16)
-# p.r_hjort[3] = 17.33029162
+# p.r_hjort[3] = 16.02230702
 
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
@@ -68,7 +72,7 @@ avoid_bad_nash = False
 # m.list_of_moments.remove('KM')
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SPFLOW'] = 10
-m.weights_dict['SPFLOW'] = 100
+# m.weights_dict['SPFLOW'] = 100
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.array(0.0465)
@@ -77,6 +81,7 @@ m.weights_dict['SPFLOW'] = 100
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
 # m.add_domestic_EU_to_SPFLOW = True
+# p.calib_parameters.remove('eta')
 # p.calib_parameters.remove('eta')
 
 if new_run:
@@ -108,10 +113,10 @@ while cond:
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
                                 bounds = bounds,
-                                method= 'dogbox',
+                                # method= 'dogbox',
                                 # loss='arctan',
                                 # jac='3-point',
-                                max_nfev=200,
+                                max_nfev=1e8,
                                 # ftol=1e-14, 
                                 xtol=1e-16, 
                                 # gtol=1e-14,
@@ -211,13 +216,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '16.1, higher weights on SPFLOW'
+commentary = '11.7, calibrated hjort elasticity'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 16.3
+run_number = 19.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

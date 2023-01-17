@@ -72,9 +72,9 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
         
 baseline_dics = [
                 {'baseline':'101',
-                  'variation':'14.1'},
-                {'baseline':'104',
-                  'variation':'14.1'}
+                  'variation':'16.1'},
+                # {'baseline':'104',
+                #   'variation':'14.1'}
                  ]
         
 lb_delta = 0.01

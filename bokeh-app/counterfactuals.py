@@ -44,7 +44,7 @@ baseline_dics = [
                 # {'baseline':'101',
                 #   'variation':'15.1'},
                 {'baseline':'101',
-                  'variation':'17.1'},
+                  'variation':'16.1'},
                 # {'baseline':'102',
                 #   'variation':None},
                 # {'baseline':'104',
@@ -53,8 +53,8 @@ baseline_dics = [
                 #   'variation':'13.1'},
                 # {'baseline':'104',
                 #   'variation':'14.1'},
-                {'baseline':'104',
-                  'variation':'17.1'}
+                # {'baseline':'104',
+                #   'variation':'17.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -314,7 +314,7 @@ baseline_dics = [
                 # {'baseline':'101',
                 #   'variation':'15.1'},
                 {'baseline':'101',
-                  'variation':'17.1'},
+                  'variation':'16.1'},
                 # {'baseline':'102',
                 #   'variation':None},
                 # {'baseline':'104',
@@ -323,8 +323,8 @@ baseline_dics = [
                 #   'variation':'13.1'},
                 # {'baseline':'104',
                 #   'variation':'14.1'},
-                {'baseline':'104',
-                  'variation':'17.1'}
+                # {'baseline':'104',
+                #   'variation':'17.1'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
