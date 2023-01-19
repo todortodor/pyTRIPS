@@ -34,24 +34,24 @@ m = moments()
 m.load_data()
 m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
-if 'theta' in p.calib_parameters:
-    p.update_sigma_with_SRDUS_target(m)
-# m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
-#                     'SRDUS','SPFLOW_US','SPFLOW_RUS',
-#                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
-#                     'SINNOVPATUS','TO']
+# if 'theta' in p.calib_parameters:
+#     p.update_sigma_with_SRDUS_target(m)
+# # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
+# #                     'SRDUS','SPFLOW_US','SPFLOW_RUS',
+# #                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
+# #                     'SINNOVPATUS','TO']
 
-# uncomment following for run 11.7
-if 'd' not in p.calib_parameters:
-    p.calib_parameters.append('d')
-# if 'r_hjort' not in p.calib_parameters:
-#     p.calib_parameters.append('r_hjort')
-# if 'khi' not in p.calib_parameters:
-#     p.calib_parameters.append('khi')
-if 'DOMPATEU' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATEU')
-if 'DOMPATUS' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATUS')
+# # uncomment following for run 11.7
+# if 'd' not in p.calib_parameters:
+#     p.calib_parameters.append('d')
+# # if 'r_hjort' not in p.calib_parameters:
+# #     p.calib_parameters.append('r_hjort')
+# # if 'khi' not in p.calib_parameters:
+# #     p.calib_parameters.append('khi')
+# if 'DOMPATEU' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATEU')
+# if 'DOMPATUS' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATUS')
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 # if 'kappa' not in p.calib_parameters:
@@ -72,12 +72,12 @@ avoid_bad_nash = False
 # m.list_of_moments.append('SPFLOWDOM_RUS')
 # m.list_of_moments.remove('KM')
 # m.list_of_moments.append('KM_GDP')
-# m.weights_dict['SPFLOW'] = 10
+m.weights_dict['SINNOVPATUS'] = 1.1
 # m.weights_dict['SPFLOW'] = 100
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
-# m.TO_target = np.array(0.0465)
-# m.KM_target = np.array(0.1322)
+m.TO_target = np.float64(0.036)
+m.KM_target = np.float64(0.1322)
 # m.GROWTH_target = np.array(0.02)
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True

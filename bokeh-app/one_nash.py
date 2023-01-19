@@ -18,10 +18,10 @@ from solver_funcs import fixed_point_solver, find_nash_eq
 from tqdm import tqdm
 import matplotlib.pylab as pylab
 
-# p_baseline = parameters(n=7,s=2)
-# p_baseline.load_data('calibration_results_matched_economy/104/')
+p_baseline = parameters(n=7,s=2)
+p_baseline.load_data('calibration_results_matched_economy/104/')
 
-deltas, welfares = find_nash_eq(p_sol,lb_delta=0.01,ub_delta=100,method='fixed_point',
+deltas, welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                  plot_convergence = True,solver_options=None,tol=5e-3,window=4,
                  initial_small_change_newton=0.5)
 

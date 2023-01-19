@@ -18,102 +18,112 @@ import numpy as np
 import pandas as pd
 
 runs_params = [
-    {'number':0,
-     'KM_target':0.06,
-     'TO_target':0.05,
-     'kappa':0.5
-     },
-    {'number':1,
-     'KM_target':0.09277,
-     'TO_target':0.05,
-     'kappa':0.5
-     },
-    {'number':2,
-     'KM_target':0.1322,
-     'TO_target':0.05,
-     'kappa':0.5
-     },
-    {'number':3,
-     'KM_target':0.06,
-     'TO_target':0.036,
-     'kappa':0.5
-     },
-    {'number':4,
-     'KM_target':0.09277,
-     'TO_target':0.036,
-     'kappa':0.5
-     },
-    {'number':5,
-     'KM_target':0.1322,
-     'TO_target':0.036,
-     'kappa':0.5
-     },
-    {'number':6,
-     'KM_target':0.06,
-     'TO_target':0.0124,
-     'kappa':0.5
-     },
-    {'number':7,
-     'KM_target':0.09277,
-     'TO_target':0.0124,
-     'kappa':0.5
-     },
-    {'number':8,
-     'KM_target':0.1322,
-     'TO_target':0.0124,
-     'kappa':0.5
-     },
-    {'number':9,
-     'KM_target':0.06,
-     'TO_target':0.05,
-     'kappa':0.7474
-     },
-    {'number':10,
-     'KM_target':0.09277,
-     'TO_target':0.05,
-     'kappa':0.7474
-     },
-    {'number':11,
-     'KM_target':0.1322,
-     'TO_target':0.05,
-     'kappa':0.7474
-     },
-    {'number':12,
-     'KM_target':0.06,
-     'TO_target':0.036,
-     'kappa':0.7474
-     },
-    {'number':13,
-     'KM_target':0.09277,
-     'TO_target':0.036,
-     'kappa':0.7474
-     },
-    {'number':14,
-     'KM_target':0.1322,
-     'TO_target':0.036,
-     'kappa':0.7474
-     },
-    {'number':15,
-     'KM_target':0.06,
-     'TO_target':0.0124,
-     'kappa':0.7474
-     },
-    {'number':16,
-     'KM_target':0.09277,
-     'TO_target':0.0124,
-     'kappa':0.7474
-     },
-    {'number':17,
-     'KM_target':0.1322,
-     'TO_target':0.0124,
-     'kappa':0.7474
-     }
+    # {'number':0,
+    #   'KM_target':0.06,
+    #   'TO_target':0.05,
+    #   'kappa':0.5
+    #   },
+    # {'number':1,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.05,
+    #  'kappa':0.5
+    #  },
+    # {'number':2,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.05,
+    #  'kappa':0.5
+    #  },
+    # {'number':3,
+    #  'KM_target':0.06,
+    #  'TO_target':0.036,
+    #  'kappa':0.5
+    #  },
+    # {'number':4,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.036,
+    #  'kappa':0.5
+    #  },
+    # {'number':5,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.036,
+    #  'kappa':0.5
+    #  },
+    # {'number':6,
+    #  'KM_target':0.06,
+    #  'TO_target':0.0124,
+    #  'kappa':0.5
+    #  },
+    # {'number':5.2,
+    #   'KM_target':0.1322,
+    #   'TO_target':0.036,
+    #   'kappa':0.5
+    #   },
+    {'number':6.2,
+      'KM_target':0.06,
+      'TO_target':0.0124,
+      'kappa':0.5
+      },
+    # {'number':7,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.0124,
+    #  'kappa':0.5
+    #  },
+    # {'number':8,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.0124,
+    #  'kappa':0.5
+    #  },
+    # {'number':9,
+    #  'KM_target':0.06,
+    #  'TO_target':0.05,
+    #  'kappa':0.7474
+    #  },
+    # {'number':10,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.05,
+    #  'kappa':0.7474
+    #  },
+    # {'number':11,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.05,
+    #  'kappa':0.7474
+    #  },
+    # {'number':12,
+    #  'KM_target':0.06,
+    #  'TO_target':0.036,
+    #  'kappa':0.7474
+    #  },
+    # {'number':13,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.036,
+    #  'kappa':0.7474
+    #  },
+    # {'number':14,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.036,
+    #  'kappa':0.7474
+    #  },
+    # {'number':15,
+    #  'KM_target':0.06,
+    #  'TO_target':0.0124,
+    #  'kappa':0.7474
+    #  },
+    # {'number':16,
+    #  'KM_target':0.09277,
+    #  'TO_target':0.0124,
+    #  'kappa':0.7474
+    #  },
+    # {'number':17,
+    #  'KM_target':0.1322,
+    #  'TO_target':0.0124,
+    #  'kappa':0.7474
+    #  }
     ]
 baseline_number = '201'
 for run_number_temp,run_params in enumerate(runs_params):
     
     baseline_dic = {'baseline':baseline_number,
-                    'variation':'1.'+str(run_number_temp)}
+                    'variation':'1.'+str(run_params['number'])}
     new_run = True
     
     if new_run:
@@ -135,6 +145,7 @@ for run_number_temp,run_params in enumerate(runs_params):
     # m.TO_target = np.array(run_params['TO_target'])
     m.KM_target = np.float64(run_params['KM_target'])
     # m.KM_target = np.array(run_params['KM_target'])
+    m.weights_dict['SINNOVPATUS'] = 1.2
     p.kappa = np.array(run_params['kappa'])
     
     if new_run:
@@ -144,7 +155,7 @@ for run_number_temp,run_params in enumerate(runs_params):
     iterations = 0
     
     while cond:
-        if iterations < 14:
+        if iterations < 29:
             test_ls = optimize.least_squares(fun = calibration_func,    
                                     x0 = p.make_p_vector(), 
                                     args = (p,m,p.guess,hist,start_time), 
@@ -172,7 +183,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                                     # gtol=1e-14,
                                     # f_scale=scale,
                                     verbose = 2)
-        cond = iterations < 15
+        cond = iterations < 30
         iterations += 1
         p.update_parameters(test_ls.x)
     
