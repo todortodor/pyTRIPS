@@ -266,25 +266,27 @@ for baseline_nbr in ['201','202']:
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path)
     baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr], baselines_dic_sol_qty[baseline_nbr]\
         = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments)
+    try:
+        files_in_dir = next(os.walk(baseline_variations_path))[1]
+        run_list = [f for f in files_in_dir if f[0].isnumeric()]
+        run_list.sort(key=float)
     
-    files_in_dir = next(os.walk(baseline_variations_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list.sort(key=float)
-    
-    for run in run_list:
-        # print(run)
-        if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
-            p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
-            a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
-                                                            baselines_dic_mom[baseline_nbr], 
-                                                            baselines_dic_sol_qty[baseline_nbr],
-                                                            p_to_add, 
-                                                            m_to_add, 
-                                                            sol_to_add,
-                                                            run)
-            baselines_dic_param[baseline_nbr] = a
-            baselines_dic_mom[baseline_nbr] = b
-            baselines_dic_sol_qty[baseline_nbr] = c
+        for run in run_list:
+            # print(run)
+            if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
+                p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
+                a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
+                                                                baselines_dic_mom[baseline_nbr], 
+                                                                baselines_dic_sol_qty[baseline_nbr],
+                                                                p_to_add, 
+                                                                m_to_add, 
+                                                                sol_to_add,
+                                                                run)
+                baselines_dic_param[baseline_nbr] = a
+                baselines_dic_mom[baseline_nbr] = b
+                baselines_dic_sol_qty[baseline_nbr] = c
+    except:
+        pass
 
 
 TOOLS="pan,wheel_zoom,box_zoom,reset"
