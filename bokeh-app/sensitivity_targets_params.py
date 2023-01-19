@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '101'
+baseline = '201'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -70,9 +70,10 @@ m_baseline.compute_moments(sol_baseline, p_baseline)
 #                 '7':'7 : drop SRDUS'
 #                 }
 
-moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS','ERDUS']
+moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS']
 # moments_to_change = ['ERDUS']
-parameters_to_change = ['kappa','gamma','rho','zeta']
+parameters_to_change = ['kappa','gamma','rho','nu_tilde']
+# parameters_to_change = ['nu_tilde']
 
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 
@@ -97,7 +98,7 @@ def GetSpacedElements(array, numElems = 13):
     out = array[idx]
     return out, idx
 
-#%%
+#%% make dirs
 
 make_dirs([parent_moment_result_path,
            parent_moment_dropbox_path,
@@ -137,6 +138,7 @@ for k, v in dic_runs.items():
         m = moments()
         m.load_data()
         m.load_run(baseline_path)
+        m.drop_CHN_IND_BRA_ROW_from_RD = True
         p = parameters(n=7,s=2)
         p.load_data(baseline_path)
         if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
@@ -149,15 +151,39 @@ for k, v in dic_runs.items():
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()
         hist = history(*tuple(m.list_of_moments+['objective']))
-        test_ls = optimize.least_squares(fun = calibration_func,    
-                            x0 = p.make_p_vector(), 
-                            args = (p,m,p.guess,hist,start_time), 
-                            bounds = bounds,
-                            max_nfev=1e8,
-                            # ftol=1e-14, 
-                            xtol=1e-10, 
-                            # gtol=1e-14,
-                            verbose = 2)
+        cond = True
+        iterations = 0
+        while cond:
+            if iterations < 14:
+                test_ls = optimize.least_squares(fun = calibration_func,    
+                                        x0 = p.make_p_vector(), 
+                                        args = (p,m,p.guess,hist,start_time), 
+                                        bounds = bounds,
+                                        # method= 'dogbox',
+                                        # loss='arctan',
+                                        # jac='3-point',
+                                        max_nfev=1e8,
+                                        # ftol=1e-14, 
+                                        xtol=1e-10, 
+                                        # gtol=1e-14,
+                                        # f_scale=scale,
+                                        verbose = 2)
+            else:
+                test_ls = optimize.least_squares(fun = calibration_func,    
+                                        x0 = p.make_p_vector(), 
+                                        args = (p,m,p.guess,hist,start_time), 
+                                        bounds = bounds,
+                                        # method= 'dogbox',
+                                        # loss='arctan',
+                                        # jac='3-point',
+                                        max_nfev=1e8,
+                                        # ftol=1e-14, 
+                                        xtol=1e-16, 
+                                        # gtol=1e-14,
+                                        # f_scale=scale,
+                                        verbose = 2)
+            cond = iterations < 15
+            iterations += 1
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
         sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
@@ -182,8 +208,10 @@ for k, v in dic_runs.items():
                                   # apply_bound_psi_star=True
                                 )
     
-        sol_c = var.var_from_vector(sol.x, p_sol)    
+        # sol_c = var.var_from_vector(sol.x, p_sol)    
         # sol_c.scale_tau(p_sol)
+        p_sol.guess = sol.x
+        sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
         sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 
@@ -204,7 +232,7 @@ dic_runs = dict([(par, np.linspace(getattr(p_baseline,par)*0.5,getattr(p_baselin
 #     dic_runs['kappa'] = np.linspace(getattr(p_baseline,'kappa')*0.8,getattr(p_baseline,'kappa')*1.2,21)
 if 'zeta' in parameters_to_change:
     dic_runs['zeta'] = [np.array([p_baseline.zeta[0], i]) for i in np.linspace(0,0.1,21)]
-    p_baseline.calib_parameters.remove('zeta')
+    # p_baseline.calib_parameters.remove('zeta')
 
 for k, v in dic_runs.items():
     print(k)
@@ -230,25 +258,51 @@ for k, v in dic_runs.items():
         m = moments()
         m.load_data()
         m.load_run(baseline_path)
+        m.drop_CHN_IND_BRA_ROW_from_RD = True
         p = parameters(n=7,s=2)
         p.load_data(baseline_path)
         if par_to_change == 'zeta':
-            p.calib_parameters.remove('zeta')
+            if 'zeta' in p.calib_parameters:
+                p.calib_parameters.remove('zeta')
         setattr(p,par_to_change,par)
         if 'theta' in p_baseline.calib_parameters:
             p.update_sigma_with_SRDUS_target(m)
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()
         hist = history(*tuple(m.list_of_moments+['objective']))
-        test_ls = optimize.least_squares(fun = calibration_func,    
-                            x0 = p.make_p_vector(), 
-                            args = (p,m,p.guess,hist,start_time), 
-                            bounds = bounds,
-                            max_nfev=1e8,
-                            # ftol=1e-14, 
-                            xtol=1e-11, 
-                            # gtol=1e-14,
-                            verbose = 2)
+        cond = True
+        iterations = 0
+        while cond:
+            if iterations < 14:
+                test_ls = optimize.least_squares(fun = calibration_func,    
+                                        x0 = p.make_p_vector(), 
+                                        args = (p,m,p.guess,hist,start_time), 
+                                        bounds = bounds,
+                                        # method= 'dogbox',
+                                        # loss='arctan',
+                                        # jac='3-point',
+                                        max_nfev=1e8,
+                                        # ftol=1e-14, 
+                                        xtol=1e-10, 
+                                        # gtol=1e-14,
+                                        # f_scale=scale,
+                                        verbose = 2)
+            else:
+                test_ls = optimize.least_squares(fun = calibration_func,    
+                                        x0 = p.make_p_vector(), 
+                                        args = (p,m,p.guess,hist,start_time), 
+                                        bounds = bounds,
+                                        # method= 'dogbox',
+                                        # loss='arctan',
+                                        # jac='3-point',
+                                        max_nfev=1e8,
+                                        # ftol=1e-14, 
+                                        xtol=1e-16, 
+                                        # gtol=1e-14,
+                                        # f_scale=scale,
+                                        verbose = 2)
+            cond = iterations < 15
+            iterations += 1
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
         sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
@@ -273,8 +327,10 @@ for k, v in dic_runs.items():
                                   # apply_bound_psi_star=True
                                 )
     
-        sol_c = var.var_from_vector(sol.x, p_sol)    
+        # sol_c = var.var_from_vector(sol.x, p_sol)    
         # sol_c.scale_tau(p_sol)
+        p_sol.guess = sol.x
+        sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
         sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 

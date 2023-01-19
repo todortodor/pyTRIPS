@@ -194,51 +194,72 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
  'SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'SINNOVPATUS', 'TO',
  'DOMPATUS','DOMPATEU','ERDUS','TWSPFLOW','TWSPFLOWDOM']
 
-comments_dic = {'baseline':'baseline',
-                '99':'silenced run',
-                '1':'1: drop South\nin RD targeting',
-                '2.1':'2.1: added domestic US to patent flow moment',
-                '2.2':'2.2: added domestic EU to patent flow moment',
-                '2.3':'2.3: added domestic US and EU to patent flow moment',
-                '3.1':'3.1: added DOMPATUS',
-                '3.2':'3.2: added DOMPATEU',
-                '3.3':'3.3: added DOMPATUS and DOMPATUS',
-                '4.1':'4.1: 2.1 and drop South in RD',
-                '4.2':'4.2: 2.2 and drop South in RD',
-                '4.3':'4.3: 2.3 and drop South in RD',
-                '5':'5: patent cost relative to RD_US (JUPCOSTRD)',
-                '6':'6: fix delta_US = 0.05 and drop JUPCOST',
-                '7':'7: drop SRDUS',
-                '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
-                '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
-                '9.1':'9.1: drop KM moment, TO target divided by 2',
-                '10.1':'10.1: SPFLOWDOM instead',
-                '10.2':'10.2: SPFLOWDOM and drop South in RD',
-                '11.1':'11.1: baseline with new parameter d',
-                '11.2':'11.2: 10.1 with new parameter d',
-                '11.3':'11.3: 1 with new parameter d',
-                '11.4':'11.4: 10.2 with new parameter d',
-                '11.5':'11.5: 2.3 with new param d',
-                '11.6':'11.6: 4.3 with new param d',
-                '11.7':'11.7: 8.1 with new param d',
-                '11.8':'11.8: 11.7 with ratio loss func',
-                '12':'12: replace KM moment by KM_GDP',
-                '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
-                '12.2':'12.2: 11.7 but drop KM moment',
-                '13.1':'13.1: 11.7 but preventing "bad" Nash',
-                '14.1':'14.1: 11.7 with kappa=0.75',
-                '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
-                '16.1':'16.1: 11.7 with Hjort middle managers factors',
-                '17.1':'17.1: 11.7, add hjort factor only for CHN',
-                '18.1':'18.1: 11.7, calibrated r_hjort-like patenting costs',
-                '19.1':'19.1: 11.7, calibrated hjort elasticity',
-                }
+# comments_dic = {'baseline':'baseline',
+#                 '99':'silenced run',
+#                 '1':'1: drop South\nin RD targeting',
+#                 '2.1':'2.1: added domestic US to patent flow moment',
+#                 '2.2':'2.2: added domestic EU to patent flow moment',
+#                 '2.3':'2.3: added domestic US and EU to patent flow moment',
+#                 '3.1':'3.1: added DOMPATUS',
+#                 '3.2':'3.2: added DOMPATEU',
+#                 '3.3':'3.3: added DOMPATUS and DOMPATUS',
+#                 '4.1':'4.1: 2.1 and drop South in RD',
+#                 '4.2':'4.2: 2.2 and drop South in RD',
+#                 '4.3':'4.3: 2.3 and drop South in RD',
+#                 '5':'5: patent cost relative to RD_US (JUPCOSTRD)',
+#                 '6':'6: fix delta_US = 0.05 and drop JUPCOST',
+#                 '7':'7: drop SRDUS',
+#                 '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
+#                 '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
+#                 '9.1':'9.1: drop KM moment, TO target divided by 2',
+#                 '10.1':'10.1: SPFLOWDOM instead',
+#                 '10.2':'10.2: SPFLOWDOM and drop South in RD',
+#                 '11.1':'11.1: baseline with new parameter d',
+#                 '11.2':'11.2: 10.1 with new parameter d',
+#                 '11.3':'11.3: 1 with new parameter d',
+#                 '11.4':'11.4: 10.2 with new parameter d',
+#                 '11.5':'11.5: 2.3 with new param d',
+#                 '11.6':'11.6: 4.3 with new param d',
+#                 '11.7':'11.7: 8.1 with new param d',
+#                 '11.8':'11.8: 11.7 with ratio loss func',
+#                 '12':'12: replace KM moment by KM_GDP',
+#                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
+#                 '12.2':'12.2: 11.7 but drop KM moment',
+#                 '13.1':'13.1: 11.7 but preventing "bad" Nash',
+#                 '14.1':'14.1: 11.7 with kappa=0.75',
+#                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
+#                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
+#                 '17.1':'17.1: 11.7, add hjort factor only for CHN',
+#                 '18.1':'18.1: 11.7, calibrated r_hjort-like patenting costs',
+#                 '19.1':'19.1: 11.7, calibrated hjort elasticity',
+#                 }
+
+comments_dic = {"baseline":"baseline",
+                "1.0":"1.0: kappa:0.5,TO:0.05,KM:0.06",
+                "1.1":"1.1: kappa:0.5,TO:0.05,KM:0.09277",
+                "1.2":"1.2: kappa:0.5,TO:0.05,KM:0.1322",
+                "1.3":"1.3: kappa:0.5,TO:0.036,KM:0.06",
+                "1.4":"1.4: kappa:0.5,TO:0.036,KM:0.09277",
+                "1.5":"1.5: kappa:0.5,TO:0.036,KM:0.1322",
+                "1.6":"1.6: kappa:0.5,TO:0.0124,KM:0.06",
+                "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
+                "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
+                "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
+                "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
+                "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
+                "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
+                "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
+                "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
+                "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
+                "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
+                "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",}
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-for baseline_nbr in ['101','102','104']:
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['201','202']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
@@ -268,7 +289,8 @@ for baseline_nbr in ['101','102','104']:
 
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
-baseline_mom = '101'
+# baseline_mom = '101'
+baseline_mom = '201'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -358,7 +380,8 @@ mom_select.on_change('value', update_mom)
 # curdoc().add_root(row(p_par, controls))
    
 
-baseline_par = '101'
+# baseline_par = '101'
+baseline_par = '201'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -426,7 +449,8 @@ baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
-baseline_sol_qty = '101'
+# baseline_sol_qty = '101'
+baseline_sol_qty = '201'
 sol_qty = 'semi_elast_RD_delta'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -508,7 +532,8 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 
 baselines_dic_sensi = {}
 
-for baseline_nbr in ['101','102','104']:
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['201','202']:
     baselines_dic_sensi[baseline_nbr] = {}
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
@@ -516,7 +541,8 @@ for baseline_nbr in ['101','102','104']:
     for f in files_in_dir:
         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-baseline_sensi = '101'
+# baseline_sensi = '101'
+baseline_sensi = '201'
 qty_sensi = 'delta US over nu'
 
 baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
@@ -524,11 +550,11 @@ qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(base
 
 ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
 p_sensi = figure(title="Sensitivity", 
-               width = 1200,
-               height = 850,
-               x_axis_label='Change in moment or parameter',
-               y_axis_label='Value',
-               tools = TOOLS)
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in moment or parameter',
+                y_axis_label='Value',
+                tools = TOOLS)
 
 colors_sensi = itertools.cycle(Category10[10])
 
@@ -557,15 +583,17 @@ sensitivity_report = column(controls_sensi,p_sensi)
 
 #%% counterfactuals
 
-baseline_cf = '101'
+# baseline_cf = '101'
+baseline_cf = '201'
 country_cf = 'USA'
 
 p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path))])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) if s[9:].startswith('201')])
 country_cf_select = Select(value=country_cf, 
                            title='Country', 
-                           options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                           # options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                           options=p_baseline.countries+['World','Harmonizing'])
 
 def get_data_cf(baseline,country):
     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
@@ -636,6 +664,7 @@ country_cf_select.on_change('value', update_country_cf)
 counterfactuals_report = column(controls_cf,p_cf)
 
 second_panel = row(sensitivity_report,counterfactuals_report)
+# second_panel = row(counterfactuals_report)
 
 #%% Nash / coop equilibrium
 
@@ -658,6 +687,9 @@ welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0').astype
 
 welf_coop = welf_coop.sort_values(['baseline','sorting'])
 welf_nash = welf_nash.sort_values(['baseline','sorting'])
+
+welf_coop = welf_coop[welf_coop['baseline'].isin([201,202])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([201,202])]
 
 ds_coop = ColumnDataSource(welf_coop)
 ds_nash = ColumnDataSource(welf_nash)
@@ -742,6 +774,9 @@ deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0').as
 
 deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
 deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
+
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([201,202])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([201,202])]
 
 ds_deltas_coop = ColumnDataSource(deltas_coop)
 ds_deltas_nash = ColumnDataSource(deltas_nash)

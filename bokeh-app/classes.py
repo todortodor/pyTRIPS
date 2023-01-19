@@ -1218,7 +1218,7 @@ class moments:
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
                        }
         
-        self.drop_CHN_IND_BRA_ROW_from_RD = False
+        self.drop_CHN_IND_BRA_ROW_from_RD = True
         self.add_domestic_US_to_SPFLOW = False
         self.add_domestic_EU_to_SPFLOW = False
     

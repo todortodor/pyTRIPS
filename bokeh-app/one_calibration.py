@@ -16,11 +16,11 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '101'
+baseline_number = '201'
 if new_run:
     p = parameters(n=7,s=2)
-    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
+    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
     # p.calib_parameters = ['eta','k','fe','T','zeta','theta','g_0',
     #                       'delta','nu','nu_tilde']
     start_time = time.perf_counter()
@@ -32,7 +32,8 @@ if new_run:
 
 m = moments()
 m.load_data()
-m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
+m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+# m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
 # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
@@ -45,8 +46,8 @@ if 'd' not in p.calib_parameters:
     p.calib_parameters.append('d')
 # if 'r_hjort' not in p.calib_parameters:
 #     p.calib_parameters.append('r_hjort')
-if 'khi' not in p.calib_parameters:
-    p.calib_parameters.append('khi')
+# if 'khi' not in p.calib_parameters:
+#     p.calib_parameters.append('khi')
 if 'DOMPATEU' not in m.list_of_moments:
     m.list_of_moments.append('DOMPATEU')
 if 'DOMPATUS' not in m.list_of_moments:
@@ -60,7 +61,7 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 #     m.list_of_moments.append('ERDUS')
 #     m.weights_dict['ERDUS'] = 5
 
-p.update_khi_and_r_hjort(0.16)
+# p.update_khi_and_r_hjort(0.16)
 # p.r_hjort[3] = 16.02230702
 
 avoid_bad_nash = False
@@ -216,17 +217,17 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '11.7, calibrated hjort elasticity'
+commentary = 'New baseline 202 calibrated elasticities'
 # commentary = ''
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 # baseline_number = '102'
-run_number = 19.1
+run_number = 202
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = False
+new_baseline = True
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path
