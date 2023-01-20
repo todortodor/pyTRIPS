@@ -261,7 +261,8 @@ baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
 # for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['201','202']:
+# for baseline_nbr in ['201','202']:
+for baseline_nbr in ['201']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
@@ -271,7 +272,7 @@ for baseline_nbr in ['201','202']:
     try:
         files_in_dir = next(os.walk(baseline_variations_path))[1]
         run_list = [f for f in files_in_dir if f[0].isnumeric()]
-        run_list.sort(key=float)
+        run_list.sort()
     
         for run in run_list:
             # print(run)
@@ -686,8 +687,8 @@ welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.da
 welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
 welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
-welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0').astype(float)
-welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0').astype(float)
+welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
+welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
 
 welf_coop = welf_coop.sort_values(['baseline','sorting'])
 welf_nash = welf_nash.sort_values(['baseline','sorting'])
@@ -773,8 +774,8 @@ deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates
 deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
 deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
 
-deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0').astype(float)
-deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0').astype(float)
+deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
+deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
 
 deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
 deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
