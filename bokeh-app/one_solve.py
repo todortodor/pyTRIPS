@@ -11,37 +11,59 @@ from solver_funcs import fixed_point_solver
 import numpy as np
 
 p = parameters(n=7,s=2)
-# p.load_data('calibration_results_matched_economy/101/')
-p.load_data('calibration_results_matched_economy/baseline_101_variations/14.1/')
+p.load_data('calibration_results_matched_economy/201/')
+# p.load_data('calibration_results_matched_economy/baseline_101_variations/14.1/')
+p.fo = p.fe
 # p.delta[0,1] = 0.1*p.delta[0,1]
 # p.d_np = np.ones((p.N,p.N))
 # np.fill_diagonal(p.d_np,p.d)
 # p = p_it_baseline
-sol, sol_c = fixed_point_solver(p,x0=p.guess,
+# sol, sol_c = fixed_point_solver(p,x0=None,
+#                         cobweb_anim=False,tol =1e-14,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='l_R',
+#                         plot_convergence=True,
+#                         plot_cobweb=True,
+#                         safe_convergence=1,
+#                         disp_summary=True,
+#                         damping = 10,
+#                         max_count = 1000,
+#                         accel_memory =50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=10
+#                         # damping=10
+#                           # apply_bound_psi_star=True
+#                         )
+sol, sol_c = fixed_point_solver(p,x0=None,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='l_R',
                         plot_convergence=True,
-                        plot_cobweb=True,
-                        safe_convergence=0.01,
+                        plot_cobweb=False,
+                        plot_live = True,
+                        safe_convergence=0.1,
                         disp_summary=True,
-                        damping = 20,
-                        max_count = 50000,
-                        accel_memory = 10, 
+                        damping = 2,
+                        max_count = 1000,
+                        accel_memory = 50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
+                        damping_post_acceleration=1
                         # damping=10
                           # apply_bound_psi_star=True
                         )
-
-sol_c = var.var_from_vector(sol.x, p)    
+# sol_c = var.var_from_vector(sol.x, p)    
 sol_c.scale_P(p)
-sol_c.compute_price_indices(p)
+# sol_c.compute_price_indices(p)
 sol_c.compute_non_solver_quantities(p) 
 # list_of_moments = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP',
 #                     'SRDUS', 'SPFLOWDOM', 'SRGDP', 'JUPCOST',

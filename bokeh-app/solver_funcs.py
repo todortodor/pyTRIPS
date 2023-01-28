@@ -16,10 +16,10 @@ from scipy import optimize
 
 def get_vec_qty(x,p):
     res = {'w':x[0:p.N],
-           'Z':x[p.N:p.N*2],
-           'l_R':x[p.N*2:p.N*2+p.N*(p.S-1)],
-           'psi_star':x[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2],
-           'phi':x[p.N*2+p.N*(p.S-1)+p.N**2:]
+           'Z':x[p.N:p.N+1],
+           'l_R':x[p.N+1:p.N+1+p.N*(p.S-1)],
+           'profit':x[p.N+1+p.N*(p.S-1):p.N+1+p.N*(p.S-1)+p.N**2],
+           'phi':x[p.N+1+p.N*(p.S-1)+p.N**2:]
            }
     return res
 
@@ -62,9 +62,9 @@ def smooth_large_jumps(x_new,x_old):
 
 def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
-                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='psi_star',
+                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
                        cobweb_coord = 1, plot_convergence = True, apply_bound_zero = True, 
-                       apply_bound_psi_star = False, apply_bound_research_labor = False,
+                        apply_bound_research_labor = False,
                        accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
                        accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
                        disp_summary=True,damping_post_acceleration=5):   
@@ -94,54 +94,54 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         norm = []
     damping = damping
     
-    while condition and count < max_count: 
+    while condition and count < max_count and np.all(x_old<1e40): 
         
         if count != 0:
             if accelerate:
                 aa_wrk.apply(x_new, x_old)
-            x_new = smooth_large_jumps(x_new,x_old)
+            # x_new = smooth_large_jumps(x_new,x_old)
             x_old = (x_new+(damping-1)*x_old)/damping
         if apply_bound_zero:
             x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
-        if apply_bound_psi_star:
-            x_old, hit_the_bound_count = bound_psi_star(x_old, p, hit_the_bound_count)
         if apply_bound_research_labor:
             x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
             
         init = var.var_from_vector(x_old,p,compute=False)
         
-        init.compute_growth(p)
-        init.compute_aggregate_qualities(p)
-        init.compute_sectoral_prices(p)
-        init.compute_trade_shares(p)
-        init.compute_labor_allocations(p)
-        init.compute_price_indices(p)
+        # init.compute_growth(p)
+        # init.compute_aggregate_qualities(p)
+        # init.compute_sectoral_prices(p)
+        # init.compute_trade_shares(p)
+        # init.compute_labor_allocations(p)
+        # init.compute_price_indices(p)
+        init.compute_solver_quantities(p)
         
         w = init.compute_wage(p)
-        Z = init.compute_expenditure(p)
+        Z = init.compute_world_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
-        psi_star = init.compute_psi_star(p)[...,1:].ravel()
-        psi_star[psi_star<1] = 1
+        profit = init.compute_profit(p)[...,1:].ravel()
+        # psi_star = init.compute_psi_star(p)[...,1:].ravel()
+        # psi_star[psi_star<1] = 1
         phi = init.compute_phi(p).ravel()
         
-        x_new = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
+        x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
         
         # print(x_new)
         
-
         x_new_decomp = get_vec_qty(x_new,p)
         x_old_decomp = get_vec_qty(x_old,p)
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
-                      for qty in ['w','Z','psi_star','l_R','phi']]
+                      for qty in ['w','Z','profit','l_R','phi']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
         # print(count)
-        if plot_live and count>1000:
-            plt.semilogy(convergence)
+        if plot_live and count>100:
+            # plt.semilogy(convergence)
+            plt.plot(x_new)
             plt.show()
         
         count += 1
-        if np.all(np.array(convergence[-10:])<safe_convergence):
+        if np.all(np.array(convergence[-5:])<safe_convergence):
             if accelerate_when_stable:
                 accelerate = True
                 damping = damping_post_acceleration
@@ -253,7 +253,55 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
         v0 = p.guess
     except:
         pass
-    sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+    # print('here')
+    sol, sol_c = fixed_point_solver(p,x0=v0,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.1,
+                            disp_summary=False,
+                            damping = 2,
+                            max_count = 1000,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=1
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    # print('here')
+    if sol.status == 'failed': 
+        print('trying standard guess')
+        sol, sol_c = fixed_point_solver(p,x0=None,
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
+                                disp_summary=False,
+                                damping = 2,
+                                max_count = 1000,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=1
+                                # damping=10
+                                  # apply_bound_psi_star=True
+                                )
+    if sol.status == 'failed': 
+        print('trying slower')
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
                                   accelerate=False,
                                   accelerate_when_stable=True,
                                   plot_cobweb=False,
@@ -262,13 +310,34 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                   disp_summary=False,
                                   safe_convergence=0.1,
                                   max_count=2e3,
+                                  damping = 10,
                                   accel_memory = 50, 
                                   accel_type1=True, 
                                   accel_regularization=1e-10,
                                   accel_relaxation=0.5, 
                                   accel_safeguard_factor=1, 
                                   accel_max_weight_norm=1e6,
-                                  damping_post_acceleration=5
+                                  damping_post_acceleration=2
+                                  )
+    if sol.status == 'failed': 
+        print('trying strong damp')
+        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=5e3,
+                                  damping = 10,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=10
                                   )
     if sol.status == 'failed': 
         print('trying less precise')
@@ -347,7 +416,6 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                       damping_post_acceleration=5
                                       )
     sol_c.scale_P(p)
-    sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_moments_deviations()
@@ -371,6 +439,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
             print('Nash : ',US_deriv_w_to_d, 'Cost : ', US_cost_w_to_d)
     hist.count += 1
     p.guess = sol_c.vector_from_var()
+    # print(p.guess.shape)
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None

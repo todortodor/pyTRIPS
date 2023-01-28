@@ -14,6 +14,7 @@ from scipy.special import gamma
 import time
 import os
 import seaborn as sns
+# import aa
 
 class parameters:     
     def __init__(self, n=7, s=2, data_path = None):
@@ -34,7 +35,7 @@ class parameters:
         self.rho = 0.02  # 0.001 - 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
         self.fe = np.ones(S)  # could be over one
-        self.fo = np.ones(S)*0  # could be over one
+        self.fo = np.ones(S)  # could be over one
         self.sigma = np.ones(S)*3  #
         self.theta = np.ones(S)*5   #
         self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
@@ -104,8 +105,8 @@ class parameters:
                         'kappa':co,
                         'k':1+co,
                         'fe':co,
-                        'fo':0,
-                        'delta':1e-2,
+                        'fo':co,
+                        'delta':co,
                         'g_0':0,
                         'alpha':co,
                          'beta':co,
@@ -122,7 +123,7 @@ class parameters:
                         'nu':cou,
                         'nu_tilde':cou,
                         'kappa':1-co,
-                        'k':1.5,
+                        'k':2,
                         'fe':cou,
                         'fo':cou,
                         'delta':cou,
@@ -174,6 +175,7 @@ class parameters:
                     # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
+                    # 'delta':[np.s_[::S],np.s_[S-1]],
                     'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
@@ -221,12 +223,15 @@ class parameters:
             
     def guess_from_params(self):
         # price_guess = self.data.price_level.values
-        Z_guess = self.data.expenditure.values/self.unit
+        Z_guess = np.array((self.data.expenditure.values/self.unit).sum())[None]
         w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)*100
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
-        psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*100
+        # psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*100
+        profit_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*0.01
         phi_guess = np.ones((self.N,self.N,self.S)).ravel()#*0.01
-        vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
+        # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
+        # print(Z_guess.shape,w_guess.shape)
+        vec = np.concatenate((w_guess,Z_guess,l_R_guess,profit_guess,phi_guess), axis=0)
         return vec
     
     def make_p_vector(self):
@@ -359,17 +364,14 @@ class var:
         self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
         self.diag_mask = np.invert(self.off_diag_mask)
 
-    # def guess_price_indices(self, price_indices_init):
-    #     self.price_indices = price_indices_init
-
-    def guess_patenting_threshold(self, psi_star_init):
-        self.psi_star = psi_star_init
+    def guess_profit(self, profit_init):
+        self.profit = profit_init    
 
     def guess_wage(self, w_init):
         self.w = w_init
 
-    def guess_expenditure(self, Z_init):
-        self.Z = Z_init
+    def guess_world_expenditure(self, Z_init):
+        self.Z_sum = Z_init
 
     def guess_labor_research(self, l_R_init):
         self.l_R = l_R_init
@@ -387,49 +389,32 @@ class var:
     
     @staticmethod
     def var_from_vector(vec,p, compute = True):
-        # init = var()    
-        # init.guess_price_indices(vec[0:p.N])
-        # init.guess_wage(vec[p.N:p.N*2])
-        # init.guess_expenditure(vec[p.N*2:p.N*3])
-        # init.guess_labor_research(
-        #     np.insert(vec[p.N*3:p.N*3+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
-        # init.guess_patenting_threshold(
-        #     np.insert(vec[p.N*3+p.N*(p.S-1):p.N*3+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
-        # init.guess_phi(vec[p.N*3+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
-        # if compute:
-        #     init.compute_growth(p)
-        #     init.compute_aggregate_qualities(p)
-        #     init.compute_monopolistic_sectoral_prices(p)
-        #     init.compute_monopolistic_trade_flows(p)
-        #     init.compute_competitive_sectoral_prices(p)
-        #     init.compute_competitive_trade_flows(p)
-        #     init.compute_labor_allocations(p)
-        # return init
         init = var()    
         init.guess_wage(vec[0:p.N])
-        init.guess_expenditure(vec[p.N:p.N*2])
+        init.guess_world_expenditure(vec[p.N:p.N+1])
         init.guess_labor_research(
-            np.insert(vec[p.N*2:p.N*2+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
-        init.guess_patenting_threshold(
-            np.insert(vec[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.full(p.N,np.inf), axis=2))
-        init.guess_phi(vec[p.N*2+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
+            np.insert(vec[p.N+1:p.N+1+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+        init.guess_profit(
+            np.insert(vec[p.N+1+p.N*(p.S-1):p.N+1+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
+        init.guess_phi(vec[p.N+1+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
         if compute:
-            init.compute_growth(p)
-            init.compute_aggregate_qualities(p)
-            init.compute_sectoral_prices(p)
-            init.compute_trade_shares(p)
-            init.compute_labor_allocations(p)
-            init.compute_price_indices(p)
+            # init.compute_growth(p)
+            # init.compute_aggregate_qualities(p)
+            # init.compute_sectoral_prices(p)
+            # init.compute_trade_shares(p)
+            # init.compute_labor_allocations(p)
+            # init.compute_price_indices(p)
+            init.compute_solver_quantities(p)
         return init
-    
+
     def vector_from_var(self):
         # price = self.price_indices
         w = self.w
         l_R = self.l_R[...,1:].ravel()
-        psi_star = self.psi_star[...,1:].ravel()
-        Z = self.Z
+        profit = self.profit[...,1:].ravel()
+        Z_sum = self.Z_sum
         phi = self.phi.ravel()
-        vec = np.concatenate((w,Z,l_R,psi_star,phi), axis=0)
+        vec = np.concatenate((w,Z_sum,l_R,profit,phi), axis=0)
         return vec
         
     def compare_two_solutions(self,sol2):
@@ -451,339 +436,201 @@ class var:
                                  self.l_R**(1-p.kappa)
                                  )/(p.k-1) - p.zeta
         self.g_s[0] = p.g_0
-        # assert np.isnan(self.g_s).sum() == 0, 'nan in g_s'
         self.g = (p.beta*self.g_s/(p.sigma-1)).sum() / (p.beta*p.alpha).sum()
         self.r = p.rho + self.g/p.gamma
+        self.G = self.r+p.zeta-self.g+self.g_s+p.nu
         
-    def check_PSI_CL(self,p):
-        # status = 'ok'
-        # self.psi_star[self.psi_star < 1] = 1
-        numerator = ((self.g_s + p.nu + p.zeta)*(self.g_s + p.nu_tilde + p.zeta))
-        denominator = (self.g_s[None, 1]+p.delta + p.nu_tilde[None, :]+p.zeta[None, :]) \
-            * (self.g_s[None, :]+p.delta + p.nu_tilde[None, :]+p.zeta[None, :])
-        psi_star_lim = ( (numerator[None, :]/denominator)**(1/(p.k-1)) )[:,None,:]
-        psi_star_lim = np.broadcast_to(psi_star_lim,self.psi_star.shape)
-        # if np.any(self.psi_star < psi_star_lim):
-        #     status = 'corrected'
-        #     print('corrected PSI', (self.psi_star[...,1] < psi_star_lim).sum(),self.psi_star.min())
-        #     self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = \
-        #         np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim] + \
-                #np.broadcast_to(psi_star_lim,self.psi_star[...,1].shape)[self.psi_star[...,1]<psi_star_lim]/100 
-        if np.any(self.psi_star < psi_star_lim):
-            print('corrected PSI', (self.psi_star < psi_star_lim).sum(),(self.psi_star - psi_star_lim).min())
-            # self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim] = self.psi_star[...,1][self.psi_star[...,1]<psi_star_lim]*2
-            self.psi_star[self.psi_star<psi_star_lim] = psi_star_lim[self.psi_star<psi_star_lim]
-            print('post_correction', np.any(self.psi_star < psi_star_lim))
-        # return status
+    def compute_patenting_thresholds(self, p):
+        A = np.einsum('n,n,s,i,i,s->nis',
+                               self.w,
+                               p.r_hjort,
+                               p.fe[1:],
+                               1/self.w,
+                               1/p.r_hjort,
+                               1/p.fo[1:])
         
-    
-    def check_PSI_CD(self,p):
-        self.compute_aggregate_qualities(p)
-        while np.any(self.PSI_CD<=0):
-            plt.plot(self.PSI_CD[...,1].ravel(),label = 'psi CD')
-            plt.plot(self.PSI_CL[...,1].sum(axis=1).ravel(),label = 'psi CL')
-            plt.plot(self.PSI_M[...,1].sum(axis=1).ravel(),label = 'psi M')
-            plt.legend()
-            plt.show()
-            time.sleep(5)
-            print('correcting PSI_CD')
-            self.l_R = self.l_R/2
-            self.compute_aggregate_qualities(p)
-            plt.plot(self.PSI_CD[...,1].ravel(),label = 'psi CD')
-            plt.plot(self.PSI_CL[...,1].sum(axis=1).ravel(),label = 'psi CL')
-            plt.plot(self.PSI_M[...,1].sum(axis=1).ravel(),label = 'psi M')
-            plt.legend()
-            plt.title('corrected')
-            plt.show()
-            time.sleep(5)
-    
-    # def check_labor(self,p):
-    #     status = 'ok'
-    #     correction_count_1 = 0
-    #     correction_count = 0
-    #     l_r = self.l_R[...,1]        
-    #     temp = np.einsum('i,i,ni->ni',
-    #                     p.eta[...,1],
-    #                     l_r,
-    #                     self.psi_star[...,1]**(-p.k))
-    #     condition1 = temp > p.labor[None,:]
-    #     condition2 = temp > p.labor[:,None]
-    #     while condition1.any() or condition2.any():
-    #         l_r = l_r/2
-    #         condition1 = temp > p.labor[None,:]
-    #         condition2 = temp > p.labor[:,None]
-    #         correction_count += 1
-    #         print('corrected labor 1', correction_count1)
+        denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
+        self.psi_C = np.full((p.N,p.N,p.S),np.inf)
+        self.psi_C[...,1:] = A/(p.r_hjort[None,:,None]*p.fo[None,None,1:]*self.profit[...,1:]*denom_bracket[:,None,1:])
+        psi_star = np.maximum(self.psi_C,1)
+        psi_star_n_star = np.min(psi_star,axis=0)
         
-    #     bound = p.labor - p.fe[1]*temp.sum(axis=0) - p.fo[1]*temp.sum(axis=1)
-    #     condition = l_r > 0.9*bound
-    #     while np.any(condition):
-    #         # l_r[condition] = 0.9*bound[condition]
-    #         l_r = l_r/2
-    #         temp = np.einsum('i,i,ni->ni',
-    #                         p.eta[...,1],
-    #                         l_r,
-    #                         self.psi_star[...,1]**(-p.k))
-    #         bound = p.labor - p.fe[1]*temp.sum(axis=0) - p.fo[1]*temp.sum(axis=1)
-    #         condition = l_r[...,1] > 0.9*bound
-    #         correction_count += 1
-    #         print('corrected labor 2', correction_count)
-    #         status = 'corrected labor'
-            
-    #     if np.any(l_r<0):
-    #         l_r[l_r<0] = 0
-    #         status = 'corrected labor'
-            
-    #     self.l_R[...,1] = l_r
-    #     return status
+        x_old = np.max(self.psi_C[...,1:], axis=0)
+        x_new = None
+        cond = True
+        it = 0
+        while cond:
+            if it>0:
+                x_old = x_new
+            mask = x_old[None,:,:]>=self.psi_C[...,1:]
+            x_new = (np.sum(A,axis=0,where=mask)+1)/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
+            cond = np.any(x_old != x_new)
+            it+=1
         
+        # print(np.maximum(A*(x_new[None,:,:]/self.psi_C[...,1:]-1),0).sum(axis=0))
 
+        condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=1
+        x_new[condition] = psi_star_n_star[...,1:][condition]
+        self.psi_o_star = np.full((p.N,p.S),np.inf)
+        self.psi_o_star[...,1:] = x_new
+        self.psi_m_star = np.full((p.N,p.N,p.S),np.inf)
+        self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],psi_star[...,1:])
+
+            
+    
     def compute_aggregate_qualities(self, p):
-        A = (self.g_s + p.nu + p.zeta)
-        B = np.einsum('s,nis,ns,ns -> nis',
-                      p.nu,
-                      np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                          self.psi_star), where=self.psi_star != np.inf),
-                      1/(self.g_s[None, :]+p.delta+p.zeta[None, :]),
-                      1/(self.g_s[None, :]+p.delta +
-                         p.nu[None, :]+p.zeta[None, :])
-                      )
         prefact = p.k * p.eta * self.l_R**(1-p.kappa) /(p.k-1)
-        self.PSI_M = np.einsum('is,nis -> nis',
-                               prefact,
+        A = (self.g_s[1:] + p.nu[1:] + p.zeta[1:])
+        B = np.einsum('s,nis,ns -> nis',
+                      p.nu[1:],
+                      self.psi_m_star[...,1:]**(1-p.k),
+                      1/((self.g_s[None, 1:]+p.delta[...,1:]+p.zeta[None, 1:])
+           *(self.g_s[None, 1:]+p.delta[...,1:]+p.nu[None,1:]+p.zeta[None,1:]))
+                      )
+        self.PSI_M = np.zeros((p.N,p.N,p.S))
+        self.PSI_M[...,1:] = np.einsum('is,nis -> nis',
+                               prefact[...,1:],
                                1/A[None, None, :]+B)
-        self.PSI_M[:, :, 0] = 0
-
-        # assert np.isnan(self.psi_star).sum() == 0, 'nan in psi_star'
-        # assert np.isnan(self.PSI_M).sum() == 0, 'nan in PSI_M'
-
-        A_tilde = (self.g_s + p.nu_tilde + p.zeta)
-        B_tilde = np.einsum('s,nis,ns,ns -> nis',
-                            p.nu,
-                            np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                                self.psi_star), where=self.psi_star != np.inf),
-                            1/(self.g_s[None, :]+p.delta +
-                               p.nu_tilde[None, :]+p.zeta[None, :]),
-                            1/(self.g_s[None, :]+p.delta +
-                               p.nu[None, :]+p.zeta[None, :])
-                            )
-        self.PSI_CL = np.einsum('is,s,nis -> nis',
-                                prefact,
-                                1/A_tilde,
-                                (p.nu/A)[None, None,:]-B_tilde*A_tilde[None, None, :])#!!!
-        # if np.any(np.isnan(self.PSI_CL)):
-        #     print('prefact',prefact)
-        #     print('A_tilde',A_tilde)
-        #     print('A',A)
-        #     print('term',(p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :])
-        #     time.sleep(30)
-        # self.PSI_CL = np.maximum(np.einsum('is,s,nis -> nis',
-        #                         prefact,
-        #                         1/A_tilde,
-        #                         (p.nu/A)[None, None:]-B_tilde*A_tilde[None, None, :]),0)
-        # print(self.psi_star[...,1].min())
-        self.PSI_CL[:, :, 0] = 0
-        self.PSI_CL[self.PSI_CL<0] = 0 #!!!!
-        self.PSI_M[self.PSI_M<0] = 0
         
-        # print(self.PSI_CL.min())
-        # assert np.isnan(self.PSI_CL).sum() == 0, 'nan in PSI_CL'
-        # assert not np.any(np.einsum('njs->ns', self.PSI_M)+np.einsum('njs->ns', self.PSI_CL) > 1),'PSI_M,CL too high'
-        # print((np.einsum('njs->ns', self.PSI_M) +
-        #                  np.einsum('njs->ns', self.PSI_CL)).max())
-        self.PSI_CD = 1-(np.einsum('njs->ns', self.PSI_M) +
-                         np.einsum('njs->ns', self.PSI_CL))
-        self.PSI_CD[self.PSI_CD<0] = 0
-        # self.PSI_CD = 1-(np.einsum('njs->ns', self.PSI_M) +
-        #                  np.einsum('njs->ns', self.PSI_CL))
-        # print(self.PSI_CD.min())
-        # assert np.isnan(self.PSI_CD).sum() == 0, 'nan in PSI_CD'
+        self.PSI_CD = np.ones((p.N,p.S))
+        self.PSI_CD[...,1:] = 1-self.PSI_M[...,1:].sum(axis=1)
+        # self.PSI_CD[self.PSI_CD<0] = 0
 
     def compute_sectoral_prices(self, p):
         power = p.sigma-1
-        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
-            * (self.PSI_M*self.phi**power[None, None, :]).sum(axis=1)
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, 1:] \
+            * (self.PSI_M[...,1:]*self.phi[...,1:]**power[None, None, 1:]).sum(axis=1)
 
-        B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
+        B = self.PSI_CD[...,1:]*(self.phi[...,1:]**p.theta[None,None,1:]).sum(axis=1)**(power/p.theta)[None, 1:]
 
-        C = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
-
-        self.P_M = np.ones((p.N, p.S))
-        self.P_M[:, 0] = np.inf
-        # self.P_M[:, 1:] = (A[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
-        # print(A.min())
-        # print(B.min())
-        # print(C.min())
-        self.P_M[:, 1:] = np.divide(
-            (A+B+C)[:, 1:], A[:, 1:], out=np.full_like(A[:, 1:], np.inf), where=A[:, 1:] > 0)**(1/(p.sigma-1))[None, 1:]
+        self.P_M = np.full((p.N, p.S),np.inf)
+        self.P_M[:,1:] = (A/(A+B))**(1/(1-p.sigma))[None, 1:]
+        # self.P_M[:, 1:] = np.divide(
+        #     (A+B)[:, 1:], A[:, 1:], out=np.full_like(A[:, 1:], np.inf), where=A[:, 1:] > 0)**(1/(p.sigma-1))[None, 1:]
         
-        self.P_CL = np.ones((p.N, p.S))
-        self.P_CL[:, 0] = np.inf
-
-        # self.P_CL[:, 1:] = (B[:, 1:]/(A+B+C)[:, 1:])**(1/(1-p.sigma))[None, 1:]
-        self.P_CL[:, 1:] = np.divide(
-            (A+B+C)[:, 1:], B[:, 1:], out=np.full_like(B[:, 1:], np.inf), where=B[:, 1:] > 0)**(1/(p.sigma-1))[None, 1:]
+        self.P_CD = np.ones((p.N, p.S))
+        self.P_CD[:,1:] = (B/(A+B))**(1/(1-p.sigma))[None, 1:]
+        # self.P_CD[:,1:] = np.divide(
+        #     A+B, B, out=np.full_like(B, np.inf), where=B > 0)**(1/(p.sigma-1))[None, :]
         
-        # self.P_CD = (C/(A+B+C))**(1/(1-p.sigma))[None, :]
-        self.P_CD = np.divide(
-            A+B+C, C, out=np.full_like(C, np.inf), where=C > 0)**(1/(p.sigma-1))[None, :]
+        # self.P_CL[np.isnan(self.P_CL)] = np.inf #!!!
+        # self.P_CD[np.isnan(self.P_CD)] = np.inf
+        # self.P_M[np.isnan(self.P_M)] = np.inf
         
-        self.P_CL[np.isnan(self.P_CL)] = np.inf #!!!
-        self.P_CD[np.isnan(self.P_CD)] = np.inf
-        self.P_M[np.isnan(self.P_M)] = np.inf
+    def compute_labor_allocations(self, p):
+        # d_np = (p.d-1)*np.identity(p.N)+1
+        self.l_Ae = np.zeros((p.N,p.N,p.S))
+        self.l_Ae[...,1:] = np.einsum('n,s,is,is,nis -> ins',
+                         # d_np,
+                         p.r_hjort,
+                         p.fe[1:],
+                         p.eta[...,1:],
+                         self.l_R[...,1:]**(1-p.kappa),
+                         self.psi_m_star[...,1:]**-p.k
+                         )
+        self.l_Ao = np.zeros((p.N,p.S))
+        self.l_Ao[...,1:] = np.einsum('i,s,is,is,is -> is',
+                         # d_np,
+                         p.r_hjort,
+                         p.fo[1:],
+                         p.eta[...,1:],
+                         self.l_R[...,1:]**(1-p.kappa),
+                         self.psi_o_star[...,1:]**-p.k
+                         )
+        self.l_P = p.labor-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
 
     def compute_trade_shares(self, p):
         # numerator_prefact_A = np.einsum('nis,nis->nis',
         #                       self.PSI_M,
         #                       self.phi**(p.sigma-1)[None, None, :])
         temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-        denominator_M = np.zeros((p.N, p.N, p.S))
-        denominator_M[..., 1:] = np.einsum('nis,ns,ns->nis',
+        denominator_M = np.einsum('nis,ns,ns->nis',
                                 self.PSI_M[..., 1:],
                                 # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
+                                # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
+                                1/temp,
                                 self.P_M[..., 1:]**(1-p.sigma[None, 1:])
                                 )
-        denominator_CL = np.zeros((p.N, p.N, p.S))
-        temp = (self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-        denominator_CL[..., 1:] = np.einsum('nis,ns,ns->nis',
-                                self.PSI_CL[..., 1:],
-                                # 1/((self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
-                                self.P_CL[..., 1:]**(1-p.sigma[None, 1:])
-                                )
         denominator_CD = np.einsum('nis,ns,ns->nis',
-                                   self.phi**(p.theta-(p.sigma-1))[None,None,:],
-                                   1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-                                   self.P_CD**(1-p.sigma[None,:])
+                                   self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
+                                   1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
+                                   self.P_CD[..., 1:]**(1-p.sigma[None,1:])
                                    )
-        self.X_M = denominator_M/(denominator_M + denominator_CL + denominator_CD)
-        self.X_CL = denominator_CL/(denominator_M + denominator_CL + denominator_CD)
-        self.X_CD = denominator_CD/(denominator_M + denominator_CL + denominator_CD)
+        self.X_M = np.zeros((p.N, p.N, p.S))
+        self.X_CD = np.ones((p.N, p.N, p.S))
+        self.X_M[...,1:] = denominator_M/(denominator_M + denominator_CD)
+        self.X_CD[...,1:] = denominator_CD/(denominator_M + denominator_CD)
         
-        self.X_M[np.isnan(self.X_M)] = 0 #!!!
-        self.X_CD[np.isnan(self.X_CD)] = 0
-        self.X_CL[np.isnan(self.X_CL)] = 0
-
-    def compute_labor_allocations(self, p, l_R=None, assign=True):
-        if l_R is None:
-            l_R = self.l_R
-        # print(p.d_np)
-        d_np = (p.d-1)*np.identity(p.N)+1
+        # self.X_M[np.isnan(self.X_M)] = 0 #!!!
+        # self.X_CD[np.isnan(self.X_CD)] = 0
+        # self.X_CL[np.isnan(self.X_CL)] = 0
         
-        l_Ae = np.einsum('ni,n,s,is,is,nis -> ins',
-                         d_np, #!!!
-                         p.r_hjort,
-                         p.fe,
-                         p.eta,
-                         l_R**(1-p.kappa),
-                         np.divide(
-                             1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star != np.inf)
-                         )
-        l_Ao = np.einsum('ins,s,i,s,n -> ins',
-                         l_Ae,
-                         p.fo,
-                         p.r_hjort,
-                         1/p.fe,
-                         1/p.r_hjort
-                         )
-        l_P = p.labor - np.einsum('is->i',
-                                  np.einsum('ins->is', l_Ao)+np.einsum('nis->is',l_Ae)+l_R)
+    def compute_expenditure(self, p):
+        A = np.einsum('nis->i', p.trade_shares*self.Z_sum)
+        B = np.einsum('i,nis->i', self.w, self.l_Ae)
+        C = p.deficit_share_world_output*self.Z_sum
+        D = np.einsum('n,ins->i', self.w, self.l_Ae)
+        self.Z = (A+B-(C+D))
         
-        # l_P_s = p.alpha*(self.X.sum(axis=0)-self.X_M.sum(axis=0)/p.sigma[None,:])/self.w[:,None]
-        # l_P = l_P_s.sum(axis=1)
-        # assert np.isnan(l_Ae).sum() == 0, 'nan in l_Ae'
-        # assert np.isnan(l_Ao).sum() == 0, 'nan in l_Ao'
-        # assert np.isnan(l_P).sum() == 0, 'nan in l_P'
-        # if np.any(l_P<0):
-        #     print(l_R)
-        #     print(l_P)
-        #     print(p.labor)
+    def compute_price_indices(self, p, assign = True):
+        power = (p.sigma-1)
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
+            * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
+        B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
+        temp = (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B))
+        one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
+        # price_indices = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
+        price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :]/(p.sigma[None, :]-1)) ).prod(axis=1)
         if assign:
-            self.l_Ae = l_Ae
-            self.l_Ao = l_Ao
-            self.l_P = l_P
-            # try:
-            #     self.l_P_s = l_P_s
-            # except:
-            #     pass
+            self.price_indices = price_indices
         else:
-            return l_P
+            return price_indices
+        
+    def compute_solver_quantities(self,p):
+        self.compute_growth(p)
+        self.compute_patenting_thresholds(p)
+        self.compute_aggregate_qualities(p)
+        self.compute_sectoral_prices(p)
+        self.compute_labor_allocations(p)
+        self.compute_trade_shares(p)
+        self.compute_expenditure(p)
+        self.compute_price_indices(p)
 
     def compute_wage(self, p):
-        wage = (p.alpha[None, :] * (p.trade_shares*self.Z.sum()*(1 - (1/p.sigma[None, None, :])*self.X_M)).sum(axis=0)
+        wage = (p.alpha[None, :] * (p.trade_shares*self.Z_sum*(1 - (1/p.sigma[None, None, :])*self.X_M)).sum(axis=0)
                 ).sum(axis=1)/self.l_P
         # assert np.isnan(wage).sum() == 0, 'nan in wage'
         # assert np.all(self.l_P > 0), 'non positive production labor'
         # assert np.all(wage > 0), 'non positive wage'
         return wage
-
-    def compute_expenditure(self, p):
-        A = np.einsum('nis->i', p.trade_shares*self.Z.sum())
-        B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = np.einsum('i,n->i', p.deficit_share_world_output, self.Z)
-        D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        Z = (A+B-(C+D))
-        # assert np.isnan(Z).sum() == 0, 'nan in Z'
-        return Z
-    
             
     def compute_labor_research(self, p):
-        d_np = (p.d-1)*np.identity(p.N)+1
-        # d_np = np.ones((p.N,p.N))
-        A = np.einsum('nis,nis,s,i,nis,s->is',
-                      p.trade_shares*self.Z.sum(),
-                      self.X_M,
-                      1/p.sigma,
-                      1/self.w,
-                      np.divide(1, self.PSI_M, out=np.zeros_like(
-                          self.PSI_M), where=self.PSI_M != 0),
-                      p.k/(self.r+p.zeta+p.nu-self.g+self.g_s)
-                      )
-        B = np.einsum('nis,nis->is',
-                      np.einsum('s,i->is',
-                                p.fo,
-                                p.r_hjort)[None,:,:]+
-                      np.einsum('n,i,ni,n,s->nis',
-                                     self.w,
-                                     1/self.w,
-                                     d_np,  #!!!
-                                     p.r_hjort,
-                                     p.fe),
-                      np.divide(
-                          1, self.psi_star**(p.k), out=np.zeros_like(self.psi_star), where=self.psi_star != np.inf)
-                      )
-        l_R = (p.eta*(A+B)/(p.k-1))**(1/p.kappa)
+        # d_np = (p.d-1)*np.identity(p.N)+1
+        A1 = ((p.k/(p.k-1))*self.profit[...,1:]/self.G[None,None,1:]).sum(axis=0)
+        A2 = np.einsum('nis,n,s,n,i,nis->is',
+                       self.psi_m_star[...,1:]**-p.k,
+                       self.w,
+                       p.fe[1:],
+                       p.r_hjort,
+                       1/self.w,
+                       p.k*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k-1))-1
+                       )
+        B = self.psi_o_star[:,1:]**-p.k*p.fo[1:]*p.r_hjort[:,None]
+        l_R = np.zeros((p.N,p.S))
+        l_R[...,1:] = (p.eta[...,1:]*(A1+A2-B))**(1/p.kappa)
         # assert np.isnan(l_R).sum() == 0, 'nan in l_R'
         return l_R
-
-    def compute_psi_star(self, p):
-        d_np = (p.d-1)*np.identity(p.N)+1
-        # d_np = np.ones((p.N,p.N))
-        psi_star = np.einsum('s,i,nis,s,nis,nis,nis,ns,ns -> nis',
-                             p.sigma,
-                             self.w,
-                             self.PSI_M,
-                             1/p.nu,
-                             np.divide(1, self.X_M, out=np.full_like(
-                                 self.X_M, np.inf), where=self.X_M != 0),
-                             1/(p.trade_shares*self.Z.sum()),
-                             np.einsum('s,i->is',
-                                       p.fo,
-                                       p.r_hjort)[None,:,:]+
-                             np.einsum('n,i,ni,n,s->nis',
-                                            self.w,
-                                            1/self.w,
-                                            d_np,  #!!!
-                                            p.r_hjort,
-                                            p.fe),
-                             self.r+p.zeta[None, :]+p.delta - self.g+self.g_s[None, :],
-                             self.r+p.zeta[None, :]+p.nu[None, :] - self.g+self.g_s[None, :]+p.delta
-                             )
-        psi_star[..., 0] = np.inf
-        # assert np.isnan(psi_star).sum() == 0, 'nan in psi_star'
-        return psi_star
-        
+    
+    def compute_profit(self,p):
+        profit = np.zeros((p.N,p.N,p.S))
+        profit[...,1:] = np.einsum('nis,nis,s,i,nis->nis',
+                                self.X_M[...,1:],
+                                p.trade_shares[...,1:]*self.Z_sum,
+                                1/p.sigma[1:],
+                                1/self.w,
+                                1/self.PSI_M[...,1:])
+        return profit
+    
     def compute_phi(self, p):
         denominator_M = np.zeros((p.N, p.N, p.S))
         denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
@@ -792,28 +639,13 @@ class var:
                                 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
                                 self.P_M[..., 1:]**(1-p.sigma[None, 1:])
                                 )
-        denominator_CL = np.zeros((p.N, p.N, p.S))
-        temp = (self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-        denominator_CL[..., 1:] = np.einsum('nis,ns,ns->nis',
-                                self.PSI_CL[..., 1:],
-                                # 1/((self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
-                                self.P_CL[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        # denominator_CL[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-        #                         self.PSI_CL[..., 1:],
-        #                         self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-        #                         1/((self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-        #                         self.P_CL[..., 1:]**(1-p.sigma[None, 1:])
-        #                         )
         denominator_CD = np.einsum('ns,ns->ns',
                                    1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
                                    self.P_CD**(1-p.sigma[None,:])
                                    )
-        one_over_denominator = 1/(denominator_M + denominator_CL + denominator_CD[:,None,:])
-        phi = np.einsum('nis,,s,n,nis->nis',
-                        p.trade_shares,
-                        self.Z.sum(),
+        one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
+        phi = np.einsum('nis,s,n,nis->nis',
+                        p.trade_shares*self.Z_sum,
                         1/p.beta,
                         1/self.Z,
                         one_over_denominator)**(1/p.theta)[None,None,:]
@@ -827,46 +659,8 @@ class var:
         
         return phi
     
-    def compute_price_indices(self, p, assign = True):
-        power = (p.sigma-1)
-        
-        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
-            * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
-        B = (self.PSI_CL*self.phi**power[None, None, :]).sum(axis=1)
-        # if np.isnan(B).sum() > 0:
-        #     print(self.PSI_CL)
-        #     print(self.phi)
-        #     time.sleep(10)
-        C = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
-        temp = (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))
-        one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
-        # price_indices = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
-        price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :]/(p.sigma[None, :]-1)) ).prod(axis=1)
-        if assign:
-            self.price_indices = price_indices
-        else:
-            return price_indices
-    
-    # def compute_tau(self,p, assign = True, price_to_compute = None):
-    #     # self.tau = np.ones((p.N,p.N,p.S))
-    #     if price_to_compute is None:
-    #         price_to_compute = self.price_indices
-    #     if p.T.size == p.N:
-    #         tau = np.einsum('nis,is,is,is->nis',
-    #                         1/self.phi,
-    #                         p.T[:,None]**(1/p.theta[None,:]),
-    #                         self.w[:,None]**(-p.alpha[None,:]),
-    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
-    #     else:
-    #         tau = np.einsum('nis,is,is,is->nis',
-    #                         1/self.phi,
-    #                         p.T**(1/p.theta[None,:]),
-    #                         self.w[:,None]**(-p.alpha[None,:]),
-    #                         price_to_compute[:,None]**(p.alpha[None,:]-1))
-    #     if assign:
-    #         self.tau = tau
-    #     else:
-    #         return tau
+    def compute_world_expenditure(self,p):
+        return np.array(self.Z.sum())[None]
     
     def compute_tau(self,p, assign = True):
         # self.tau = np.ones((p.N,p.N,p.S))
@@ -875,63 +669,23 @@ class var:
             self.tau = tau
         else:
             return tau
-        
-    # def compute_T(self,p, assign = True):
-    #     # self.tau = np.ones((p.N,p.N,p.S))
-    #     T = np.diagonal(self.phi).transpose()*self.w[:,None]**p.alpha[None,:]*self.w[:,None]**(1-p.alpha[None,:])
-    #     if assign:
-    #         self.T = T
-    #     else:
-    #         return T
-    
-    # def scale_tau(self, p):
-    #     try:
-    #         price_to_compute = self.compute_price_indices(p, assign = False)
-    #     except:
-    #         self.compute_growth(p)
-    #         self.compute_aggregate_qualities(p)
-    #         price_to_compute = self.compute_price_indices(p, assign = False)
-            
-    #     tau = self.compute_tau(p, assign = False, price_to_compute = price_to_compute)
-
-    #     diag_tau = np.diagonal(tau).transpose()
-    #     # B = np.ones((p.N,p.S))
-    #     # B[:,0] = ( diag_tau[:,0]**(1+p.beta[1]*(p.alpha[1]-1)) / diag_tau[:,1]**(p.beta[1]*(p.alpha[0]-1)) )**(1/(p.alpha*p.beta).sum())
-    #     # B[:,1] = ( diag_tau[:,1]**(1+p.beta[0]*(p.alpha[0]-1)) / diag_tau[:,0]**(p.beta[0]*(p.alpha[1]-1)) )**(1/(p.alpha*p.beta).sum())
-        
-    #     B = diag_tau * ( (diag_tau**p.beta[None,:]).prod(axis=1))[:,None]**((1-p.alpha[None,:])/(p.alpha*p.beta).sum() )
-        
-    #     self.phi = self.phi*B[:,None,:]
-    #     self.compute_sectoral_prices(p)
-    #     self.compute_trade_flows(p)
     
     def scale_P(self, p):
         try:
-            price_to_compute = self.compute_price_indices(p, assign = False)
+            numeraire = self.price_indices[0]
         except:
-            self.compute_growth(p)
-            self.compute_aggregate_qualities(p)
-            price_to_compute = self.compute_price_indices(p, assign = False)
-
-        numeraire = price_to_compute[0]
+            self.compute_solver_quantities(p)
+            numeraire = self.price_indices[0]
         
         self.w = self.w / numeraire
         self.Z = self.Z / numeraire
+        self.Z_sum = self.Z_sum / numeraire
         self.phi = self.phi * numeraire
-        # p.trade_flows = p.trade_flows / numeraire
         
         self.compute_sectoral_prices(p)
-        # self.compute_trade_shares(p)
-        
-    # def scale_Z(self,p):
-    #     fact = p.OUT/self.Z.sum()
-    #     self.w = self.w * fact
-    #     self.Z = self.Z * fact
-        
-    #     self.compute_trade_flows(p)
     
     def compute_nominal_value_added(self,p):
-        self.nominal_value_added = p.alpha[None, :]*(p.trade_shares*self.Z.sum()*(1-self.X_M/p.sigma[None, None, :])).sum(axis=0)
+        self.nominal_value_added = p.alpha[None, :]*(p.trade_shares*self.Z_sum*(1-self.X_M/p.sigma[None, None, :])).sum(axis=0)
     
     def compute_nominal_intermediate_input(self,p):
         self.nominal_intermediate_input = np.einsum('s,is->is',
@@ -943,26 +697,17 @@ class var:
         self.cons = self.nominal_final_consumption/self.price_indices
         
     def compute_gdp(self,p):
-        self.gdp = self.nominal_final_consumption + p.deficit_share_world_output*self.Z.sum() + self.w*(p.labor - self.l_P)
-    
-    def compute_profit(self,p):
-        self.profit = np.einsum('nis,nis,s,i,nis->nis',
-                                self.X_M,
-                                p.trade_shares*self.Z.sum(),
-                                1/p.sigma,
-                                1/self.w,
-                                np.divide(1, self.PSI_M, out=np.zeros_like(
-                                    self.PSI_M), where=self.PSI_M != 0))
+        self.gdp = self.nominal_final_consumption + p.deficit_share_world_output*self.Z_sum + self.w*(p.labor - self.l_P)
     
     def compute_pflow(self,p):
         self.pflow = np.einsum('nis,is,is->nis',
-                              self.psi_star[...,1:]**(-p.k),
+                              self.psi_m_star[...,1:]**(-p.k),
                               p.eta[...,1:],
-                              self.l_R[...,1:]**(1-p.k)
+                              self.l_R[...,1:]**(1-p.kappa)#!!!
                               ).squeeze()
         
     def compute_share_of_innovations_patented(self,p):
-        self.share_innov_patented = self.psi_star[...,1]**(-p.k)
+        self.share_innov_patented = self.psi_m_star[...,1]**(-p.k)
     
     def compute_welfare(self,p):
         # exp = 1-1/p.gamma
@@ -984,7 +729,7 @@ class var:
         numerator_prefact = p.k*np.einsum('is,is,is,is->is',
                                       p.delta[:,1:]**2,
                                       np.diagonal(self.profit[...,1:]).transpose(),
-                                      np.diagonal(self.psi_star[...,1:]).transpose()**(1-p.k),
+                                      np.diagonal(self.psi_m_star[...,1:]).transpose()**(1-p.k),
                                       self.DT[:,1:]
                                       )
         numerator_sum = 1/(self.r_NP[None,1:]-p.nu[None,1:]+p.delta[:,1:])\
@@ -992,93 +737,50 @@ class var:
         denominator = p.kappa*np.einsum('mis,mis->is',
                                 self.profit[...,1:],
                                 p.k/self.r_NP[None,None,1:]+np.einsum('mis,ms->mis',
-                                                                      self.psi_star[...,1:]**(1-p.k),
+                                                                      self.psi_m_star[...,1:]**(1-p.k),
                                                                       self.DT[:,1:]),
                                 )
         
         self.semi_elast_RD_delta[...,1:] = numerator_prefact*numerator_sum/denominator
     
     def compute_non_solver_aggregate_qualities(self,p): 
-        prefact = p.k * p.eta * self.l_R**(1-p.kappa)/(p.k-1)
-        A = (self.g_s + p.nu + p.zeta)
-        A_tilde = (self.g_s + p.nu_tilde + p.zeta)
-        self.PSI_MPND = np.einsum('is,nis,ns->nis',
+        self.PSI_MPND = np.zeros((p.N,p.N,p.S))
+        self.PSI_MPD = np.zeros((p.N,p.N,p.S))
+        self.PSI_MNP = np.zeros((p.N,p.N,p.S))
+        prefact = p.k * p.eta[...,1:] * self.l_R[...,1:]**(1-p.kappa)/(p.k-1)
+        A = (self.g_s[1:] + p.nu[1:] + p.zeta[1:])
+        self.PSI_MPND[...,1:] = np.einsum('is,nis,ns->nis',   #HERE
                                   prefact,
-                                  np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                                      self.psi_star), where=self.psi_star != np.inf),
-                                  1/(A[None,:]+p.delta))
-        self.PSI_MPL = np.einsum('s,nis,ns->nis',
-                                 p.nu,
-                                 self.PSI_MPND,
-                                 1/(A_tilde[None,:]+p.delta))
-        self.PSI_MPD = np.einsum('s,nis,ns->nis',
-                                 p.nu_tilde,#!!!
-                                 self.PSI_MPL,
-                                 1/(p.delta+self.g_s[None,:]+p.zeta[None,:]))
+                                  self.psi_m_star[...,1:]**(1-p.k),
+                                  1/(A[None,:]+p.delta[...,1:]))
+        self.PSI_MPD[...,1:] = np.einsum('s,nis,ns->nis',
+                                 p.nu[1:],
+                                 self.PSI_MPND[...,1:],
+                                 1/(p.delta[...,1:]+self.g_s[None,1:]+p.zeta[None,1:]))
         numerator_A = np.einsum('is,nis->nis',
                                 prefact,
-                                1 - np.divide(1, self.psi_star**(p.k-1), out=np.zeros_like(
-                                    self.psi_star), where=self.psi_star != np.inf))
+                                1-self.psi_m_star[...,1:]**(1-p.k))
         numerator_B= np.einsum('ns,nis->nis',
-                               p.delta,
-                               self.PSI_MPND)
-        self.PSI_MNP = (numerator_A + numerator_B)/A[None,None,:]
-        
-    
-    def compute_consumption_equivalent_welfare(self,p,baseline):
-        self.cons_eq_welfare = self.cons*\
-            ((p.rho-baseline.g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
-                /baseline.cons
+                               p.delta[...,1:],
+                               self.PSI_MPND[...,1:])
+        self.PSI_MNP[...,1:] = (numerator_A + numerator_B)/A[None,None,:]
     
     def compute_non_solver_quantities(self,p):
-        self.compute_price_indices(p)
         self.compute_tau(p)
-        # self.compute_T(p)
         self.compute_nominal_value_added(p)
         self.compute_nominal_intermediate_input(p)
         self.compute_nominal_final_consumption(p)
         self.compute_gdp(p)
-        self.compute_profit(p)
         self.compute_pflow(p)      
         self.compute_share_of_innovations_patented(p)
         self.compute_welfare(p)
         self.compute_non_solver_aggregate_qualities(p)
         self.compute_semi_elast_RD_delta(p)
-
-    # def check_solution(self, p, return_checking_copy = False, assertions = True):
-    #     check = self.copy()
-    #     check.compute_growth(p)
-    #     check.compute_aggregate_qualities(p)
-    #     check.compute_phi(p)
-    #     check.price_indices = check.compute_price_indices(p)
-    #     check.compute_monopolistic_sectoral_prices(p)
-    #     check.compute_monopolistic_trade_flows(p)
-    #     check.psi_star = check.compute_psi_star(p)
-    #     check.l_R = check.compute_labor_research(p)
-    #     check.compute_competitive_sectoral_prices(p)
-    #     check.compute_competitive_trade_flows(p)
-    #     check.compute_labor_allocations(p)
-    #     check.w = check.compute_wage(p)
-    #     check.Z = check.compute_expenditure(p)
-    #     if assertions:
-    #         assert np.all(
-    #             np.isclose(check.price_indices, check.compute_price_indices(p))
-    #             ), 'check prices wrong'
-    #         assert np.all(
-    #             np.isclose(check.psi_star, check.compute_psi_star(p))
-    #             ), 'check psi star wrong'
-    #         assert np.all(
-    #             np.isclose(check.l_R, check.compute_labor_research(p))
-    #             ), 'check l_R wrong'
-    #         assert np.all(
-    #             np.isclose(check.w, check.compute_wage(p))
-    #             ), 'check w wrong'
-    #         assert np.all(
-    #             np.isclose(check.Z, check.compute_expenditure(p))
-    #             ), 'check Z wrong'
-    #         print('is a solution')
-    #     if return_checking_copy:
-    #         return check
+        
+    def compute_consumption_equivalent_welfare(self,p,baseline):
+        self.cons_eq_welfare = self.cons*\
+            ((p.rho-baseline.g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
+                /baseline.cons
 
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)
@@ -1560,7 +1262,7 @@ class moments:
         
         
     def compute_OUT(self,var,p):
-        self.OUT = var.Z.sum()
+        self.OUT = var.Z_sum[0]
         
     def compute_SRGDP(self,var,p):
         numerator = var.gdp/var.price_indices
@@ -1574,7 +1276,7 @@ class moments:
     def compute_RD(self,var,p):
         # numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
         #     + np.einsum('n,ins->is',var.w,var.l_Ao)
-        numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
+        numerator = var.w[:,None]*var.l_R + np.einsum('i,is->is',var.w,var.l_Ao)\
             + np.einsum('n,ins->is',var.w,var.l_Ae)
         self.RD = np.einsum('is,i->i',
                             numerator,
@@ -1583,19 +1285,18 @@ class moments:
         self.RD_RUS = self.RD/self.RD_US
     
     def compute_KM(self,var,p):
-        denominatorA = var.r+p.zeta[None,1:]+p.delta[:,1:]-var.g+var.g_s[None,1:]
-        bracket = 1/denominatorA - 1/(denominatorA+p.nu[None,1:])
+        bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
         self.KM = p.k/(p.k-1)*np.einsum('s,s,ns,ns,ns->',
             p.eta[0,1:],
             var.l_R[0,1:]**(1-p.kappa),
-            var.psi_star[:,0,1:]**(1-p.k),
+            var.psi_m_star[:,0,1:]**(1-p.k),
             var.profit[:,0,1:],
             bracket,
-            )/var.l_R[0,1:].sum()
+            )/(var.l_R[0,1:].sum()+var.l_Ao[0,1:].sum()+(var.w[:,None]*var.l_Ae[0,:,1:]/var.w[0]).sum())
         self.KM_GDP = self.KM*self.RD_US
         
     def compute_SRDUS(self,var,p):
-        self.SRDUS = (var.X_M[:,0,1]*p.trade_shares[:,0,1]*var.Z.sum()).sum()/(p.trade_shares[:,0,1]*var.Z.sum()).sum()
+        self.SRDUS = (var.X_M[:,0,1]*p.trade_shares[:,0,1]).sum()/(p.trade_shares[:,0,1]).sum()
     
     def compute_GPDIFF(self,var,p):
         price_index_growth_rate = var.g_s/(1-p.sigma)+p.alpha*var.g
@@ -1608,7 +1309,10 @@ class moments:
         self.Z = var.Z
     
     def compute_JUPCOST(self,var,p):
-        self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
+        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
+        self.JUPCOST = var.pflow[2,0]*p.r_hjort[2]*p.fe[1]*var.w[2]
+        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[2]*p.fe[1]*var.w[2]
+        #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_TP(self,var,p):
@@ -1630,16 +1334,11 @@ class moments:
         self.delta_t = delt
         PHI = var.phi**p.theta[None,None,:]
         
-        num_brack_A = var.PSI_CL*eps(p.nu_tilde*delt)[None,None,:]
-        num_brack_B = var.PSI_MNP*(eps(p.nu_tilde*delt)*eps(p.nu*delt))[None,None,:]
-        num_brack_C = var.PSI_MPND*(eps(p.delta*delt)
-                                    *eps(p.nu*delt)[None,:]
-                                    *eps(p.nu_tilde*delt)[None,:])[:,None,:]
-        num_brack_D = var.PSI_MPL*(eps(p.delta*delt)
-                                    *eps(p.nu_tilde*delt)[None,:])[:,None,:]
+        num_brack_B = var.PSI_MNP*eps(p.nu*delt)[None,None,:]
+        num_brack_C = var.PSI_MPND*(eps(p.delta*delt)*eps(p.nu*delt)[None,:])[:,None,:]
         num_brack_E = var.PSI_MPD*eps(p.nu*delt)[None,None,:]
         
-        num_brack = (num_brack_A +num_brack_B + num_brack_C + num_brack_D + num_brack_E)
+        num_brack = (num_brack_B + num_brack_C + num_brack_E)
         
         num_sum = np.einsum('nis,njs->ns',
                             num_brack,
@@ -1672,22 +1371,19 @@ class moments:
         denom_B_a = var.PSI_MNP*np.exp(-delt*p.nu)[None,None,:]
         denom_B_b = var.PSI_MPND*(np.exp(-delt*p.nu)[None,:]
                                   +eps(p.nu*delt)[None,:]*np.exp(-delt*p.delta))[:,None,:]
-        denom_B_c = (var.PSI_MPL+var.PSI_MPD)*np.exp(-delt*p.delta)[:,None,:]
+        denom_B_c = var.PSI_MPD*np.exp(-delt*p.delta)[:,None,:]
         denom_B = np.einsum('nis,nis,s->nis',
                             denom_B_a + denom_B_b + denom_B_c,
                             var.phi**(p.sigma-1)[None,None,:],
                             (p.sigma/(p.sigma-1))**(1-p.sigma)
                             )
-        
-        denom_C_a = var.PSI_CL*np.exp(-delt*p.nu_tilde)[None,None,:]
-        denom_C_b = var.PSI_MNP*(np.exp(-delt*p.nu_tilde)*eps(delt*p.nu))[None,None,:]
+
+        denom_C_b = var.PSI_MNP*eps(delt*p.nu)[None,None,:]
         denom_C_c = var.PSI_MPND*(eps(p.delta*delt)
-                                    *eps(p.nu*delt)[None,:]
-                                    *np.exp(-p.nu_tilde*delt)[None,:])[:,None,:]
-        denom_C_d = var.PSI_MPL*(eps(p.delta*delt)
-                                    *np.exp(-p.nu_tilde*delt)[None,:])[:,None,:]
+                                    *eps(p.nu*delt)[None,:])[:,None,:]
+        
         denom_C = np.einsum('nis,nis->nis',
-                            denom_C_a + denom_C_b + denom_C_c + denom_C_d,
+                            denom_C_b + denom_C_c,
                             var.phi**(p.sigma-1)[None,None,:]
                             )
         
@@ -1713,7 +1409,7 @@ class moments:
         self.TO = self.turnover[0,1]
         
     def compute_TE(self,var,p):
-        out_diag_trade_flows_shares = remove_diag(var.X_M + var.X_CL)
+        out_diag_trade_flows_shares = remove_diag(var.X_M)
         self.TE = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
                                                     p.theta-(p.sigma-1),
                                                     out_diag_trade_flows_shares)

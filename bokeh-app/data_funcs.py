@@ -78,20 +78,23 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df_labor['non patenting'] = sol_c.nominal_value_added[:,0]/sol_c.w
     df_labor['production patenting sector'] = sol_c.nominal_value_added[:,1]/sol_c.w
     df_labor['RD'] = sol_c.l_R[:,1]
-    df_labor['patenting'] = sol_c.l_Ao[:,:,1].sum(axis=1)+sol_c.l_Ae[:,:,1].sum(axis=1)
+    df_labor['patenting'] = sol_c.l_Ao[:,1]+sol_c.l_Ae[:,:,1].sum(axis=1)
     df_labor['total'] = df_labor['non patenting']+df_labor['production patenting sector']+df_labor['RD']+df_labor['patenting']
     df_labor['total data'] = p.labor
     df_labor.to_excel(writer,sheet_name='labor')
     
-    df_psi_star = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],names=['destination','origin','sector']))
-    df_psi_star['psi_star'] = sol_c.psi_star.ravel()
-    df_psi_star.to_excel(writer,sheet_name='psi_star')
+    df_psi_m_star = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],names=['destination','origin','sector']))
+    df_psi_m_star['psi_m_star'] = sol_c.psi_m_star.ravel()
+    df_psi_m_star.to_excel(writer,sheet_name='psi_m_star')
+    df_psi_o_star = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.sectors],names=['country','sector']))
+    df_psi_o_star['psi_o_star'] = sol_c.psi_o_star.ravel()
+    df_psi_o_star.to_excel(writer,sheet_name='psi_o_star')
     
     df_sales = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
     df_sales['M share of sales'] = sol_c.X_M[:,:,1].ravel()
-    df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].ravel()
+    # df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].ravel()
     df_sales['CD share of sales'] = sol_c.X_CD[:,:,1].ravel()
-    df_sales['total to check'] = df_sales['M share of sales'] + df_sales['CL share of sales'] + df_sales['CD share of sales']
+    df_sales['total to check'] = df_sales['M share of sales'] + df_sales['CD share of sales']
     df_sales.to_excel(writer,sheet_name='monopolistic_competitive_shares')
     
     # df_expenditure = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
@@ -104,14 +107,14 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     
     df_qualities = pd.DataFrame(index=pd.Index(p.countries,name='country'))
     df_qualities['PSI_M'] = sol_c.PSI_M[...,1].sum(axis=1)
-    df_qualities['PSI_CL'] = sol_c.PSI_CL[...,1].sum(axis=1)
+    # df_qualities['PSI_CL'] = sol_c.PSI_CL[...,1].sum(axis=1)
     df_qualities['PSI_CD'] = sol_c.PSI_CD[...,1]
-    df_qualities['total check'] = df_qualities['PSI_M']+df_qualities['PSI_CL']+df_qualities['PSI_CD']
+    df_qualities['total check'] = df_qualities['PSI_M']+df_qualities['PSI_CD']
     df_qualities.to_excel(writer,sheet_name='aggregate_qualities')    
     
     df_prices = pd.DataFrame(index=pd.Index(p.countries,name='country'))
     df_prices['P_M'] = sol_c.P_M[...,1]
-    df_prices['P_CL'] = sol_c.P_CL[...,1]
+    # df_prices['P_CL'] = sol_c.P_CL[...,1]
     df_prices['P_CD'] = sol_c.P_CD[...,1]
     df_prices['P'] = sol_c.price_indices
     df_prices.to_excel(writer,sheet_name='prices')
