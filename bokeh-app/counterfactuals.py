@@ -55,7 +55,7 @@ baseline_dics = [
                 #   'variation':'14.1'},
                 # {'baseline':'104',
                 #   'variation':'17.1'}
-                {'baseline':'201',
+                {'baseline':'301',
                   'variation':None}
                  ]
 for baseline_dic in baseline_dics:
@@ -114,7 +114,7 @@ for baseline_dic in baseline_dics:
                             )
     
     sol_baseline.scale_P(p_baseline)
-    sol_baseline.compute_price_indices(p_baseline)
+    # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
     # counterfactuals_by_country = {}
@@ -159,10 +159,10 @@ for baseline_dic in baseline_dics:
                                     )
             # print(sol.status)
         
-            sol_c = var.var_from_vector(sol.x, p)    
+            # sol_c = var.var_from_vector(sol.x, p)    
             # sol_c.scale_tau(p)
             sol_c.scale_P(p)
-            sol_c.compute_price_indices(p)
+            # sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p)
             # sol_c.compute_welfare(p)
             # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -200,7 +200,7 @@ for baseline_dic in baseline_dics:
                                 plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
-                                apply_bound_psi_star = False,
+                                # apply_bound_psi_star = False,
                                 damping = 10,
                                 max_count = 1e4,
                                 accel_memory = 50, 
@@ -215,10 +215,10 @@ for baseline_dic in baseline_dics:
                                 )
         # print(sol.status)
     
-        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         # sol_c.compute_welfare(p)
         # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -251,7 +251,7 @@ for baseline_dic in baseline_dics:
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
-                                apply_bound_psi_star = False,
+                                # apply_bound_psi_star = False,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
@@ -271,10 +271,11 @@ for baseline_dic in baseline_dics:
                                 )
         # print(sol.status)
     
-        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
+        # sol_c.compute_solver_quantities()
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         # sol_c.compute_welfare(p)
         # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -327,7 +328,7 @@ baseline_dics = [
                 #   'variation':'14.1'},
                 # {'baseline':'104',
                 #   'variation':'17.1'}
-                {'baseline':'201',
+                {'baseline':'301',
                   'variation':None}
                  ]
 for baseline_dic in baseline_dics:
@@ -372,7 +373,7 @@ for baseline_dic in baseline_dics:
                               # apply_bound_psi_star=True
                             )
     sol_baseline.scale_P(p_baseline)
-    sol_baseline.compute_price_indices(p_baseline)
+    # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
     if baseline_dic['variation'] is None:
@@ -403,10 +404,11 @@ for baseline_dic in baseline_dics:
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                sol_c.compute_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
                 sol.scale_P(p)
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
@@ -432,10 +434,11 @@ for baseline_dic in baseline_dics:
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                sol_c.compute_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
                 sol.scale_P(p)  
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
@@ -464,10 +467,11 @@ for baseline_dic in baseline_dics:
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
+                sol_c.compute_solver_quantities(p)
                 sol.scale_P(p)
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = np.log(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])/np.log(p_baseline.delta[0,1]/p_baseline.delta[idx_country,1])
