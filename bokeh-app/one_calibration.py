@@ -64,7 +64,7 @@ if new_run:
 #     m.weights_dict['ERDUS'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
-# p.update_khi_and_r_hjort(1)
+p.update_khi_and_r_hjort(1)
 # p.fe[1] = 0.01
 
 p.guess = None
@@ -83,7 +83,7 @@ avoid_bad_nash = False
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SINNOVPATUS'] = 1.1
-m.weights_dict['JUPCOST'] = 2
+# m.weights_dict['JUPCOST'] = 2
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.float64(0.036)
@@ -227,13 +227,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'Higher weight on JUPCOST'
+commentary = 'No Hjort factors'
 # commentary = ''
 baseline_number = '301'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 1.0
+run_number = 2.0
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
