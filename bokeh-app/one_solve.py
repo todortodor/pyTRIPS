@@ -13,7 +13,7 @@ import numpy as np
 p = parameters(n=7,s=2)
 p.load_data('calibration_results_matched_economy/201/')
 # p.load_data('calibration_results_matched_economy/baseline_101_variations/14.1/')
-p.fo = p.fe
+# p.fo = p.fe
 # p.delta[0,1] = 0.1*p.delta[0,1]
 # p.d_np = np.ones((p.N,p.N))
 # np.fill_diagonal(p.d_np,p.d)

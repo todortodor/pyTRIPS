@@ -258,7 +258,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
 #                 "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
 #                 "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",}
 comments_dic = {"baseline":"baseline",
-                "1.0":"1.0: not dropping south in RD",
+                "1.0":"1.0: Higher weight on JUPCOST",
                 "1.1":"1.1: No hjort and no drop south RD",
                 "1.2":"1.2: No hjort",
                 "1.3":"1.3: No hjort, Adding ERDUS moment",
@@ -276,7 +276,10 @@ comments_dic = {"baseline":"baseline",
                 "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
                 "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
                 "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
-                "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",}
+                "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
+                "2.0":"2.0: Corrected Hjort",
+                "90":"90: temp",
+                }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}

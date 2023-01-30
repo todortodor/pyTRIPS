@@ -441,17 +441,20 @@ class var:
         self.G = self.r+p.zeta-self.g+self.g_s+p.nu
         
     def compute_patenting_thresholds(self, p):
-        A = np.einsum('n,n,s,i,i,s->nis',
+        d_np = (p.d-1)*np.identity(p.N)+1
+        A = np.einsum('n,n,s,i,i,ni->nis',
                                self.w,
                                p.r_hjort,
                                p.fe[1:],
                                1/self.w,
                                1/p.r_hjort,
-                               1/p.fo[1:])
+                               # 1/p.fo[1:],
+                               d_np,
+                               )
         
         denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
         self.psi_C = np.full((p.N,p.N,p.S),np.inf)
-        self.psi_C[...,1:] = A/(p.r_hjort[None,:,None]*p.fo[None,None,1:]*self.profit[...,1:]*denom_bracket[:,None,1:])
+        self.psi_C[...,1:] = A*p.r_hjort[None,:,None]/(self.profit[...,1:]*denom_bracket[:,None,1:])
         psi_star = np.maximum(self.psi_C,1)
         psi_star_n_star = np.min(psi_star,axis=0)
         
@@ -463,7 +466,7 @@ class var:
             if it>0:
                 x_old = x_new
             mask = x_old[None,:,:]>=self.psi_C[...,1:]
-            x_new = (np.sum(A,axis=0,where=mask)+1)/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
+            x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:])/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
             cond = np.any(x_old != x_new)
             it+=1
         
@@ -518,10 +521,10 @@ class var:
         # self.P_M[np.isnan(self.P_M)] = np.inf
         
     def compute_labor_allocations(self, p):
-        # d_np = (p.d-1)*np.identity(p.N)+1
+        d_np = (p.d-1)*np.identity(p.N)+1
         self.l_Ae = np.zeros((p.N,p.N,p.S))
-        self.l_Ae[...,1:] = np.einsum('n,s,is,is,nis -> ins',
-                         # d_np,
+        self.l_Ae[...,1:] = np.einsum('ni,n,s,is,is,nis -> ins',
+                          d_np,
                          p.r_hjort,
                          p.fe[1:],
                          p.eta[...,1:],
@@ -530,7 +533,6 @@ class var:
                          )
         self.l_Ao = np.zeros((p.N,p.S))
         self.l_Ao[...,1:] = np.einsum('i,s,is,is,is -> is',
-                         # d_np,
                          p.r_hjort,
                          p.fo[1:],
                          p.eta[...,1:],
@@ -605,12 +607,13 @@ class var:
         return wage
             
     def compute_labor_research(self, p):
-        # d_np = (p.d-1)*np.identity(p.N)+1
+        d_np = (p.d-1)*np.identity(p.N)+1
         A1 = ((p.k/(p.k-1))*self.profit[...,1:]/self.G[None,None,1:]).sum(axis=0)
-        A2 = np.einsum('nis,n,s,n,i,nis->is',
+        A2 = np.einsum('nis,n,s,ni,n,i,nis->is',
                        self.psi_m_star[...,1:]**-p.k,
                        self.w,
                        p.fe[1:],
+                       d_np,
                        p.r_hjort,
                        1/self.w,
                        p.k*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k-1))-1

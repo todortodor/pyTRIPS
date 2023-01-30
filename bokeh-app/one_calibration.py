@@ -16,14 +16,15 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '201'
+baseline_number = '301'
 if new_run:
     p = parameters(n=7,s=2)
-    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.0/')
-    p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
+    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.0/')
+    # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
+    # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
-    p.fo = p.fe
+    # p.fo = p.fe*0
 # list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
 #                     'SRDUS','SPFLOWDOM','SPFLOWDOM_US','SPFLOWDOM_RUS', 'SRGDP',
 #                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
@@ -63,14 +64,14 @@ if new_run:
 #     m.weights_dict['ERDUS'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
-p.update_khi_and_r_hjort(1)
+# p.update_khi_and_r_hjort(1)
 # p.fe[1] = 0.01
 
 p.guess = None
 # p.d = 1
 # p.r_hjort[3] = 16.02230702
 # p.delta[...,1][p.delta[...,1]<0.01] = 0.01
-# p.delta[...,1] = 0.05
+# p.delta[...,1] = p.delta[...,1]*0+0.05
 # p.k = 1.5
 
 avoid_bad_nash = False
@@ -82,7 +83,7 @@ avoid_bad_nash = False
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SINNOVPATUS'] = 1.1
-# m.weights_dict['SPFLOW'] = 100
+m.weights_dict['JUPCOST'] = 2
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.float64(0.036)
@@ -102,8 +103,8 @@ avoid_bad_nash = False
 # m.weights_dict['DOMPATUS'] = 2       
 # m.weights_dict['DOMPATEU'] = 2       
 # m.weights_dict['SPFLOW'] = 2       
-m.weights_dict['RD'] = 10      
-m.weights_dict['GPDIFF'] = 10      
+# m.weights_dict['RD'] = 10      
+# m.weights_dict['GPDIFF'] = 10      
 # m.weights_dict['SRDUS'] = 5       
 # m.weights_dict['GROWTH'] = 5       
 
@@ -113,13 +114,12 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 15
+max_iter = 30
 # if avoid_bad_nash:
 #     x0 = np.concatenate([p.make_p_vector()
 
 while cond:
     if iterations < max_iter - 1:
-        
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
@@ -227,13 +227,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'Higher RD and GPDIFF weight'
+commentary = 'Higher weight on JUPCOST'
 # commentary = ''
 baseline_number = '301'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 1.6
+run_number = 1.0
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
