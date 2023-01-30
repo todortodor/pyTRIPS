@@ -279,6 +279,8 @@ comments_dic = {"baseline":"baseline",
                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
                 "2.0":"2.0: No Hjort factors",
                 "3.0":"3.0: UUPCOST instead of JUPCOST",
+                "3.1":"3.1: UUPCOST and JUPCOST",
+                "3.2":"3.2: no UUPCOST, no JUPCOST",
                 # "90":"90: temp",
                 }
 
@@ -303,18 +305,18 @@ for baseline_nbr in ['301','302']:
     
         for run in run_list:
             # print(run)
-            if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
-                p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
-                a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
-                                                                baselines_dic_mom[baseline_nbr], 
-                                                                baselines_dic_sol_qty[baseline_nbr],
-                                                                p_to_add, 
-                                                                m_to_add, 
-                                                                sol_to_add,
-                                                                run)
-                baselines_dic_param[baseline_nbr] = a
-                baselines_dic_mom[baseline_nbr] = b
-                baselines_dic_sol_qty[baseline_nbr] = c
+            # if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
+            p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
+            a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
+                                                            baselines_dic_mom[baseline_nbr], 
+                                                            baselines_dic_sol_qty[baseline_nbr],
+                                                            p_to_add, 
+                                                            m_to_add, 
+                                                            sol_to_add,
+                                                            run)
+            baselines_dic_param[baseline_nbr] = a
+            baselines_dic_mom[baseline_nbr] = b
+            baselines_dic_sol_qty[baseline_nbr] = c
     except:
         pass
 

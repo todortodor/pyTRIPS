@@ -20,7 +20,7 @@ baseline_number = '301'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.0/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -69,7 +69,7 @@ if 'theta' in p.calib_parameters:
 #     m.weights_dict['ERDUS'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
-# p.update_khi_and_r_hjort(0.16)
+# p.update_khi_and_r_hjort(1)
 # p.fe[1] = 0.01
 
 # p.guess = None
@@ -84,8 +84,8 @@ avoid_bad_nash = False
 # m.list_of_moments.remove('SPFLOW')
 if 'JUPCOST' in m.list_of_moments:
     m.list_of_moments.remove('JUPCOST')
-if 'UUPCOST' not in m.list_of_moments:
-    m.list_of_moments.append('UUPCOST')
+# if 'UUPCOST' not in m.list_of_moments:
+#     m.list_of_moments.append('UUPCOST')
 # m.list_of_moments.append('ERDUS')
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
@@ -235,13 +235,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'UUPCOST instead of JUPCOST'
+commentary = 'no UUPCOST no JUPCOST'
 # commentary = ''
 # baseline_number = '302'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 3.0
+run_number = 3.2
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
