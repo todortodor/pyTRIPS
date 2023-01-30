@@ -34,8 +34,13 @@ if new_run:
     m.load_data()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
-# if 'theta' in p.calib_parameters:
-#     p.update_sigma_with_SRDUS_target(m)
+if 'theta' not in p.calib_parameters:
+    p.calib_parameters.append('theta')
+# if 'sigma' not in p.calib_parameters:
+#     p.calib_parameters.append('sigma')
+
+if 'theta' in p.calib_parameters:
+    p.update_sigma_with_SRDUS_target(m)
 # # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
 # #                     'SRDUS','SPFLOW_US','SPFLOW_RUS',
 # #                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
@@ -64,7 +69,7 @@ if new_run:
 #     m.weights_dict['ERDUS'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
-p.update_khi_and_r_hjort(1)
+p.update_khi_and_r_hjort(0.16)
 # p.fe[1] = 0.01
 
 p.guess = None
@@ -87,6 +92,7 @@ avoid_bad_nash = False
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.float64(0.036)
+m.TO_target = m.TO_target/2
 # m.KM_target = np.float64(0.1322)
 # m.GROWTH_target = np.array(0.02)
 # m.GROWTH_target = np.array(0.03)
@@ -227,17 +233,17 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'No Hjort factors'
+commentary = 'New baseline 302 calibrated elasticities'
 # commentary = ''
-baseline_number = '301'
+baseline_number = '302'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 2.0
+run_number = 302
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = False
+new_baseline = True
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

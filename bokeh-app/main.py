@@ -288,7 +288,7 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['101','102','104']:
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
-for baseline_nbr in ['301']:
+for baseline_nbr in ['301','302']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
@@ -558,60 +558,60 @@ sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 first_panel = row(moment_report,param_report,sol_qty_report)
 # from bokeh.io import output_file, show
 # show(first_panel)
-curdoc().add_root(first_panel)
 
-# #%% sensitivities
 
-# baselines_dic_sensi = {}
+#%% sensitivities
 
-# # for baseline_nbr in ['101','102','104']:
-# for baseline_nbr in ['201','202']:
-#     baselines_dic_sensi[baseline_nbr] = {}
-#     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
-#     files_in_dir = os.listdir(baseline_sensi_path)
-#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-#     for f in files_in_dir:
-#         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
+baselines_dic_sensi = {}
+
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['201','202']:
+    baselines_dic_sensi[baseline_nbr] = {}
+    baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
+    files_in_dir = os.listdir(baseline_sensi_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-# # baseline_sensi = '101'
-# baseline_sensi = '201'
-# qty_sensi = 'delta US over nu'
+# baseline_sensi = '101'
+baseline_sensi = '201'
+qty_sensi = 'delta US over nu'
 
-# baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
-# qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
+baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
+qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
 
-# ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
-# p_sensi = figure(title="Sensitivity", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in moment or parameter',
-#                 y_axis_label='Value',
-#                 tools = TOOLS)
+ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
+p_sensi = figure(title="Sensitivity", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in moment or parameter',
+                y_axis_label='Value',
+                tools = TOOLS)
 
-# colors_sensi = itertools.cycle(Category10[10])
+colors_sensi = itertools.cycle(Category10[10])
 
-# for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
-#     p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
+    p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
 
-# p_sensi.legend.click_policy="hide"
-# p_sensi.legend.label_text_font_size = '8pt'
-# p_sensi.add_layout(p_sensi.legend[0], 'right')
+p_sensi.legend.click_policy="hide"
+p_sensi.legend.label_text_font_size = '8pt'
+p_sensi.add_layout(p_sensi.legend[0], 'right')
 
-# def update_baseline_sensi(attrname, old, new):
-#     qty_sensi = qty_sensi_select.value
-#     ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
+def update_baseline_sensi(attrname, old, new):
+    qty_sensi = qty_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
     
-# def update_qty_sensi(attrname, old, new):
-#     baseline_sensi = baseline_sensi_select.value
-#     ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
+def update_qty_sensi(attrname, old, new):
+    baseline_sensi = baseline_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
 
-# controls_sensi = row(baseline_sensi_select, qty_sensi_select)
-# # controls_mom.sizing_mode = 'scale_width'
+controls_sensi = row(baseline_sensi_select, qty_sensi_select)
+# controls_mom.sizing_mode = 'scale_width'
 
-# baseline_sensi_select.on_change('value', update_baseline_sensi)
-# qty_sensi_select.on_change('value', update_qty_sensi)
+baseline_sensi_select.on_change('value', update_baseline_sensi)
+qty_sensi_select.on_change('value', update_qty_sensi)
 
-# sensitivity_report = column(controls_sensi,p_sensi)
+sensitivity_report = column(controls_sensi,p_sensi)
 
 # #%% counterfactuals
 
@@ -623,9 +623,9 @@ curdoc().add_root(first_panel)
 
 # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) if s[9:].startswith('201')])
 # country_cf_select = Select(value=country_cf, 
-#                            title='Country', 
-#                            # options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
-#                            options=p_baseline.countries+['World','Harmonizing'])
+#                             title='Country', 
+#                             # options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
+#                             options=p_baseline.countries+['World','Harmonizing'])
 
 # def get_data_cf(baseline,country):
 #     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
@@ -653,11 +653,11 @@ curdoc().add_root(first_panel)
 # colors_cf_max = itertools.cycle(Category10[10])
 
 # p_cf = figure(title="Patent protection counterfactual", 
-#                width = 1200,
-#                height = 850,
-#                x_axis_label='Change in delta',
-#                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                tools = TOOLS) 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 tools = TOOLS) 
 
 # for col in df_cf.columns:
 #     if col not in [0,'delt','growth']:
@@ -696,7 +696,7 @@ curdoc().add_root(first_panel)
 # counterfactuals_report = column(controls_cf,p_cf)
 
 # second_panel = row(sensitivity_report,counterfactuals_report)
-# # second_panel = row(counterfactuals_report)
+second_panel = row(sensitivity_report)
 
 # #%% Nash / coop equilibrium
 
@@ -955,3 +955,4 @@ curdoc().add_root(first_panel)
 # third_panel = row(p_kog,p_kog2)
 
 # curdoc().add_root(column(first_panel, second_panel, second_panel_bis, third_panel))
+curdoc().add_root(column(first_panel, second_panel))
