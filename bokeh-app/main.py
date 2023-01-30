@@ -190,10 +190,10 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 #%% moments / parameters for variations
 
-list_of_moments = ['GPDIFF','GROWTH','KM','KM_GDP', 'OUT',
+list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
- 'SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'SINNOVPATUS', 'TO',
+ 'SRGDP_RUS', 'JUPCOST','UUPCOST', 'SINNOVPATUS', 'TO',
  'DOMPATUS','DOMPATEU','ERDUS','TWSPFLOW','TWSPFLOWDOM']
 
 # comments_dic = {'baseline':'baseline',
@@ -278,6 +278,7 @@ comments_dic = {"baseline":"baseline",
                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
                 "2.0":"2.0: No Hjort factors",
+                "3.0":"3.0: UUPCOST instead of JUPCOST",
                 # "90":"90: temp",
                 }
 

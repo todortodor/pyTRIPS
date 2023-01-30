@@ -20,6 +20,7 @@ SRGDP_US;US share of world real GDP
 SRGDP_RUS;Share of world real GDP, ratio with the US
 STFLOW;Ratio of bilateral trade flow to world output
 JUPCOST;Patenting cost in Japan for the US
+UUPCOST;Patenting cost in US for the US
 JUPCOSTRD;Ratio of patenting cost in Japan for the US to RD in the US
 TP;Total number of patents in the world
 Z;country expenditure

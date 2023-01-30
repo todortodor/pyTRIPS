@@ -34,8 +34,8 @@ if new_run:
     m.load_data()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/11.7/')
-if 'theta' not in p.calib_parameters:
-    p.calib_parameters.append('theta')
+# if 'theta' not in p.calib_parameters:
+#     p.calib_parameters.append('theta')
 # if 'sigma' not in p.calib_parameters:
 #     p.calib_parameters.append('sigma')
 
@@ -69,10 +69,10 @@ if 'theta' in p.calib_parameters:
 #     m.weights_dict['ERDUS'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
-p.update_khi_and_r_hjort(0.16)
+# p.update_khi_and_r_hjort(0.16)
 # p.fe[1] = 0.01
 
-p.guess = None
+# p.guess = None
 # p.d = 1
 # p.r_hjort[3] = 16.02230702
 # p.delta[...,1][p.delta[...,1]<0.01] = 0.01
@@ -82,8 +82,10 @@ p.guess = None
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
 # m.list_of_moments.remove('SPFLOW')
-# m.list_of_moments.remove('SPFLOW_RUS')
-# m.list_of_moments.append('SPFLOWDOM')
+if 'JUPCOST' in m.list_of_moments:
+    m.list_of_moments.remove('JUPCOST')
+if 'UUPCOST' not in m.list_of_moments:
+    m.list_of_moments.append('UUPCOST')
 # m.list_of_moments.append('ERDUS')
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
@@ -92,7 +94,7 @@ avoid_bad_nash = False
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
 # m.TO_target = np.float64(0.036)
-m.TO_target = m.TO_target/2
+# m.TO_target = m.TO_target/2
 # m.KM_target = np.float64(0.1322)
 # m.GROWTH_target = np.array(0.02)
 # m.GROWTH_target = np.array(0.03)
@@ -233,17 +235,17 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'New baseline 302 calibrated elasticities'
+commentary = 'UUPCOST instead of JUPCOST'
 # commentary = ''
-baseline_number = '302'
+# baseline_number = '302'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 302
+run_number = 3.0
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

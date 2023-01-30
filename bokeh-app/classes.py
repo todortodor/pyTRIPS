@@ -798,7 +798,7 @@ class moments:
         if list_of_moments is None:
             self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
-                               'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
+                               'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST',
                                'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
@@ -844,6 +844,7 @@ class moments:
                              'SRGDP_RUS':1, 
                              # 'STFLOW':1,
                              'JUPCOST':1,
+                             'UUPCOST':1,
                              'JUPCOSTRD':1,
                               'TP':1,
                               'Z':1,
@@ -890,6 +891,7 @@ class moments:
                                                       , names=['destination','origin']),
                     'SRDUS':pd.Index(['scalar']), 
                     'JUPCOST':pd.Index(['scalar']), 
+                    'UUPCOST':pd.Index(['scalar']), 
                     'JUPCOSTRD':pd.Index(['scalar']), 
                     'SRGDP':pd.Index(self.countries, name='country'), 
                     'SRGDP_US':pd.Index(['scalar']), 
@@ -937,7 +939,7 @@ class moments:
         return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU',
-                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','JUPCOSTRD', 'TP', 'Z', 
+                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','JUPCOSTRD', 'TP', 'Z', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
     
@@ -995,6 +997,7 @@ class moments:
         # self.GROWTH_target = self.GROWTH_target*10
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
+        self.UUPCOST_target = self.moments.loc['UUPCOST'].value
         self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
         self.TP_data = self.cc_moments['patent flows'].sum()
@@ -1317,6 +1320,13 @@ class moments:
         #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
+    def compute_UUPCOST(self,var,p):
+        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
+        self.UUPCOST = var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]
+        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[2]*p.fe[1]*var.w[2]
+        #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
+        # self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
+        
     def compute_TP(self,var,p):
         self.TP = var.pflow.sum()
         inter_pflow = remove_diag(var.pflow)
@@ -1454,6 +1464,7 @@ class moments:
         self.compute_GPDIFF(var, p)
         self.compute_GROWTH(var, p)
         self.compute_JUPCOST(var, p)
+        self.compute_UUPCOST(var, p)
         self.compute_TP(var,p)
         self.compute_Z(var,p)
         # self.compute_SDOMTFLOW(var,p)
