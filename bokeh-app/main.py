@@ -318,6 +318,8 @@ for baseline_nbr in ['301','302']:
         pass
 
 
+countries = p_baseline.countries
+
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
 # baseline_mom = '101'
@@ -565,7 +567,7 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 baselines_dic_sensi = {}
 
 # for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['201','202']:
+for baseline_nbr in ['201']:
     baselines_dic_sensi[baseline_nbr] = {}
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
@@ -613,346 +615,346 @@ qty_sensi_select.on_change('value', update_qty_sensi)
 
 sensitivity_report = column(controls_sensi,p_sensi)
 
-# #%% counterfactuals
+#%% counterfactuals
 
-# # baseline_cf = '101'
-# baseline_cf = '201'
-# country_cf = 'USA'
+# baseline_cf = '101'
+baseline_cf = '201'
+country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) if s[9:].startswith('201')])
-# country_cf_select = Select(value=country_cf, 
-#                             title='Country', 
-#                             # options=p_baseline.countries+['World','Harmonizing','World_2','Harmonizing_2'])
-#                             options=p_baseline.countries+['World','Harmonizing'])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) if s[9:].startswith('201')])
+country_cf_select = Select(value=country_cf, 
+                            title='Country', 
+                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                            options=countries+['World','Harmonizing'])
 
-# def get_data_cf(baseline,country):
-#     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-#     if country != 'Harmonizing':
-#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-#     if country == 'Harmonizing':
-#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-#     df_cf.set_index('delt',inplace=True)
-#     return df_cf
+def get_data_cf(baseline,country):
+    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+    if country != 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+    df_cf.set_index('delt',inplace=True)
+    return df_cf
 
-# def build_max(df_cf):
-#     df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-#     df_max.index.name = 'label'
-#     df_max.columns = ['xmax','max'] 
-#     df_max = df_max.loc[p_baseline.countries]
-#     df_max['colors'] = Category10[10][:len(df_max)]
-#     return df_max
+def build_max(df_cf):
+    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category10[10][:len(df_max)]
+    return df_max
 
-# df_cf = get_data_cf(baseline_cf,country_cf)
-# ds_cf = ColumnDataSource(df_cf)
-# df_cf_max = build_max(df_cf)
-# ds_cf_max = ColumnDataSource(df_cf_max)
+df_cf = get_data_cf(baseline_cf,country_cf)
+ds_cf = ColumnDataSource(df_cf)
+df_cf_max = build_max(df_cf)
+ds_cf_max = ColumnDataSource(df_cf_max)
 
-# colors_cf = itertools.cycle(Category10[10])
-# colors_cf_max = itertools.cycle(Category10[10])
+colors_cf = itertools.cycle(Category10[10])
+colors_cf_max = itertools.cycle(Category10[10])
 
-# p_cf = figure(title="Patent protection counterfactual", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in delta',
-#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                 tools = TOOLS) 
+p_cf = figure(title="Patent protection counterfactual", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                tools = TOOLS) 
 
-# for col in df_cf.columns:
-#     if col not in [0,'delt','growth']:
-#         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+for col in df_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
-# p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
 
-# # p_cf.extra_y_ranges['growth'] = DataRange1d()
-# # p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# # p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+# p_cf.extra_y_ranges['growth'] = DataRange1d()
+# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
      
-# p_cf.legend.click_policy="hide"
-# p_cf.legend.label_text_font_size = '8pt'
-# p_cf.add_layout(p_cf.legend[0], 'right')
+p_cf.legend.click_policy="hide"
+p_cf.legend.label_text_font_size = '8pt'
+p_cf.add_layout(p_cf.legend[0], 'right')
 
-# def update_baseline_cf(attrname, old, new):
-#     country_cf = country_cf_select.value
-#     ds_cf.data = get_data_cf(new,country_cf)
-#     df_cf = get_data_cf(new,country_cf)
-#     ds_cf.data = df_cf
-#     ds_cf_max.data = build_max(df_cf)
+def update_baseline_cf(attrname, old, new):
+    country_cf = country_cf_select.value
+    ds_cf.data = get_data_cf(new,country_cf)
+    df_cf = get_data_cf(new,country_cf)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
     
-# def update_country_cf(attrname, old, new):
-#     baseline_cf = baseline_cf_select.value
-#     df_cf = get_data_cf(baseline_cf,new)
-#     ds_cf.data = df_cf
-#     ds_cf_max.data = build_max(df_cf)
-#     # ds_cf.data = get_data_cf(baseline_cf,new)
+def update_country_cf(attrname, old, new):
+    baseline_cf = baseline_cf_select.value
+    df_cf = get_data_cf(baseline_cf,new)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    # ds_cf.data = get_data_cf(baseline_cf,new)
     
-# controls_cf = row(baseline_cf_select, country_cf_select)
-# # controls_mom.sizing_mode = 'scale_width'
+controls_cf = row(baseline_cf_select, country_cf_select)
+# controls_mom.sizing_mode = 'scale_width'
 
-# baseline_cf_select.on_change('value', update_baseline_cf)
-# country_cf_select.on_change('value', update_country_cf)
+baseline_cf_select.on_change('value', update_baseline_cf)
+country_cf_select.on_change('value', update_country_cf)
 
-# counterfactuals_report = column(controls_cf,p_cf)
+counterfactuals_report = column(controls_cf,p_cf)
 
-# second_panel = row(sensitivity_report,counterfactuals_report)
-second_panel = row(sensitivity_report)
+second_panel = row(sensitivity_report,counterfactuals_report)
+# second_panel = row(sensitivity_report)
 
-# #%% Nash / coop equilibrium
+#%% Nash / coop equilibrium
 
-# # nash_eq_path = 'nash_eq_recaps/'
-# # coop_eq_path = 'coop_eq_recaps/'
+# nash_eq_path = 'nash_eq_recaps/'
+# coop_eq_path = 'coop_eq_recaps/'
 
-# welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-#                            'variation'],keep='last').sort_values(['baseline','variation'])
-# welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-#                            'variation'],keep='last').sort_values(['baseline','variation'])
+welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+                            'variation'],keep='last').sort_values(['baseline','variation'])
+welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+                            'variation'],keep='last').sort_values(['baseline','variation'])
 
-# welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
-# welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
 
-# welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
-# welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
+welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
-# welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
-# welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
+welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
+welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
 
-# welf_coop = welf_coop.sort_values(['baseline','sorting'])
-# welf_nash = welf_nash.sort_values(['baseline','sorting'])
+welf_coop = welf_coop.sort_values(['baseline','sorting'])
+welf_nash = welf_nash.sort_values(['baseline','sorting'])
 
-# welf_coop = welf_coop[welf_coop['baseline'].isin([201,202])]
-# welf_nash = welf_nash[welf_nash['baseline'].isin([201,202])]
+welf_coop = welf_coop[welf_coop['baseline'].isin([201,202])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([201,202])]
 
-# ds_coop = ColumnDataSource(welf_coop)
-# ds_nash = ColumnDataSource(welf_nash)
+ds_coop = ColumnDataSource(welf_coop)
+ds_nash = ColumnDataSource(welf_nash)
 
-# colors_coop = itertools.cycle(Category10[10])
-# colors_nash = itertools.cycle(Category10[10])
+colors_coop = itertools.cycle(Category10[10])
+colors_nash = itertools.cycle(Category10[10])
 
-# x_range = welf_nash['run'].to_list()
+x_range = welf_nash['run'].to_list()
 
-# p_eq = figure(title="Cooperative and Nash equilibrium", 
-#                width = 1400,
-#                height = 850,
-#                x_range = x_range,
-#                # x_axis_label='Run',
-#                y_axis_label='Consumption eqivalent welfare change',
-#                 tools = TOOLS
-#                ) 
-# p_eq.xaxis.major_label_orientation = 3.14/3
+p_eq = figure(title="Cooperative and Nash equilibrium", 
+                width = 1400,
+                height = 850,
+                x_range = x_range,
+                # x_axis_label='Run',
+                y_axis_label='Consumption eqivalent welfare change',
+                tools = TOOLS
+                ) 
+p_eq.xaxis.major_label_orientation = 3.14/3
 
-# for col in p_baseline.countries+['pop w av']:
-#     p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
-#     p_eq.line(x='run', y=col, source = ds_coop, color=next(colors_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+for col in p_baseline.countries+['pop w av']:
+    p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
+    p_eq.line(x='run', y=col, source = ds_coop, color=next(colors_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
     
-# p_eq.legend.click_policy="hide"
-# p_eq.legend.label_text_font_size = '8pt'
-# p_eq.add_layout(p_eq.legend[0], 'right')    
+p_eq.legend.click_policy="hide"
+p_eq.legend.label_text_font_size = '8pt'
+p_eq.add_layout(p_eq.legend[0], 'right')    
 
-# hover_tool_eq = HoverTool()
-# hover_tool_eq.tooltips = [
-#     ("run", "@run"),
-#     ("value", "$y")
-#     ] 
-# p_eq.add_tools(hover_tool_eq)
+hover_tool_eq = HoverTool()
+hover_tool_eq.tooltips = [
+    ("run", "@run"),
+    ("value", "$y")
+    ] 
+p_eq.add_tools(hover_tool_eq)
 
-# data_table_eq = dict(
-#         runs=[run for run in comments_dic.keys()],
-#         comments=[comment for comment in comments_dic.values()],
-#     )
-# source_table_eq = ColumnDataSource(data_table_eq)
+data_table_eq = dict(
+        runs=[run for run in comments_dic.keys()],
+        comments=[comment for comment in comments_dic.values()],
+    )
+source_table_eq = ColumnDataSource(data_table_eq)
 
-# columns = [
-#         TableColumn(field="runs", title="Runs"),
-#         TableColumn(field="comments", title="Description"),
-#     ]
-# data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=850,
-#                            # autosize_mode="force_fit"
-#                           )
+columns = [
+        TableColumn(field="runs", title="Runs"),
+        TableColumn(field="comments", title="Description"),
+    ]
+data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=850,
+                            # autosize_mode="force_fit"
+                          )
 
-# data_table_welfares = pd.concat([welf_nash.set_index('run'),
-#              welf_coop.set_index('run')],
-#             axis=0,
-#             keys=['Nash','Coop'],
-#             names=['type','run'],
-#             sort=False
-#             ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['pop w av']]
+data_table_welfares = pd.concat([welf_nash.set_index('run'),
+              welf_coop.set_index('run')],
+            axis=0,
+            keys=['Nash','Coop'],
+            names=['type','run'],
+            sort=False
+            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['pop w av']]
 
-# source_table_welfares = ColumnDataSource(data_table_welfares)
-# columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['pop w av']]
+source_table_welfares = ColumnDataSource(data_table_welfares)
+columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['pop w av']]
 
-# table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=850, height=400,
-#                            # autosize_mode="force_fit"
-#                           )
+table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=850, height=400,
+                            # autosize_mode="force_fit"
+                          )
 
-# # columns_par = [
-# #         TableColumn(field="x"),
-# #     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
+# columns_par = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
 
-# data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
+data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
 
-# # p_eq.show()
+# p_eq.show()
 
-# deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
-#                            'variation'],keep='last').sort_values(['baseline','variation'])
-# deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
-#                            'variation'],keep='last').sort_values(['baseline','variation'])
+deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+                            'variation'],keep='last').sort_values(['baseline','variation'])
+deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+                            'variation'],keep='last').sort_values(['baseline','variation'])
 
-# deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
-# deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
+deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
+deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
 
-# deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
-# deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
+deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
+deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
 
-# deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
-# deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
+deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
+deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
 
-# deltas_coop = deltas_coop[deltas_coop['baseline'].isin([201,202])]
-# deltas_nash = deltas_nash[deltas_nash['baseline'].isin([201,202])]
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([201,202])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([201,202])]
 
-# ds_deltas_coop = ColumnDataSource(deltas_coop)
-# ds_deltas_nash = ColumnDataSource(deltas_nash)
+ds_deltas_coop = ColumnDataSource(deltas_coop)
+ds_deltas_nash = ColumnDataSource(deltas_nash)
 
-# colors_deltas_coop = itertools.cycle(Category10[10])
-# colors_deltas_nash = itertools.cycle(Category10[10])
+colors_deltas_coop = itertools.cycle(Category10[10])
+colors_deltas_nash = itertools.cycle(Category10[10])
 
-# x_range = deltas_nash['run'].to_list()
+x_range = deltas_nash['run'].to_list()
 
-# p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
-#                width = 1400,
-#                height = 850,
-#                x_range = x_range,
-#                y_axis_type="log",
-#                # x_axis_label='Run',
-#                y_axis_label='Delta',
-#                 tools = TOOLS
-#                ) 
-# p_deltas_eq.xaxis.major_label_orientation = 3.14/3
+p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
+                width = 1400,
+                height = 850,
+                x_range = x_range,
+                y_axis_type="log",
+                # x_axis_label='Run',
+                y_axis_label='Delta',
+                tools = TOOLS
+                ) 
+p_deltas_eq.xaxis.major_label_orientation = 3.14/3
 
-# for col in p_baseline.countries:
-#     p_deltas_eq.line(x='run', y=col, source = ds_deltas_nash, color=next(colors_deltas_nash),line_width = 2, legend_label=col+' Nash')
-#     p_deltas_eq.line(x='run', y=col, source = ds_deltas_coop, color=next(colors_deltas_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+for col in p_baseline.countries:
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_nash, color=next(colors_deltas_nash),line_width = 2, legend_label=col+' Nash')
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_coop, color=next(colors_deltas_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
     
-# p_deltas_eq.legend.click_policy="hide"
-# p_deltas_eq.legend.label_text_font_size = '8pt'
-# p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
-# hover_tool_deltas_eq = HoverTool()
-# hover_tool_deltas_eq.tooltips = [
-#     ("run", "@run"),
-#     ("value", "$y")
-#     ] 
-# p_deltas_eq.add_tools(hover_tool_deltas_eq)
+p_deltas_eq.legend.click_policy="hide"
+p_deltas_eq.legend.label_text_font_size = '8pt'
+p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
+hover_tool_deltas_eq = HoverTool()
+hover_tool_deltas_eq.tooltips = [
+    ("run", "@run"),
+    ("value", "$y")
+    ] 
+p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
-# data_table_deltas = pd.concat([deltas_nash.set_index('run'),
-#              deltas_coop.set_index('run')],
-#             axis=0,
-#             keys=['Nash','Coop'],
-#             names=['type','run'],
-#             sort=False
-#             ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
+data_table_deltas = pd.concat([deltas_nash.set_index('run'),
+              deltas_coop.set_index('run')],
+            axis=0,
+            keys=['Nash','Coop'],
+            names=['type','run'],
+            sort=False
+            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
 
-# source_table_deltas = ColumnDataSource(data_table_deltas)
-# columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries]
+source_table_deltas = ColumnDataSource(data_table_deltas)
+columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries]
 
-# table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=850, height=400,
-#                            # autosize_mode="force_fit"
-#                           )
+table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=850, height=400,
+                            # autosize_mode="force_fit"
+                          )
 
-# second_panel_bis = column(row(p_eq,data_table_eq),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
+second_panel_bis = column(row(p_eq,data_table_eq),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
-# #%% Kogan paper
+#%% Kogan paper
 
-# # TOOLS="pan,wheel_zoom,box_zoom,reset"
+# TOOLS="pan,wheel_zoom,box_zoom,reset"
 
-# colors_kog = itertools.cycle(Category10[10])
+colors_kog = itertools.cycle(Category10[10])
 
-# df_kog = pd.read_csv(data_path+'koga_updated.csv')
-# ds_kog = ColumnDataSource(df_kog)
+df_kog = pd.read_csv(data_path+'koga_updated.csv')
+ds_kog = ColumnDataSource(df_kog)
 
-# p_kog = figure(title="Kogan moment updated / extrapolated", 
-#                width = 1200,
-#                height = 850,
-#                x_axis_label='Issue Date',
-#                y_axis_type="log",
-#                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                tools = TOOLS) 
+p_kog = figure(title="Kogan moment updated / extrapolated", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Issue Date',
+                y_axis_type="log",
+                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                tools = TOOLS) 
 
-# l_kog = {}
+l_kog = {}
 
-# for i,col in enumerate(df_kog.columns):
-#     if col not in ['issue_date']:
-#         l_kog[i] = p_kog.line(x='issue_date', y=col, 
-#                   source = ds_kog, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog),
-#                   name = col)
+for i,col in enumerate(df_kog.columns):
+    if col not in ['issue_date']:
+        l_kog[i] = p_kog.line(x='issue_date', y=col, 
+                  source = ds_kog, 
+                  line_width = 2, legend_label=col, color=next(colors_kog),
+                  name = col)
 
-# hover_tool_kog = HoverTool(
-#     # line_policy='nearest',
-#     tooltips = [
-#         ("Issue date", "$x"),
-#         ('ValuePerPatent', '@ValuePerPatent'),
-#         ('CostPerPatent', '@CostPerPatent'),
-#         ('KM_article', '@KM_article'),
-#         ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
-#         ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
-#         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
-#         ],
-#     mode='vline',
-#     renderers = [l_kog[4]]
-# )
-# p_kog.add_tools(hover_tool_kog)
-# # hover_tool_kog.renderers.append(l_kog[0])
+hover_tool_kog = HoverTool(
+    # line_policy='nearest',
+    tooltips = [
+        ("Issue date", "$x"),
+        ('ValuePerPatent', '@ValuePerPatent'),
+        ('CostPerPatent', '@CostPerPatent'),
+        ('KM_article', '@KM_article'),
+        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
+        ],
+    mode='vline',
+    renderers = [l_kog[4]]
+)
+p_kog.add_tools(hover_tool_kog)
+# hover_tool_kog.renderers.append(l_kog[0])
 
-# p_kog.legend.click_policy="hide"
-# p_kog.legend.label_text_font_size = '8pt'
-# p_kog.add_layout(p_kog.legend[0], 'right')
+p_kog.legend.click_policy="hide"
+p_kog.legend.label_text_font_size = '8pt'
+p_kog.add_layout(p_kog.legend[0], 'right')
 
 
-# #
-# colors_kog2 = itertools.cycle(Category10[10])
+#
+colors_kog2 = itertools.cycle(Category10[10])
 
-# df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
-# ds_kog2 = ColumnDataSource(df_kog2)
+df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
+ds_kog2 = ColumnDataSource(df_kog2)
 
-# p_kog2 = figure(title="Kogan moment", 
-#                width = 1200,
-#                height = 850,
-#                x_axis_label='Market Prior',
-#                # y_axis_type="log",
-#                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                tools = TOOLS) 
+p_kog2 = figure(title="Kogan moment", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Market Prior',
+                # y_axis_type="log",
+                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                tools = TOOLS) 
 
-# l_kog2 = {}
+l_kog2 = {}
 
-# for i,col in enumerate(df_kog2.columns):
-#     if col not in ['market prior']:
-#         l_kog2[i] = p_kog2.line(x='market prior', y=col, 
-#                   source = ds_kog2, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog2))
+for i,col in enumerate(df_kog2.columns):
+    if col not in ['market prior']:
+        l_kog2[i] = p_kog2.line(x='market prior', y=col, 
+                  source = ds_kog2, 
+                  line_width = 2, legend_label=col, color=next(colors_kog2))
 
-# hover_tool_kog2 = HoverTool(
-#     # line_policy='nearest',
-#     tooltips = [
-#         ("market prior", "$x"),
-#         ('1950 to 2007', '@from1950to2007'),
-#         ('1980 to 2007', '@from1980to2007'),
-#         ('1995 to 2007', '@from1995to2007'),
-#         ('2002 to 2007', '@from2002to2007'),
-#         ('1950 to 2020', '@from1950to2020'),
-#         ('1980 to 2020', '@from1980to2020'),
-#         ('1995 to 2020', '@from1995to2020'),
-#         ('2002 to 2020', '@from2002to2020'),
-#         ],
-#     mode='vline',
-#     renderers = [l_kog2[4]]
-# )
+hover_tool_kog2 = HoverTool(
+    # line_policy='nearest',
+    tooltips = [
+        ("market prior", "$x"),
+        ('1950 to 2007', '@from1950to2007'),
+        ('1980 to 2007', '@from1980to2007'),
+        ('1995 to 2007', '@from1995to2007'),
+        ('2002 to 2007', '@from2002to2007'),
+        ('1950 to 2020', '@from1950to2020'),
+        ('1980 to 2020', '@from1980to2020'),
+        ('1995 to 2020', '@from1995to2020'),
+        ('2002 to 2020', '@from2002to2020'),
+        ],
+    mode='vline',
+    renderers = [l_kog2[4]]
+)
 
-# p_kog2.legend.click_policy="hide"
-# p_kog2.legend.label_text_font_size = '8pt'
-# p_kog2.add_layout(p_kog2.legend[0], 'right')
-# p_kog2.add_tools(hover_tool_kog2)
+p_kog2.legend.click_policy="hide"
+p_kog2.legend.label_text_font_size = '8pt'
+p_kog2.add_layout(p_kog2.legend[0], 'right')
+p_kog2.add_tools(hover_tool_kog2)
 
-# third_panel = row(p_kog,p_kog2)
+third_panel = row(p_kog,p_kog2)
 
-# curdoc().add_root(column(first_panel, second_panel, second_panel_bis, third_panel))
-curdoc().add_root(column(first_panel, second_panel))
+curdoc().add_root(column(first_panel, second_panel, second_panel_bis, third_panel))
+# curdoc().add_root(column(first_panel, second_panel))
