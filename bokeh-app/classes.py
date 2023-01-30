@@ -469,10 +469,9 @@ class var:
             x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:])/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
             cond = np.any(x_old != x_new)
             it+=1
-        
         # print(np.maximum(A*(x_new[None,:,:]/self.psi_C[...,1:]-1),0).sum(axis=0))
 
-        condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=1
+        condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=p.fo[None,1:]
         x_new[condition] = psi_star_n_star[...,1:][condition]
         self.psi_o_star = np.full((p.N,p.S),np.inf)
         self.psi_o_star[...,1:] = x_new
