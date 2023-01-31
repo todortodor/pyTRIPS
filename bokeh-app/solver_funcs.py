@@ -611,7 +611,7 @@ def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta):
                                              # bounds=(np.log10(lb_delta), np.log10(ub_delta)),
                                              bounds=(lb_delta, ub_delta),
                                              args = (p,c,sol_it_baseline),
-                                             options={'disp':3},
+                                             # options={'disp':3},
                                               tol=1e-8
                                              )
         # new_deltas[i] = 10**delta_min.x
@@ -753,8 +753,8 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         
         it += 1
         
-        if it>10:
-            damping = 2
+        # if it>10:
+        #     damping = 5
         
         if plot_convergence:
                 fig,ax = plt.subplots()
@@ -771,5 +771,5 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                 plt.show()
     return deltas, welfares
 
-def find_coop_eq(p_baseline,lb_delta=0.01,ub_delta=100,tol=5e-5):
+# def find_coop_eq(p_baseline,lb_delta=0.01,ub_delta=100,tol=5e-5):
     

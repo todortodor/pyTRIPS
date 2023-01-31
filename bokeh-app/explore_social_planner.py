@@ -43,8 +43,8 @@ pylab.rcParams.update(params)
 baseline_dics = [
                 # {'baseline':'101',
                 #   'variation':'16.1'},
-                {'baseline':'311',
-                  'variation': 'basline'},
+                # {'baseline':'311',
+                #   'variation': 'basline'},
                 # {'baseline':'311',
                 #   'variation': '1.0'},
                 # {'baseline':'311',
@@ -57,16 +57,16 @@ baseline_dics = [
                 #   'variation': '1.4'},
                 # {'baseline':'311',
                 #   'variation': '1.5'},
-                # {'baseline':'311',
-                #   'variation': '1.6'},
+                {'baseline':'311',
+                  'variation': '1.6'},
                 # {'baseline':'311',
                 #   'variation': '1.7'},
                 # {'baseline':'311',
                 #   'variation': '1.8'}
                  ]
         
-lb_delta = 0.01
-ub_delta = 100
+# lb_delta = 0.01
+# ub_delta = 100
 
 for baseline_dic in baseline_dics:    
 # for baseline_dic in baseline_dics:    
@@ -108,8 +108,10 @@ for baseline_dic in baseline_dics:
     sol_baseline.compute_non_solver_quantities(p_baseline)
 
 l_df = []    
+d_sol = {}
+d_p = {}
     
-for delta in np.logspace(-1,1,21):
+for delta in np.linspace(1,3,21):
     country = 'USA'
     p = p_baseline.copy()
     p.delta[p.countries.index(country),1] = p_baseline.delta[p.countries.index(country),1]*delta
@@ -144,20 +146,28 @@ for delta in np.logspace(-1,1,21):
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
-    l_df.append(pd.DataFrame(index=p.countries+['growth','Negishi','pop weighted'],
-                                          data=sol_c.cons_eq_welfare.tolist()+[sol_c.g/sol_baseline.g,
-                                                                               sol_c.negishi_welfare_change,
-                                                                               sol_c.pop_average_welfare_change]))
+    
+    d_p[delta] = p
+    d_sol[delta] = sol_c
+    
+    l_df.append(pd.DataFrame(index=p.countries+['growth'],
+                                          data=sol_c.cons_eq_welfare.tolist()+[sol_c.g/sol_baseline.g]))
     print('Delta '+country, delta)
-    print('Negishi weighted', sol_c.negishi_welfare_change)
-    print('Pop weighted', sol_c.pop_average_welfare_change)
-    print('cons_eq_welfare', pd.DataFrame(index=p.countries+['growth','Negishi','pop weighted'],
-                                          data=sol_c.cons_eq_welfare.tolist()+[sol_c.g,
-                                                                               sol_c.negishi_welfare_change,
-                                                                               sol_c.pop_average_welfare_change]))
+    # print('Negishi weighted', sol_c.negishi_welfare_change)
+    # print('Pop weighted', sol_c.pop_average_welfare_change)
+    print('cons_eq_welfare', pd.DataFrame(index=p.countries+['growth'],
+                                          data=sol_c.cons_eq_welfare.tolist()+[sol_c.g]))
     print('')
 #%%
 df = pd.concat(l_df,axis=1)
 df = df.T
 df.index = np.logspace(-1,1,21)
-df.plot(y=['Negishi','pop weighted'])
+df.plot()
+
+#%%
+
+for delta in d_p:
+    print('delta',round(delta,1),'EU welfare',d_sol[delta].cons_eq_welfare[1])
+    print(np.argwhere(d_sol[delta].psi_o_star ==1 ))
+    # plt.plot(d_sol[delta].psi_m_star[...,1].ravel())
+    # plt.show()

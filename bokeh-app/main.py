@@ -191,10 +191,9 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 #%% moments / parameters for variations
 
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
- 'RD', 'RD_US', 'RD_RUS', 'RP', 'SPFLOWDOM', 'SPFLOW',
- 'SPFLOW_US', 'SPFLOW_RUS', 'SRDUS', 'SRGDP', 'SRGDP_US',
- 'SRGDP_RUS', 'JUPCOST','UUPCOST', 'SINNOVPATUS', 'TO',
- 'DOMPATUS','DOMPATEU','ERDUS','TWSPFLOW','TWSPFLOWDOM']
+ 'RD', 'RP', 'SPFLOWDOM', 'SPFLOW',
+ 'SRDUS', 'SRGDP','UUPCOST', 'SINNOVPATUS','SINNOVPATEU', 'TO',
+ 'DOMPATUS','DOMPATEU','TWSPFLOW','TWSPFLOWDOM']
 
 # comments_dic = {'baseline':'baseline',
 #                 '99':'silenced run',
@@ -243,11 +242,26 @@ comments_dic = {"baseline":"baseline",
                 "1.3":"1.3: kappa:0.5,TO:0.036,KM:0.06",
                 "1.4":"1.4: kappa:0.5,TO:0.036,KM:0.09277",
                 "1.5":"1.5: kappa:0.5,TO:0.036,KM:0.1322",
-                # "1.5.2":"1.5.2: kappa:0.5,TO:0.036,KM:0.1322",
                 "1.6":"1.6: kappa:0.5,TO:0.0124,KM:0.06",
-                # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
                 "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
                 "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
+                "1.9":"1.9: kappa:0.5,TO:0.0242,KM:0.06",
+                "1.10":"1.10: kappa:0.5,TO:0.0242,KM:0.09277",
+                "1.11":"1.11: kappa:0.5,TO:0.0242,KM:0.1322",
+                "2.0":"2.0: Added SINNOVPATEU moment",
+                "2.1":"2.1: 2.0 stronger weights DOMPATEU/US SINNOVPATEU/US",
+                "2.1.0":"2.1.0: kappa:0.5,TO:0.05,KM:0.06",
+                "2.1.1":"2.1.1: kappa:0.5,TO:0.05,KM:0.09277",
+                "2.1.2":"2.1.2: kappa:0.5,TO:0.05,KM:0.1322",
+                "2.1.3":"2.1.3: kappa:0.5,TO:0.036,KM:0.06",
+                "2.1.4":"2.1.4: kappa:0.5,TO:0.036,KM:0.09277",
+                "2.1.5":"2.1.5: kappa:0.5,TO:0.036,KM:0.1322",
+                "2.1.6":"2.1.6: kappa:0.5,TO:0.0242,KM:0.06",
+                "2.1.7":"2.1.7: kappa:0.5,TO:0.0242,KM:0.09277",
+                "2.1.8":"2.1.8: kappa:0.5,TO:0.0242,KM:0.1322",
+                "2.1.9":"2.1.9: kappa:0.5,TO:0.0124,KM:0.06",
+                "2.1.10":"2.1.10: kappa:0.5,TO:0.0124,KM:0.09277",
+                "2.1.11":"2.1.11: kappa:0.5,TO:0.0124,KM:0.1322",
                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
@@ -257,6 +271,7 @@ comments_dic = {"baseline":"baseline",
                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
+                
                 }
 # comments_dic = {"baseline":"baseline",
 #                 "1.0":"1.0: Higher weight on JUPCOST",
@@ -292,6 +307,9 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['101','102','104']:
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
+    
+def section(s):
+     return [int(_) for _ in s.split(".")]
 for baseline_nbr in ['311']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
@@ -302,7 +320,9 @@ for baseline_nbr in ['311']:
     try:
         files_in_dir = next(os.walk(baseline_variations_path))[1]
         run_list = [f for f in files_in_dir if f[0].isnumeric()]
-        run_list.sort()
+        # lists = sorted([s.split('.') for s in run_list], key=lambda x:map(int, x))  
+        # run_list#.sort()
+        run_list = sorted(run_list, key=section)
     
         for run in run_list:
             # print(run)
@@ -352,9 +372,28 @@ labels = LabelSet(x='target', y='baseline', text='x',
 p_mom.add_layout(labels)
 p_mom.add_tools(hover_tool_mom)
 # p_mom.sizing_mode = 'scale_width'
-slope = Slope(gradient=1, y_intercept=0,
+slope1 = Slope(gradient=1, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=1)
-p_mom.add_layout(slope)
+slope2 = Slope(gradient=0.48, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=0.25)
+slope3 = Slope(gradient=0.72, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=0.25)
+slope4 = Slope(gradient=0.248, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=0.25)
+slope5 = Slope(gradient=1.546, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=0.25)
+slope6 = Slope(gradient=2.20, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=0.25)
+
+for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
+    p_mom.add_layout(slope)
+    
+# slope1.visible = False
+slope2.visible = False
+slope3.visible = False
+slope4.visible = False
+slope5.visible = False
+slope6.visible = False
 
 # colors_mom = itertools.cycle(Category20.values()(len(baselines_dic_mom[baseline_mom][mom].columns)))
 colors_mom = itertools.cycle(Category10[10])
@@ -407,6 +446,21 @@ def update_mom(attrname, old, new):
     # p_mom.legend.items = []
     baseline_mom = baseline_mom_select.value
     ds_mom.data = baselines_dic_mom[baseline_mom][new]
+    if new == 'scalars':
+        # for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
+        # slope1.visible = True
+        slope2.visible = True
+        slope3.visible = True
+        slope4.visible = True
+        slope5.visible = True
+        slope6.visible = True
+    else:
+        # slope1.visible = False
+        slope2.visible = False
+        slope3.visible = False
+        slope4.visible = False
+        slope5.visible = False
+        slope6.visible = False
 
 controls_mom = row(baseline_mom_select, mom_select)
 # controls_mom.sizing_mode = 'scale_width'
@@ -626,9 +680,11 @@ baseline_cf = '311'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
-
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
-                        if s[9:].startswith('311')])
+cf_list = [s for s in os.listdir(cf_path) if s[9:].startswith('311') and s.startswith('baseline')]
+def section_end(s):
+     return [int(_) for _ in s.split("_")[-1].split(".")]
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
@@ -664,6 +720,7 @@ p_cf = figure(title="Patent protection counterfactual",
                 height = 850,
                 x_axis_label='Change in delta',
                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
                 tools = TOOLS) 
 
 for col in df_cf.columns:
@@ -709,6 +766,8 @@ second_panel = row(sensitivity_report,counterfactuals_report)
 
 # nash_eq_path = 'nash_eq_recaps/'
 # coop_eq_path = 'coop_eq_recaps/'
+def section_ser(s):
+     return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
 welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
                             'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
@@ -724,8 +783,10 @@ welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation
 welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
 welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
 
-welf_coop = welf_coop.sort_values(['baseline','sorting'])
-welf_nash = welf_nash.sort_values(['baseline','sorting'])
+# welf_coop = welf_coop.sort_values(['baseline','sorting'])
+# welf_nash = welf_nash.sort_values(['baseline','sorting'])
+welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
 welf_coop = welf_coop[welf_coop['baseline'].isin([311])]
 welf_nash = welf_nash[welf_nash['baseline'].isin([311])]
@@ -784,7 +845,7 @@ data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, he
                           )
 
 # explication = Text(text="First is the quantity displayed\n'Negishi coop equal' means that we display the ")
-explication = Div(text="<br> <br> <br> <br> In the legend, first is the quantity displayed and last\
+explication = Div(text="In the legend, first is the quantity displayed and last\
                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation")
@@ -798,7 +859,8 @@ data_table_welfares = pd.concat([welf_nash.set_index('run'),
             keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
-            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+            # ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 source_table_welfares = ColumnDataSource(data_table_welfares)
 columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
@@ -826,8 +888,10 @@ deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['var
 deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
 deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
 
-deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
-deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
+# deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
+# deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
+deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
 deltas_coop = deltas_coop[deltas_coop['baseline'].isin([311])]
 deltas_nash = deltas_nash[deltas_nash['baseline'].isin([311])]
@@ -872,12 +936,14 @@ hover_tool_deltas_eq.tooltips = [
 p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
 data_table_deltas = pd.concat([deltas_nash.set_index('run'),
-              deltas_coop.set_index('run')],
+              deltas_negishi.set_index('run'),
+              deltas_pop_weighted.set_index('run')],
             axis=0,
             keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
-            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
+            # ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
+            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
 
 source_table_deltas = ColumnDataSource(data_table_deltas)
 columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]

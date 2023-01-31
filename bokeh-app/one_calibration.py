@@ -15,12 +15,12 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = True
-baseline_number = '301'
+new_run = False
+baseline_number = '311'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -33,7 +33,7 @@ if new_run:
     m = moments()
     m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
 # if 'theta' not in p.calib_parameters:
 #     p.calib_parameters.append('theta')
 # if 'sigma' not in p.calib_parameters:
@@ -59,6 +59,8 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATEU')
 # if 'DOMPATUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATUS')
+if 'SINNOVPATEU' not in m.list_of_moments:
+    m.list_of_moments.append('SINNOVPATEU')
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 # if 'kappa' not in p.calib_parameters:
@@ -89,7 +91,11 @@ avoid_bad_nash = False
 # m.list_of_moments.append('ERDUS')
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
-# m.weights_dict['SINNOVPATUS'] = 1.1
+m.weights_dict['SINNOVPATEU'] = 3
+m.weights_dict['DOMPATEU'] = 3
+m.weights_dict['SINNOVPATUS'] = 3
+m.weights_dict['DOMPATUS'] = 3
+# p.delta[...,1] = 0.05
 # m.weights_dict['JUPCOST'] = 2
 # m.weights_dict['SPFLOW_US'] = 3
 # m.weights_dict['SPFLOW_RUS'] = 3
@@ -235,17 +241,17 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'New baseline corresponding to 301_3.0'
+commentary = '2.0 with stronger weights on DOMPATEU/US SINNOVPATEU/US'
 # commentary = ''
-baseline_number = '311'
+# baseline_number = '311'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 311
+run_number = 2.1
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path
