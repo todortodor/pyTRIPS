@@ -683,7 +683,7 @@ class var:
         self.Z = self.Z / numeraire
         self.Z_sum = self.Z_sum / numeraire
         self.phi = self.phi * numeraire
-        
+        self.price_indices = self.price_indices / numeraire
         self.compute_sectoral_prices(p)
     
     def compute_nominal_value_added(self,p):
@@ -783,6 +783,16 @@ class var:
         self.cons_eq_welfare = self.cons*\
             ((p.rho-baseline.g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
                 /baseline.cons
+                
+    def compute_world_welfare_changes(self,p,baseline):
+        one_ov_gamma = 1/p.gamma
+        numerator = (p.labor**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
+        denominator = (p.labor**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
+        self.cons_eq_pop_average_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
+        
+        numerator = (baseline.cons**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
+        denominator = baseline.cons.sum()*(p.rho-self.g*(1-one_ov_gamma))
+        self.cons_eq_negishi_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
 
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)

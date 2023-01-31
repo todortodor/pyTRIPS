@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '201'
+baseline = '311'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -70,9 +70,10 @@ m_baseline.compute_moments(sol_baseline, p_baseline)
 #                 '7':'7 : drop SRDUS'
 #                 }
 
-moments_to_change = ['KM','JUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS']
+moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS',
+                     'DOMPATUS','DOMPATEU']
 # moments_to_change = ['ERDUS']
-parameters_to_change = ['kappa','gamma','rho','nu_tilde']
+parameters_to_change = ['kappa','gamma','rho']
 # parameters_to_change = ['nu_tilde']
 
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
@@ -153,8 +154,9 @@ for k, v in dic_runs.items():
         hist = history(*tuple(m.list_of_moments+['objective']))
         cond = True
         iterations = 0
+        max_iter = 10
         while cond:
-            if iterations < 14:
+            if iterations < max_iter-1:
                 test_ls = optimize.least_squares(fun = calibration_func,    
                                         x0 = p.make_p_vector(), 
                                         args = (p,m,p.guess,hist,start_time), 
@@ -182,7 +184,7 @@ for k, v in dic_runs.items():
                                         # gtol=1e-14,
                                         # f_scale=scale,
                                         verbose = 2)
-            cond = iterations < 15
+            cond = iterations < max_iter
             iterations += 1
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
@@ -211,9 +213,9 @@ for k, v in dic_runs.items():
         # sol_c = var.var_from_vector(sol.x, p_sol)    
         # sol_c.scale_tau(p_sol)
         p_sol.guess = sol.x
-        sol_c.compute_non_solver_quantities(p_sol) 
+        # sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 
         m.compute_moments(sol_c,p_sol)
         m.compute_moments_deviations()
@@ -222,7 +224,7 @@ for k, v in dic_runs.items():
         m.write_moments(result_path+str(i)+'/')
         
         write_calibration_results(dropbox_path+str(i),p_sol,m,sol_c,commentary = '')
-        m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
+        # m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
         
 #%% make calibration runs for different parameters
 
@@ -258,7 +260,7 @@ for k, v in dic_runs.items():
         m = moments()
         m.load_data()
         m.load_run(baseline_path)
-        m.drop_CHN_IND_BRA_ROW_from_RD = True
+        # m.drop_CHN_IND_BRA_ROW_from_RD = True
         p = parameters(n=7,s=2)
         p.load_data(baseline_path)
         if par_to_change == 'zeta':
@@ -272,8 +274,9 @@ for k, v in dic_runs.items():
         hist = history(*tuple(m.list_of_moments+['objective']))
         cond = True
         iterations = 0
+        max_iter = 10
         while cond:
-            if iterations < 14:
+            if iterations < max_iter-1:
                 test_ls = optimize.least_squares(fun = calibration_func,    
                                         x0 = p.make_p_vector(), 
                                         args = (p,m,p.guess,hist,start_time), 
@@ -301,7 +304,7 @@ for k, v in dic_runs.items():
                                         # gtol=1e-14,
                                         # f_scale=scale,
                                         verbose = 2)
-            cond = iterations < 15
+            cond = iterations < max_iter
             iterations += 1
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
@@ -330,9 +333,9 @@ for k, v in dic_runs.items():
         # sol_c = var.var_from_vector(sol.x, p_sol)    
         # sol_c.scale_tau(p_sol)
         p_sol.guess = sol.x
-        sol_c.compute_non_solver_quantities(p_sol) 
+        # sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 
         m.compute_moments(sol_c,p_sol)
         m.compute_moments_deviations()
@@ -341,7 +344,7 @@ for k, v in dic_runs.items():
         m.write_moments(result_path+str(i)+'/')
         
         write_calibration_results(dropbox_path+str(i),p_sol,m,sol_c,commentary = '')
-        m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
+        # m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
 
 #%% write summaries calibration runs for moment target change
 
@@ -1201,7 +1204,7 @@ make_dirs([sensitivity_tables_path])
 
 df_dic = {}
 
-for s_spec_par in ['theta','fe','zeta','nu','nu_tilde']:
+for s_spec_par in ['theta','fe','fo','zeta','nu']:
     list_of_dfs = []
     for qty,variation_dic in dic_of_variation_dics.items():
         df = pd.DataFrame()
@@ -1260,14 +1263,14 @@ for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
 big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
 df_dic['d_g_d_delta_US'] = big_df 
 
-list_of_dfs = []
-for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
-    df = pd.DataFrame()
-    df['Change'] = [round(change) for change in variation_dic['change'].values()]
-    df[qty] = [m.ERDUS for m in variation_dic['m'].values()]
-    list_of_dfs.append(df)
-big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
-df_dic['ERDUS'] = big_df 
+# list_of_dfs = []
+# for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
+#     df = pd.DataFrame()
+#     df['Change'] = [round(change) for change in variation_dic['change'].values()]
+#     df[qty] = [m.ERDUS for m in variation_dic['m'].values()]
+#     list_of_dfs.append(df)
+# big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs) 
+# df_dic['ERDUS'] = big_df 
         
 for k,df in df_dic.items():
     df.to_csv(sensitivity_tables_path+k+'.csv')

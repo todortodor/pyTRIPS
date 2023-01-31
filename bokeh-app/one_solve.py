@@ -10,8 +10,8 @@ from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 import numpy as np
 
-p = parameters(n=7,s=2)
-p.load_data('calibration_results_matched_economy/201/')
+# p = parameters(n=7,s=2)
+# p.load_data('calibration_results_matched_economy/201/')
 # p.load_data('calibration_results_matched_economy/baseline_101_variations/14.1/')
 # p.fo = p.fe
 # p.delta[0,1] = 0.1*p.delta[0,1]
@@ -39,25 +39,25 @@ p.load_data('calibration_results_matched_economy/201/')
 #                         # damping=10
 #                           # apply_bound_psi_star=True
 #                         )
-sol, sol_c = fixed_point_solver(p,x0=None,
+sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
-                        cobweb_qty='l_R',
+                        cobweb_qty='phi',
                         plot_convergence=True,
                         plot_cobweb=False,
-                        plot_live = True,
-                        safe_convergence=0.1,
-                        disp_summary=True,
-                        damping = 2,
-                        max_count = 1000,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        plot_live=False,
+                        damping = 5,
+                        max_count = 1e4,
                         accel_memory = 50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=1
+                        damping_post_acceleration=2
                         # damping=10
                           # apply_bound_psi_star=True
                         )

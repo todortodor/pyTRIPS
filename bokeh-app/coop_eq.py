@@ -35,7 +35,7 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
                             plot_cobweb=False,
                             safe_convergence=0.001,
                             disp_summary=False,
-                            damping = 10,
+                            damping = 5,
                             max_count = 1e4,
                             accel_memory = 50, 
                             accel_type1=True, 
@@ -43,18 +43,53 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
                             accel_relaxation=0.5, 
                             accel_safeguard_factor=1, 
                             accel_max_weight_norm=1e6,
-                            damping_post_acceleration=5
+                            damping_post_acceleration=2
                             # damping=10
                               # apply_bound_psi_star=True
                             )
-    sol_c = var.var_from_vector(sol.x, p)    
+    # sol_c = var.var_from_vector(sol.x, p)    
     # sol_c.scale_tau(p)
     sol_c.scale_P(p)
-    sol_c.compute_price_indices(p)
+    # sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    sol_c.compute_world_welfare_changes(p, sol_baseline)
+    # print(-sol_c.pop_average_welfare_change)
     
-    return -(sol_c.cons_eq_welfare*p.data.labor.values).sum()/p.data.labor.values.sum()
+    return -sol_c.cons_eq_pop_average_welfare_change
+
+def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
+    p.delta[...,1] = deltas
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 5,
+                            max_count = 1e4,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=2
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    # sol_c = var.var_from_vector(sol.x, p)    
+    # sol_c.scale_tau(p)
+    sol_c.scale_P(p)
+    # sol_c.compute_price_indices(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    sol_c.compute_world_welfare_changes(p, sol_baseline)
+    
+    return -sol_c.cons_eq_negishi_welfare_change
 
 # baseline_dics = []
 
@@ -71,10 +106,28 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
 #                           'variation':run})
         
 baseline_dics = [
-                {'baseline':'101',
-                  'variation':'16.1'},
-                # {'baseline':'104',
-                #   'variation':'14.1'}
+                # {'baseline':'101',
+                #   'variation':'16.1'},
+                {'baseline':'311',
+                  'variation': 'baseline'},
+                {'baseline':'311',
+                  'variation': '1.0'},
+                {'baseline':'311',
+                  'variation': '1.1'},
+                {'baseline':'311',
+                  'variation': '1.2'},
+                {'baseline':'311',
+                  'variation': '1.3'},
+                {'baseline':'311',
+                  'variation': '1.4'},
+                {'baseline':'311',
+                  'variation': '1.5'},
+                {'baseline':'311',
+                  'variation': '1.6'},
+                {'baseline':'311',
+                  'variation': '1.7'},
+                {'baseline':'311',
+                  'variation': '1.8'}
                  ]
         
 lb_delta = 0.01
@@ -116,20 +169,30 @@ for baseline_dic in baseline_dics:
                             )
     
     sol_baseline.scale_P(p_baseline)
-    sol_baseline.compute_price_indices(p_baseline)
+    # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)   
     
-    for aggregation_method in ['pop_weighted']:
-    
+    for aggregation_method in ['pop_weighted','negishi']:
+        print(aggregation_method)
         p = p_baseline.copy()
         bounds = [(lb_delta,ub_delta)]*len(p.countries)
+        if aggregation_method == 'pop_weighted':
+            sol = optimize.minimize(fun = minus_welfare_of_delta_pop_weighted,
+                                    x0 = p.delta[...,1],
+                                    tol = 1e-8,
+                                    args=(p,sol_baseline),
+                                    # options = {'disp':True},
+                                    bounds=bounds,
+                )
+        if aggregation_method == 'negishi':
+            sol = optimize.minimize(fun = minus_welfare_of_delta_negishi_weighted,
+                                    x0 = p.delta[...,1],
+                                    tol = 1e-8,
+                                    args=(p,sol_baseline),
+                                    # options = {'disp':True},
+                                    bounds=bounds
+                )
         
-        sol = optimize.minimize(fun = minus_welfare_of_delta_pop_weighted,
-                                x0 = p.delta[...,1],
-                                args=(p,sol_baseline),
-                                # options = {'disp':True},
-                                bounds=bounds
-            )
         
         # solve here opt_deltas
         
@@ -156,12 +219,13 @@ for baseline_dic in baseline_dics:
                                 # damping=10
                                   # apply_bound_psi_star=True
                                 )
-        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
+        sol_c.compute_world_welfare_changes(p,sol_baseline)
         
         # welfares = sol_c.cons_eq_welfare
             
@@ -183,12 +247,13 @@ for baseline_dic in baseline_dics:
             if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
                 cons_eq_welfares = pd.DataFrame(columns = ['baseline',
                                                 'variation',
-                                                'aggregation_method'] + p_baseline.countries)
+                                                'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
             cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
             run = pd.DataFrame(data = [baseline_dic['baseline'],
                             baseline_dic['variation'],
-                            aggregation_method]+sol_c.cons_eq_welfare.tolist(), 
+                            aggregation_method]+sol_c.cons_eq_welfare.tolist()+[sol_c.cons_eq_pop_average_welfare_change,
+                                                               sol_c.cons_eq_negishi_welfare_change], 
                             index = cons_eq_welfares.columns).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')

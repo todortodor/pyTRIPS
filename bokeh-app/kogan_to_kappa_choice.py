@@ -18,11 +18,11 @@ import numpy as np
 import pandas as pd
 
 runs_params = [
-    {'number':0,
-      'KM_target':0.06,
-      'TO_target':0.05,
-      'kappa':0.5
-      },
+    # {'number':0,
+    #   'KM_target':0.06,
+    #   'TO_target':0.05,
+    #   'kappa':0.5
+    #   },
     {'number':1,
       'KM_target':0.09277,
       'TO_target':0.05,
@@ -53,16 +53,6 @@ runs_params = [
       'TO_target':0.0124,
       'kappa':0.5
       },
-    {'number':5.2,
-      'KM_target':0.1322,
-      'TO_target':0.036,
-      'kappa':0.5
-      },
-    {'number':6.2,
-      'KM_target':0.06,
-      'TO_target':0.0124,
-      'kappa':0.5
-      },
     {'number':7,
       'KM_target':0.09277,
       'TO_target':0.0124,
@@ -73,54 +63,54 @@ runs_params = [
       'TO_target':0.0124,
       'kappa':0.5
       },
-    {'number':9,
-      'KM_target':0.06,
-      'TO_target':0.05,
-      'kappa':0.7474
-      },
-    {'number':10,
-      'KM_target':0.09277,
-      'TO_target':0.05,
-      'kappa':0.7474
-      },
-    {'number':11,
-      'KM_target':0.1322,
-      'TO_target':0.05,
-      'kappa':0.7474
-      },
-    {'number':12,
-      'KM_target':0.06,
-      'TO_target':0.036,
-      'kappa':0.7474
-      },
-    {'number':13,
-      'KM_target':0.09277,
-      'TO_target':0.036,
-      'kappa':0.7474
-      },
-    {'number':14,
-      'KM_target':0.1322,
-      'TO_target':0.036,
-      'kappa':0.7474
-      },
-    {'number':15,
-      'KM_target':0.06,
-      'TO_target':0.0124,
-      'kappa':0.7474
-      },
-    {'number':16,
-      'KM_target':0.09277,
-      'TO_target':0.0124,
-      'kappa':0.7474
-      },
-    {'number':17,
-      'KM_target':0.1322,
-      'TO_target':0.0124,
-      'kappa':0.7474
-      }
+    # {'number':9,
+    #   'KM_target':0.06,
+    #   'TO_target':0.05,
+    #   'kappa':0.7474
+    #   },
+    # {'number':10,
+    #   'KM_target':0.09277,
+    #   'TO_target':0.05,
+    #   'kappa':0.7474
+    #   },
+    # {'number':11,
+    #   'KM_target':0.1322,
+    #   'TO_target':0.05,
+    #   'kappa':0.7474
+    #   },
+    # {'number':12,
+    #   'KM_target':0.06,
+    #   'TO_target':0.036,
+    #   'kappa':0.7474
+    #   },
+    # {'number':13,
+    #   'KM_target':0.09277,
+    #   'TO_target':0.036,
+    #   'kappa':0.7474
+    #   },
+    # {'number':14,
+    #   'KM_target':0.1322,
+    #   'TO_target':0.036,
+    #   'kappa':0.7474
+    #   },
+    # {'number':15,
+    #   'KM_target':0.06,
+    #   'TO_target':0.0124,
+    #   'kappa':0.7474
+    #   },
+    # {'number':16,
+    #   'KM_target':0.09277,
+    #   'TO_target':0.0124,
+    #   'kappa':0.7474
+    #   },
+    # {'number':17,
+    #   'KM_target':0.1322,
+    #   'TO_target':0.0124,
+    #   'kappa':0.7474
+    #   }
     ]
-baseline_number = '201'
-for run_number_temp,run_params in enumerate(runs_params):
+baseline_number = '311'
+for run_params in runs_params:
     
     baseline_dic = {'baseline':baseline_number,
                     'variation':'1.'+str(run_params['number'])}
@@ -128,8 +118,8 @@ for run_number_temp,run_params in enumerate(runs_params):
     
     if new_run:
         p = parameters(n=7,s=2)
-        # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-        p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+baseline_dic['variation']+'/')
+        p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+        # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+baseline_dic['variation']+'/')
         start_time = time.perf_counter()
     
     # test = var.var_from_vector(p.guess, p)    
@@ -149,17 +139,18 @@ for run_number_temp,run_params in enumerate(runs_params):
     # m.TO_target = np.array(run_params['TO_target'])
     m.KM_target = np.float64(run_params['KM_target'])
     # m.KM_target = np.array(run_params['KM_target'])
-    m.weights_dict['SINNOVPATUS'] = 2
-    p.kappa = np.array(run_params['kappa'])
+    # m.weights_dict['SINNOVPATUS'] = 2
+    # p.kappa = np.array(run_params['kappa'])
     
     if new_run:
         hist = history(*tuple(m.list_of_moments+['objective']))
     bounds = p.make_parameters_bounds()
     cond = True
     iterations = 0
+    max_iter = 10
     
     while cond:
-        if iterations < 29:
+        if iterations < max_iter-1:
             test_ls = optimize.least_squares(fun = calibration_func,    
                                     x0 = p.make_p_vector(), 
                                     args = (p,m,p.guess,hist,start_time), 
@@ -187,7 +178,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                                     # gtol=1e-14,
                                     # f_scale=scale,
                                     verbose = 2)
-        cond = iterations < 30
+        cond = iterations < max_iter
         iterations += 1
         p.update_parameters(test_ls.x)
     
@@ -220,7 +211,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                             )
     p_sol.guess = sol.x 
     sol_c.scale_P(p_sol)
-    sol_c.compute_price_indices(p_sol)
+    # sol_c.compute_price_indices(p_sol)
     sol_c.compute_non_solver_quantities(p_sol) 
     m.compute_moments(sol_c,p_sol)
     m.compute_moments_deviations()
@@ -249,7 +240,7 @@ for run_number_temp,run_params in enumerate(runs_params):
         pass
     
     write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-    m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+    # m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
     
     try:
         os.mkdir(local_path)
@@ -296,8 +287,6 @@ for run_number_temp,run_params in enumerate(runs_params):
     lb_delta = 0.01
     ub_delta = 100
     
-    aggregation_method = 'pop_weighted'
-    
     def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
         p.delta[...,1] = deltas
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
@@ -309,7 +298,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                                 plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
-                                damping = 10,
+                                damping = 5,
                                 max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
@@ -317,19 +306,55 @@ for run_number_temp,run_params in enumerate(runs_params):
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 # damping=10
                                   # apply_bound_psi_star=True
                                 )
         sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+        sol_c.compute_world_welfare_changes(p, sol_baseline)
+        # print(-sol_c.pop_average_welfare_change)
         
-        return -(sol_c.cons_eq_welfare*p.data.labor.values).sum()/p.data.labor.values.sum()
+        return -sol_c.pop_average_welfare_change
 
+    def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
+        p.delta[...,1] = deltas
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                cobweb_anim=False,tol =1e-15,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 5,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=2
+                                # damping=10
+                                  # apply_bound_psi_star=True
+                                )
+        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c.scale_tau(p)
+        sol_c.scale_P(p)
+        # sol_c.compute_price_indices(p)
+        sol_c.compute_non_solver_quantities(p)
+        sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+        sol_c.compute_world_welfare_changes(p, sol_baseline)
+        
+        return -sol_c.negishi_welfare_change
+
+    aggregation_method = 'pop_weighted'
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                             cobweb_anim=False,tol =1e-15,
@@ -353,7 +378,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                               # apply_bound_psi_star=True
                             )
     sol_baseline.scale_P(p)
-    sol_baseline.compute_price_indices(p)
+    # sol_baseline.compute_price_indices(p)
     sol_baseline.compute_non_solver_quantities(p)
     
     p = p_baseline.copy()
@@ -391,10 +416,111 @@ for run_number_temp,run_params in enumerate(runs_params):
                             # damping=10
                               # apply_bound_psi_star=True
                             )
-    sol_c = var.var_from_vector(sol.x, p)    
+    # sol_c = var.var_from_vector(sol.x, p)    
     # sol_c.scale_tau(p)
     sol_c.scale_P(p)
-    sol_c.compute_price_indices(p)
+    # sol_c.compute_price_indices(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
+    
+    # welfares = sol_c.cons_eq_welfare
+        
+    write = True
+    if write:
+        if not os.path.exists('coop_eq_recaps/deltas.csv'):
+            deltas_df = pd.DataFrame(columns = ['baseline',
+                                            'variation',
+                                            'aggregation_method'] + p_baseline.countries)
+            deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+        deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
+        run = pd.DataFrame(data = [baseline_dic['baseline'],
+                        baseline_dic['variation'],
+                        aggregation_method]+p.delta[...,1].tolist(), 
+                        index = deltas_df.columns).T
+        deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+        deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+        
+        if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
+            cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                            'variation',
+                                            'aggregation_method'] + p_baseline.countries)
+            cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+        cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
+        run = pd.DataFrame(data = [baseline_dic['baseline'],
+                        baseline_dic['variation'],
+                        aggregation_method]+sol_c.cons_eq_welfare.tolist(), 
+                        index = cons_eq_welfares.columns).T
+        cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+        cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+        
+    # with negishi weights
+        
+    aggregation_method = 'negishi_weighted'
+    
+    sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=True,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    sol_baseline.scale_P(p)
+    # sol_baseline.compute_price_indices(p)
+    sol_baseline.compute_non_solver_quantities(p)
+    
+    p = p_baseline.copy()
+    bounds = [(lb_delta,ub_delta)]*len(p.countries)
+    
+    sol = optimize.minimize(fun = minus_welfare_of_delta_negishi_weighted,
+                            x0 = p.delta[...,1],
+                            args=(p,sol_baseline),
+                            # options = {'disp':True},
+                            bounds=bounds
+        )
+    
+ 
+    
+    p.delta[...,1] = sol.x
+    
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 1e4,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    # sol_c = var.var_from_vector(sol.x, p)    
+    # sol_c.scale_tau(p)
+    sol_c.scale_P(p)
+    # sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
     
@@ -477,10 +603,10 @@ for run_number_temp,run_params in enumerate(runs_params):
                                       # apply_bound_psi_star=True
                                     )
 
-            sol_c = var.var_from_vector(sol.x, p)    
+            # sol_c = var.var_from_vector(sol.x, p)    
             # sol_c.scale_tau(p)
             sol_c.scale_P(p)
-            sol_c.compute_price_indices(p)
+            # sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p)
             # sol_c.compute_welfare(p)
             # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -518,7 +644,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                                 plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
-                                apply_bound_psi_star = False,
+                                # apply_bound_psi_star = False,
                                 damping = 10,
                                 max_count = 1e4,
                                 accel_memory = 50, 
@@ -532,10 +658,10 @@ for run_number_temp,run_params in enumerate(runs_params):
                                   # apply_bound_psi_star=True
                                 )
     
-        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         # sol_c.compute_welfare(p)
         # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -567,7 +693,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
-                                apply_bound_psi_star = False,
+                                # apply_bound_psi_star = False,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
@@ -587,10 +713,10 @@ for run_number_temp,run_params in enumerate(runs_params):
                                 )
         # print(sol.status)
     
-        sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c = var.var_from_vector(sol.x, p)    
         # sol_c.scale_tau(p)
         sol_c.scale_P(p)
-        sol_c.compute_price_indices(p)
+        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p)
         # sol_c.compute_welfare(p)
         # sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -645,7 +771,7 @@ for run_number_temp,run_params in enumerate(runs_params):
                               # apply_bound_psi_star=True
                             )
     sol_baseline.scale_P(p_baseline)
-    sol_baseline.compute_price_indices(p_baseline)
+    # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
     if baseline_dic['variation'] is None:
@@ -676,10 +802,10 @@ for run_number_temp,run_params in enumerate(runs_params):
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
                 sol.scale_P(p)
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
@@ -705,10 +831,10 @@ for run_number_temp,run_params in enumerate(runs_params):
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
                 sol.scale_P(p)  
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
@@ -737,10 +863,10 @@ for run_number_temp,run_params in enumerate(runs_params):
             # print(p.guess)
             if p.guess is not None:
                 sol = var.var_from_vector(p.guess, p, compute=True)
-                sol.compute_non_solver_aggregate_qualities(p)
-                sol.compute_non_solver_quantities(p)
+                # sol.compute_non_solver_aggregate_qualities(p)
+                # sol.compute_non_solver_quantities(p)
                 sol.scale_P(p)
-                sol.compute_price_indices(p)
+                # sol.compute_price_indices(p)
                 sol.compute_non_solver_quantities(p)
                 sol.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = np.log(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])/np.log(p_baseline.delta[0,1]/p_baseline.delta[idx_country,1])

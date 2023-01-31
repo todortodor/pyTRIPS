@@ -28,36 +28,29 @@ import time
 #                  ]
 baseline_dics = [
                 # {'baseline':'101',
-                #   'variation':None},
-                # {'baseline':'101',
-                #   'variation':'7'},
-                # {'baseline':'101',
-                #   'variation':'9.1'},
-                # {'baseline':'101',
-                #   'variation':'11.7'},
-                # {'baseline':'101',
-                #   'variation':'12.2'},
-                # {'baseline':'101',
-                #   'variation':'13.1'},
-                # {'baseline':'101',
-                #   'variation':'14.1'},
-                # {'baseline':'101',
-                #   'variation':'15.1'},
-                # {'baseline':'101',
                 #   'variation':'16.1'},
-                # {'baseline':'102',
-                #   'variation':None},
-                # {'baseline':'104',
-                #   'variation':None},
-                # {'baseline':'104',
-                #   'variation':'13.1'},
-                # {'baseline':'104',
-                #   'variation':'14.1'},
-                # {'baseline':'104',
-                #   'variation':'17.1'}
-                {'baseline':'301',
-                  'variation':None}
+                {'baseline':'311',
+                  'variation': None},
+                {'baseline':'311',
+                  'variation': '1.0'},
+                {'baseline':'311',
+                  'variation': '1.1'},
+                {'baseline':'311',
+                  'variation': '1.2'},
+                {'baseline':'311',
+                  'variation': '1.3'},
+                {'baseline':'311',
+                  'variation': '1.4'},
+                {'baseline':'311',
+                  'variation': '1.5'},
+                {'baseline':'311',
+                  'variation': '1.6'},
+                {'baseline':'311',
+                  'variation': '1.7'},
+                {'baseline':'311',
+                  'variation': '1.8'}
                  ]
+
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
         baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
@@ -68,9 +61,9 @@ for baseline_dic in baseline_dics:
     print(baseline_path)
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
-    m_baseline = moments()
-    m_baseline.load_data()
-    m_baseline.load_run(baseline_path)
+    # m_baseline = moments()
+    # m_baseline.load_data()
+    # m_baseline.load_run(baseline_path)
     
     # save = True
     # dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/counterfactuals/unilaterat_patent_protection_'+baseline+'/'
@@ -92,7 +85,7 @@ for baseline_dic in baseline_dics:
     # recap = pd.DataFrame(columns = ['changed_quantity'])
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -120,6 +113,7 @@ for baseline_dic in baseline_dics:
     # counterfactuals_by_country = {}
     
     for c in p_baseline.countries:
+    # for c in ['USA']:
         country_path = local_path+c+'/'
         try:
             os.mkdir(country_path)
@@ -298,38 +292,29 @@ try:
 except:
     pass
 
-# baseline = '101'
 baseline_dics = [
                 # {'baseline':'101',
-                #   'variation':None},
-                # {'baseline':'101',
-                #   'variation':'7'},
-                # {'baseline':'101',
-                #   'variation':'9.1'},
-                # {'baseline':'101',
-                #   'variation':'11.7'},
-                # {'baseline':'101',
-                #   'variation':'12.2'},
-                # {'baseline':'101',
-                #   'variation':'13.1'},
-                # {'baseline':'101',
-                #   'variation':'14.1'},
-                # {'baseline':'101',
-                #   'variation':'15.1'},
-                # {'baseline':'101',
                 #   'variation':'16.1'},
-                # {'baseline':'102',
-                #   'variation':None},
-                # {'baseline':'104',
-                #   'variation':None},
-                # {'baseline':'104',
-                #   'variation':'13.1'},
-                # {'baseline':'104',
-                #   'variation':'14.1'},
-                # {'baseline':'104',
-                #   'variation':'17.1'}
-                {'baseline':'301',
-                  'variation':None}
+                {'baseline':'311',
+                  'variation': None},
+                {'baseline':'311',
+                  'variation': '1.0'},
+                {'baseline':'311',
+                  'variation': '1.1'},
+                {'baseline':'311',
+                  'variation': '1.2'},
+                {'baseline':'311',
+                  'variation': '1.3'},
+                {'baseline':'311',
+                  'variation': '1.4'},
+                {'baseline':'311',
+                  'variation': '1.5'},
+                {'baseline':'311',
+                  'variation': '1.6'},
+                {'baseline':'311',
+                  'variation': '1.7'},
+                {'baseline':'311',
+                  'variation': '1.8'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -347,12 +332,12 @@ for baseline_dic in baseline_dics:
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
     # print(p_baseline.delta)
-    m_baseline = moments()
-    m_baseline.load_data()
-    m_baseline.load_run(baseline_path)
+    # m_baseline = moments()
+    # m_baseline.load_data()
+    # m_baseline.load_run(baseline_path)
     # sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True)
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -387,6 +372,7 @@ for baseline_dic in baseline_dics:
         pass
     
     for c in p_baseline.countries:
+    # for c in ['USA']:
         recap = pd.DataFrame(columns = ['delt','growth']+p_baseline.countries)
         print(c)
         idx_country = p_baseline.countries.index(c)
@@ -403,17 +389,18 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol = var.var_from_vector(p.guess, p, compute=True)
+                sol_c = var.var_from_vector(p.guess, p, compute=True)
+                print(sol_c.price_indices[0])
                 sol_c.compute_solver_quantities(p)
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)
-                sol.scale_P(p)
+                sol_c.scale_P(p)
                 # sol.compute_price_indices(p)
-                sol.compute_non_solver_quantities(p)
-                sol.compute_consumption_equivalent_welfare(p,sol_baseline)
+                sol_c.compute_non_solver_quantities(p)
+                sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
-                recap.loc[run, 'growth'] = sol.g
-                recap.loc[run,p_baseline.countries] = sol.cons_eq_welfare
+                recap.loc[run, 'growth'] = sol_c.g
+                recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         recap.to_csv(recap_path+c+'.csv', index=False)
         
     for c in ['World']:
@@ -433,17 +420,17 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol = var.var_from_vector(p.guess, p, compute=True)
-                sol_c.compute_solver_quantities(p)
+                sol_c = var.var_from_vector(p.guess, p, compute=True)
+                # sol_c.compute_solver_quantities(p)
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)
-                sol.scale_P(p)  
+                sol_c.scale_P(p)  
                 # sol.compute_price_indices(p)
-                sol.compute_non_solver_quantities(p)
-                sol.compute_consumption_equivalent_welfare(p,sol_baseline)
+                sol_c.compute_non_solver_quantities(p)
+                sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
-                recap.loc[run, 'growth'] = sol.g
-                recap.loc[run,p_baseline.countries] = sol.cons_eq_welfare
+                recap.loc[run, 'growth'] = sol_c.g
+                recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
                 # recap.loc[run, 'psi_star_min'] = 1+np.log(1+np.log(sol.psi_star.min()))
         recap.to_csv(recap_path+c+'.csv', index=False)
             # print(sol.psi_star.min())
@@ -466,17 +453,17 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol = var.var_from_vector(p.guess, p, compute=True)
+                sol_c = var.var_from_vector(p.guess, p, compute=True)
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)
-                sol_c.compute_solver_quantities(p)
-                sol.scale_P(p)
+                # sol_c.compute_solver_quantities(p)
+                sol_c.scale_P(p)
                 # sol.compute_price_indices(p)
-                sol.compute_non_solver_quantities(p)
-                sol.compute_consumption_equivalent_welfare(p,sol_baseline)
+                sol_c.compute_non_solver_quantities(p)
+                sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
                 recap.loc[run, 'delt'] = np.log(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])/np.log(p_baseline.delta[0,1]/p_baseline.delta[idx_country,1])
-                recap.loc[run, 'growth'] = sol.g
-                recap.loc[run,p_baseline.countries] = sol.cons_eq_welfare
+                recap.loc[run, 'growth'] = sol_c.g
+                recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         recap.to_csv(recap_path+c+'.csv', index=False)
             # print(sol.psi_star.min())
 

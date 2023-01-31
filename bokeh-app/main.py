@@ -13,7 +13,7 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import DataRange1d, LinearAxis, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import DataRange1d, LinearAxis, Text, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
@@ -31,10 +31,10 @@ from bokeh.palettes import Category10
 def load(path, data_path=None):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
-    if path.endswith('20.1/') or path.endswith('20.2/'):
-        p.r_hjort[3] = 17.33029162
-    if path.endswith('19.1/') or path.endswith('19.2/'):
-        p.r_hjort[4] = 17.33029162
+    # if path.endswith('20.1/') or path.endswith('20.2/'):
+    #     p.r_hjort[3] = 17.33029162
+    # if path.endswith('19.1/') or path.endswith('19.2/'):
+    #     p.r_hjort[4] = 17.33029162
     sol = var.var_from_vector(p.guess, p, compute=True)
     # sol.compute_non_solver_aggregate_qualities(p)
     # sol.compute_non_solver_quantities(p)
@@ -236,38 +236,18 @@ list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 #                 '19.1':'19.1: 11.7, calibrated hjort elasticity',
 #                 }
 
-# comments_dic = {"baseline":"baseline",
-#                 "1.0":"1.0: kappa:0.5,TO:0.05,KM:0.06",
-#                 "1.1":"1.1: kappa:0.5,TO:0.05,KM:0.09277",
-#                 "1.2":"1.2: kappa:0.5,TO:0.05,KM:0.1322",
-#                 "1.3":"1.3: kappa:0.5,TO:0.036,KM:0.06",
-#                 "1.4":"1.4: kappa:0.5,TO:0.036,KM:0.09277",
-#                 "1.5":"1.5: kappa:0.5,TO:0.036,KM:0.1322",
-#                 "1.5.2":"1.5.2: kappa:0.5,TO:0.036,KM:0.1322",
-#                 "1.6":"1.6: kappa:0.5,TO:0.0124,KM:0.06",
-#                 "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
-#                 "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
-#                 "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
-#                 "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
-#                 "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
-#                 "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
-#                 "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
-#                 "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
-#                 "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
-#                 "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
-#                 "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
-#                 "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",}
 comments_dic = {"baseline":"baseline",
-                "1.0":"1.0: Higher weight on JUPCOST",
-                # "1.1":"1.1: No hjort and no drop south RD",
-                # "1.2":"1.2: No hjort",
-                # "1.3":"1.3: No hjort, Adding ERDUS moment",
-                # "1.4":"1.4: No hjort, drop SRDUS",
-                # "1.5":"1.5: Higher RD weight",
-                # "1.6":"1.6: Higher RD and GPDIFF weight",
+                "1.0":"1.0: kappa:0.5,TO:0.05,KM:0.06",
+                "1.1":"1.1: kappa:0.5,TO:0.05,KM:0.09277",
+                "1.2":"1.2: kappa:0.5,TO:0.05,KM:0.1322",
+                "1.3":"1.3: kappa:0.5,TO:0.036,KM:0.06",
+                "1.4":"1.4: kappa:0.5,TO:0.036,KM:0.09277",
+                "1.5":"1.5: kappa:0.5,TO:0.036,KM:0.1322",
+                # "1.5.2":"1.5.2: kappa:0.5,TO:0.036,KM:0.1322",
+                "1.6":"1.6: kappa:0.5,TO:0.0124,KM:0.06",
                 # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
-                # "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
-                # "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
+                "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
+                "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
@@ -277,12 +257,33 @@ comments_dic = {"baseline":"baseline",
                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
-                "2.0":"2.0: No Hjort factors",
-                "3.0":"3.0: UUPCOST instead of JUPCOST",
-                "3.1":"3.1: UUPCOST and JUPCOST",
-                "3.2":"3.2: no UUPCOST, no JUPCOST",
-                # "90":"90: temp",
                 }
+# comments_dic = {"baseline":"baseline",
+#                 "1.0":"1.0: Higher weight on JUPCOST",
+#                 # "1.1":"1.1: No hjort and no drop south RD",
+#                 # "1.2":"1.2: No hjort",
+#                 # "1.3":"1.3: No hjort, Adding ERDUS moment",
+#                 # "1.4":"1.4: No hjort, drop SRDUS",
+#                 # "1.5":"1.5: Higher RD weight",
+#                 # "1.6":"1.6: Higher RD and GPDIFF weight",
+#                 # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
+#                 # "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
+#                 # "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
+#                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
+#                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
+#                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
+#                 # "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
+#                 # "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
+#                 # "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
+#                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
+#                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
+#                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
+#                 "2.0":"2.0: No Hjort factors",
+#                 "3.0":"3.0: UUPCOST instead of JUPCOST",
+#                 "3.1":"3.1: UUPCOST and JUPCOST",
+#                 "3.2":"3.2: no UUPCOST, no JUPCOST",
+#                 # "90":"90: temp",
+#                 }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -291,7 +292,7 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['101','102','104']:
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
-for baseline_nbr in ['301','302']:
+for baseline_nbr in ['311']:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
@@ -305,18 +306,18 @@ for baseline_nbr in ['301','302']:
     
         for run in run_list:
             # print(run)
-            # if run not in ['1','2.1','2.2','2.3','3.1','3.2','3.3','4.1','4.2','4.3','5','99']:
-            p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
-            a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
-                                                            baselines_dic_mom[baseline_nbr], 
-                                                            baselines_dic_sol_qty[baseline_nbr],
-                                                            p_to_add, 
-                                                            m_to_add, 
-                                                            sol_to_add,
-                                                            run)
-            baselines_dic_param[baseline_nbr] = a
-            baselines_dic_mom[baseline_nbr] = b
-            baselines_dic_sol_qty[baseline_nbr] = c
+            if run not in ['1.5.2','1.6.2','99']:
+                p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
+                a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
+                                                                baselines_dic_mom[baseline_nbr], 
+                                                                baselines_dic_sol_qty[baseline_nbr],
+                                                                p_to_add, 
+                                                                m_to_add, 
+                                                                sol_to_add,
+                                                                run)
+                baselines_dic_param[baseline_nbr] = a
+                baselines_dic_mom[baseline_nbr] = b
+                baselines_dic_sol_qty[baseline_nbr] = c
     except:
         pass
 
@@ -326,7 +327,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
 # baseline_mom = '101'
-baseline_mom = '301'
+baseline_mom = '311'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -417,7 +418,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '301'
+baseline_par = '311'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -486,7 +487,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '301'
+baseline_sol_qty = '311'
 sol_qty = 'semi_elast_RD_delta'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -570,7 +571,7 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 baselines_dic_sensi = {}
 
 # for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['201']:
+for baseline_nbr in ['311']:
     baselines_dic_sensi[baseline_nbr] = {}
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
@@ -579,7 +580,7 @@ for baseline_nbr in ['201']:
         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
 # baseline_sensi = '101'
-baseline_sensi = '201'
+baseline_sensi = '311'
 qty_sensi = 'delta US over nu'
 
 baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
@@ -621,12 +622,13 @@ sensitivity_report = column(controls_sensi,p_sensi)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '201'
+baseline_cf = '311'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) if s[9:].startswith('201') or s[9:].startswith('301')])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
+                        if s[9:].startswith('311')])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
@@ -709,12 +711,12 @@ second_panel = row(sensitivity_report,counterfactuals_report)
 # coop_eq_path = 'coop_eq_recaps/'
 
 welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                            'variation'],keep='last').sort_values(['baseline','variation'])
+                            'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
 welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
                             'variation'],keep='last').sort_values(['baseline','variation'])
 
-welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
-welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+# welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
+# welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
 
 welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
 welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
@@ -725,13 +727,18 @@ welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astyp
 welf_coop = welf_coop.sort_values(['baseline','sorting'])
 welf_nash = welf_nash.sort_values(['baseline','sorting'])
 
-welf_coop = welf_coop[welf_coop['baseline'].isin([201,202])]
-welf_nash = welf_nash[welf_nash['baseline'].isin([201,202])]
+welf_coop = welf_coop[welf_coop['baseline'].isin([311])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([311])]
 
-ds_coop = ColumnDataSource(welf_coop)
+welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
+welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
+
+ds_pop_weighted = ColumnDataSource(welf_pop_weighted)
+ds_negishi = ColumnDataSource(welf_negishi)
 ds_nash = ColumnDataSource(welf_nash)
 
-colors_coop = itertools.cycle(Category10[10])
+colors_pop_weighted = itertools.cycle(Category10[10])
+colors_negishi = itertools.cycle(Category10[10])
 colors_nash = itertools.cycle(Category10[10])
 
 x_range = welf_nash['run'].to_list()
@@ -746,9 +753,10 @@ p_eq = figure(title="Cooperative and Nash equilibrium",
                 ) 
 p_eq.xaxis.major_label_orientation = 3.14/3
 
-for col in p_baseline.countries+['pop w av']:
+for col in p_baseline.countries+['Equal']+['Negishi']:
     p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
-    p_eq.line(x='run', y=col, source = ds_coop, color=next(colors_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+    p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
+    p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
     
 p_eq.legend.click_policy="hide"
 p_eq.legend.label_text_font_size = '8pt'
@@ -775,16 +783,25 @@ data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, he
                             # autosize_mode="force_fit"
                           )
 
+# explication = Text(text="First is the quantity displayed\n'Negishi coop equal' means that we display the ")
+explication = Div(text="<br> <br> <br> <br> In the legend, first is the quantity displayed and last\
+                  is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
+                      - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
+                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation")
+
+help_panel = column(explication,data_table_eq)
+
 data_table_welfares = pd.concat([welf_nash.set_index('run'),
-              welf_coop.set_index('run')],
+              welf_negishi.set_index('run'),
+              welf_pop_weighted.set_index('run')],
             axis=0,
-            keys=['Nash','Coop'],
+            keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
-            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['pop w av']]
+            ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 source_table_welfares = ColumnDataSource(data_table_welfares)
-columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['pop w av']]
+columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=850, height=400,
                             # autosize_mode="force_fit"
@@ -799,7 +816,7 @@ data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, hei
 # p_eq.show()
 
 deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                            'variation'],keep='last').sort_values(['baseline','variation'])
+                            'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
 deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
                             'variation'],keep='last').sort_values(['baseline','variation'])
 
@@ -812,13 +829,18 @@ deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.a
 deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
 deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
 
-deltas_coop = deltas_coop[deltas_coop['baseline'].isin([201,202])]
-deltas_nash = deltas_nash[deltas_nash['baseline'].isin([201,202])]
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([311])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([311])]
 
-ds_deltas_coop = ColumnDataSource(deltas_coop)
+deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
+deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
+
+ds_deltas_negishi = ColumnDataSource(deltas_negishi)
+ds_deltas_pop_weighted = ColumnDataSource(deltas_pop_weighted)
 ds_deltas_nash = ColumnDataSource(deltas_nash)
 
-colors_deltas_coop = itertools.cycle(Category10[10])
+colors_deltas_negishi = itertools.cycle(Category10[10])
+colors_deltas_pop_weighted = itertools.cycle(Category10[10])
 colors_deltas_nash = itertools.cycle(Category10[10])
 
 x_range = deltas_nash['run'].to_list()
@@ -836,7 +858,8 @@ p_deltas_eq.xaxis.major_label_orientation = 3.14/3
 
 for col in p_baseline.countries:
     p_deltas_eq.line(x='run', y=col, source = ds_deltas_nash, color=next(colors_deltas_nash),line_width = 2, legend_label=col+' Nash')
-    p_deltas_eq.line(x='run', y=col, source = ds_deltas_coop, color=next(colors_deltas_coop), line_dash='dashed', line_width = 2, legend_label=col+' coop')
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
+    p_deltas_eq.line(x='run', y=col, source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
     
 p_deltas_eq.legend.click_policy="hide"
 p_deltas_eq.legend.label_text_font_size = '8pt'
@@ -851,19 +874,19 @@ p_deltas_eq.add_tools(hover_tool_deltas_eq)
 data_table_deltas = pd.concat([deltas_nash.set_index('run'),
               deltas_coop.set_index('run')],
             axis=0,
-            keys=['Nash','Coop'],
+            keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
             ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
 
 source_table_deltas = ColumnDataSource(data_table_deltas)
-columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries]
+columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=850, height=400,
                             # autosize_mode="force_fit"
                           )
 
-second_panel_bis = column(row(p_eq,data_table_eq),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
+second_panel_bis = column(row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
 #%% Kogan paper
 
