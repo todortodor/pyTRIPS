@@ -15,12 +15,12 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = False
+new_run = True
 baseline_number = '311'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.9/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -33,7 +33,10 @@ if new_run:
     m = moments()
     m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.9/')
+    
+    # m_back_up = m.copy()
+    # p_back_up = m.copy()
 # if 'theta' not in p.calib_parameters:
 #     p.calib_parameters.append('theta')
 # if 'sigma' not in p.calib_parameters:
@@ -59,8 +62,8 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATEU')
 # if 'DOMPATUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATUS')
-if 'SINNOVPATEU' not in m.list_of_moments:
-    m.list_of_moments.append('SINNOVPATEU')
+# if 'SINNOVPATEU' not in m.list_of_moments:
+#     m.list_of_moments.append('SINNOVPATEU')
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 # if 'kappa' not in p.calib_parameters:
@@ -74,7 +77,7 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.update_khi_and_r_hjort(1)
 # p.fe[1] = 0.01
 
-# p.guess = None
+p.guess = None
 # p.d = 1
 # p.r_hjort[3] = 16.02230702
 # p.delta[...,1][p.delta[...,1]<0.01] = 0.01
@@ -91,10 +94,10 @@ avoid_bad_nash = False
 # m.list_of_moments.append('ERDUS')
 # m.list_of_moments.remove('SRDUS')
 # m.list_of_moments.append('KM_GDP')
-m.weights_dict['SINNOVPATEU'] = 3
-m.weights_dict['DOMPATEU'] = 3
-m.weights_dict['SINNOVPATUS'] = 3
-m.weights_dict['DOMPATUS'] = 3
+# m.weights_dict['SINNOVPATEU'] = 3
+# m.weights_dict['DOMPATEU'] = 3
+# m.weights_dict['SPFLOW'] = 1
+# m.weights_dict['DOMPATUS'] = 3
 # p.delta[...,1] = 0.05
 # m.weights_dict['JUPCOST'] = 2
 # m.weights_dict['SPFLOW_US'] = 3
@@ -241,13 +244,14 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = '2.0 with stronger weights on DOMPATEU/US SINNOVPATEU/US'
+commentary = 'reconverging 2.1.9'
 # commentary = ''
 # baseline_number = '311'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 run_number = 2.1
+run_str = '2.1.9.2'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -262,15 +266,19 @@ try:
 except:
     pass
 
-write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+# write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
+# m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+write_calibration_results(path+run_str,p_sol,m,sol_c,commentary = commentary)
+m.plot_moments(m.list_of_moments, save_plot = path+run_str)
 
 try:
     os.mkdir(local_path)
 except:
     pass
-p_sol.write_params(local_path+str(run_number)+'/')
-m.write_moments(local_path+str(run_number)+'/')
+# p_sol.write_params(local_path+str(run_number)+'/')
+# m.write_moments(local_path+str(run_number)+'/')
+p_sol.write_params(local_path+run_str+'/')
+m.write_moments(local_path+run_str+'/')
 
 #%%
 import matplotlib.pyplot as plt

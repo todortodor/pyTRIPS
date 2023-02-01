@@ -29,26 +29,28 @@ import time
 baseline_dics = [
                 # {'baseline':'101',
                 #   'variation':'16.1'},
+                # {'baseline':'311',
+                #   'variation': None},
+                # {'baseline':'311',
+                #   'variation': '1.0'},
+                # {'baseline':'311',
+                #   'variation': '1.1'},
+                # {'baseline':'311',
+                #   'variation': '1.2'},
+                # {'baseline':'311',
+                #   'variation': '1.3'},
+                # {'baseline':'311',
+                #   'variation': '1.4'},
+                # {'baseline':'311',
+                #   'variation': '1.5'},
+                # {'baseline':'311',
+                #   'variation': '1.6'},
+                # {'baseline':'311',
+                #   'variation': '1.7'},
+                # {'baseline':'311',
+                #   'variation': '1.8'}
                 {'baseline':'311',
-                  'variation': None},
-                {'baseline':'311',
-                  'variation': '1.0'},
-                {'baseline':'311',
-                  'variation': '1.1'},
-                {'baseline':'311',
-                  'variation': '1.2'},
-                {'baseline':'311',
-                  'variation': '1.3'},
-                {'baseline':'311',
-                  'variation': '1.4'},
-                {'baseline':'311',
-                  'variation': '1.5'},
-                {'baseline':'311',
-                  'variation': '1.6'},
-                {'baseline':'311',
-                  'variation': '1.7'},
-                {'baseline':'311',
-                  'variation': '1.8'}
+                  'variation': '2.1.9.2'}
                  ]
 
 for baseline_dic in baseline_dics:
@@ -295,26 +297,28 @@ except:
 baseline_dics = [
                 # {'baseline':'101',
                 #   'variation':'16.1'},
+                # {'baseline':'311',
+                #   'variation': None},
+                # {'baseline':'311',
+                #   'variation': '1.0'},
+                # {'baseline':'311',
+                #   'variation': '1.1'},
+                # {'baseline':'311',
+                #   'variation': '1.2'},
+                # {'baseline':'311',
+                #   'variation': '1.3'},
+                # {'baseline':'311',
+                #   'variation': '1.4'},
+                # {'baseline':'311',
+                #   'variation': '1.5'},
+                # {'baseline':'311',
+                #   'variation': '1.6'},
+                # {'baseline':'311',
+                #   'variation': '1.7'},
+                # {'baseline':'311',
+                #   'variation': '1.8'}
                 {'baseline':'311',
-                  'variation': None},
-                {'baseline':'311',
-                  'variation': '1.0'},
-                {'baseline':'311',
-                  'variation': '1.1'},
-                {'baseline':'311',
-                  'variation': '1.2'},
-                {'baseline':'311',
-                  'variation': '1.3'},
-                {'baseline':'311',
-                  'variation': '1.4'},
-                {'baseline':'311',
-                  'variation': '1.5'},
-                {'baseline':'311',
-                  'variation': '1.6'},
-                {'baseline':'311',
-                  'variation': '1.7'},
-                {'baseline':'311',
-                  'variation': '1.8'}
+                  'variation': '2.1.9.2'}
                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -390,7 +394,7 @@ for baseline_dic in baseline_dics:
             # print(p.guess)
             if p.guess is not None:
                 sol_c = var.var_from_vector(p.guess, p, compute=True)
-                print(sol_c.price_indices[0])
+                # print(sol_c.price_indices[0])
                 sol_c.compute_solver_quantities(p)
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)

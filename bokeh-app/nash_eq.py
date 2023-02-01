@@ -46,7 +46,7 @@ baseline_dics = [
                 # {'baseline':'311',
                 #   'variation': '1.5'},
                 {'baseline':'311',
-                  'variation': '2.1.9'},
+                  'variation': '2.1.9.2'},
                 # {'baseline':'311',
                 #   'variation': '1.7'},
                 # {'baseline':'311',
@@ -90,7 +90,7 @@ for baseline_dic in baseline_dics:
     # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)   
     
-    write = False
+    write = True
     
     method = 'fixed_point'
     
