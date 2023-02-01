@@ -118,7 +118,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
             except:
                 pass
             
-    for sol_qty in ['semi_elast_RD_delta','DT']:
+    for sol_qty in ['semi_elast_RD_delta','DT','psi_o_star']:
         df = pd.DataFrame(index = p_baseline.countries, 
                           columns = ['baseline'], 
                           )
@@ -171,7 +171,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     
     for k in dic_df_sol.keys():
-        if k in ['semi_elast_RD_delta','DT']:
+        if k in ['semi_elast_RD_delta','DT','psi_o_star']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]
         if k in ['l_R']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]/p.labor
@@ -262,6 +262,8 @@ comments_dic = {"baseline":"baseline",
                 "2.1.9":"2.1.9: kappa:0.5,TO:0.0124,KM:0.06",
                 "2.1.10":"2.1.10: kappa:0.5,TO:0.0124,KM:0.09277",
                 "2.1.11":"2.1.11: kappa:0.5,TO:0.0124,KM:0.1322",
+                "2.2":"2.2: 2.0 with ratio loss",
+                "2.3":"2.3: 2.2 higher SPFLOW weight",
                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
@@ -542,7 +544,7 @@ par_select.on_change('value', update_par)
 
 # baseline_sol_qty = '101'
 baseline_sol_qty = '311'
-sol_qty = 'semi_elast_RD_delta'
+sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
 sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baselines_dic_sol_qty[baseline_sol_qty].keys()))
