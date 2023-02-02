@@ -19,8 +19,8 @@ new_run = True
 baseline_number = '311'
 if new_run:
     p = parameters(n=7,s=2)
-    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.9/')
+    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/8.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -32,8 +32,8 @@ if new_run:
 
     m = moments()
     m.load_data()
-    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.9/')
+    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/8.0/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
@@ -75,9 +75,9 @@ if 'theta' in p.calib_parameters:
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.guess = None
 # p.update_khi_and_r_hjort(1)
-# p.fe[1] = 0.01
+# p.theta[1] = 8
 
-p.guess = None
+# p.guess = None
 # p.d = 1
 # p.r_hjort[3] = 16.02230702
 # p.delta[...,1][p.delta[...,1]<0.01] = 0.01
@@ -87,8 +87,14 @@ p.guess = None
 avoid_bad_nash = False
 # p.kappa = np.array(0.75)
 # m.list_of_moments.remove('SPFLOW')
-# if 'JUPCOST' in m.list_of_moments:
-#     m.list_of_moments.remove('JUPCOST')
+# if 'JUPCOST' not in m.list_of_moments:
+#     m.list_of_moments.append('JUPCOST')
+# if 'UUPCOST' in m.list_of_moments:
+#     m.list_of_moments.remove('UUPCOST')
+# if 'SRDUS' in m.list_of_moments:
+#     m.list_of_moments.remove('SRDUS')
+# if 'UUPCOST' in m.list_of_moments:
+#     m.list_of_moments.remove('UUPCOST')
 # if 'UUPCOST' not in m.list_of_moments:
 #     m.list_of_moments.append('UUPCOST')
 # m.list_of_moments.append('ERDUS')
@@ -96,7 +102,7 @@ avoid_bad_nash = False
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SINNOVPATEU'] = 3
 # m.weights_dict['DOMPATEU'] = 3
-# m.weights_dict['SPFLOW'] = 1
+m.weights_dict['SPFLOW'] = 0
 # m.weights_dict['DOMPATUS'] = 3
 # p.delta[...,1] = 0.05
 # m.weights_dict['JUPCOST'] = 2
@@ -131,7 +137,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 30
+max_iter = 3
 # if avoid_bad_nash:
 #     x0 = np.concatenate([p.make_p_vector()
 
@@ -244,14 +250,14 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'reconverging 2.1.9'
+commentary = 'squared diff loss function for SPFLOW'
 # commentary = ''
 # baseline_number = '311'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 2.1
-run_str = '2.1.9.2'
+run_number = 8.1
+# run_str = '2.1.9.2'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -266,19 +272,19 @@ try:
 except:
     pass
 
-# write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-# m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
-write_calibration_results(path+run_str,p_sol,m,sol_c,commentary = commentary)
-m.plot_moments(m.list_of_moments, save_plot = path+run_str)
+write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
+m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+# write_calibration_results(path+run_str,p_sol,m,sol_c,commentary = commentary)
+# m.plot_moments(m.list_of_moments, save_plot = path+run_str)
 
 try:
     os.mkdir(local_path)
 except:
     pass
-# p_sol.write_params(local_path+str(run_number)+'/')
-# m.write_moments(local_path+str(run_number)+'/')
-p_sol.write_params(local_path+run_str+'/')
-m.write_moments(local_path+run_str+'/')
+p_sol.write_params(local_path+str(run_number)+'/')
+m.write_moments(local_path+str(run_number)+'/')
+# p_sol.write_params(local_path+run_str+'/')
+# m.write_moments(local_path+run_str+'/')
 
 #%%
 import matplotlib.pyplot as plt

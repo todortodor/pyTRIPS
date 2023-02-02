@@ -49,8 +49,24 @@ baseline_dics = [
                 #   'variation': '1.7'},
                 # {'baseline':'311',
                 #   'variation': '1.8'}
+                # {'baseline':'311',
+                #   'variation': '2.1.9.2'}
+                # {'baseline':'311',
+                #   'variation': '4.0'},
+                # {'baseline':'311',
+                #   'variation': '4.0'},
+                # {'baseline':'311',
+                #   'variation': '5.0'},
+                # {'baseline':'311',
+                #   'variation': '6.1'},
+                # {'baseline':'311',
+                #   'variation': '6.2'},
+                # {'baseline':'311',
+                #   'variation': '6.3'},
+                # {'baseline':'311',
+                #   'variation': '7.0'},
                 {'baseline':'311',
-                  'variation': '2.1.9.2'}
+                  'variation': '8.0'}
                  ]
 
 for baseline_dic in baseline_dics:
@@ -285,7 +301,7 @@ for baseline_dic in baseline_dics:
         # sols_c.append(sol_c)
     # counterfactuals_by_country[c] = sols_c
 
-#%% make recaps
+#  make recaps
 
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
@@ -294,32 +310,34 @@ try:
 except:
     pass
 
-baseline_dics = [
-                # {'baseline':'101',
-                #   'variation':'16.1'},
-                # {'baseline':'311',
-                #   'variation': None},
-                # {'baseline':'311',
-                #   'variation': '1.0'},
-                # {'baseline':'311',
-                #   'variation': '1.1'},
-                # {'baseline':'311',
-                #   'variation': '1.2'},
-                # {'baseline':'311',
-                #   'variation': '1.3'},
-                # {'baseline':'311',
-                #   'variation': '1.4'},
-                # {'baseline':'311',
-                #   'variation': '1.5'},
-                # {'baseline':'311',
-                #   'variation': '1.6'},
-                # {'baseline':'311',
-                #   'variation': '1.7'},
-                # {'baseline':'311',
-                #   'variation': '1.8'}
-                {'baseline':'311',
-                  'variation': '2.1.9.2'}
-                 ]
+# baseline_dics = [
+#                 # {'baseline':'101',
+#                 #   'variation':'16.1'},
+#                 # {'baseline':'311',
+#                 #   'variation': None},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.0'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.1'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.2'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.3'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.4'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.5'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.6'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.7'},
+#                 # {'baseline':'311',
+#                 #   'variation': '1.8'}
+#                 # {'baseline':'311',
+#                 #   'variation': '2.1.9.2'}
+#                 {'baseline':'311',
+#                   'variation': '3.0'}
+#                  ]
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
         baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'

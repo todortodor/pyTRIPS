@@ -1508,6 +1508,7 @@ class moments:
             if hasattr(self, mom):
                 
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH':
+                # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'SPFLOW':
                     # setattr(self,
                     #         mom+'_deviation',
                     #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
@@ -1529,13 +1530,21 @@ class moments:
                 #             /getattr(self,mom+'_target').size**(1/2)
                 #             )
                 else:
-                    mo = getattr(self,mom)
-                    tar = getattr(self,mom+'_target')
-                    setattr(self,
-                            mom+'_deviation',
-                            self.weights_dict[mom]*np.abs(mo-tar)/tar
-                            /getattr(self,mom+'_target').size
-                            )
+                    if mom != 'SPFLOW':
+                        mo = getattr(self,mom)
+                        tar = getattr(self,mom+'_target')
+                        setattr(self,
+                                mom+'_deviation',
+                                self.weights_dict[mom]*np.abs(mo-tar)/tar
+                                /getattr(self,mom+'_target').size
+                                )
+                    else:
+                        mo = getattr(self,mom)
+                        tar = getattr(self,mom+'_target')
+                        setattr(self,
+                                mom+'_deviation',
+                                self.weights_dict[mom]*(mo-tar)**(2)
+                                )
                 # mo = getattr(self,mom)
                 # tar = getattr(self,mom+'_target')
                 # setattr(self,

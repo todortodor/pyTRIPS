@@ -29,28 +29,20 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-                # {'baseline':'101',
-                #   'variation':'16.1'},
                 # {'baseline':'311',
-                #   'variation': 'baseline'},
+                #   'variation': '4.0'},
                 # {'baseline':'311',
-                #   'variation': '1.0'},
+                #   'variation': '5.0'},
                 # {'baseline':'311',
-                #   'variation': '1.1'},
+                #   'variation': '6.1'},
                 # {'baseline':'311',
-                #   'variation': '1.2'},
+                #   'variation': '6.2'},
                 # {'baseline':'311',
-                #   'variation': '1.3'},
+                #   'variation': '6.3'},
                 # {'baseline':'311',
-                #   'variation': '1.4'},
-                # {'baseline':'311',
-                #   'variation': '1.5'},
+                #   'variation': '7.0'},
                 {'baseline':'311',
-                  'variation': '2.1.9.2'},
-                # {'baseline':'311',
-                #   'variation': '1.7'},
-                # {'baseline':'311',
-                #   'variation': '1.8'}
+                  'variation': '8.0'}
                  ]
 
 for baseline_dic in baseline_dics:    

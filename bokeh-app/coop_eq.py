@@ -106,30 +106,20 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
 #                           'variation':run})
         
 baseline_dics = [
-                # {'baseline':'101',
-                #   'variation':'16.1'},
-                # {'baseline':'311',
-                #   'variation': 'baseline'},
-                # {'baseline':'311',
-                #   'variation': '1.0'},
-                # {'baseline':'311',
-                #   'variation': '1.1'},
-                # {'baseline':'311',
-                #   'variation': '1.2'},
-                # {'baseline':'311',
-                #   'variation': '1.3'},
-                # {'baseline':'311',
-                #   'variation': '1.4'},
-                # {'baseline':'311',
-                #   'variation': '1.5'},
-                # {'baseline':'311',
-                #   'variation': '1.6'},
-                # {'baseline':'311',
-                #   'variation': '1.7'},
-                # {'baseline':'311',
-                #   'variation': '1.8'}
                 {'baseline':'311',
-                  'variation': '2.1.9.2'}
+                  'variation': '4.0'},
+                {'baseline':'311',
+                  'variation': '5.0'},
+                {'baseline':'311',
+                  'variation': '6.1'},
+                {'baseline':'311',
+                  'variation': '6.2'},
+                {'baseline':'311',
+                  'variation': '6.3'},
+                {'baseline':'311',
+                  'variation': '7.0'},
+                {'baseline':'311',
+                  'variation': '8.0'}
                  ]
         
 lb_delta = 0.01

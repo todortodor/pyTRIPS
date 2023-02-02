@@ -55,7 +55,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     params = p_baseline.calib_parameters
     params.append('kappa')
     params.append('r_hjort')
-    # params.append('khi')
+    params.append('theta')
     # params.append('d*fe')
     # params.append('nu/deltaUS')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
@@ -265,6 +265,15 @@ comments_dic = {"baseline":"baseline",
                 "2.1.11":"2.1.11: kappa:0.5,TO:0.0124,KM:0.1322",
                 "2.2":"2.2: 2.0 with ratio loss",
                 "2.3":"2.3: 2.2 higher SPFLOW weight",
+                "3.0":"3.0: Not calibrated ! only eta_US/2",
+                "4.0":"4.0: drop SRDUS moment",
+                "5.0":"5.0: no Hjort factors",
+                "6.1":"6.1: JUPCOST instead of UUPCOST",
+                "6.2":"6.2: both JUPCOST and UUPCOST",
+                "6.3":"6.3: none of JUPCOST or UUPCOST",
+                "7.0":"7.0: calibrated elasticities",
+                "8.0":"8.0: ratio loss function for SPFLOW",
+                "8.1":"8.1: squared diff loss function for SPFLOW",
                 
                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
@@ -330,7 +339,7 @@ for baseline_nbr in ['311']:
     
         for run in run_list:
             # print(run)
-            if run not in ['1.5.2','1.6.2','99']:
+            if run not in ['2.1.9','2.2','99']:
                 p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
                 a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                                 baselines_dic_mom[baseline_nbr], 
