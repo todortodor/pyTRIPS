@@ -111,7 +111,7 @@ l_df = []
 d_sol = {}
 d_p = {}
     
-for delta in np.linspace(1,3,21):
+for delta in np.logspace(-1,1,111):
     country = 'USA'
     p = p_baseline.copy()
     p.delta[p.countries.index(country),1] = p_baseline.delta[p.countries.index(country),1]*delta
@@ -162,12 +162,131 @@ for delta in np.linspace(1,3,21):
 df = pd.concat(l_df,axis=1)
 df = df.T
 df.index = np.logspace(-1,1,21)
-df.plot()
+df.plot(logx=True)
 
 #%%
 
+x = np.logspace(-1,1,111)
+
 for delta in d_p:
     print('delta',round(delta,1),'EU welfare',d_sol[delta].cons_eq_welfare[1])
-    print(np.argwhere(d_sol[delta].psi_o_star ==1 ))
+    # print(np.argwhere(d_sol[delta].psi_m_star ==1 ))
+    print(d_sol[delta].cons[1])
     # plt.plot(d_sol[delta].psi_m_star[...,1].ravel())
     # plt.show()
+
+#%%
+
+plt.semilogx(x
+             ,[d_sol[delta].cons_eq_welfare[1]/d_sol[0.1].cons_eq_welfare[1]
+               for delta in d_sol]
+             ,label = 'Cons eq welfare EU')
+plt.semilogx(x
+             ,[d_sol[delta].cons[1]/d_sol[0.1].cons[1] for delta in d_sol]
+             ,label = 'Nominal Cons EU')
+plt.semilogx(x
+             ,[d_sol[delta].nominal_intermediate_input[1,:].sum()/d_sol[0.1].nominal_intermediate_input[1,:].sum() 
+               for delta in d_sol]
+             ,label = 'PQ_sum_EU')
+plt.semilogx(x
+             ,[d_sol[delta].Z[1]/d_sol[0.1].Z[1]
+               for delta in d_sol]
+             ,label = 'Z_EU')
+plt.semilogx(x
+             ,[d_sol[delta].price_indices[1]/d_sol[0.1].price_indices[1] 
+               for delta in d_sol]
+             ,label = 'price indice EU')
+plt.semilogx(x
+             ,[d_sol[delta].price_indices[0]/d_sol[0.1].price_indices[0] 
+               for delta in d_sol]
+             ,label = 'price indice USA')
+plt.semilogx(x
+             ,[d_sol[delta].PSI_CD[1,1]/d_sol[0.1].PSI_CD[1,1]
+               for delta in d_sol]
+             ,label = 'PSI_CD_EU')
+plt.semilogx(x
+             ,[d_sol[delta].PSI_M[1,1,1]/d_sol[0.1].PSI_M[1,1,1]
+               for delta in d_sol]
+             ,label = 'PSI_M_EU_EU')
+plt.semilogx(x
+             ,[d_sol[delta].l_R[1,1]/d_sol[0.1].l_R[1,1]
+               for delta in d_sol]
+             ,label = 'l_R_EU')
+plt.semilogx(x
+             ,[d_sol[delta].profit[1,1,1]/d_sol[0.1].profit[1,1,1]
+               for delta in d_sol]
+             ,label = 'profit_EU_EU'
+             ,ls = '--')
+plt.semilogx(x
+             ,[d_sol[delta].profit[1,0,1]/d_sol[0.1].profit[1,0,1]
+               for delta in d_sol]
+             ,label = 'profit_EU_USA'
+             ,ls = '--')
+plt.semilogx(x
+             ,[d_sol[delta].X_M[1,1,1]/d_sol[0.1].X_M[1,1,1]
+               for delta in d_sol]
+             ,label = 'X_M_EU_EU'
+             ,ls = '--')
+
+
+plt.legend()
+plt.title('USA patent protection unilateral counterfactual, Normalized quantities')
+plt.show()
+#%%
+fig, ax = plt.subplots(3,2,figsize = (10,14))
+
+ax[0,0].semilogx(x
+             ,[d_sol[delta].psi_o_star[0,1]
+               for delta in d_sol]
+             ,label = 'psi_o_star_USA')
+ax[0,0].set_title('psi_o_star_USA')
+ax[0,1].semilogx(x
+             ,[d_sol[delta].psi_o_star[1,1]
+               for delta in d_sol]
+             ,label = 'psi_o_star_EU')
+ax[0,1].set_title('psi_o_star_EU')
+ax[1,1].semilogx(x
+             ,[d_sol[delta].psi_m_star[1,0,1]
+               for delta in d_sol]
+             ,label = 'psi_m_star_EU_USA')
+ax[1,1].set_title('psi_m_star_EU_USA')
+ax[2,1].semilogx(x
+             ,[d_sol[delta].psi_m_star[1,1,1]
+               for delta in d_sol]
+             ,label = 'psi_m_star_EU_EU')
+ax[2,1].set_title('psi_m_star_EU_EU')
+ax[1,0].semilogx(x
+             ,[d_sol[delta].psi_m_star[0,1,1]
+               for delta in d_sol]
+             ,label = 'psi_m_star_USA_EU')
+ax[1,0].set_title('psi_m_star_USA_EU')
+ax[2,0].semilogx(x
+             ,[d_sol[delta].psi_m_star[0,0,1]
+               for delta in d_sol]
+             ,label = 'psi_m_star_USA_USA')
+ax[2,0].set_title('psi_m_star_USA_USA')
+# plt.legend()
+plt.suptitle('USA patent protection unilateral counterfactual\nPatenting thresholds')
+plt.show()
+
+#%% psi_star
+
+fig,ax = plt.subplots()
+
+ax.semilogx(x
+             ,[d_sol[delta].psi_m_star[1,0,1]
+               for delta in d_sol]
+             ,label = 'psi_m_star_EU_USA',
+             lw=5,ls='--')
+ax.semilogx(x
+              ,[d_sol[delta].psi_star[1,0,1]
+                for delta in d_sol]
+              ,label = 'psi_star_EU_USA')
+ax.semilogx(x
+              ,[d_sol[delta].psi_o_star[0,1]
+                for delta in d_sol]
+              ,label = 'psi_o_star_USA')
+
+plt.title('Decomposition of psi_m_star_EU_USA \n psi_m_star_EU_USA=max(psi_star_EU_USA,psi_o_star_USA)')
+plt.legend()
+plt.show()

@@ -455,8 +455,8 @@ class var:
         denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
         self.psi_C = np.full((p.N,p.N,p.S),np.inf)
         self.psi_C[...,1:] = A*p.r_hjort[None,:,None]/(self.profit[...,1:]*denom_bracket[:,None,1:])
-        psi_star = np.maximum(self.psi_C,1)
-        psi_star_n_star = np.min(psi_star,axis=0)
+        self.psi_star = np.maximum(self.psi_C,1)
+        psi_star_n_star = np.min(self.psi_star,axis=0)
         
         x_old = np.max(self.psi_C[...,1:], axis=0)
         x_new = None
@@ -476,7 +476,7 @@ class var:
         self.psi_o_star = np.full((p.N,p.S),np.inf)
         self.psi_o_star[...,1:] = x_new
         self.psi_m_star = np.full((p.N,p.N,p.S),np.inf)
-        self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],psi_star[...,1:])
+        self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],self.psi_star[...,1:])
 
             
     
@@ -1530,21 +1530,21 @@ class moments:
                 #             /getattr(self,mom+'_target').size**(1/2)
                 #             )
                 else:
-                    if mom != 'SPFLOW':
-                        mo = getattr(self,mom)
-                        tar = getattr(self,mom+'_target')
-                        setattr(self,
-                                mom+'_deviation',
-                                self.weights_dict[mom]*np.abs(mo-tar)/tar
-                                /getattr(self,mom+'_target').size
-                                )
-                    else:
-                        mo = getattr(self,mom)
-                        tar = getattr(self,mom+'_target')
-                        setattr(self,
-                                mom+'_deviation',
-                                self.weights_dict[mom]*(mo-tar)**(2)
-                                )
+                    # if mom != 'SPFLOW':
+                    mo = getattr(self,mom)
+                    tar = getattr(self,mom+'_target')
+                    setattr(self,
+                            mom+'_deviation',
+                            self.weights_dict[mom]*np.abs(mo-tar)/tar
+                            /getattr(self,mom+'_target').size
+                            )
+                    # else:
+                    #     mo = getattr(self,mom)
+                    #     tar = getattr(self,mom+'_target')
+                    #     setattr(self,
+                    #             mom+'_deviation',
+                    #             self.weights_dict[mom]*(mo-tar)**(2)
+                    #             )
                 # mo = getattr(self,mom)
                 # tar = getattr(self,mom+'_target')
                 # setattr(self,

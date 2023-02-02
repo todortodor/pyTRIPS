@@ -66,7 +66,7 @@ baseline_dics = [
                 # {'baseline':'311',
                 #   'variation': '7.0'},
                 {'baseline':'311',
-                  'variation': '8.0'}
+                  'variation': '7.0'}
                  ]
 
 for baseline_dic in baseline_dics:

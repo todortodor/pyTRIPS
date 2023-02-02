@@ -15,7 +15,7 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = True
+new_run = False
 baseline_number = '311'
 if new_run:
     p = parameters(n=7,s=2)
@@ -37,8 +37,8 @@ if new_run:
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
-# if 'theta' not in p.calib_parameters:
-#     p.calib_parameters.append('theta')
+if 'theta' not in p.calib_parameters:
+    p.calib_parameters.append('theta')
 # if 'sigma' not in p.calib_parameters:
 #     p.calib_parameters.append('sigma')
 
@@ -64,6 +64,8 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATUS')
 # if 'SINNOVPATEU' not in m.list_of_moments:
 #     m.list_of_moments.append('SINNOVPATEU')
+if 'theta' in p.calib_parameters and 'TE' not in m.list_of_moments:
+    m.list_of_moments.append('TE')
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 # if 'kappa' not in p.calib_parameters:
@@ -102,7 +104,7 @@ avoid_bad_nash = False
 # m.list_of_moments.append('KM_GDP')
 # m.weights_dict['SINNOVPATEU'] = 3
 # m.weights_dict['DOMPATEU'] = 3
-m.weights_dict['SPFLOW'] = 0
+# m.weights_dict['SPFLOW'] = 0
 # m.weights_dict['DOMPATUS'] = 3
 # p.delta[...,1] = 0.05
 # m.weights_dict['JUPCOST'] = 2
@@ -250,13 +252,13 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-commentary = 'squared diff loss function for SPFLOW'
+commentary = 'calibrated elasticities'
 # commentary = ''
 # baseline_number = '311'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 8.1
+run_number = 7.0
 # run_str = '2.1.9.2'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
