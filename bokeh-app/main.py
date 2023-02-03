@@ -55,7 +55,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     params = p_baseline.calib_parameters
     params.append('kappa')
     params.append('r_hjort')
-    params.append('theta')
+    # params.append('theta')
     # params.append('d*fe')
     # params.append('nu/deltaUS')
     df_scalar_params = pd.DataFrame(columns = ['baseline'])
@@ -457,7 +457,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
                width = 1200,
-               height = 1000,
+               height = 925,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -512,10 +512,12 @@ legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=
 # legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data)]
 legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
                     label_text_font_size="8pt",
-                    spacing = 0)
+                    spacing = 0, location=(10, -60))
 p_mom.add_layout(legend_mom, 'right')
 # columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
-columns_mom = [TableColumn(field=col) for col in ['target']+list(comments_dic[baseline_mom].keys())]
+columns_mom = [
+        TableColumn(field="x"),
+    ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[baseline_mom].keys())]
 data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1200, height=400)
     
 def update_baseline_mom(attrname, old, new):
@@ -526,7 +528,9 @@ def update_baseline_mom(attrname, old, new):
     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
                         for col in ds_mom.data if col in comments_dic[new]]
     p_mom.legend.items = legend_items_mom
-    data_table_mom.columns = [TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
+    data_table_mom.columns = [
+            TableColumn(field="x"),
+        ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
     
 def update_mom(attrname, old, new):
     baseline_mom = baseline_mom_select.value
@@ -562,7 +566,7 @@ x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
                width = 1200,
-               height = 1000,
+               height = 925,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -588,7 +592,8 @@ for col in baselines_dic_param[baseline_par][par].columns:
 
 legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
                     for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
-legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0
+                    , location=(10, -30))
 p_par.add_layout(legend_par, 'right')
 # p_par.legend.click_policy="hide"
 # p_par.legend.label_text_font_size = '8pt'
@@ -613,7 +618,9 @@ def update_baseline_par(attrname, old, new):
                         for col in ds_par.data if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
     p_par.legend.items = legend_items_par
-    data_table_par.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
+    data_table_par.columns = [
+            TableColumn(field="x"),
+        ]+[TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_par(attrname, old, new):
     baseline_par = baseline_par_select.value
@@ -637,7 +644,7 @@ x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to
 ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
 p_sol_qty = figure(title="Solution quantities", 
                width = 1200,
-               height = 1000,
+               height = 925,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -664,7 +671,8 @@ for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
 legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
                         for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
 legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
-                        label_text_font_size="8pt",spacing = 0)
+                        label_text_font_size="8pt",spacing = 0
+                        , location=(10, -30))
 p_sol_qty.add_layout(legend_sol_qty, 'right')
 # p_par.legend.click_policy="hide"
 # p_par.legend.label_text_font_size = '8pt'
