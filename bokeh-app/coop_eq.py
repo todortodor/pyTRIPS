@@ -106,21 +106,37 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
 #                           'variation':run})
         
 baseline_dics = [
-                # {'baseline':'311',
-                #   'variation': '4.0'},
-                # {'baseline':'311',
-                #   'variation': '5.0'},
-                # {'baseline':'311',
-                #   'variation': '6.1'},
-                # {'baseline':'311',
-                #   'variation': '6.2'},
-                # {'baseline':'311',
-                #   'variation': '6.3'},
-                {'baseline':'311',
-                  'variation': '7.0'},
-                # {'baseline':'311',
-                #   'variation': '8.0'}
-                 ]
+    # {'baseline':'312',
+    #                   'variation': 'baseline'},
+    # {'baseline':'312',
+    #                   'variation': '1.0'},
+    # {'baseline':'312',
+    #                   'variation': '2.0'},
+    # {'baseline':'312',
+    #                   'variation': '3.0'},
+    # {'baseline':'312',
+    #                   'variation': '4.0'},
+    # {'baseline':'312',
+    #                   'variation': '5.0'},
+    # {'baseline':'312',
+    #                   'variation': '6.0'},
+    # {'baseline':'312',
+    #                   'variation': '7.0'},
+    # {'baseline':'312',
+    #                   'variation': '8.0'},
+    # {'baseline':'312',
+    #                   'variation': '9.0'},
+    # {'baseline':'312',
+    #                   'variation': '10.0'},
+    # {'baseline':'312',
+    #                   'variation': '11.0'},
+    # {'baseline':'312',
+    #                   'variation': '11.1'},
+    {'baseline':'312',
+                      'variation': '11.2'},
+    {'baseline':'312',
+                      'variation': '11.3'},
+    ]
         
 lb_delta = 0.01
 ub_delta = 100

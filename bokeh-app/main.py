@@ -133,6 +133,22 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         df.index.name='x'
         df['baseline'] = getattr(sol_baseline,sol_qty)[...,1]/p_baseline.labor
         dic_df_sol[sol_qty] = df
+        
+    for sol_qty in ['min_psi_m_star_inward']:
+        df = pd.DataFrame(index = p_baseline.countries, 
+                          columns = ['baseline'], 
+                          )
+        df.index.name='x'
+        df['baseline'] = getattr(sol_baseline,'psi_m_star')[:,:,1].min(axis=1)
+        dic_df_sol[sol_qty] = df
+        
+    for sol_qty in ['min_psi_m_star_outward']:
+        df = pd.DataFrame(index = p_baseline.countries, 
+                          columns = ['baseline'], 
+                          )
+        df.index.name='x'
+        df['baseline'] = getattr(sol_baseline,'psi_m_star')[:,:,1].min(axis=0)
+        dic_df_sol[sol_qty] = df
     
     dic_df_mom['scalars'] = df_scalar_moments
     # dic_df_mom['scalar deviations'] = df_scalar_moments_deviation
@@ -175,6 +191,10 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]
         if k in ['l_R']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]/p.labor
+        if k in ['min_psi_m_star_outward']:
+            dic_df_sol[k][run_name] = getattr(sol,'psi_m_star')[:,:,1].min(axis=0)
+        if k in ['min_psi_m_star_inward']:
+            dic_df_sol[k][run_name] = getattr(sol,'psi_m_star')[:,:,1].min(axis=1)
             
     return dic_df_param, dic_df_mom, dic_df_sol
 
@@ -182,6 +202,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
 
 data_path = join(dirname(__file__), 'data/')
 # data_path = 'data/'
+# results_path = 'calibration_results_matched_economy/'
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
 cf_path = join(dirname(__file__), 'counterfactual_recaps/unilateral_patent_protection/')
 nash_eq_path = join(dirname(__file__), 'nash_eq_recaps/')
@@ -193,7 +214,7 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW',
  'SRDUS', 'SRGDP','UUPCOST', 'SINNOVPATUS','SINNOVPATEU', 'TO',
- 'DOMPATUS','DOMPATEU','TWSPFLOW','TWSPFLOWDOM']
+ 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM']
 
 # comments_dic = {'baseline':'baseline',
 #                 '99':'silenced run',
@@ -234,8 +255,35 @@ list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 #                 '18.1':'18.1: 11.7, calibrated r_hjort-like patenting costs',
 #                 '19.1':'19.1: 11.7, calibrated hjort elasticity',
 #                 }
+# comments_dic = {"baseline":"baseline",
+#                 "1.0":"1.0: Higher weight on JUPCOST",
+#                 # "1.1":"1.1: No hjort and no drop south RD",
+#                 # "1.2":"1.2: No hjort",
+#                 # "1.3":"1.3: No hjort, Adding ERDUS moment",
+#                 # "1.4":"1.4: No hjort, drop SRDUS",
+#                 # "1.5":"1.5: Higher RD weight",
+#                 # "1.6":"1.6: Higher RD and GPDIFF weight",
+#                 # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
+#                 # "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
+#                 # "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
+#                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
+#                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
+#                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
+#                 # "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
+#                 # "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
+#                 # "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
+#                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
+#                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
+#                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
+#                 "2.0":"2.0: No Hjort factors",
+#                 "3.0":"3.0: UUPCOST instead of JUPCOST",
+#                 "3.1":"3.1: UUPCOST and JUPCOST",
+#                 "3.2":"3.2: no UUPCOST, no JUPCOST",
+#                 # "90":"90: temp",
+#                 }
+comments_dic = {}
 
-comments_dic = {"baseline":"baseline",
+comments_dic['311'] = {"baseline":"baseline",
                 "1.0":"1.0: kappa:0.5,TO:0.05,KM:0.06",
                 "1.1":"1.1: kappa:0.5,TO:0.05,KM:0.09277",
                 "1.2":"1.2: kappa:0.5,TO:0.05,KM:0.1322",
@@ -273,8 +321,7 @@ comments_dic = {"baseline":"baseline",
                 "6.3":"6.3: none of JUPCOST or UUPCOST",
                 "7.0":"7.0: calibrated elasticities",
                 "8.0":"8.0: ratio loss function for SPFLOW",
-                "8.1":"8.1: squared diff loss function for SPFLOW",
-                
+                # "8.1":"8.1: squared diff loss function for SPFLOW",            
                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
@@ -284,34 +331,55 @@ comments_dic = {"baseline":"baseline",
                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
-                
                 }
-# comments_dic = {"baseline":"baseline",
-#                 "1.0":"1.0: Higher weight on JUPCOST",
-#                 # "1.1":"1.1: No hjort and no drop south RD",
-#                 # "1.2":"1.2: No hjort",
-#                 # "1.3":"1.3: No hjort, Adding ERDUS moment",
-#                 # "1.4":"1.4: No hjort, drop SRDUS",
-#                 # "1.5":"1.5: Higher RD weight",
-#                 # "1.6":"1.6: Higher RD and GPDIFF weight",
-#                 # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
-#                 # "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
-#                 # "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
-#                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
-#                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
-#                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
-#                 # "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
-#                 # "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
-#                 # "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
-#                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
-#                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
-#                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
-#                 "2.0":"2.0: No Hjort factors",
-#                 "3.0":"3.0: UUPCOST instead of JUPCOST",
-#                 "3.1":"3.1: UUPCOST and JUPCOST",
-#                 "3.2":"3.2: no UUPCOST, no JUPCOST",
-#                 # "90":"90: temp",
-#                 }
+
+comments_dic['312'] = {"baseline":"baseline",
+                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
+                "1.1":"1.1: TO: 0.036",
+                "1.2":"1.2: TO: 0.0124",
+                "1.3":"1.3: TO: 0.00972",
+                "2.0":"2.0: with SINNOVPATEU",
+                "2.1":"2.1: TO: 0.036",
+                "2.2":"2.2: TO: 0.0124",
+                "2.3":"2.3: TO: 0.00972",
+                "3.0":"3.0: with DOMPATINUS/EU",
+                "3.1":"3.1: TO: 0.036",
+                "3.2":"3.2: TO: 0.0124",
+                "3.3":"3.3: TO: 0.00972",
+                "4.0":"4.0: with SINNOVPATEU and DOMPATINUS/EU",
+                "4.1":"4.1: TO: 0.036",
+                "4.2":"4.2: TO: 0.0124",
+                "4.3":"4.3: TO: 0.00972",
+                "5.0":"5.0: drop SRDUS",
+                "5.1":"5.1: TO: 0.036",
+                "5.2":"5.2: TO: 0.0124",
+                "5.3":"5.3: TO: 0.00972",
+                "6.0":"6.0: drop SRDUS with SINNOVPATEU",
+                "6.1":"6.1: TO: 0.036",
+                "6.2":"6.2: TO: 0.0124",
+                "6.3":"6.3: TO: 0.00972",
+                "7.0":"7.0: drop SRDUS with DOMPATINUS/EU",
+                "7.1":"7.1: TO: 0.036",
+                "7.2":"7.2: TO: 0.0124",
+                "7.3":"7.3: TO: 0.00972",
+                "8.0":"8.0: drop SRDUS with SINNOVPATEU and DOMPATINUS/EU",
+                "8.1":"8.1: TO: 0.036",
+                "8.2":"8.2: TO: 0.0124",
+                "8.3":"8.3: TO: 0.00972",
+                "9.0":"9.0: drop UUPCOST",
+                "9.1":"9.1: TO: 0.036",
+                "9.2":"9.2: TO: 0.0124",
+                "9.3":"9.3: TO: 0.00972",
+                "10.0":"10.0: drop UUPCOST with SINNOVPATEU and DOMPATINUS/EU",
+                "10.1":"10.1: TO: 0.036",
+                "10.2":"10.2: TO: 0.0124",
+                "10.3":"10.3: TO: 0.00972",
+                "11.0":"11.0:drop SRDUS & UUPCOST with SINNOVPATEU & DOMPATIN",  
+                "11.1":"11.1: TO: 0.036",
+                "11.2":"11.2: TO: 0.0124",
+                "11.3":"11.3: TO: 0.00972",
+                }
+
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -320,10 +388,12 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['101','102','104']:
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
-    
+
+baseline_list = ['311','312']    
+
 def section(s):
      return [int(_) for _ in s.split(".")]
-for baseline_nbr in ['311']:
+for baseline_nbr in baseline_list:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
         
@@ -339,7 +409,7 @@ for baseline_nbr in ['311']:
     
         for run in run_list:
             # print(run)
-            if run not in ['2.1.9','2.2','99']:
+            if run not in ['2.1.9','99']:
                 p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
                 a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                                 baselines_dic_mom[baseline_nbr], 
@@ -354,13 +424,31 @@ for baseline_nbr in ['311']:
     except:
         pass
 
+# gather full list run
+full_run_list = []
+for baseline_nbr in baseline_list:
+    baseline_path = results_path+baseline_nbr+'/'
+    baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
+    files_in_dir = next(os.walk(baseline_variations_path))[1]
+    for f in files_in_dir:
+        if f[0].isnumeric() and f not in full_run_list:
+            full_run_list.append(f)
+full_run_list = ['target','baseline']+sorted(full_run_list,key = section)
+#add empty columns to dfs
+for baseline_nbr in baseline_list:
+    for df_name in baselines_dic_mom[baseline_nbr].keys():
+        baselines_dic_mom[baseline_nbr][df_name] = baselines_dic_mom[baseline_nbr][df_name].reindex(columns=full_run_list)
+    for df_name in baselines_dic_param[baseline_nbr].keys():
+        baselines_dic_param[baseline_nbr][df_name] = baselines_dic_param[baseline_nbr][df_name].reindex(columns=full_run_list[1:])
+    for df_name in baselines_dic_sol_qty[baseline_nbr].keys():
+        baselines_dic_sol_qty[baseline_nbr][df_name] = baselines_dic_sol_qty[baseline_nbr][df_name].reindex(columns=full_run_list[1:])
 
 countries = p_baseline.countries
 
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
 # baseline_mom = '101'
-baseline_mom = '311'
+baseline_mom = '312'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -369,7 +457,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
                width = 1200,
-               height = 900,
+               height = 1000,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -384,99 +472,79 @@ labels = LabelSet(x='target', y='baseline', text='x',
               x_offset=2, y_offset=2, source=ds_mom, text_font_size="7pt")
 p_mom.add_layout(labels)
 p_mom.add_tools(hover_tool_mom)
-# p_mom.sizing_mode = 'scale_width'
 slope1 = Slope(gradient=1, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=1)
-slope2 = Slope(gradient=0.48, y_intercept=0,
+slope2 = Slope(gradient=1.4876, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
-slope3 = Slope(gradient=0.72, y_intercept=0,
+slope3 = Slope(gradient=0.5124, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
-slope4 = Slope(gradient=0.248, y_intercept=0,
+slope4 = Slope(gradient=0.40165, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
-slope5 = Slope(gradient=1.546, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=0.25)
-slope6 = Slope(gradient=2.20, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=0.25)
+# slope5 = Slope(gradient=1.546, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=0.25)
+# slope6 = Slope(gradient=2.20, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=0.25)
 
-for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
+for slope in [slope1,slope2,slope3,slope4]:
+# for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
     p_mom.add_layout(slope)
     
-# slope1.visible = False
 slope2.visible = False
 slope3.visible = False
 slope4.visible = False
-slope5.visible = False
-slope6.visible = False
+# slope5.visible = False
+# slope6.visible = False
 
-# colors_mom = itertools.cycle(Category20.values()(len(baselines_dic_mom[baseline_mom][mom].columns)))
 colors_mom = itertools.cycle(Category10[10])
 
-# for col in baselines_dic_mom[baseline_mom][mom].columns[1:]:
 lines_mom = {}
-for col in ds_mom.data.keys():
+# for i,col in enumerate(ds_mom.data.keys()):
+for i,col in enumerate(ds_mom.data.keys()):
     if col not in ['x','target']:
-        # lines_mom[col] = p_mom.circle('target', col, 
-        #                               source = ds_mom, 
-        #                               size=5, color=next(colors_mom), 
-        #                               legend_label=comments_dic[col])
         lines_mom[col] = p_mom.circle('target', col, 
                                       source = ds_mom, 
                                       size=5, color=next(colors_mom))
         if col != 'baseline':
             lines_mom[col].visible = False
             
-legend_items_mom = [LegendItem(label=comments_dic[col], renderers=[lin_mom]) for col, lin_mom in lines_mom.items()]
-legend_mom = Legend(items=legend_items_mom, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lin_mom]) 
+                    for col, lin_mom in lines_mom.items() if col in comments_dic[baseline_mom]]
+# legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data)]
+legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0)
 p_mom.add_layout(legend_mom, 'right')
-# p_mom.line('target','target',source = ds_mom , color = 'black', line_alpha = 0.1)
-# p_mom.ray(x=1e-15, y=1e-15, length=0, angle_units = "deg",
-#       angle = 45)
-
-# p_mom.legend.click_policy="hide"
-# p_mom.legend.label_text_font_size = '8pt'
-# # p_mom.legend.label_height = 0
-# # p_mom.legend.glyph_height = 0
-# p_mom.legend.spacing = 0
-# # p_mom.legend.
-# p_mom.add_layout(p_mom.legend[0], 'right')
-
-# columns_mom = [
-#         TableColumn(field="x"),
-#     ]+[TableColumn(field=col) for col in baselines_dic_mom[baseline_mom][mom].columns]
-columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
+# columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
+columns_mom = [TableColumn(field=col) for col in ['target']+list(comments_dic[baseline_mom].keys())]
 data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1200, height=400)
-# data_table_mom = DataTable(source=ds_mom, width=900, height=400)
-# data_table_mom = DataTable(source=ds_mom.data, width=900, height=400)
-
+    
 def update_baseline_mom(attrname, old, new):
     mom = mom_select.value
     ds_mom.data = baselines_dic_mom[new][mom]
-    legend_items_mom = [LegendItem(label=comments_dic[col], renderers=[lines_mom[col]]) for col in ds_mom.data if col not in ['x','target']]
-    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
+    # legend_items_mom = [LegendItem(label=comments_dic[new][col], 
+    #                                 renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data) if col not in ['x','target']]
+    legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
+                        for col in ds_mom.data if col in comments_dic[new]]
     p_mom.legend.items = legend_items_mom
+    data_table_mom.columns = [TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
     
 def update_mom(attrname, old, new):
-    # p_mom.legend.items = []
     baseline_mom = baseline_mom_select.value
     ds_mom.data = baselines_dic_mom[baseline_mom][new]
     if new == 'scalars':
-        # for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
-        # slope1.visible = True
         slope2.visible = True
         slope3.visible = True
         slope4.visible = True
-        slope5.visible = True
-        slope6.visible = True
+        # slope5.visible = True
+        # slope6.visible = True
     else:
-        # slope1.visible = False
         slope2.visible = False
         slope3.visible = False
         slope4.visible = False
-        slope5.visible = False
-        slope6.visible = False
+        # slope5.visible = False
+        # slope6.visible = False
 
 controls_mom = row(baseline_mom_select, mom_select)
-# controls_mom.sizing_mode = 'scale_width'
 
 baseline_mom_select.on_change('value', update_baseline_mom)
 mom_select.on_change('value', update_mom)
@@ -485,7 +553,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '311'
+baseline_par = '312'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -494,7 +562,7 @@ x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
                width = 1200,
-               height = 900,
+               height = 1000,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -518,7 +586,8 @@ for col in baselines_dic_param[baseline_par][par].columns:
     if col != 'baseline':
         lines_par[col].visible = False
 
-legend_items_par = [LegendItem(label=comments_dic[col], renderers=[lin_par]) for col, lin_par in lines_par.items()]
+legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
+                    for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
 legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0)
 p_par.add_layout(legend_par, 'right')
 # p_par.legend.click_policy="hide"
@@ -530,16 +599,21 @@ p_par.add_layout(legend_par, 'right')
 
 columns_par = [
         TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
+    ]+[TableColumn(field=col) for col in list(comments_dic[baseline_par].keys())]
+# columns_par = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
 
 data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
 
 def update_baseline_par(attrname, old, new):
     par = par_select.value
     ds_par.data = baselines_dic_param[new][par]
-    legend_items_par = [LegendItem(label=comments_dic[col], renderers=[lines_par[col]]) for col in ds_par.data if col not in ['x']]
+    legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
+                        for col in ds_par.data if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
     p_par.legend.items = legend_items_par
+    data_table_par.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_par(attrname, old, new):
     baseline_par = baseline_par_select.value
@@ -554,7 +628,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '311'
+baseline_sol_qty = '312'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -563,7 +637,7 @@ x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to
 ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
 p_sol_qty = figure(title="Solution quantities", 
                width = 1200,
-               height = 900,
+               height = 1000,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -587,8 +661,10 @@ for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
     if col != 'baseline':
         lines_sol_qty[col].visible = False
 
-legend_items_sol_qty = [LegendItem(label=comments_dic[col], renderers=[lin_sol_qty]) for col, lin_sol_qty in lines_sol_qty.items()]
-legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", label_text_font_size="8pt",spacing = 0)
+legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
+                        for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
+legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
+                        label_text_font_size="8pt",spacing = 0)
 p_sol_qty.add_layout(legend_sol_qty, 'right')
 # p_par.legend.click_policy="hide"
 # p_par.legend.label_text_font_size = '8pt'
@@ -599,16 +675,18 @@ p_sol_qty.add_layout(legend_sol_qty, 'right')
 
 columns_sol_qty = [
         TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns]
+    ]+[TableColumn(field=col) for col in list(comments_dic[baseline_sol_qty].keys())]
 
 data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1200, height=400)
 
 def update_baseline_sol_qty(attrname, old, new):
     sol_qty = sol_qty_select.value
     ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
-    legend_items_sol_qty = [LegendItem(label=comments_dic[col], renderers=[lines_sol_qty[col]]) for col in ds_sol_qty.data if col not in ['x']]
+    legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
+                            for col in ds_sol_qty.data  if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
     p_sol_qty.legend.items = legend_items_sol_qty
+    data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_sol_qty(attrname, old, new):
     baseline_sol_qty = baseline_sol_qty_select.value
@@ -689,15 +767,20 @@ sensitivity_report = column(controls_sensi,p_sensi)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '311'
+baseline_cf = '312'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
-cf_list = [s for s in os.listdir(cf_path) if s[9:].startswith('311') and s.startswith('baseline')]
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
+cf_list = sorted([s for s in os.listdir(cf_path) 
+           if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+
 # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
@@ -801,8 +884,8 @@ welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astyp
 welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-welf_coop = welf_coop[welf_coop['baseline'].isin([311])]
-welf_nash = welf_nash[welf_nash['baseline'].isin([311])]
+welf_coop = welf_coop[welf_coop['baseline'].isin([312])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([312])]
 
 welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
 welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
@@ -844,8 +927,8 @@ hover_tool_eq.tooltips = [
 p_eq.add_tools(hover_tool_eq)
 
 data_table_eq = dict(
-        runs=[run for run in comments_dic.keys()],
-        comments=[comment for comment in comments_dic.values()],
+        runs=[run for run in comments_dic[baseline_sol_qty].keys()],
+        comments=[comment for comment in comments_dic[baseline_sol_qty].values()],
     )
 source_table_eq = ColumnDataSource(data_table_eq)
 
@@ -906,8 +989,8 @@ deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.a
 deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-deltas_coop = deltas_coop[deltas_coop['baseline'].isin([311])]
-deltas_nash = deltas_nash[deltas_nash['baseline'].isin([311])]
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([312])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([312])]
 
 deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
 deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']

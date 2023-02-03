@@ -28,22 +28,55 @@ params = {'legend.fontsize': 'x-large',
          'ytick.labelsize':'x-large'}
 pylab.rcParams.update(params)
 
+# baseline_dics = [
+#                 # {'baseline':'311',
+#                 #   'variation': '4.0'},
+#                 # {'baseline':'311',
+#                 #   'variation': '5.0'},
+#                 # {'baseline':'311',
+#                 #   'variation': '6.1'},
+#                 # {'baseline':'311',
+#                 #   'variation': '6.2'},
+#                 # {'baseline':'311',
+#                 #   'variation': '6.3'},
+#                 # {'baseline':'311',
+#                 #   'variation': '7.0'},
+#                 {'baseline':'311',
+#                   'variation': '8.0'}
+#                  ]
+
 baseline_dics = [
-                # {'baseline':'311',
-                #   'variation': '4.0'},
-                # {'baseline':'311',
-                #   'variation': '5.0'},
-                # {'baseline':'311',
-                #   'variation': '6.1'},
-                # {'baseline':'311',
-                #   'variation': '6.2'},
-                # {'baseline':'311',
-                #   'variation': '6.3'},
-                # {'baseline':'311',
-                #   'variation': '7.0'},
-                {'baseline':'311',
-                  'variation': '8.0'}
-                 ]
+    # {'baseline':'312',
+    #                   'variation': 'baseline'},
+    # {'baseline':'312',
+    #                   'variation': '1.0'},
+    # {'baseline':'312',
+    #                   'variation': '2.0'},
+    # {'baseline':'312',
+    #                   'variation': '3.0'},
+    # {'baseline':'312',
+    #                   'variation': '4.0'},
+    # {'baseline':'312',
+    #                   'variation': '5.0'},
+    # {'baseline':'312',
+    #                   'variation': '6.0'},
+    # {'baseline':'312',
+    #                   'variation': '7.0'},
+    # {'baseline':'312',
+    #                   'variation': '8.0'},
+    # {'baseline':'312',
+    #                   'variation': '9.0'},
+    # {'baseline':'312',
+    #                   'variation': '10.0'},
+    # {'baseline':'312',
+    #                   'variation': '11.0'},
+    {'baseline':'312',
+                      'variation': '11.1'},
+    # {'baseline':'312',
+    #                   'variation': '11.2'},
+    # {'baseline':'312',
+    #                   'variation': '11.3'},
+    ]
 
 for baseline_dic in baseline_dics:    
     if baseline_dic['variation'] == 'baseline':

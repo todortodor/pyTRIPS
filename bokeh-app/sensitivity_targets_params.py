@@ -1254,16 +1254,16 @@ for c_spec_par in ['eta']:
             df[qty] = [getattr(p,c_spec_par)[0,1] for p in variation_dic['p'].values()]
             list_of_dfs.append(df)
         big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
-        df_dic['eta US'] = big_df
+        df_dic['eta_US'] = big_df
 
 list_of_dfs = []
 for qty,variation_dic in dic_of_variation_dics.items():
     df = pd.DataFrame()
     df['Change'] = [round(change) for change in variation_dic['change'].values()]
-    df[qty] = [getattr(m,'RD_US')[0,1] for p in variation_dic['p'].values()]
+    df[qty] = [getattr(m,'RD_US') for m in variation_dic['m'].values()]
     list_of_dfs.append(df)
 big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
-df_dic['RD US'] = big_df
+df_dic['RD_US'] = big_df
         
 list_of_dfs = []
 for qty,variation_dic in tqdm(dic_of_variation_dics.items()):
@@ -1299,5 +1299,5 @@ for k,df in df_dic.items():
 
 # big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
 # big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
-big_df.to_csv(sensitivity_tables_path+'eta_US'+'.csv')   
+big_df.to_csv(sensitivity_tables_path+'RD_US'+'.csv')   
         

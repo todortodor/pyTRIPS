@@ -810,7 +810,7 @@ class moments:
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
                                'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST',
                                'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
-                               'SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
+                               'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
             self.list_of_moments = list_of_moments
         # self.weights_dict = {'GPDIFF':1, 
@@ -867,6 +867,8 @@ class moments:
                               'DOMPATRATUSEU':2,
                               'DOMPATUS':1,
                               'DOMPATEU':1,
+                              'DOMPATINUS':1,
+                              'DOMPATINEU':1,
                               'SPATORIG':2,
                               'SPATDEST':2,
                               'TWSPFLOW':1,
@@ -922,6 +924,8 @@ class moments:
                     'TE':pd.Index(['scalar']),
                     'DOMPATUS':pd.Index(['scalar']),
                     'DOMPATEU':pd.Index(['scalar']),
+                    'DOMPATINUS':pd.Index(['scalar']),
+                    'DOMPATINEU':pd.Index(['scalar']),
                     'NUR':pd.Index(['scalar']),
                     'ERDUS':pd.Index(['scalar'])
                     }
@@ -948,7 +952,7 @@ class moments:
     def get_list_of_moments():
         return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
-                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU',
+                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','JUPCOSTRD', 'TP', 'Z', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
@@ -1003,7 +1007,7 @@ class moments:
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.TE_target = self.moments.loc['TE'].value 
-        self.TO_target = np.array(0.05)
+        self.TO_target = self.moments.loc['TO'].value 
         # self.GROWTH_target = self.GROWTH_target*10
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
@@ -1013,6 +1017,8 @@ class moments:
         self.TP_data = self.cc_moments['patent flows'].sum()
         self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
         self.DOMPATUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=1)['patent flows'].sum()
+        self.DOMPATINEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=0)['patent flows'].sum()
+        self.DOMPATINUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=0)['patent flows'].sum()
         self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
         self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
@@ -1459,6 +1465,12 @@ class moments:
     def compute_DOMPATUS(self,var,p):
         self.DOMPATUS = var.pflow[0,0]/var.pflow[:,0].sum()
         
+    def compute_DOMPATINEU(self,var,p):
+        self.DOMPATINEU = var.pflow[1,1]/var.pflow[1,:].sum()
+        
+    def compute_DOMPATINUS(self,var,p):
+        self.DOMPATINUS = var.pflow[0,0]/var.pflow[0,:].sum()
+        
     def compute_ERDUS(self,var,p):
         self.ERDUS = var.semi_elast_RD_delta[0,1]
         
@@ -1489,6 +1501,8 @@ class moments:
         self.compute_TWSPFLOW(var, p)
         self.compute_DOMPATEU(var, p)
         self.compute_DOMPATUS(var, p)
+        self.compute_DOMPATINEU(var, p)
+        self.compute_DOMPATINUS(var, p)
         self.compute_ERDUS(var, p)
         
     def compute_moments_deviations(self):

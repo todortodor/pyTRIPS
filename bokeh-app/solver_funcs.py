@@ -679,8 +679,9 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
     while condition:
         print(it)
         if it != 0:
-            aa_wrk.apply(new_deltas, x_old)
-            x_old = (new_deltas+(damping-1)*x_old)/damping
+            # aa_wrk.apply(new_deltas, x_old)
+            # x_old = (new_deltas+(damping-1)*x_old)/damping
+            x_old = new_deltas
             p_it_baseline.delta[...,1] = x_old
             
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
@@ -746,7 +747,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         
         condition = np.linalg.norm((new_deltas-x_old)/x_old)> tol
         
-        convergence.append(np.linalg.norm(new_deltas - x_old)/np.linalg.norm(x_old))
+        convergence.append(np.linalg.norm((new_deltas - x_old)/x_old))
         
         print(convergence)
         print((new_deltas-x_old)/x_old)

@@ -36,6 +36,8 @@ SPATORIG; total patent applications made by each origin country as share of worl
 SPATDEST; total patent applications received in each destination country as share of world total
 TWSPFLOW; trade weighted ratio of international bilateral patent flows to international world patenting
 TWSPFLOWDOM; trade weighted ratio of patent flows to world patenting
-DOMPATEU; domestic patent EU as share of EU patents
-DOMPATUS; domestic patent US as share of US patents
+DOMPATEU; domestic patent EU as share of patents from EU
+DOMPATUS; domestic patent US as share of patents from US
+DOMPATINEU; domestic patent EU as share of EU patents
+DOMPATINUS; domestic patent US as share of US patents
 ERDUS; semi elasticity of RD with respect to delta in the US
