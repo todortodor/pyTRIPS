@@ -942,7 +942,7 @@ def update_jac(event):
                                change_by = 0.25, tol = 1e-14, damping = 5,
                                max_count = 5e3)
     data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
-    p_jac.y_range = m_jac.get_signature_list()
+    p_jac.y_range = FactorRange(factors=m_jac.get_signature_list())
     src_jac.data = data_jac
 
 button_jac = Button(label="Compute")
