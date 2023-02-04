@@ -942,10 +942,19 @@ class moments:
         self.add_domestic_US_to_SPFLOW = False
         self.add_domestic_EU_to_SPFLOW = False
     
-    def get_signature_list(self):
+    def get_signature_list(self, list_of_moments = None):
+        if list_of_moments is None:
+            list_of_moments = self.list_of_moments
         l = []
-        for mom in self.list_of_moments:
-            l.extend([mom]*np.array(getattr(self,mom)).size)
+        for mom in list_of_moments:
+            # if self.idx[mom][0] == 'scalar':
+            #     l.extend([mom])
+            # else:
+            if mom == 'RD' or mom =='RD_RDUS':
+                if self.drop_CHN_IND_BRA_ROW_from_RD:
+                    l.extend([mom+' '+str(x) for x in list(self.idx[mom])[:3]])
+            else:        
+                l.extend([mom+' '+str(x) for x in list(self.idx[mom])])
         return l
     
     @staticmethod
@@ -1569,7 +1578,10 @@ class moments:
                     # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
         if self.drop_CHN_IND_BRA_ROW_from_RD:
             self.RD_deviation = self.RD_deviation[:3]
-            self.RD_RUS_deviation = self.RD_RUS_deviation[:3]    
+            try:
+                self.RD_RUS_deviation = self.RD_RUS_deviation[:3]   
+            except:
+                pass
             
         if self.add_domestic_EU_to_SPFLOW or self.add_domestic_US_to_SPFLOW:
             current_inter_PFLOW = self.SPFLOW.ravel()*self.inter_TP

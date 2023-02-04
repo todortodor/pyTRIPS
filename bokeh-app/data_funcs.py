@@ -221,5 +221,61 @@ def compare_params(dic, save=False, save_path=None, color_gradient = True):
         plt.savefig(save_path+'scalar_params')
     plt.show()    
 
-# def get_dataframes_for_baseline_variation(m,p):
+def get_vec_qty(x,p):
+    res = {'w':x[0:p.N],
+           'Z':x[p.N:p.N+1],
+           'l_R':x[p.N+1:p.N+1+p.N*(p.S-1)],
+           'profit':x[p.N+1+p.N*(p.S-1):p.N+1+p.N*(p.S-1)+p.N**2],
+           'phi':x[p.N+1+p.N*(p.S-1)+p.N**2:]
+           }
+    return res
+
+def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, 
+                           change_by = 1e-2, tol = 1e-14, damping = 5,
+                           max_count = 5e3):
+    m.compute_moments_deviations()
+    m_diff = m.copy()
+    p_diff = p.copy()
+    qty = getattr(p,qty_to_change)
+    qty[idx_to_change] = qty[idx_to_change]*(1+change_by)
+    setattr(p_diff, qty_to_change, qty)
+    try:
+        x_old = p_diff.guess
+    except:
+        x_old = p_diff.guess_from_params()
+    count = 0
+    x_new = None
+    condition = True
+    convergence = []
+    while condition:
+        if count != 0:
+            x_old = (x_new+(damping-1)*x_old)/damping
+        init = var.var_from_vector(x_old,p_diff,compute=False)
+        init.compute_solver_quantities(p_diff)
+        w = init.compute_wage(p_diff)
+        Z = init.compute_world_expenditure(p_diff)
+        l_R = init.compute_labor_research(p_diff)[...,1:].ravel()
+        profit = init.compute_profit(p_diff)[...,1:].ravel()
+        phi = init.compute_phi(p_diff).ravel()
+        x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
+        x_new_decomp = get_vec_qty(x_new,p_diff)
+        x_old_decomp = get_vec_qty(x_old,p_diff)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['w','Z','profit','l_R','phi']]
+        condition = np.any(conditions) and count<max_count
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        count += 1
+    # print(count)
+    # plt.semilogy(convergence)
+    # plt.show()
+    sol_c = var.var_from_vector(x_old,p_diff,compute=True)
+    sol_c.scale_P(p_diff)
+    sol_c.compute_non_solver_quantities(p_diff)
+    m_diff.compute_moments(sol_c,p_diff)
+    m_diff.compute_moments_deviations()
+    
+    return (m_diff.deviation_vector()-m.deviation_vector())*(1+change_by)*m.deviation_vector()/(change_by*qty[idx_to_change])
+    
+    
+    
     

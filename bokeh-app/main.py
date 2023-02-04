@@ -13,13 +13,14 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import DataRange1d, LinearAxis, Text, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import DataRange1d,Button, LinearAxis, FactorRange, Text, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
 from bokeh.plotting import figure
+from bokeh.events import ButtonClick
 from classes import parameters, moments, var
-
+from data_funcs import compute_rough_jacobian
 import numpy as np
 # from bokeh.models import LogScale, LinearScale
 import itertools
@@ -863,8 +864,98 @@ country_cf_select.on_change('value', update_country_cf)
 
 counterfactuals_report = column(controls_cf,p_cf)
 
-second_panel = row(sensitivity_report,counterfactuals_report)
 # second_panel = row(sensitivity_report)
+
+#%% Jacobian panel
+
+baseline_jac = '312'
+country_jac = 'USA'
+sector_jac = 'Patent'
+
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312'])
+
+baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
+files_in_dir = next(os.walk(baseline_jac_path))[1]
+run_list = [f for f in files_in_dir if f[0].isnumeric()]
+run_list = sorted(run_list, key=section)
+variation_jac_select = Select(value='baseline', title='Variation', 
+                              options=['baseline']+run_list)
+
+def update_list_of_runs_jac(attr, old, new):
+    baseline_jac_path = results_path+'baseline_'+new+'_variations/'
+    files_in_dir = next(os.walk(baseline_jac_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list = sorted(run_list, key=section)
+    variation_jac_select.options = ['baseline']+run_list
+
+if variation_jac_select.value == 'baseline':
+    path = results_path+baseline_jac_select.value+'/'
+else:
+    path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
+    
+p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+
+qty_jac_select = Select(value='delta', title='Parameter', options=p_jac.calib_parameters)
+country_jac_select = Select(value='USA', title='Country', options=p_jac.countries)
+sector_jac_select = Select(value='Patent', title='Sector', options=p_jac.sectors)
+
+if qty_jac_select.value in ['eta','T','delta','nu']:
+    idx_to_change_jac = p_jac.countries.index(country_jac_select.value),p_jac.sectors.index(sector_jac_select.value)
+if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
+    idx_to_change_jac = 0,p_jac.sectors.index(sector_jac_select.value)
+if qty_jac_select.value in ['k','g_0']:
+    idx_to_change_jac = 0
+
+qty_to_change_jac = qty_jac_select.value
+
+x_jac = compute_rough_jacobian(p_jac, m_jac, qty_to_change_jac, idx_to_change_jac, 
+                           change_by = 0.25, tol = 1e-14, damping = 5,
+                           max_count = 5e3)
+
+p_jac = figure(title="Rough jacobian computation", 
+               y_range=FactorRange(factors=m_jac.get_signature_list()),
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in contribution to objective function',
+                y_axis_label='Moment',
+                tools = TOOLS) 
+
+data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
+src_jac = ColumnDataSource(data_jac)
+
+# p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
+p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
+
+def update_jac(event):
+    if variation_jac_select.value == 'baseline':
+        path = results_path+baseline_jac_select.value+'/'
+    else:
+        path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
+    p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+    if qty_jac_select.value in ['eta','T','delta','nu']:
+        idx_to_change_jac = p_jac.countries.index(country_jac_select.value),p_jac.sectors.index(sector_jac_select.value)
+    if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
+        idx_to_change_jac = p_jac.sectors.index(sector_jac_select.value)
+    if qty_jac_select.value in ['k','g_0']:
+        idx_to_change_jac = None
+    x_jac = compute_rough_jacobian(p_jac, m_jac, qty_jac_select.value, idx_to_change_jac, 
+                               change_by = 0.25, tol = 1e-14, damping = 5,
+                               max_count = 5e3)
+    data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
+    p_jac.y_range = m_jac.get_signature_list()
+    src_jac.data = data_jac
+
+button_jac = Button(label="Compute")
+button_jac.on_event(ButtonClick, update_jac)
+
+controls_jac = row(baseline_jac_select, variation_jac_select, qty_jac_select, 
+                   country_jac_select, sector_jac_select, button_jac)
+
+baseline_jac_select.on_change('value', update_list_of_runs_jac)
+
+jac_report = column(controls_jac,p_jac)
+
+second_panel = row(sensitivity_report,counterfactuals_report,jac_report)
 
 #%% Nash / coop equilibrium
 
