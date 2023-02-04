@@ -878,7 +878,7 @@ baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
 run_list = [f for f in files_in_dir if f[0].isnumeric()]
 run_list = sorted(run_list, key=section)
-variation_jac_select = Select(value='baseline', title='Variation', 
+variation_jac_select = Select(value='4.0', title='Variation', 
                               options=['baseline']+run_list)
 
 def update_list_of_runs_jac(attr, old, new):
