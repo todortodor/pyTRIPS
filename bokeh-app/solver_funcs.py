@@ -16,10 +16,10 @@ from scipy import optimize
 
 def get_vec_qty(x,p):
     res = {'w':x[0:p.N],
-           'Z':x[p.N:p.N+1],
-           'l_R':x[p.N+1:p.N+1+p.N*(p.S-1)],
-           'profit':x[p.N+1+p.N*(p.S-1):p.N+1+p.N*(p.S-1)+p.N**2],
-           'phi':x[p.N+1+p.N*(p.S-1)+p.N**2:]
+           'Z':x[p.N:p.N+p.N],
+           'l_R':x[p.N+p.N:p.N+p.N+p.N*(p.S-1)],
+           'profit':x[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2],
+           'phi':x[p.N+p.N+p.N*(p.S-1)+p.N**2:]
            }
     return res
 
@@ -31,14 +31,14 @@ def get_vec_qty(x,p):
 #     x[p.N*2+p.N*(p.S-1):p.N*2+p.N*(p.S-1)+p.N**2] = x_psi_star
 #     return x, hit_the_bound
 
-def bound_research_labor(x,p,hit_the_bound=None):
-    x_l_R = x[p.N*3:p.N*3+p.N*(p.S-1)]
-    if np.any(x_l_R > p.labor.max()):
-        if hit_the_bound is not None:
-            hit_the_bound+=1
-        x_l_R[x_l_R > p.labor.max()] = p.labor.max()
-    x[p.N*3:p.N*3+p.N*(p.S-1)] = x_l_R
-    return x,hit_the_bound
+# def bound_research_labor(x,p,hit_the_bound=None):
+#     x_l_R = x[p.N*3:p.N*3+p.N*(p.S-1)]
+#     if np.any(x_l_R > p.labor.max()):
+#         if hit_the_bound is not None:
+#             hit_the_bound+=1
+#         x_l_R[x_l_R > p.labor.max()] = p.labor.max()
+#     x[p.N*3:p.N*3+p.N*(p.S-1)] = x_l_R
+#     return x,hit_the_bound
 
 def bound_zero(x, cutoff=1e-8, hit_the_bound=None):
     if np.any(x<=0):
@@ -103,8 +103,8 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             x_old = (x_new+(damping-1)*x_old)/damping
         if apply_bound_zero:
             x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
-        if apply_bound_research_labor:
-            x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
+        # if apply_bound_research_labor:
+        #     x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
             
         init = var.var_from_vector(x_old,p,compute=False)
         
@@ -117,7 +117,7 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         init.compute_solver_quantities(p)
         
         w = init.compute_wage(p)
-        Z = init.compute_world_expenditure(p)
+        Z = init.compute_expenditure(p)
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         profit = init.compute_profit(p)[...,1:].ravel()
         # psi_star = init.compute_psi_star(p)[...,1:].ravel()
