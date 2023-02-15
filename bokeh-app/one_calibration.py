@@ -62,24 +62,24 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATEU')
 # if 'DOMPATUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATUS')
-if 'DOMPATINEU' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATINEU')
-if 'DOMPATINUS' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATINUS')
-if 'SINNOVPATEU' not in m.list_of_moments:
-    m.list_of_moments.append('SINNOVPATEU')
+# if 'DOMPATINEU' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINEU')
+# if 'DOMPATINUS' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINUS')
+# if 'SINNOVPATEU' not in m.list_of_moments:
+#     m.list_of_moments.append('SINNOVPATEU')
 # if 'SRDUS' not in m.list_of_moments:
 #     m.list_of_moments.append('SRDUS')
-if 'SRDUS' in m.list_of_moments:
-    m.list_of_moments.remove('SRDUS')
+# if 'SRDUS' in m.list_of_moments:
+#     m.list_of_moments.remove('SRDUS')
 # if 'SINNOVPATEU' in m.list_of_moments:
 #     m.list_of_moments.remove('SINNOVPATEU')
 # if 'DOMPATINEU' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINEU')
 # if 'DOMPATINUS' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINUS')
-if 'UUPCOST' in m.list_of_moments:
-    m.list_of_moments.remove('UUPCOST')
+# if 'UUPCOST' in m.list_of_moments:
+#     m.list_of_moments.remove('UUPCOST')
 
 # if 'theta' in p.calib_parameters and 'TE' not in m.list_of_moments:
 #     m.list_of_moments.append('TE')
@@ -126,13 +126,13 @@ avoid_bad_nash = False
 # m.weights_dict['DOMPATUS'] = 3
 # p.delta[...,1] = 0.05
 # m.weights_dict['JUPCOST'] = 2
-m.weights_dict['DOMPATINUS'] = 2
-m.weights_dict['DOMPATINEU'] = 2
-m.TO_target = np.float64(0.0242)
-m.SINNOVPATEU_target = np.float64(0.265)
+# m.weights_dict['DOMPATINUS'] = 2
+# m.weights_dict['DOMPATINEU'] = 2
+# m.TO_target = np.float64(0.0242)
+# m.SINNOVPATEU_target = np.float64(0.265)
 # p.fo = p.fe
 # m.TO_target = m.TO_target/2
-m.KM_target = np.float64(0.09277)
+# m.KM_target = np.float64(0.09277)
 # m.GROWTH_target = np.array(0.02)
 # m.GROWTH_target = np.array(0.03)
 # m.add_domestic_US_to_SPFLOW = True
@@ -147,7 +147,7 @@ m.KM_target = np.float64(0.09277)
 # m.weights_dict['JUPCOST'] = 2       
 # m.weights_dict['DOMPATUS'] = 2       
 # m.weights_dict['DOMPATEU'] = 2       
-m.weights_dict['SPFLOW'] = 2       
+# m.weights_dict['SPFLOW'] = 2       
 # m.weights_dict['RD'] = 10      
 # m.weights_dict['GPDIFF'] = 10      
 # m.weights_dict['SRDUS'] = 5       
@@ -238,7 +238,7 @@ print('minimizing time',finish_time-start_time)
 p_sol = p.copy()
 p_sol.update_parameters(test_ls.x)
 
-sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
+sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         cobweb_anim=False,tol =1e-15,
                         accelerate=False,
                         accelerate_when_stable=True,

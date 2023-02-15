@@ -10,7 +10,7 @@ import numpy as np
 import aa
 import matplotlib.pyplot as plt
 import time
-from classes import cobweb, var, sol_class, moments, parameters
+from classes import cobweb, sol_class, moments, parameters, var
 # import pandas as pd
 from scipy import optimize
 
@@ -60,7 +60,7 @@ def smooth_large_jumps(x_new,x_old):
         low_jumps_too_big = x_new < x_old/1000
     return x_new
 
-def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
+def fixed_point_solver(p, context, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
                        plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
                        cobweb_coord = 1, plot_convergence = True, apply_bound_zero = True, 
@@ -105,9 +105,9 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
             x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
         # if apply_bound_research_labor:
         #     x_old, hit_the_bound_count = bound_research_labor(x_old, p, hit_the_bound_count) 
-            
-        init = var.var_from_vector(x_old,p,compute=False)
-        
+        init = var.var_from_vector(x_old,p,context=context,compute=False)
+        # init.phi = init.phi/np.diagonal(init.phi).transpose()[:,None,:]
+        # x_old = init.vector_from_var()
         # init.compute_growth(p)
         # init.compute_aggregate_qualities(p)
         # init.compute_sectoral_prices(p)
@@ -115,14 +115,17 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         # init.compute_labor_allocations(p)
         # init.compute_price_indices(p)
         init.compute_solver_quantities(p)
+        # init.scale_tau(p)
+        # init.scale_P(p)
+        # print(init.price_indices)
         
-        w = init.compute_wage(p)
-        Z = init.compute_expenditure(p)
+        w = init.compute_wage(p)#/init.price_indices[0]
+        Z = init.compute_expenditure(p)#/init.price_indices[0]
         l_R = init.compute_labor_research(p)[...,1:].ravel()
         profit = init.compute_profit(p)[...,1:].ravel()
         # psi_star = init.compute_psi_star(p)[...,1:].ravel()
         # psi_star[psi_star<1] = 1
-        phi = init.compute_phi(p).ravel()
+        phi = init.compute_phi(p).ravel()#*init.price_indices[0]
         
         x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
         
@@ -175,8 +178,8 @@ def fixed_point_solver(p, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
         for i,c in enumerate(convergence):
             cob.append_old_new(history_old[i],history_new[i])
             if cobweb_anim:
-                cob.plot(count=i, window = 100,pause = 0.05) 
-        cob.plot(count = count, window = 200)
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
             
     if plot_convergence:
         plt.semilogy(convergence, label = 'convergence')
@@ -254,7 +257,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
     except:
         pass
     # print('here')
-    sol, sol_c = fixed_point_solver(p,x0=v0,
+    sol, sol_c = fixed_point_solver(p,context = 'calibration', x0=v0,
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -278,7 +281,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
     # print('here')
     if sol.status == 'failed': 
         print('trying standard guess')
-        sol, sol_c = fixed_point_solver(p,x0=None,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=None,
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -301,7 +304,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                 )
     if sol.status == 'failed': 
         print('trying slower')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-14,
                                   accelerate=False,
                                   accelerate_when_stable=True,
                                   plot_cobweb=False,
@@ -321,7 +324,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                   )
     if sol.status == 'failed': 
         print('trying strong damp')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-14,
                                   accelerate=False,
                                   accelerate_when_stable=True,
                                   plot_cobweb=False,
@@ -341,7 +344,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                   )
     if sol.status == 'failed': 
         print('trying less precise')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-12,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-12,
                                       accelerate=False,
                                       accelerate_when_stable=True,
                                       plot_cobweb=False,
@@ -360,7 +363,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                       )
     if sol.status == 'failed':
         print('trying with standard guess')
-        sol, sol_c = fixed_point_solver(p,x0=None,tol=1e-12,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=None,tol=1e-12,
                                       accelerate=False,
                                       accelerate_when_stable=True,
                                       plot_cobweb=False,
@@ -379,7 +382,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                       )
     if sol.status == 'failed':
         print('trying longer convergence')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-13,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-13,
                                       accelerate=False,
                                       accelerate_when_stable=True,
                                       plot_cobweb=False,
@@ -398,7 +401,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                       )
     if sol.status == 'failed':
         print('trying with no acceleration')
-        sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-13,
+        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-13,
                                       accelerate=False,
                                       accelerate_when_stable=False,
                                       plot_cobweb=False,

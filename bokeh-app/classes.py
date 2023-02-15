@@ -38,8 +38,6 @@ class parameters:
         self.fo = np.ones(S)  # could be over one
         self.sigma = np.ones(S)*3  #
         self.theta = np.ones(S)*5   #
-        self.beta = np.concatenate((np.array([0.735, 0.265]),np.ones(s)*0.5))[:s]
-        self.beta = self.beta / self.beta.sum()
         # self.zeta = np.ones(S)*0.01
         self.zeta = np.ones(S)*0.01
         self.g_0 = 0.01  # makes sense to be low
@@ -65,6 +63,7 @@ class parameters:
         self.OUT = self.trade_flows.sum()
         # self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
+        self.beta = np.einsum('nis->s',self.trade_shares)
         self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
         
         self.data = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
@@ -316,6 +315,7 @@ class parameters:
             setattr(self,'calib_parameters',df[0].to_list())
         except:
             pass
+        self.beta = np.einsum('nis->s',self.trade_shares)
             
     def make_parameters_bounds(self):
         lb = []
@@ -356,7 +356,7 @@ class cobweb:
         time.sleep(pause)
         
 class var:
-    def __init__(self):
+    def __init__(self, context):
         N = 7
         S = 2
         self.off_diag_mask = np.ones((N,N,S),bool).ravel()
@@ -364,6 +364,7 @@ class var:
         self.off_diag_mask[np.s_[1::(N+1)*S]] = False
         self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
         self.diag_mask = np.invert(self.off_diag_mask)
+        self.context = context
 
     def guess_profit(self, profit_init):
         self.profit = profit_init    
@@ -389,8 +390,8 @@ class var:
         return frame
     
     @staticmethod
-    def var_from_vector(vec,p, compute = True):
-        init = var()    
+    def var_from_vector(vec,p,context,compute = True):
+        init = var(context=context)    
         init.guess_wage(vec[0:p.N])
         init.guess_Z(vec[p.N:p.N+p.N])
         init.guess_labor_research(
@@ -429,7 +430,6 @@ class var:
         
         for k in diffs:
             print(k, (np.nanmean(vars(self)[k]/vars(sol2)[k])))
-
 
     def compute_growth(self, p):
         self.g_s = p.k*np.einsum('is,is -> s',
@@ -540,29 +540,6 @@ class var:
                          self.psi_o_star[...,1:]**-p.k
                          )
         self.l_P = p.labor-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
-
-    def compute_trade_flows_and_shares(self, p):
-        self.X = p.trade_shares*self.Z.sum()
-        # numerator_prefact_A = np.einsum('nis,nis->nis',
-        #                       self.PSI_M,
-        #                       self.phi**(p.sigma-1)[None, None, :])
-        temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-        denominator_M = np.einsum('nis,ns,ns->nis',
-                                self.PSI_M[..., 1:],
-                                # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
-                                1/temp,
-                                self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CD = np.einsum('nis,ns,ns->nis',
-                                   self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
-                                   1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
-                                   self.P_CD[..., 1:]**(1-p.sigma[None,1:])
-                                   )
-        self.X_M = np.zeros((p.N, p.N, p.S))
-        self.X_CD = self.X.copy()
-        self.X_M[...,1:] = denominator_M*self.X[...,1:]/(denominator_M + denominator_CD)
-        self.X_CD[...,1:] = denominator_CD*self.X[...,1:]/(denominator_M + denominator_CD)
         
         # self.X_M[np.isnan(self.X_M)] = 0 #!!!
         # self.X_CD[np.isnan(self.X_CD)] = 0
@@ -588,6 +565,63 @@ class var:
             self.price_indices = price_indices
         else:
             return price_indices
+        
+    def compute_trade_flows_and_shares(self, p, assign = True):
+        if self.context == 'calibration':
+            X = p.trade_shares*self.Z.sum()
+            # numerator_prefact_A = np.einsum('nis,nis->nis',
+            #                       self.PSI_M,
+            #                       self.phi**(p.sigma-1)[None, None, :])
+            temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
+            denominator_M = np.einsum('nis,ns,ns->nis',
+                                    self.PSI_M[..., 1:],
+                                    # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+                                    # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
+                                    1/temp,
+                                    self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+                                    )
+            denominator_CD = np.einsum('nis,ns,ns->nis',
+                                       self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
+                                       1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
+                                       self.P_CD[..., 1:]**(1-p.sigma[None,1:])
+                                       )
+            X_M = np.zeros((p.N, p.N, p.S))
+            X_CD = X.copy()
+            X_M[...,1:] = denominator_M*X[...,1:]/(denominator_M + denominator_CD)
+            X_CD[...,1:] = denominator_CD*X[...,1:]/(denominator_M + denominator_CD)
+            if assign:
+                self.X_M = X_M
+                self.X_CD = X_CD
+                self.X = X
+            else:
+                return X_M,X_CD,X
+        elif self.context == 'counterfactual':
+            temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
+            X_M = np.zeros((p.N, p.N, p.S))
+            X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
+                                    self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
+                                    self.PSI_M[..., 1:],
+                                    1/temp,
+                                    self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
+                                    p.beta[1:],
+                                    self.Z
+                                    )
+            X_CD = np.einsum('nis,ns,ns,s,n->nis',
+                                       self.phi**(p.theta)[None,None,:],
+                                       1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+                                       self.P_CD**(1-p.sigma[None,:]),
+                                       p.beta,
+                                       self.Z
+                                       )
+            X = X_M+X_CD
+            if assign:
+                self.X_M = X_M
+                self.X_CD = X_CD
+                self.X = X
+            else:
+                return X_M,X_CD,X
+        else:
+            print('context attribute needs to be either "calibration" or "counterfactual"')
         
     def compute_solver_quantities(self,p):
         self.compute_growth(p)
@@ -634,34 +668,6 @@ class var:
                                 1/self.PSI_M[...,1:])
         return profit
     
-    def compute_phi(self, p):
-        denominator_M = np.zeros((p.N, p.N, p.S))
-        denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-                                self.PSI_M[..., 1:],
-                                self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-                                1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-                                )
-        denominator_CD = np.einsum('ns,ns->ns',
-                                   1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-                                   self.P_CD**(1-p.sigma[None,:])
-                                   )
-        one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
-        phi = np.einsum('nis,s,n,nis->nis',
-                        self.X,
-                        1/p.beta,
-                        1/self.Z,
-                        one_over_denominator)**(1/p.theta)[None,None,:]
-        
-        phi = np.einsum('nis,ns,ns,ns,ns->nis',
-                phi,
-                1/np.diagonal(phi).transpose(),
-                p.T**(1/p.theta[None,:]),
-                self.w[:,None]**(-p.alpha[None,:]),
-                self.price_indices[:,None]**(p.alpha[None,:]-1))
-        
-        return phi
-    
     # def compute_world_expenditure(self,p):
     #     return np.array(self.Z.sum())[None]
     
@@ -670,12 +676,129 @@ class var:
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
         C = p.deficit_share_world_output*self.Z.sum()
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        Z = (A+B-(C+D))
+        # Z = (A+B-(C+D))
+        Z = A-C
         return Z
+    
+    def compute_phi(self, p):
+        if self.context == 'calibration':
+            denominator_M = np.zeros((p.N, p.N, p.S))
+            denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
+                                    self.PSI_M[..., 1:],
+                                    self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
+                                    1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+                                    self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+                                    )
+            denominator_CD = np.einsum('ns,ns->ns',
+                                        1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+                                        self.P_CD**(1-p.sigma[None,:])
+                                        )
+            # phi_temp = self.phi/np.diagonal(self.phi).transpose()[:,None,:]
+            # denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
+            #                         self.PSI_M[..., 1:],
+            #                         phi_temp[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
+            #                         1/((self.PSI_M[..., 1:]*phi_temp[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+            #                         self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+            #                         )
+            # denominator_CD = np.einsum('ns,ns->ns',
+            #                             1/(phi_temp**(p.theta)[None,None,:]).sum(axis=1),
+            #                             self.P_CD**(1-p.sigma[None,:])
+                                        # )
+            one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
+            
+            phi = np.einsum('nis,s,n,nis->nis',
+                            self.X,
+                            1/p.beta,
+                            1/self.Z,
+                            one_over_denominator)**(1/p.theta)[None,None,:]
+            # phi = np.einsum('nis,ns,ns->nis',
+            #         phi,
+            #         1/np.diagonal(phi).transpose(),
+            #         np.diagonal(self.phi).transpose())
+            # phi = np.einsum('nis,ns->nis',
+            #         phi,
+            #         np.diagonal(self.phi).transpose())
+            # np.einsum('nns->ns',phi)[...] = np.einsum('nns->ns',phi)+np.einsum('ns,ns,ns->ns',
+            #         p.T**(1/p.theta[None,:]),
+            #         self.w[:,None]**(-p.alpha[None,:]),
+            #         self.price_indices[:,None]**(p.alpha[None,:]-1))-np.einsum('nns->ns',self.phi)
+            
+            # np.einsum('nns->ns',phi)[...] = np.einsum('ns,ns,ns->ns',
+            #         p.T**(1/p.theta[None,:]),
+            #         self.w[:,None]**(-p.alpha[None,:]),
+            #         self.price_indices[:,None]**(p.alpha[None,:]-1))
+            
+            # print((
+            #     (phi/np.diagonal(phi).transpose()[:,None,:])/
+            #        (self.phi/np.diagonal(self.phi).transpose()[:,None,:])
+            #         )[1])
+            # print(phi/self.phi)
+            
+            phi = np.einsum('nis,ns,ns,ns,ns->nis',
+                    phi,
+                    1/np.diagonal(phi).transpose(),
+                    p.T**(1/p.theta[None,:]),
+                    self.w[:,None]**(-p.alpha[None,:]),
+                    self.price_indices[:,None]**(p.alpha[None,:]-1))
+            
+            
+            # phi = np.einsum('nis,ns,ns,ns,ns->nis',
+            #         phi,
+            #         np.diagonal(self.phi).transpose(),
+            #         p.T**(-1/p.theta[None,:]),
+            #         self.w[:,None]**(p.alpha[None,:]),
+            #         self.price_indices[:,None]**(1-p.alpha[None,:]))
+    
+            return phi
+        
+        elif self.context == 'counterfactual':
+            phi = np.einsum('is,nis,is,is->nis',
+                    p.T**(1/p.theta[None,:]),
+                    1/p.tau,
+                    self.w[:,None]**(-p.alpha[None,:]),
+                    self.price_indices[:,None]**(p.alpha[None,:]-1))
+            return phi
+        
+        else:
+            print('context attribute needs to be either "calibration" or "counterfactual"')
+    
+    def check_phi(self,p):
+        denominator_M = np.zeros((p.N, p.N, p.S))
+        denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
+                                self.PSI_M[..., 1:],
+                                self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
+                                1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+                                self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+                                )
+        denominator_CD = np.einsum('ns,ns->ns',
+                                    1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+                                    self.P_CD**(1-p.sigma[None,:])
+                                    )
+        one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
+        phi = np.einsum('nis,s,n,nis->nis',
+                        self.X,
+                        1/p.beta,
+                        1/self.Z,
+                        one_over_denominator)**(1/p.theta)[None,None,:]
+        return self.phi/phi
+    
+    def scale_tau(self,p):
+        self.phi = self.phi\
+            *np.einsum('ns,ns,ns->ns',
+                p.T**(1/p.theta[None,:]),
+                self.w[:,None]**(-p.alpha[None,:]),
+                self.price_indices[:,None]**(p.alpha[None,:]-1))[:,None,:]\
+            /np.einsum('nns->ns',self.phi)[:,None,:]
     
     def compute_tau(self,p, assign = True):
         # self.tau = np.ones((p.N,p.N,p.S))
-        tau = np.diagonal(self.phi).transpose()[None,:,:]/self.phi
+        # tau = np.diagonal(self.phi).transpose()[None,:,:]/self.phi
+        tau = np.einsum('is,nis,is,is->nis',
+                        p.T**(1/p.theta[None,:]),
+                        1/self.phi,
+                        self.w[:,None]**-p.alpha[None,:],
+                        self.price_indices[:,None]**(p.alpha[None,:]-1),
+                        )
         if assign:
             self.tau = tau
         else:
@@ -804,7 +927,107 @@ class var:
         numerator = (baseline.cons**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
         denominator = baseline.cons.sum()*(p.rho-self.g*(1-one_ov_gamma))
         self.cons_eq_negishi_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
+    
+        # return phi
+# class var_calibration(var):
+#     def __init__(self):
+#         super().__init__()
+    
+    # def check_trade_flows_and_shares(self, p):
+    #     temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
+    #     X_M = np.zeros((p.N, p.N, p.S))
+    #     X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
+    #                             self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
+    #                             self.PSI_M[..., 1:],
+    #                             1/temp,
+    #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
+    #                             p.beta[1:],
+    #                             self.Z
+    #                             )
+    #     X_CD = np.einsum('nis,ns,ns,s,n->nis',
+    #                                 self.phi**(p.theta)[None,None,:],
+    #                                 1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+    #                                 self.P_CD**(1-p.sigma[None,:]),
+    #                                 p.beta,
+    #                                 self.Z
+    #                                 )
+    #     X = X_M+X_CD
+    #     return X
+    
+    # def check_phi(self,p):
+    #     denominator_M = np.zeros((p.N, p.N, p.S))
+    #     denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
+    #                             self.PSI_M[..., 1:],
+    #                             self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
+    #                             1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+    #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+    #                             )
+    #     denominator_CD = np.einsum('ns,ns->ns',
+    #                                 1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+    #                                 self.P_CD**(1-p.sigma[None,:])
+    #                                 )
+    #     one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
+    #     phi = np.einsum('nis,s,n,nis->nis',
+    #                     self.X,
+    #                     1/p.beta,
+    #                     1/self.Z,
+    #                     one_over_denominator)**(1/p.theta)[None,None,:]
+    #     return phi
+        
 
+# class var_counterfactual(var):
+#     def __init__(self):
+#         super().__init__()
+        
+#     def compute_trade_flows_and_shares(self, p):
+#         temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
+#         self.X_M = np.zeros((p.N, p.N, p.S))
+#         self.X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
+#                                 self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
+#                                 self.PSI_M[..., 1:],
+#                                 1/temp,
+#                                 self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
+#                                 p.beta[1:],
+#                                 self.Z
+#                                 )
+#         self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
+#                                    self.phi**(p.theta)[None,None,:],
+#                                    1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+#                                    self.P_CD**(1-p.sigma[None,:]),
+#                                    p.beta,
+#                                    self.Z
+#                                    )
+#         self.X = self.X_M+self.X_CD
+    
+#     def compute_phi(self, p):
+#         phi = np.einsum('is,nis,is,is->nis',
+#                 p.T**(1/p.theta[None,:]),
+#                 1/p.tau,
+#                 self.w[:,None]**(-p.alpha[None,:]),
+#                 self.price_indices[:,None]**(p.alpha[None,:]-1))
+#         return phi
+    
+#     @staticmethod
+#     def var_from_vector(vec,p, compute = True):
+#         init = var_counterfactual()    
+#         init.guess_wage(vec[0:p.N])
+#         init.guess_Z(vec[p.N:p.N+p.N])
+#         init.guess_labor_research(
+#             np.insert(vec[p.N+p.N:p.N+p.N+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+#         init.guess_profit(
+#             np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
+#         init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
+#         if compute:
+#             # init.compute_growth(p)
+#             # init.compute_aggregate_qualities(p)
+#             # init.compute_sectoral_prices(p)
+#             # init.compute_trade_shares(p)
+#             # init.compute_labor_allocations(p)
+#             # init.compute_price_indices(p)
+#             init.compute_solver_quantities(p)
+#         return init
+    
+    
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)
     return np.squeeze(removed)
