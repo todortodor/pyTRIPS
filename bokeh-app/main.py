@@ -13,11 +13,13 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import DataRange1d,Button, LinearAxis, FactorRange, Text, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import DataRange1d,Button, LinearAxis, FactorRange, Text, Div,Toggle, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
 from bokeh.plotting import figure
+from datetime import datetime
+import random
 from bokeh.events import ButtonClick
 from classes import parameters, moments, var
 from data_funcs import compute_rough_jacobian
@@ -433,7 +435,7 @@ for baseline_nbr in baseline_list:
 
 countries = p_baseline.countries
 
-TOOLS="pan,wheel_zoom,box_zoom,reset"
+TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
 baseline_mom = '401'
@@ -1137,7 +1139,22 @@ table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_delt
                             # autosize_mode="force_fit"
                           )
 
-second_panel_bis = column(row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
+#try for a live Nash calculator
+
+source = ColumnDataSource(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
+plot = figure(width = 1200, x_axis_type = 'datetime', tools = 'pan,box_select,crosshair,reset,save,wheel_zoom')
+plot.line(x = 'time', y = 'value', line_color = 'black', source = source)
+toggle = Toggle(label = "Toggle", button_type = "success")
+
+def update():
+    if toggle.active:
+        source.stream(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
+
+# curdoc().add_root(Column(plot, toggle))
+curdoc().add_periodic_callback(update, 1000)
+
+
+second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
 #%% Kogan paper
 
