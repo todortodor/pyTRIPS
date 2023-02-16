@@ -1141,20 +1141,21 @@ table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_delt
 
 #try for a live Nash calculator
 
-source = ColumnDataSource(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
-plot = figure(width = 1200, x_axis_type = 'datetime', tools = 'pan,box_select,crosshair,reset,save,wheel_zoom')
-plot.line(x = 'time', y = 'value', line_color = 'black', source = source)
-toggle = Toggle(label = "Toggle", button_type = "success")
+# source = ColumnDataSource(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
+# plot = figure(width = 1200, x_axis_type = 'datetime', tools = 'pan,box_select,crosshair,reset,save,wheel_zoom')
+# plot.line(x = 'time', y = 'value', line_color = 'black', source = source)
+# toggle = Toggle(label = "Toggle", button_type = "success")
 
-def update():
-    if toggle.active:
-        source.stream(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
+# def update():
+#     if toggle.active:
+#         source.stream(dict(time = [datetime.now()], value = [random.randint(5, 10)]))
 
-# curdoc().add_root(Column(plot, toggle))
-curdoc().add_periodic_callback(update, 1000)
+# # curdoc().add_root(Column(plot, toggle))
+# curdoc().add_periodic_callback(update, 1000)
 
 
-second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
+# second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
+second_panel_bis = column(row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
 #%% Kogan paper
 
