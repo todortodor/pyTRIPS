@@ -199,11 +199,11 @@ for baseline_dic in baseline_dics:
                             context = 'calibration', x0=p_baseline.guess,
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
-                            accelerate_when_stable=False,
+                            accelerate_when_stable=True,
                             cobweb_qty='phi',
                             plot_convergence=True,
                             plot_cobweb=True,
-                            safe_convergence=1,
+                            safe_convergence=0.001,
                             disp_summary=True,
                             damping = 10,
                             max_count = 5000,
@@ -223,8 +223,8 @@ for baseline_dic in baseline_dics:
     # sol_calibration.scale_P(p_baseline)
     sol_calibration.compute_non_solver_quantities(p_baseline)
     
-    # p_baseline.tau = sol_calibration.tau.copy()
-    # p_baseline.guess = sol_calibration.vector_from_var()
+    p_baseline.tau = sol_calibration.tau.copy()
+    p_baseline.guess = sol_calibration.vector_from_var()
     # print(p_baseline.tau)
     
     sol, sol_counterfactual = fixed_point_solver(p_baseline,
@@ -323,8 +323,8 @@ phi = sol_calibration.compute_phi(p_baseline)
 sol_calibration.context = 'counterfactual'
 X_M_cf, X_CD_cf, X_cf = sol_calibration.compute_trade_flows_and_shares(p_baseline,assign=False)
 phi_cf = sol_calibration.compute_phi(p_baseline)
-# print('X_M',X_M/X_M_cf)
-# print('X_CD',X_CD/X_CD_cf)
-# print('X',X/X_cf)
-print('X',X/np.diagonal(X).transpose()[:,None,:]/(X_cf/np.diagonal(X_cf).transpose()[:,None,:]))
+print('X_M',X_M/X_M_cf)
+print('X_CD',X_CD/X_CD_cf)
+print('X',X/X_cf)
+# print('X',X/np.diagonal(X).transpose()[:,None,:]/(X_cf/np.diagonal(X_cf).transpose()[:,None,:]))
 # print('phi',phi/phi_cf)

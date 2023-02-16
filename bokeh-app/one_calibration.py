@@ -15,12 +15,12 @@ import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
-new_run = False
-baseline_number = '312'
+new_run = True
+baseline_number = '401'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/4.0/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -33,7 +33,7 @@ if new_run:
     m = moments()
     m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/4.0/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
@@ -41,7 +41,8 @@ if new_run:
 #     p.calib_parameters.append('theta')
 # if 'sigma' not in p.calib_parameters:
 #     p.calib_parameters.append('sigma')
-baseline_number = '312'
+# p.beta = np.einsum('nis->s',p.trade_shares)
+# baseline_number = '312'
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
 # # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
@@ -62,24 +63,24 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATEU')
 # if 'DOMPATUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATUS')
-# if 'DOMPATINEU' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINEU')
-# if 'DOMPATINUS' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINUS')
-# if 'SINNOVPATEU' not in m.list_of_moments:
-#     m.list_of_moments.append('SINNOVPATEU')
+if 'DOMPATINEU' not in m.list_of_moments:
+    m.list_of_moments.append('DOMPATINEU')
+if 'DOMPATINUS' not in m.list_of_moments:
+    m.list_of_moments.append('DOMPATINUS')
+if 'SINNOVPATEU' not in m.list_of_moments:
+    m.list_of_moments.append('SINNOVPATEU')
 # if 'SRDUS' not in m.list_of_moments:
 #     m.list_of_moments.append('SRDUS')
-# if 'SRDUS' in m.list_of_moments:
-#     m.list_of_moments.remove('SRDUS')
+if 'SRDUS' in m.list_of_moments:
+    m.list_of_moments.remove('SRDUS')
 # if 'SINNOVPATEU' in m.list_of_moments:
 #     m.list_of_moments.remove('SINNOVPATEU')
 # if 'DOMPATINEU' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINEU')
 # if 'DOMPATINUS' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINUS')
-# if 'UUPCOST' in m.list_of_moments:
-#     m.list_of_moments.remove('UUPCOST')
+if 'UUPCOST' in m.list_of_moments:
+    m.list_of_moments.remove('UUPCOST')
 
 # if 'theta' in p.calib_parameters and 'TE' not in m.list_of_moments:
 #     m.list_of_moments.append('TE')
@@ -88,9 +89,9 @@ if 'theta' in p.calib_parameters:
 # if 'kappa' not in p.calib_parameters:
 #     p.calib_parameters.append('kappa')
     
-# if 'ERDUS' not in m.list_of_moments:
-#     m.list_of_moments.append('ERDUS')
-#     m.weights_dict['ERDUS'] = 5
+# if 'SDOMTFLOW' not in m.list_of_moments:
+#     m.list_of_moments.append('SDOMTFLOW')
+#     m.weights_dict['SDOMTFLOW'] = 5
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 # p.guess = None
@@ -159,7 +160,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 10
+max_iter = 5
 # if avoid_bad_nash:
 #     x0 = np.concatenate([p.make_p_vector()
 
@@ -192,44 +193,10 @@ while cond:
                                 # gtol=1e-14,
                                 # f_scale=scale,
                                 verbose = 2)
-    if avoid_bad_nash:
-        p_sol = p.copy()
-        p_sol.update_parameters(test_ls.x)
-
-        sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
-                                cobweb_anim=False,tol =1e-15,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
-                                disp_summary=False,
-                                damping = 10,
-                                max_count = 3e3,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
-                                # damping=10
-                                  # apply_bound_psi_star=True
-                                )
-        p_sol.guess = sol.x
-        # sol_c = var.var_from_vector(sol.x, p_sol)    
-        sol_c.scale_P(p_sol)
-        # sol_c.compute_price_indices(p)
-        sol_c.compute_non_solver_quantities(p_sol) 
-        US_deriv_w_to_d = np.array(compute_deriv_welfare_to_patent_protec_US(sol_c,p,p.guess))
-        cond = US_deriv_w_to_d<-1e-8
-        bad_nash_weight = bad_nash_weight*5
-    else:
         # cond = test_ls.nfev>15
-        cond = iterations < max_iter
-        iterations += 1
-        p.update_parameters(test_ls.x)
+    cond = iterations < max_iter
+    iterations += 1
+    p.update_parameters(test_ls.x)
         
     cost = test_ls.cost
 finish_time = time.perf_counter()
@@ -264,23 +231,26 @@ p_sol.guess = sol.x
 # sol_c = var.var_from_vector(sol.x, p_sol)    
 # sol_c = var.var_from_vector(p_sol.guess, p_sol)    
 sol_c.scale_P(p_sol)
+
 # sol_c.compute_price_indices(p_sol)
 sol_c.compute_non_solver_quantities(p_sol) 
+p_sol.tau = sol_c.tau
 m.compute_moments(sol_c,p_sol)
 m.compute_moments_deviations()
 m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-# commentary = 'With SINNOVPATEU and DOMPATINUS/EU'
+# commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
 commentary = 'drop SRDUS and UUPCOST with SINNOVPATEU and DOMPATINUS/EU'
+# commentary = 'drop UUPCOST'
 # commentary = ''
-baseline_number = '312'
+# baseline_number = '401'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
 run_number = 11.0
-# run_str = '2.1.9.2'
+# run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

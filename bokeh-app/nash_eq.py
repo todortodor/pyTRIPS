@@ -45,37 +45,70 @@ pylab.rcParams.update(params)
 #                   'variation': '8.0'}
 #                  ]
 
+# baseline_dics = [
+#     # {'baseline':'312',
+#     #                   'variation': 'baseline'},
+#     # {'baseline':'312',
+#     #                   'variation': '1.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '2.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '3.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '4.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '5.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '6.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '7.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '8.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '9.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '10.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '11.0'},
+#     {'baseline':'312',
+#                       'variation': '11.1'},
+#     # {'baseline':'312',
+#     #                   'variation': '11.2'},
+#     # {'baseline':'312',
+#     #                   'variation': '11.3'},
+#     ]
+
 baseline_dics = [
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': 'baseline'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '1.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '2.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '3.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '4.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '5.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '6.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '7.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '8.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '9.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '10.0'},
-    # {'baseline':'312',
+    # {'baseline':'401',
     #                   'variation': '11.0'},
-    {'baseline':'312',
-                      'variation': '11.1'},
-    # {'baseline':'312',
-    #                   'variation': '11.2'},
-    # {'baseline':'312',
-    #                   'variation': '11.3'},
+    # {'baseline':'401',
+    #                   'variation': '11.1'},
+    {'baseline':'401',
+                      'variation': '11.2'},
+    {'baseline':'401',
+                      'variation': '11.3'},
     ]
 
 for baseline_dic in baseline_dics:    
@@ -90,6 +123,7 @@ for baseline_dic in baseline_dics:
     p_baseline.load_data(baseline_path)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                           context = 'counterfactual',
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -119,13 +153,14 @@ for baseline_dic in baseline_dics:
     
     method = 'fixed_point'
     
-    deltas,welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
+    deltas,welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
                      plot_convergence = True,solver_options=None,tol=1e-4)
     
     p = p_baseline.copy()
     p.delta[...,1] = deltas[...,-1]
     
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,

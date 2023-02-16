@@ -230,7 +230,7 @@ def get_vec_qty(x,p):
            }
     return res
 
-def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, 
+def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibration',
                            change_by = 1e-2, tol = 1e-14, damping = 5,
                            max_count = 5e3):
     m.compute_moments_deviations()
@@ -250,10 +250,11 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change,
     while condition:
         if count != 0:
             x_old = (x_new+(damping-1)*x_old)/damping
-        init = var.var_from_vector(x_old,p_diff,compute=False)
+        init = var.var_from_vector(x_old,p_diff,compute=False, context = context)
         init.compute_solver_quantities(p_diff)
         w = init.compute_wage(p_diff)
-        Z = init.compute_world_expenditure(p_diff)
+        # Z = init.compute_world_expenditure(p_diff)
+        Z = init.compute_expenditure(p_diff)
         l_R = init.compute_labor_research(p_diff)[...,1:].ravel()
         profit = init.compute_profit(p_diff)[...,1:].ravel()
         phi = init.compute_phi(p_diff).ravel()
@@ -268,7 +269,7 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change,
     # print(count)
     # plt.semilogy(convergence)
     # plt.show()
-    sol_c = var.var_from_vector(x_old,p_diff,compute=True)
+    sol_c = var.var_from_vector(x_old,p_diff,compute=True, context = context)
     sol_c.scale_P(p_diff)
     sol_c.compute_non_solver_quantities(p_diff)
     m_diff.compute_moments(sol_c,p_diff)

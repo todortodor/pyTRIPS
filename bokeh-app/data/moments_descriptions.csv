@@ -24,7 +24,8 @@ UUPCOST;Patenting cost in US for the US
 JUPCOSTRD;Ratio of patenting cost in Japan for the US to RD in the US
 TP;Total number of patents in the world
 Z;country expenditure
-SDOMTFLOW; Sector specific domestic trade flows as shares of total economy
+SDOMTFLOW;Sector specific domestic trade flows as shares of total economy
+STFLOWSDOM;Trade flows as ratio to the domestic trade flow
 SINNOVPATEU; Share of innovations patented in Europe
 SINNOVPATUS; Share of innovations patented in the US
 NUR; Ratio of diffusion : Nu_tilde/Nu

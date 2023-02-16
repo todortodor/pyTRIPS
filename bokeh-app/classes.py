@@ -147,8 +147,8 @@ class parameters:
                     'd':pd.Index(['scalar']),
                     'khi':pd.Index(['scalar']),
                     'k':pd.Index(['scalar']),
-                    # 'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
-                    #                                  , names=['destination','origin','sector']),
+                    'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                      , names=['destination','origin','sector']),
                     'fe':pd.Index(self.sectors, name='sector'),
                     'r_hjort':pd.Index(self.countries, name='country'),
                     'fo':pd.Index(self.sectors, name='sector'),
@@ -315,7 +315,7 @@ class parameters:
             setattr(self,'calib_parameters',df[0].to_list())
         except:
             pass
-        self.beta = np.einsum('nis->s',self.trade_shares)
+        # self.beta = np.einsum('nis->s',self.trade_shares)
             
     def make_parameters_bounds(self):
         lb = []
@@ -567,35 +567,35 @@ class var:
             return price_indices
         
     def compute_trade_flows_and_shares(self, p, assign = True):
-        if self.context == 'calibration':
-            X = p.trade_shares*self.Z.sum()
-            # numerator_prefact_A = np.einsum('nis,nis->nis',
-            #                       self.PSI_M,
-            #                       self.phi**(p.sigma-1)[None, None, :])
-            temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-            denominator_M = np.einsum('nis,ns,ns->nis',
-                                    self.PSI_M[..., 1:],
-                                    # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-                                    # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
-                                    1/temp,
-                                    self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-                                    )
-            denominator_CD = np.einsum('nis,ns,ns->nis',
-                                       self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
-                                       1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
-                                       self.P_CD[..., 1:]**(1-p.sigma[None,1:])
-                                       )
-            X_M = np.zeros((p.N, p.N, p.S))
-            X_CD = X.copy()
-            X_M[...,1:] = denominator_M*X[...,1:]/(denominator_M + denominator_CD)
-            X_CD[...,1:] = denominator_CD*X[...,1:]/(denominator_M + denominator_CD)
-            if assign:
-                self.X_M = X_M
-                self.X_CD = X_CD
-                self.X = X
-            else:
-                return X_M,X_CD,X
-        elif self.context == 'counterfactual':
+        # if self.context == 'calibration':
+        #     X = p.trade_shares*self.Z.sum()
+        #     # numerator_prefact_A = np.einsum('nis,nis->nis',
+        #     #                       self.PSI_M,
+        #     #                       self.phi**(p.sigma-1)[None, None, :])
+        #     temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
+        #     denominator_M = np.einsum('nis,ns,ns->nis',
+        #                             self.PSI_M[..., 1:],
+        #                             # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
+        #                             # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
+        #                             1/temp,
+        #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:])
+        #                             )
+        #     denominator_CD = np.einsum('nis,ns,ns->nis',
+        #                                self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
+        #                                1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
+        #                                self.P_CD[..., 1:]**(1-p.sigma[None,1:])
+        #                                )
+        #     X_M = np.zeros((p.N, p.N, p.S))
+        #     X_CD = X.copy()
+        #     X_M[...,1:] = denominator_M*X[...,1:]/(denominator_M + denominator_CD)
+        #     X_CD[...,1:] = denominator_CD*X[...,1:]/(denominator_M + denominator_CD)
+        #     if assign:
+        #         self.X_M = X_M
+        #         self.X_CD = X_CD
+        #         self.X = X
+        #     else:
+        #         return X_M,X_CD,X
+        # elif self.context == 'counterfactual':
             temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
             X_M = np.zeros((p.N, p.N, p.S))
             X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
@@ -607,12 +607,12 @@ class var:
                                     self.Z
                                     )
             X_CD = np.einsum('nis,ns,ns,s,n->nis',
-                                       self.phi**(p.theta)[None,None,:],
-                                       1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-                                       self.P_CD**(1-p.sigma[None,:]),
-                                       p.beta,
-                                       self.Z
-                                       )
+                                        self.phi**(p.theta)[None,None,:],
+                                        1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
+                                        self.P_CD**(1-p.sigma[None,:]),
+                                        p.beta,
+                                        self.Z
+                                        )
             X = X_M+X_CD
             if assign:
                 self.X_M = X_M
@@ -620,8 +620,8 @@ class var:
                 self.X = X
             else:
                 return X_M,X_CD,X
-        else:
-            print('context attribute needs to be either "calibration" or "counterfactual"')
+        # else:
+        #     print('context attribute needs to be either "calibration" or "counterfactual"')
         
     def compute_solver_quantities(self,p):
         self.compute_growth(p)
@@ -676,8 +676,8 @@ class var:
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
         C = p.deficit_share_world_output*self.Z.sum()
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        # Z = (A+B-(C+D))
-        Z = A-C
+        Z = (A+B-(C+D))
+        # Z = A-C
         return Z
     
     def compute_phi(self, p):
@@ -693,61 +693,17 @@ class var:
                                         1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
                                         self.P_CD**(1-p.sigma[None,:])
                                         )
-            # phi_temp = self.phi/np.diagonal(self.phi).transpose()[:,None,:]
-            # denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-            #                         self.PSI_M[..., 1:],
-            #                         phi_temp[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-            #                         1/((self.PSI_M[..., 1:]*phi_temp[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-            #                         self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-            #                         )
-            # denominator_CD = np.einsum('ns,ns->ns',
-            #                             1/(phi_temp**(p.theta)[None,None,:]).sum(axis=1),
-            #                             self.P_CD**(1-p.sigma[None,:])
-                                        # )
-            one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
+            f_phi = np.einsum('nis,nis->nis',
+                            p.trade_shares,
+                            1/(denominator_M + denominator_CD[:,None,:]))
             
-            phi = np.einsum('nis,s,n,nis->nis',
-                            self.X,
-                            1/p.beta,
-                            1/self.Z,
-                            one_over_denominator)**(1/p.theta)[None,None,:]
-            # phi = np.einsum('nis,ns,ns->nis',
-            #         phi,
-            #         1/np.diagonal(phi).transpose(),
-            #         np.diagonal(self.phi).transpose())
-            # phi = np.einsum('nis,ns->nis',
-            #         phi,
-            #         np.diagonal(self.phi).transpose())
-            # np.einsum('nns->ns',phi)[...] = np.einsum('nns->ns',phi)+np.einsum('ns,ns,ns->ns',
-            #         p.T**(1/p.theta[None,:]),
-            #         self.w[:,None]**(-p.alpha[None,:]),
-            #         self.price_indices[:,None]**(p.alpha[None,:]-1))-np.einsum('nns->ns',self.phi)
-            
-            # np.einsum('nns->ns',phi)[...] = np.einsum('ns,ns,ns->ns',
-            #         p.T**(1/p.theta[None,:]),
-            #         self.w[:,None]**(-p.alpha[None,:]),
-            #         self.price_indices[:,None]**(p.alpha[None,:]-1))
-            
-            # print((
-            #     (phi/np.diagonal(phi).transpose()[:,None,:])/
-            #        (self.phi/np.diagonal(self.phi).transpose()[:,None,:])
-            #         )[1])
-            # print(phi/self.phi)
-            
-            phi = np.einsum('nis,ns,ns,ns,ns->nis',
-                    phi,
-                    1/np.diagonal(phi).transpose(),
+            phi = np.einsum('nis,nns,ns,ns,ns->nis',
+                    f_phi**(1/p.theta)[None,None,:],
+                    # 1/np.diagonal(phi).transpose(),
+                    f_phi**(-1/p.theta)[None,None,:],
                     p.T**(1/p.theta[None,:]),
                     self.w[:,None]**(-p.alpha[None,:]),
                     self.price_indices[:,None]**(p.alpha[None,:]-1))
-            
-            
-            # phi = np.einsum('nis,ns,ns,ns,ns->nis',
-            #         phi,
-            #         np.diagonal(self.phi).transpose(),
-            #         p.T**(-1/p.theta[None,:]),
-            #         self.w[:,None]**(p.alpha[None,:]),
-            #         self.price_indices[:,None]**(1-p.alpha[None,:]))
     
             return phi
         
@@ -1041,9 +997,9 @@ class moments:
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         if list_of_moments is None:
             self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
-                               'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
-                               'SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST',
-                               'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
+                               'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
+                               'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
+                               'UUPCOST','JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
             self.list_of_moments = list_of_moments
@@ -1086,13 +1042,14 @@ class moments:
                              'SRGDP':1, 
                              'SRGDP_US':1, 
                              'SRGDP_RUS':1, 
-                             # 'STFLOW':1,
+                              'STFLOW':1,
+                             'SDOMTFLOW':1,
                              'JUPCOST':1,
                              'UUPCOST':1,
                              'JUPCOSTRD':1,
                               'TP':1,
                               'Z':1,
-                             # 'SDOMTFLOW':1,
+                              'STFLOWSDOM':1,
                              'SINNOVPATEU':1,
                              'SINNOVPATUS':1,
                               'NUR':1,
@@ -1142,8 +1099,12 @@ class moments:
                     'SRGDP':pd.Index(self.countries, name='country'), 
                     'SRGDP_US':pd.Index(['scalar']), 
                     'SRGDP_RUS':pd.Index(self.countries, name='country'), 
-                    # 'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
-                    #                                  , names=['destination','origin','sector']),
+                    'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                      , names=['destination','origin','sector']),
+                    'STFLOWSDOM':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                      , names=['destination','origin','sector']),
+                    'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
+                                                      , names=['country','sector']),
                     'TP':pd.Index(['scalar']),
                     'Z':pd.Index(self.countries, name='country'),
                     'DOMPATRATUSEU':pd.Index(self.countries, name='country'),
@@ -1168,6 +1129,8 @@ class moments:
                        'SPFLOWDOM':(len(self.countries),len(self.countries)),
                        'SPFLOW_RUS':(len(self.countries),len(self.countries)-1),
                        'SPFLOWDOM_RUS':(len(self.countries),len(self.countries)),
+                       'SDOMTFLOW':(len(self.countries),len(self.sectors)),
+                       'STFLOWSDOM':(len(self.countries),len(self.countries),len(self.sectors)),
                        'TWSPFLOW':(len(self.countries),len(self.countries)-1),
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
                        }
@@ -1194,7 +1157,7 @@ class moments:
     @staticmethod
     def get_list_of_moments():
         return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
-                'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US',
+                'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','JUPCOSTRD', 'TP', 'Z', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
@@ -1220,8 +1183,10 @@ class moments:
         N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
         S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
         self.unit = 1e6
-        # self.STFLOW_target = (self.ccs_moments.trade/
-        #                       self.ccs_moments.trade.sum()).values.reshape(N,N,S)
+        self.STFLOW_target = (self.ccs_moments.trade/
+                              self.ccs_moments.trade.sum()).values.reshape(N,N,S)
+        self.STFLOWSDOM_target = self.ccs_moments.trade.values.reshape(N,N,S)\
+            /np.einsum('nns->ns',self.ccs_moments.trade.values.reshape(N,N,S))[:,None,:]
         self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
         self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
         # self.SPFLOW_US_target = self.SPFLOW_target[0,:]
@@ -1265,8 +1230,8 @@ class moments:
         self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
         self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
-        # self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values#/self.ccs_moments.trade.sum()
-        # self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)/self.unit
+        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
+        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)#/self.unit
         self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
         self.sales_mark_up_US_target = self.moments.loc['sales_mark_up_US'].value
         self.DOMPATRATUSEU_target = (self.cc_moments.query("destination_code == origin_code")['patent flows']\
@@ -1485,8 +1450,11 @@ class moments:
             plt.savefig(save_path+'scalar_moments')
         plt.show()
         
-    # def compute_STFLOW(self,var,p):
-    #     self.STFLOW = (var.X_M+var.X_CL+var.X_CD)/var.Z.sum()
+    def compute_STFLOW(self,var,p):
+        self.STFLOW = (var.X)/var.X.sum()
+        
+    def compute_STFLOWSDOM(self,var,p):
+        self.STFLOWSDOM = (var.X)/np.einsum('nns->ns',var.X)[:,None,:]
         
     def compute_SPFLOW(self,var,p):
         # numerator = np.einsum('nis,is,is->nis',
@@ -1591,8 +1559,8 @@ class moments:
         inter_pflow = remove_diag(var.pflow)
         self.inter_TP = inter_pflow.sum()
         
-    # def compute_SDOMTFLOW(self,var,p):
-    #     self.SDOMTFLOW = np.diagonal(var.X).transpose()#/var.X.sum()
+    def compute_SDOMTFLOW(self,var,p):
+        self.SDOMTFLOW = np.diagonal(var.X).transpose()/var.X.sum()
     
     def compute_SINNOVPATEU(self,var,p):
         self.SINNOVPATEU = var.share_innov_patented[1,1]
@@ -1718,7 +1686,8 @@ class moments:
         self.ERDUS = var.semi_elast_RD_delta[0,1]
         
     def compute_moments(self,var,p):
-        # self.compute_STFLOW(var, p)
+        self.compute_STFLOW(var, p)
+        self.compute_STFLOWSDOM(var, p)
         self.compute_SPFLOW(var, p)
         self.compute_OUT(var, p)
         self.compute_SRGDP(var, p)
@@ -1732,7 +1701,7 @@ class moments:
         self.compute_UUPCOST(var, p)
         self.compute_TP(var,p)
         self.compute_Z(var,p)
-        # self.compute_SDOMTFLOW(var,p)
+        self.compute_SDOMTFLOW(var,p)
         self.compute_SINNOVPATEU(var,p)
         self.compute_SINNOVPATUS(var,p)
         self.compute_NUR(var,p)

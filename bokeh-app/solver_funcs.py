@@ -507,6 +507,7 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
     # p.delta[p.countries.index(c),1] = 10**delta
     p.delta[p.countries.index(c),1] = delta
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -542,6 +543,7 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
 def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     p.delta[...,1] = deltas
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                             cobweb_anim=False,tol =1e-15,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -645,6 +647,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                                 damping_post_acceleration=5)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                    context = 'counterfactual',
                             **solver_options
                             )
     
@@ -665,20 +668,20 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
     convergence = []
     new_deltas = None
     
-    accel_memory = 10
-    accel_type1=False
-    accel_regularization=1e-12
-    accel_relaxation=1
-    accel_safeguard_factor=1 
-    accel_max_weight_norm=1e6
-    aa_options = {'dim': len(x_old),
-                'mem': accel_memory,
-                'type1': accel_type1,
-                'regularization': accel_regularization,
-                'relaxation': accel_relaxation,
-                'safeguard_factor': accel_safeguard_factor,
-                'max_weight_norm': accel_max_weight_norm}
-    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    # accel_memory = 10
+    # accel_type1=False
+    # accel_regularization=1e-12
+    # accel_relaxation=1
+    # accel_safeguard_factor=1 
+    # accel_max_weight_norm=1e6
+    # aa_options = {'dim': len(x_old),
+    #             'mem': accel_memory,
+    #             'type1': accel_type1,
+    #             'regularization': accel_regularization,
+    #             'relaxation': accel_relaxation,
+    #             'safeguard_factor': accel_safeguard_factor,
+    #             'max_weight_norm': accel_max_weight_norm}
+    # aa_wrk = aa.AndersonAccelerator(**aa_options)
     while condition:
         print(it)
         if it != 0:
@@ -688,6 +691,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
             p_it_baseline.delta[...,1] = x_old
             
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+                                                  context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -719,6 +723,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         
         p_it_baseline.delta[...,1] = new_deltas
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+                                                  context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,

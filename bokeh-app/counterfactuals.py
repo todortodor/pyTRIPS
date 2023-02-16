@@ -69,37 +69,41 @@ import time
 #                   'variation': '7.0'}
 #                  ]
 baseline_dics = [
-    # {'baseline':'312',
-    #                   'variation': None},
-    # {'baseline':'312',
-    #                   'variation': '1.0'},
-    # {'baseline':'312',
-    #                   'variation': '2.0'},
-    # {'baseline':'312',
-    #                   'variation': '3.0'},
-    # {'baseline':'312',
-    #                   'variation': '4.0'},
-    # {'baseline':'312',
-    #                   'variation': '5.0'},
-    # {'baseline':'312',
-    #                   'variation': '6.0'},
-    # {'baseline':'312',
-    #                   'variation': '7.0'},
-    # {'baseline':'312',
-    #                   'variation': '8.0'},
-    # {'baseline':'312',
-    #                   'variation': '9.0'},
-    # {'baseline':'312',
-    #                   'variation': '10.0'},
-    # {'baseline':'312',
-    #                   'variation': '11.0'},
-    {'baseline':'312',
-                      'variation': '11.1'},
-    {'baseline':'312',
-                      'variation': '11.2'},
-    {'baseline':'312',
-                      'variation': '11.3'},
+    {'baseline':'401',
+                      'variation': None},
+    {'baseline':'401',
+                      'variation': '1.0'},
+    {'baseline':'401',
+                      'variation': '2.0'},
+    {'baseline':'401',
+                      'variation': '3.0'},
+    {'baseline':'401',
+                      'variation': '4.0'},
+    {'baseline':'401',
+                      'variation': '5.0'},
+    {'baseline':'401',
+                      'variation': '6.0'},
+    {'baseline':'401',
+                      'variation': '7.0'},
+    {'baseline':'401',
+                      'variation': '8.0'},
+    {'baseline':'401',
+                      'variation': '9.0'},
+    {'baseline':'401',
+                      'variation': '10.0'},
+    {'baseline':'401',
+                      'variation': '11.0'},
+    # {'baseline':'401',
+    #                   'variation': '11.1'},
+    # {'baseline':'401',
+    #                   'variation': '11.2'},
+    # {'baseline':'401',
+    #                   'variation': '11.3'},
     ]
+# baseline_dics = [
+#     {'baseline':'401',
+#                       'variation': None},
+#     ]
 
 for baseline_dic in baseline_dics:
     if baseline_dic['variation'] is None:
@@ -135,6 +139,7 @@ for baseline_dic in baseline_dics:
     # recap = pd.DataFrame(columns = ['changed_quantity'])
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                            context = 'counterfactual',
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -181,6 +186,7 @@ for baseline_dic in baseline_dics:
             # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
             # print(p.guess)
             sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                                     cobweb_anim=False,tol =1e-15,
                                     accelerate=False,
                                     accelerate_when_stable=True,
@@ -236,6 +242,7 @@ for baseline_dic in baseline_dics:
         # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
         # print(p.guess)
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -292,6 +299,7 @@ for baseline_dic in baseline_dics:
         # print(p.delta[idx_country,1]/p_baseline.delta[idx_country,1])
         # print(p.guess)
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -391,6 +399,7 @@ for baseline_dic in baseline_dics:
     # m_baseline.load_run(baseline_path)
     # sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True)
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                            context = 'counterfactual',
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -443,7 +452,7 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol_c = var.var_from_vector(p.guess, p, compute=True)
+                sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
                 # print(sol_c.price_indices[0])
                 sol_c.compute_solver_quantities(p)
                 # sol.compute_non_solver_aggregate_qualities(p)
@@ -474,7 +483,7 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol_c = var.var_from_vector(p.guess, p, compute=True)
+                sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
                 # sol_c.compute_solver_quantities(p)
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)
@@ -507,7 +516,7 @@ for baseline_dic in baseline_dics:
             # time.sleep(100)
             # print(p.guess)
             if p.guess is not None:
-                sol_c = var.var_from_vector(p.guess, p, compute=True)
+                sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
                 # sol.compute_non_solver_aggregate_qualities(p)
                 # sol.compute_non_solver_quantities(p)
                 # sol_c.compute_solver_quantities(p)

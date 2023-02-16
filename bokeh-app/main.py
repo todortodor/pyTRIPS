@@ -27,16 +27,17 @@ import itertools
 from bokeh.palettes import Category10
 # import numpy as np
 
+
 # print(1)
 
-def load(path, data_path=None):
+def load(path, data_path=None, context = 'calibration'):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
     # if path.endswith('20.1/') or path.endswith('20.2/'):
     #     p.r_hjort[3] = 17.33029162
     # if path.endswith('19.1/') or path.endswith('19.2/'):
     #     p.r_hjort[4] = 17.33029162
-    sol = var.var_from_vector(p.guess, p, compute=True)
+    sol = var.var_from_vector(p.guess, p, compute=True, context = context)
     # sol.compute_non_solver_aggregate_qualities(p)
     # sol.compute_non_solver_quantities(p)
     sol.scale_P(p)
@@ -47,6 +48,7 @@ def load(path, data_path=None):
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
+    # print(m.STFLOWSDOM)
     return p,m,sol
 
 def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments):
@@ -213,75 +215,10 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 #%% moments / parameters for variations
 
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
- 'RD', 'RP', 'SPFLOWDOM', 'SPFLOW',
+ 'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRDUS', 'SRGDP','UUPCOST', 'SINNOVPATUS','SINNOVPATEU', 'TO',
- 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM']
+ 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW']
 
-# comments_dic = {'baseline':'baseline',
-#                 '99':'silenced run',
-#                 '1':'1: drop South\nin RD targeting',
-#                 '2.1':'2.1: added domestic US to patent flow moment',
-#                 '2.2':'2.2: added domestic EU to patent flow moment',
-#                 '2.3':'2.3: added domestic US and EU to patent flow moment',
-#                 '3.1':'3.1: added DOMPATUS',
-#                 '3.2':'3.2: added DOMPATEU',
-#                 '3.3':'3.3: added DOMPATUS and DOMPATUS',
-#                 '4.1':'4.1: 2.1 and drop South in RD',
-#                 '4.2':'4.2: 2.2 and drop South in RD',
-#                 '4.3':'4.3: 2.3 and drop South in RD',
-#                 '5':'5: patent cost relative to RD_US (JUPCOSTRD)',
-#                 '6':'6: fix delta_US = 0.05 and drop JUPCOST',
-#                 '7':'7: drop SRDUS',
-#                 '8.1':'8.1: drop South RD, DOMPAT moments, weight1 SPFLOW',
-#                 '8.2':'8.2: drop South RD, DOMPAT moments, weight3 SPFLOW',
-#                 '9.1':'9.1: drop KM moment, TO target divided by 2',
-#                 '10.1':'10.1: SPFLOWDOM instead',
-#                 '10.2':'10.2: SPFLOWDOM and drop South in RD',
-#                 '11.1':'11.1: baseline with new parameter d',
-#                 '11.2':'11.2: 10.1 with new parameter d',
-#                 '11.3':'11.3: 1 with new parameter d',
-#                 '11.4':'11.4: 10.2 with new parameter d',
-#                 '11.5':'11.5: 2.3 with new param d',
-#                 '11.6':'11.6: 4.3 with new param d',
-#                 '11.7':'11.7: 8.1 with new param d',
-#                 '11.8':'11.8: 11.7 with ratio loss func',
-#                 '12':'12: replace KM moment by KM_GDP',
-#                 '12.1':'12.1: 11.7 but replace KM moment by KM_GDP',
-#                 '12.2':'12.2: 11.7 but drop KM moment',
-#                 '13.1':'13.1: 11.7 but preventing "bad" Nash',
-#                 '14.1':'14.1: 11.7 with kappa=0.75',
-#                 '15.1':'15.1: 11.7 with ERDUS moment and calibrated kappa',
-#                 '16.1':'16.1: 11.7 with Hjort middle managers factors',
-#                 '17.1':'17.1: 11.7, add hjort factor only for CHN',
-#                 '18.1':'18.1: 11.7, calibrated r_hjort-like patenting costs',
-#                 '19.1':'19.1: 11.7, calibrated hjort elasticity',
-#                 }
-# comments_dic = {"baseline":"baseline",
-#                 "1.0":"1.0: Higher weight on JUPCOST",
-#                 # "1.1":"1.1: No hjort and no drop south RD",
-#                 # "1.2":"1.2: No hjort",
-#                 # "1.3":"1.3: No hjort, Adding ERDUS moment",
-#                 # "1.4":"1.4: No hjort, drop SRDUS",
-#                 # "1.5":"1.5: Higher RD weight",
-#                 # "1.6":"1.6: Higher RD and GPDIFF weight",
-#                 # "1.6.2":"1.6.2: kappa:0.5,TO:0.0124,KM:0.06",
-#                 # "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
-#                 # "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
-#                 # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
-#                 # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
-#                 # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
-#                 # "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
-#                 # "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
-#                 # "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
-#                 # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
-#                 # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
-#                 # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
-#                 "2.0":"2.0: No Hjort factors",
-#                 "3.0":"3.0: UUPCOST instead of JUPCOST",
-#                 "3.1":"3.1: UUPCOST and JUPCOST",
-#                 "3.2":"3.2: no UUPCOST, no JUPCOST",
-#                 # "90":"90: temp",
-#                 }
 comments_dic = {}
 
 comments_dic['311'] = {"baseline":"baseline",
@@ -351,6 +288,8 @@ comments_dic['312'] = {"baseline":"baseline",
                 "4.1":"4.1: TO: 0.036",
                 "4.2":"4.2: TO: 0.0124",
                 "4.3":"4.3: TO: 0.00972",
+                "4.4":"4.4: 4.0 new solver version",
+                # "4.5":"4.5: 4.4 targeting SDOMTFLOW",
                 "5.0":"5.0: drop SRDUS",
                 "5.1":"5.1: TO: 0.036",
                 "5.2":"5.2: TO: 0.0124",
@@ -381,6 +320,54 @@ comments_dic['312'] = {"baseline":"baseline",
                 "11.3":"11.3: TO: 0.00972",
                 }
 
+comments_dic['401'] = {"baseline":"baseline",
+                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
+                "1.1":"1.1: TO: 0.036",
+                "1.2":"1.2: TO: 0.0183",
+                "1.3":"1.3: TO: 0.0124",
+                "2.0":"2.0: with SINNOVPATEU",
+                "2.1":"2.1: TO: 0.036",
+                "2.2":"2.2: TO: 0.0183",
+                "2.3":"2.3: TO: 0.0124",
+                "3.0":"3.0: with DOMPATINUS/EU",
+                "3.1":"3.1: TO: 0.036",
+                "3.2":"3.2: TO: 0.0183",
+                "3.3":"3.3: TO: 0.0124",
+                "4.0":"4.0: with SINNOVPATEU and DOMPATINUS/EU",
+                "4.1":"4.1: TO: 0.036",
+                "4.2":"4.2: TO: 0.0183",
+                "4.3":"4.3: TO: 0.0124",
+                "5.0":"5.0: drop SRDUS",
+                "5.1":"5.1: TO: 0.036",
+                "5.2":"5.2: TO: 0.0183",
+                "5.3":"5.3: TO: 0.0124",
+                "6.0":"6.0: drop SRDUS with SINNOVPATEU",
+                "6.1":"6.1: TO: 0.036",
+                "6.2":"6.2: TO: 0.0183",
+                "6.3":"6.3: TO: 0.0124",
+                "7.0":"7.0: drop SRDUS with DOMPATINUS/EU",
+                "7.1":"7.1: TO: 0.036",
+                "7.2":"7.2: TO: 0.0183",
+                "7.3":"7.3: TO: 0.0124",
+                "8.0":"8.0: drop SRDUS with SINNOVPATEU and DOMPATINUS/EU",
+                "8.1":"8.1: TO: 0.036",
+                "8.2":"8.2: TO: 0.0183",
+                "8.3":"8.3: TO: 0.0124",
+                "9.0":"9.0: drop UUPCOST",
+                "9.1":"9.1: TO: 0.036",
+                "9.2":"9.2: TO: 0.0183",
+                "9.3":"9.3: TO: 0.0124",
+                "10.0":"10.0: drop UUPCOST with SINNOVPATEU and DOMPATINUS/EU",
+                "10.1":"10.1: TO: 0.036",
+                "10.2":"10.2: TO: 0.0183",
+                "10.3":"10.3: TO: 0.0124",
+                "11.0":"11.0:drop SRDUS & UUPCOST with SINNOVPATEU & DOMPATIN",  
+                "11.1":"11.1: TO: 0.036",
+                "11.2":"11.2: TO: 0.0183",
+                "11.3":"11.3: TO: 0.0124",
+                }
+
+# comments_dic['401'] = {"baseline":"baseline"}
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -390,7 +377,7 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
 
-baseline_list = ['311','312']    
+baseline_list = ['311','312','401']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -449,7 +436,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset"
 
 # baseline_mom = '101'
-baseline_mom = '312'
+baseline_mom = '401'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -479,7 +466,7 @@ slope2 = Slope(gradient=1.4876, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
 slope3 = Slope(gradient=0.5124, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
-slope4 = Slope(gradient=0.40165, y_intercept=0,
+slope4 = Slope(gradient=0.756198, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=0.25)
 # slope5 = Slope(gradient=1.546, y_intercept=0,
 #               line_color='black', line_dash='dashed', line_width=0.25)
@@ -558,7 +545,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '312'
+baseline_par = '401'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -636,7 +623,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '312'
+baseline_sol_qty = '401'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -776,14 +763,16 @@ sensitivity_report = column(controls_sensi,p_sensi)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '312'
+baseline_cf = '401'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-           if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+            if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+               if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
@@ -868,17 +857,17 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% Jacobian panel
 
-baseline_jac = '312'
+baseline_jac = '401'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
 run_list = [f for f in files_in_dir if f[0].isnumeric()]
 run_list = sorted(run_list, key=section)
-variation_jac_select = Select(value='4.0', title='Variation', 
+variation_jac_select = Select(value='4.2', title='Variation', 
                               options=['baseline']+run_list)
 
 def update_list_of_runs_jac(attr, old, new):
@@ -983,8 +972,8 @@ welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astyp
 welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-welf_coop = welf_coop[welf_coop['baseline'].isin([312])]
-welf_nash = welf_nash[welf_nash['baseline'].isin([312])]
+welf_coop = welf_coop[welf_coop['baseline'].isin([401])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([401])]
 
 welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
 welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
@@ -1035,7 +1024,7 @@ columns = [
         TableColumn(field="runs", title="Runs"),
         TableColumn(field="comments", title="Description"),
     ]
-data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=850,
+data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=600,
                             # autosize_mode="force_fit"
                           )
 
@@ -1043,7 +1032,8 @@ data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, he
 explication = Div(text="In the legend, first is the quantity displayed and last\
                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
-                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation")
+                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation<br>\
+                          <br> No simple global Nash for 401 : 5.1, 6.1, 7.1, 8.3, 11.1")
 
 help_panel = column(explication,data_table_eq)
 
@@ -1088,8 +1078,8 @@ deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.a
 deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-deltas_coop = deltas_coop[deltas_coop['baseline'].isin([312])]
-deltas_nash = deltas_nash[deltas_nash['baseline'].isin([312])]
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([401])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([401])]
 
 deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
 deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']

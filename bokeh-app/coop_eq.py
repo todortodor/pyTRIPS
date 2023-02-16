@@ -27,6 +27,7 @@ pylab.rcParams.update(params)
 def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     p.delta[...,1] = deltas
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                             cobweb_anim=False,tol =1e-15,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -55,12 +56,14 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
     # print(-sol_c.pop_average_welfare_change)
+    # print(p.delta[...,1])
     
     return -sol_c.cons_eq_pop_average_welfare_change
 
 def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     p.delta[...,1] = deltas
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
                             cobweb_anim=False,tol =1e-15,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -88,6 +91,8 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
+    # print(p.delta[...,1])
+    
     
     return -sol_c.cons_eq_negishi_welfare_change
 
@@ -105,41 +110,74 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
 #         baseline_dics.append({'baseline':baseline_number,
 #                           'variation':run})
         
-baseline_dics = [
-    # {'baseline':'312',
-    #                   'variation': 'baseline'},
-    # {'baseline':'312',
-    #                   'variation': '1.0'},
-    # {'baseline':'312',
-    #                   'variation': '2.0'},
-    # {'baseline':'312',
-    #                   'variation': '3.0'},
-    # {'baseline':'312',
-    #                   'variation': '4.0'},
-    # {'baseline':'312',
-    #                   'variation': '5.0'},
-    # {'baseline':'312',
-    #                   'variation': '6.0'},
-    # {'baseline':'312',
-    #                   'variation': '7.0'},
-    # {'baseline':'312',
-    #                   'variation': '8.0'},
-    # {'baseline':'312',
-    #                   'variation': '9.0'},
-    # {'baseline':'312',
-    #                   'variation': '10.0'},
-    # {'baseline':'312',
-    #                   'variation': '11.0'},
-    # {'baseline':'312',
-    #                   'variation': '11.1'},
-    {'baseline':'312',
-                      'variation': '11.2'},
-    {'baseline':'312',
-                      'variation': '11.3'},
-    ]
+# baseline_dics = [
+#     # {'baseline':'312',
+#     #                   'variation': 'baseline'},
+#     # {'baseline':'312',
+#     #                   'variation': '1.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '2.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '3.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '4.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '5.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '6.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '7.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '8.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '9.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '10.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '11.0'},
+#     # {'baseline':'312',
+#     #                   'variation': '11.1'},
+#     {'baseline':'312',
+#                       'variation': '11.2'},
+#     {'baseline':'312',
+#                       'variation': '11.3'},
+#     ]
         
+baseline_dics = [
+    {'baseline':'401',
+                      'variation': 'baseline'},
+    {'baseline':'401',
+                      'variation': '1.0'},
+    {'baseline':'401',
+                      'variation': '2.0'},
+    {'baseline':'401',
+                      'variation': '3.0'},
+    {'baseline':'401',
+                      'variation': '4.0'},
+    {'baseline':'401',
+                      'variation': '5.0'},
+    {'baseline':'401',
+                      'variation': '6.0'},
+    {'baseline':'401',
+                      'variation': '7.0'},
+    {'baseline':'401',
+                      'variation': '8.0'},
+    {'baseline':'401',
+                      'variation': '9.0'},
+    {'baseline':'401',
+                      'variation': '10.0'},
+    {'baseline':'401',
+                      'variation': '11.0'},
+    # {'baseline':'401',
+    #                   'variation': '11.1'},
+    # {'baseline':'401',
+    #                   'variation': '11.2'},
+    # {'baseline':'401',
+    #                   'variation': '11.3'},
+    ]
+
 lb_delta = 0.01
-ub_delta = 100
+ub_delta = 12
 
 for baseline_dic in baseline_dics:    
 # for baseline_dic in baseline_dics:    
@@ -155,6 +193,7 @@ for baseline_dic in baseline_dics:
     p_baseline.load_data(baseline_path)
 
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                           context = 'counterfactual',
                             cobweb_anim=False,tol =1e-15,
                             accelerate=False,
                             accelerate_when_stable=True,
@@ -207,6 +246,7 @@ for baseline_dic in baseline_dics:
         p.delta[...,1] = sol.x
         
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                        context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
