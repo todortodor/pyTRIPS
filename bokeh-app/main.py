@@ -506,7 +506,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
                width = 1800,
-               height = 925,
+               height = 850,
                 x_axis_type="log",
                 y_axis_type="log",
                 x_axis_label='Target', 
@@ -642,7 +642,7 @@ x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
                width = 1800,
-               height = 925,
+               height = 850,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
@@ -737,7 +737,7 @@ x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to
 ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
 p_sol_qty = figure(title="Solution quantities", 
                width = 1800,
-               height = 925,
+               height = 850,
            x_range = x_range,
            y_axis_label='Model implied',
            tools = TOOLS)
