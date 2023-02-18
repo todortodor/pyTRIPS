@@ -16,11 +16,11 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '401'
+baseline_number = '402'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -33,24 +33,14 @@ if new_run:
     m = moments()
     m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.0/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
-# if 'theta' not in p.calib_parameters:
-#     p.calib_parameters.append('theta')
-# if 'sigma' not in p.calib_parameters:
-#     p.calib_parameters.append('sigma')
-# p.beta = np.einsum('nis->s',p.trade_shares)
-# baseline_number = '312'
+
 if 'theta' in p.calib_parameters:
     p.update_sigma_with_SRDUS_target(m)
-# # m.list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
-# #                     'SRDUS','SPFLOW_US','SPFLOW_RUS',
-# #                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
-# #                     'SINNOVPATUS','TO']
 
-# # uncomment following for run 11.7
 # if 'fo' not in p.calib_parameters:
 #     p.calib_parameters.append('fo')
 # if 'd' in p.calib_parameters:
@@ -63,12 +53,12 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('DOMPATEU')
 # if 'DOMPATUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATUS')
-if 'DOMPATINEU' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATINEU')
-if 'DOMPATINUS' not in m.list_of_moments:
-    m.list_of_moments.append('DOMPATINUS')
-if 'SINNOVPATEU' not in m.list_of_moments:
-    m.list_of_moments.append('SINNOVPATEU')
+# if 'DOMPATINEU' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINEU')
+# if 'DOMPATINUS' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINUS')
+# if 'SINNOVPATEU' not in m.list_of_moments:
+#     m.list_of_moments.append('SINNOVPATEU')
 # if 'SRDUS' not in m.list_of_moments:
 #     m.list_of_moments.append('SRDUS')
 if 'SRDUS' in m.list_of_moments:
@@ -79,80 +69,53 @@ if 'SRDUS' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINEU')
 # if 'DOMPATINUS' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINUS')
-if 'UUPCOST' in m.list_of_moments:
-    m.list_of_moments.remove('UUPCOST')
 
-# if 'theta' in p.calib_parameters and 'TE' not in m.list_of_moments:
-#     m.list_of_moments.append('TE')
-# m.drop_CHN_IND_BRA_ROW_from_RD = True
+if 'DOMPATEU' in m.list_of_moments:
+    m.list_of_moments.remove('DOMPATEU')
+if 'DOMPATUS' in m.list_of_moments:
+    m.list_of_moments.remove('DOMPATUS')
+# if 'DOMPATINUS' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINUS')
+# if 'DOMPATINEU' not in m.list_of_moments:
+#     m.list_of_moments.append('DOMPATINEU')
 
-# if 'kappa' not in p.calib_parameters:
-#     p.calib_parameters.append('kappa')
-    
-# if 'SDOMTFLOW' not in m.list_of_moments:
-#     m.list_of_moments.append('SDOMTFLOW')
-#     m.weights_dict['SDOMTFLOW'] = 5
+# # replacing UUPCOST with PCOST(INTER)
+# if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+#     if 'UUPCOST' in m.list_of_moments:
+#         m.list_of_moments.remove('UUPCOST')
+#     if 'PCOST' in m.list_of_moments:
+#         m.list_of_moments.remove('PCOST')
+#     if 'PCOSTINTER' not in m.list_of_moments:
+#         m.list_of_moments.append('PCOSTINTER')
+# elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+#     if 'UUPCOST' in m.list_of_moments:
+#         m.list_of_moments.remove('UUPCOST')
+#     if 'PCOSTINTER' in m.list_of_moments:
+#         m.list_of_moments.remove('PCOSTINTER')
+#     if 'PCOST' not in m.list_of_moments:
+#         m.list_of_moments.append('PCOST')
+        
+# replacing UUPCOST with PCOST(INTER)NOAGG
+if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+    if 'UUPCOST' in m.list_of_moments:
+        m.list_of_moments.remove('UUPCOST')
+    if 'PCOSTNOAGG' in m.list_of_moments:
+        m.list_of_moments.remove('PCOSTNOAGG')
+    if 'PCOSTINTERNOAGG' not in m.list_of_moments:
+        m.list_of_moments.append('PCOSTINTERNOAGG')
+elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+    if 'UUPCOST' in m.list_of_moments:
+        m.list_of_moments.remove('UUPCOST')
+    if 'PCOSTINTERNOAGG' in m.list_of_moments:
+        m.list_of_moments.remove('PCOSTINTERNOAGG')
+    if 'PCOSTNOAGG' not in m.list_of_moments:
+        m.list_of_moments.append('PCOSTNOAGG')
+
+
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
-# p.guess = None
-# p.update_khi_and_r_hjort(1)
-# p.theta[1] = 8
-
-# p.guess = None
-# p.d = 1
-# p.r_hjort[3] = 16.02230702
-# p.delta[...,1][p.delta[...,1]<0.01] = 0.01
-# p.delta[...,1] = p.delta[...,1]*0+0.05
-# p.k = 1.5
-
 avoid_bad_nash = False
-# p.kappa = np.array(0.75)
-# m.list_of_moments.remove('SPFLOW')
-# if 'JUPCOST' not in m.list_of_moments:
-#     m.list_of_moments.append('JUPCOST')
-# if 'UUPCOST' in m.list_of_moments:
-#     m.list_of_moments.remove('UUPCOST')
-# if 'SRDUS' in m.list_of_moments:
-#     m.list_of_moments.remove('SRDUS')
-# if 'UUPCOST' in m.list_of_moments:
-#     m.list_of_moments.remove('UUPCOST')
-# if 'UUPCOST' not in m.list_of_moments:
-#     m.list_of_moments.append('UUPCOST')
-# m.list_of_moments.append('ERDUS')
-# m.list_of_moments.remove('SRDUS')
-# m.list_of_moments.append('KM_GDP')
-# m.weights_dict['SINNOVPATEU'] = 3
-# m.weights_dict['DOMPATEU'] = 3
-# m.weights_dict['SPFLOW'] = 0
-# m.weights_dict['DOMPATUS'] = 3
-# p.delta[...,1] = 0.05
-# m.weights_dict['JUPCOST'] = 2
-# m.weights_dict['DOMPATINUS'] = 2
-# m.weights_dict['DOMPATINEU'] = 2
-# m.TO_target = np.float64(0.0242)
-# m.SINNOVPATEU_target = np.float64(0.265)
-# p.fo = p.fe
-# m.TO_target = m.TO_target/2
-# m.KM_target = np.float64(0.09277)
-# m.GROWTH_target = np.array(0.02)
-# m.GROWTH_target = np.array(0.03)
-# m.add_domestic_US_to_SPFLOW = True
-# m.add_domestic_EU_to_SPFLOW = True
-# p.calib_parameters.remove('eta')
-# p.calib_parameters.remove('eta')
-
-
-
-# m.TO_target = np.array(0.05)
-# m.weights_dict['SINNOVPATUS'] = 2  
-# m.weights_dict['JUPCOST'] = 2       
-# m.weights_dict['DOMPATUS'] = 2       
-# m.weights_dict['DOMPATEU'] = 2       
-# m.weights_dict['SPFLOW'] = 2       
-# m.weights_dict['RD'] = 10      
-# m.weights_dict['GPDIFF'] = 10      
-# m.weights_dict['SRDUS'] = 5       
-# m.weights_dict['GROWTH'] = 5       
+ 
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -210,8 +173,8 @@ sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
-                        plot_convergence=True,
-                        plot_cobweb=True,
+                        plot_convergence=False,
+                        plot_cobweb=False,
                         
                         safe_convergence=0.001,
                         disp_summary=True,
@@ -242,14 +205,14 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 # commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
-commentary = 'drop SRDUS and UUPCOST with SINNOVPATEU and DOMPATINUS/EU'
-# commentary = 'drop UUPCOST'
+# commentary = 'With PCOSTNOAGG and no DOMPAT'
+commentary = 'drop SRDUS with PCOSTNOAGG, no DOMPAT'
 # commentary = ''
-# baseline_number = '401'
+# baseline_number = '402'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 11.0
+run_number = 18.0
 # run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

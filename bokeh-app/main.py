@@ -13,7 +13,7 @@ import pandas as pd
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import DataRange1d,Button, LinearAxis, FactorRange, Text, Div,Toggle, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import DataRange1d,Button,CheckboxButtonGroup, LinearAxis, FactorRange, Text, Div,Toggle, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
@@ -39,6 +39,7 @@ def load(path, data_path=None, context = 'calibration'):
     #     p.r_hjort[3] = 17.33029162
     # if path.endswith('19.1/') or path.endswith('19.2/'):
     #     p.r_hjort[4] = 17.33029162
+    # print(path)
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
     # sol.compute_non_solver_aggregate_qualities(p)
     # sol.compute_non_solver_quantities(p)
@@ -218,7 +219,8 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
- 'SRDUS', 'SRGDP','UUPCOST', 'SINNOVPATUS','SINNOVPATEU', 'TO',
+ 'SRDUS', 'SRGDP','UUPCOST', 'PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG','SINNOVPATUS',
+ 'SINNOVPATEU', 'TO','TP',
  'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW']
 
 comments_dic = {}
@@ -369,6 +371,63 @@ comments_dic['401'] = {"baseline":"baseline",
                 "11.3":"11.3: TO: 0.0124",
                 }
 
+comments_dic['402'] = {"baseline":"baseline, SRDUS, UUPCOST, DOMPATOUT",
+                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
+                "1.1":"1.1: TO: 0.0183",
+                "1.2":"1.2: TO: 0.0124",
+                "2.0":"2.0: SRDUS, UUPCOST, DOMPATIN",
+                "2.1":"2.1: TO: 0.0183",
+                "2.2":"2.2: TO: 0.0124",
+                "3.0":"3.0: SRDUS, UUPCOST, no DOMPAT",
+                "3.1":"3.1: TO: 0.0183",
+                "3.2":"3.2: TO: 0.0124",
+                "4.0":"4.0: SRDUS, PCOST, DOMPATOUT",
+                "4.1":"4.1: TO: 0.0183",
+                "4.2":"4.2: TO: 0.0183",
+                "5.0":"5.0: SRDUS, PCOST, DOMPATIN",
+                "5.1":"5.1: TO: 0.0183",
+                "5.2":"5.2: TO: 0.0124",
+                "6.0":"6.0: SRDUS, PCOSTINTER, no DOMPAT",
+                "6.1":"6.1: TO: 0.0183",
+                "6.2":"6.2: TO: 0.0124",
+                "7.0":"7.0: SRDUS, PCOSTNOAGG, DOMPATOUT",
+                "7.1":"7.1: TO: 0.0183",
+                "7.2":"7.2: TO: 0.0124",
+                "8.0":"8.0: SRDUS, PCOSTNOAGG, DOMPATIN",
+                "8.1":"8.1: TO: 0.0183",
+                "8.2":"8.2: TO: 0.0124",
+                "9.0":"9.0: SRDUS, PCOSTINTERNOAGG, no DOMPAT",
+                "9.1":"9.1: TO: 0.0183",
+                "9.2":"9.2: TO: 0.0124",
+                "10.0":"10.0: no SRDUS, UUPCOST, DOMPATOUT",
+                "10.1":"10.1: TO: 0.0183",
+                "10.2":"10.2: TO: 0.0124",
+                "11.0":"11.0: no SRDUS, UUPCOST, DOMPATIN",
+                "11.1":"11.1: TO: 0.0183",
+                "11.2":"11.2: TO: 0.0124",
+                "12.0":"12.0: no SRDUS, UUPCOST, no DOMPAT",
+                "12.1":"12.1: TO: 0.0183",
+                "12.2":"12.2: TO: 0.0124",
+                "13.0":"13.0: no SRDUS, PCOST, DOMPATOUT",
+                "13.1":"13.1: TO: 0.0183",
+                "13.2":"13.2: TO: 0.0124",
+                "14.0":"14.0: no SRDUS, PCOST, DOMPATIN",
+                "14.1":"14.1: TO: 0.0183",
+                "14.2":"14.2: TO: 0.0124",
+                "15.0":"15.0: no SRDUS, PCOSTINTER, no DOMPAT",
+                "15.1":"15.1: TO: 0.0183",
+                "15.2":"15.2: TO: 0.0124",
+                "16.0":"16.0: no SRDUS, PCOSTNOAGG, DOMPATOUT",
+                "16.1":"16.1: TO: 0.0183",
+                "16.2":"16.2: TO: 0.0124",
+                "17.0":"17.0: no SRDUS, PCOSTNOAGG, DOMPATIN",
+                "17.1":"17.1: TO: 0.0183",
+                "17.2":"17.2: TO: 0.0124",
+                "18.0":"18.0: no SRDUS, PCOSTINTERNOAGG, no DOMPAT",
+                "18.1":"18.1: TO: 0.0183",
+                "18.2":"18.2: TO: 0.0124",
+                }
+
 # comments_dic['401'] = {"baseline":"baseline"}
 
 baselines_dic_param = {}
@@ -379,7 +438,7 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
 
-baseline_list = ['311','312','401']    
+baseline_list = ['311','312','401','402']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -438,7 +497,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '401'
+baseline_mom = '402'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -446,7 +505,7 @@ mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mo
 
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
-               width = 1200,
+               width = 1800,
                height = 925,
                 x_axis_type="log",
                 y_axis_type="log",
@@ -500,15 +559,28 @@ for i,col in enumerate(ds_mom.data.keys()):
 legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lin_mom]) 
                     for col, lin_mom in lines_mom.items() if col in comments_dic[baseline_mom]]
 # legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data)]
-legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
+# legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0, location=(10, -60))
+legend_mom_split_1 = Legend(items=legend_items_mom[:round(len(legend_items_mom)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
-                    spacing = 0, location=(10, -60))
-p_mom.add_layout(legend_mom, 'right')
+                    spacing = 0, 
+                    # location=(10, -60)
+                    )
+legend_mom_split_2 = Legend(items=legend_items_mom[round(len(legend_items_mom)/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    # , location=(10, -60)
+                    )
+
+# p_mom.add_layout(legend_mom, 'right')
+p_mom.add_layout(legend_mom_split_1, 'right')
+p_mom.add_layout(legend_mom_split_2, 'right')
 # columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
 columns_mom = [
         TableColumn(field="x"),
     ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[baseline_mom].keys())]
-data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1200, height=400)
+data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1800, height=400)
     
 def update_baseline_mom(attrname, old, new):
     mom = mom_select.value
@@ -517,7 +589,9 @@ def update_baseline_mom(attrname, old, new):
     #                                 renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data) if col not in ['x','target']]
     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
                         for col in ds_mom.data if col in comments_dic[new]]
-    p_mom.legend.items = legend_items_mom
+    # p_mom.legend.items = legend_items_mom
+    legend_mom_split_1.items = legend_items_mom[:round(len(legend_items_mom)/2)]
+    legend_mom_split_2.items = legend_items_mom[round(len(legend_items_mom)/2):]
     data_table_mom.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
@@ -538,6 +612,18 @@ def update_mom(attrname, old, new):
         # slope5.visible = False
         # slope6.visible = False
 
+# def update_legend():
+#     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
+#                         for col in ds_mom.data if col in comments_dic[new]]
+#     p_mom.legend.items = legend_items_mom
+    
+# checkbox_buttons_labels = ["Variations .0", "Variations .1", "Variations .2"]
+# checkbox_button_group = CheckboxButtonGroup(labels=checkbox_buttons_labels, active=[0, 1],
+                                            # )
+# checkbox_button_group.on_change('value', update_legend)
+
+
+# controls_mom = row(baseline_mom_select, mom_select, checkbox_button_group)
 controls_mom = row(baseline_mom_select, mom_select)
 
 baseline_mom_select.on_change('value', update_baseline_mom)
@@ -547,7 +633,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '401'
+baseline_par = '402'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -555,7 +641,7 @@ par_select = Select(value=par, title='Quantity', options=sorted(baselines_dic_pa
 x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
 p_par = figure(title="Parameters", 
-               width = 1200,
+               width = 1800,
                height = 925,
            x_range = x_range,
            y_axis_label='Model implied',
@@ -582,9 +668,23 @@ for col in baselines_dic_param[baseline_par][par].columns:
 
 legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
                     for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
-legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0
-                    , location=(10, -30))
-p_par.add_layout(legend_par, 'right')
+# legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0
+#                     # , location=(10, -30)
+#                     )
+
+legend_par_split_1 = Legend(items=legend_items_par[:round(len(legend_items_par)/2)], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    # location=(10, -60)
+                    )
+legend_par_split_2 = Legend(items=legend_items_par[round(len(legend_items_par)/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    # , location=(10, -60)
+                    )
+# p_par.add_layout(legend_par, 'right')
+p_par.add_layout(legend_par_split_1, 'right')
+p_par.add_layout(legend_par_split_2, 'right')
 # p_par.legend.click_policy="hide"
 # p_par.legend.label_text_font_size = '8pt'
 # p_par.legend.spacing = 0
@@ -599,7 +699,7 @@ columns_par = [
 #         TableColumn(field="x"),
 #     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
 
-data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
+data_table_par = DataTable(source=ds_par, columns = columns_par, width=1800, height=400)
 
 def update_baseline_par(attrname, old, new):
     par = par_select.value
@@ -607,7 +707,10 @@ def update_baseline_par(attrname, old, new):
     legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
                         for col in ds_par.data if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
-    p_par.legend.items = legend_items_par
+    # p_par.legend.items = legend_items_par
+    legend_par_split_1.items = legend_items_par[:round(len(legend_items_par)/2)]
+    legend_par_split_2.items = legend_items_par[round(len(legend_items_par)/2):]
+                      
     data_table_par.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in list(comments_dic[new].keys())]
@@ -625,7 +728,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '401'
+baseline_sol_qty = '402'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -633,7 +736,7 @@ sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baseline
 x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
 ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
 p_sol_qty = figure(title="Solution quantities", 
-               width = 1200,
+               width = 1800,
                height = 925,
            x_range = x_range,
            y_axis_label='Model implied',
@@ -660,10 +763,23 @@ for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
 
 legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
                         for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
-legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
-                        label_text_font_size="8pt",spacing = 0
-                        , location=(10, -30))
-p_sol_qty.add_layout(legend_sol_qty, 'right')
+# legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
+#                         label_text_font_size="8pt",spacing = 0
+#                         , location=(10, -30))
+
+legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round(len(legend_items_sol_qty)/2)], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    # location=(10, -60)
+                    )
+legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round(len(legend_items_sol_qty)/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    # , location=(10, -60)
+                    )
+# p_sol_qty.add_layout(legend_sol_qty, 'right')
+p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
+p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
 # p_par.legend.click_policy="hide"
 # p_par.legend.label_text_font_size = '8pt'
 # p_par.legend.spacing = 0
@@ -675,7 +791,7 @@ columns_sol_qty = [
         TableColumn(field="x"),
     ]+[TableColumn(field=col) for col in list(comments_dic[baseline_sol_qty].keys())]
 
-data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1200, height=400)
+data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1800, height=400)
 
 def update_baseline_sol_qty(attrname, old, new):
     sol_qty = sol_qty_select.value
@@ -683,7 +799,9 @@ def update_baseline_sol_qty(attrname, old, new):
     legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
                             for col in ds_sol_qty.data  if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
-    p_sol_qty.legend.items = legend_items_sol_qty
+    # p_sol_qty.legend.items = legend_items_sol_qty
+    legend_sol_qty_split_1.items = legend_items_sol_qty[:round(len(legend_items_sol_qty)/2)]
+    legend_sol_qty_split_2.items = legend_items_sol_qty[round(len(legend_items_sol_qty)/2):]
     data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_sol_qty(attrname, old, new):
@@ -765,14 +883,16 @@ sensitivity_report = column(controls_sensi,p_sensi)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '401'
+baseline_cf = '402'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)+\
+            if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
                if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
@@ -859,17 +979,17 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% Jacobian panel
 
-baseline_jac = '401'
+baseline_jac = '402'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
 run_list = [f for f in files_in_dir if f[0].isnumeric()]
 run_list = sorted(run_list, key=section)
-variation_jac_select = Select(value='4.2', title='Variation', 
+variation_jac_select = Select(value='baseline', title='Variation', 
                               options=['baseline']+run_list)
 
 def update_list_of_runs_jac(attr, old, new):
@@ -922,19 +1042,19 @@ def update_jac(event):
         path = results_path+baseline_jac_select.value+'/'
     else:
         path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
-    p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+    par_jac, m_jac, sol_jac = load(path, data_path=data_path)
     if qty_jac_select.value in ['eta','T','delta','nu']:
-        idx_to_change_jac = p_jac.countries.index(country_jac_select.value),p_jac.sectors.index(sector_jac_select.value)
+        idx_to_change_jac = par_jac.countries.index(country_jac_select.value),par_jac.sectors.index(sector_jac_select.value)
     if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
-        idx_to_change_jac = p_jac.sectors.index(sector_jac_select.value)
+        idx_to_change_jac = par_jac.sectors.index(sector_jac_select.value)
     if qty_jac_select.value in ['k','g_0']:
         idx_to_change_jac = None
-    x_jac = compute_rough_jacobian(p_jac, m_jac, qty_jac_select.value, idx_to_change_jac, 
-                               change_by = 0.25, tol = 1e-14, damping = 5,
+    x_jac = compute_rough_jacobian(par_jac, m_jac, qty_jac_select.value, idx_to_change_jac, 
+                               change_by = 0.1, tol = 1e-14, damping = 5,
                                max_count = 5e3)
     data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
-    p_jac.y_range = FactorRange(factors=m_jac.get_signature_list())
     src_jac.data = data_jac
+    p_jac.y_range.factors = m_jac.get_signature_list()
 
 button_jac = Button(label="Compute")
 button_jac.on_event(ButtonClick, update_jac)
@@ -974,8 +1094,8 @@ welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astyp
 welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-welf_coop = welf_coop[welf_coop['baseline'].isin([401])]
-welf_nash = welf_nash[welf_nash['baseline'].isin([401])]
+welf_coop = welf_coop[welf_coop['baseline'].isin([402])]
+welf_nash = welf_nash[welf_nash['baseline'].isin([402])]
 
 welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
 welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
@@ -1000,11 +1120,17 @@ p_eq = figure(title="Cooperative and Nash equilibrium",
                 ) 
 p_eq.xaxis.major_label_orientation = 3.14/3
 
+lines_nash = {}
 for col in p_baseline.countries+['Equal']+['Negishi']:
-    p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
-    p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
-    p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
-    
+    lines_nash[col+' Nash'] = p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
+    lines_nash[col+' coop equal'] = p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
+    lines_nash[col+' coop negishi'] = p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
+    if col != 'Negishi' and col != 'Equal':
+        lines_nash[col+' Nash'].visible = False
+        lines_nash[col+' coop equal'].visible = False
+        lines_nash[col+' coop negishi'].visible = False
+        
+        
 p_eq.legend.click_policy="hide"
 p_eq.legend.label_text_font_size = '8pt'
 p_eq.add_layout(p_eq.legend[0], 'right')    
@@ -1035,7 +1161,7 @@ explication = Div(text="In the legend, first is the quantity displayed and last\
                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation<br>\
-                          <br> No simple global Nash for 401 : 5.1, 6.1, 7.1, 8.3, 11.1")
+                          <br> No simple global Nash for 402 : 15.1")
 
 help_panel = column(explication,data_table_eq)
 
@@ -1080,8 +1206,8 @@ deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.a
 deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
 
-deltas_coop = deltas_coop[deltas_coop['baseline'].isin([401])]
-deltas_nash = deltas_nash[deltas_nash['baseline'].isin([401])]
+deltas_coop = deltas_coop[deltas_coop['baseline'].isin([402])]
+deltas_nash = deltas_nash[deltas_nash['baseline'].isin([402])]
 
 deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
 deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
@@ -1107,10 +1233,19 @@ p_deltas_eq = figure(title="Cooperative and Nash equilibrium",
                 ) 
 p_deltas_eq.xaxis.major_label_orientation = 3.14/3
 
+lines_delta={}
 for col in p_baseline.countries:
-    p_deltas_eq.line(x='run', y=col, source = ds_deltas_nash, color=next(colors_deltas_nash),line_width = 2, legend_label=col+' Nash')
-    p_deltas_eq.line(x='run', y=col, source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
-    p_deltas_eq.line(x='run', y=col, source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
+    lines_delta[col+' Nash'] = p_deltas_eq.line(x='run', y=col, 
+                                            source = ds_deltas_nash, color=next(colors_deltas_nash),
+                                            line_width = 2, legend_label=col+' Nash')
+    lines_delta[col+' coop equal'] = p_deltas_eq.line(x='run', y=col, 
+                                                source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', 
+                                                line_width = 2, legend_label=col+' coop equal')
+    lines_delta[col+' coop negishi'] = p_deltas_eq.line(x='run', y=col, 
+                                                source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', 
+                                                line_width = 2, legend_label=col+' coop negishi')
+    lines_delta[col+' coop equal'].visible = False
+    lines_delta[col+' coop negishi'].visible = False
     
 p_deltas_eq.legend.click_policy="hide"
 p_deltas_eq.legend.label_text_font_size = '8pt'

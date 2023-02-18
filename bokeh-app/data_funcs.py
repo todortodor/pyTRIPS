@@ -278,5 +278,31 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibr
     return (m_diff.deviation_vector()-m.deviation_vector())*(1+change_by)*m.deviation_vector()/(change_by*qty[idx_to_change])
     
     
-    
+def load(path, data_path=None, context = 'calibration'):
+    p = parameters(n=7,s=2,data_path=data_path)
+    p.load_data(path)
+    # if path.endswith('20.1/') or path.endswith('20.2/'):
+    #     p.r_hjort[3] = 17.33029162
+    # if path.endswith('19.1/') or path.endswith('19.2/'):
+    #     p.r_hjort[4] = 17.33029162
+    sol = var.var_from_vector(p.guess, p, compute=True, context = context)
+    # sol.compute_non_solver_aggregate_qualities(p)
+    # sol.compute_non_solver_quantities(p)
+    sol.scale_P(p)
+    sol.compute_price_indices(p)
+    sol.compute_non_solver_quantities(p)
+    m = moments()
+    m.load_data(data_path)
+    m.load_run(path)
+    m.compute_moments(sol, p)
+    m.compute_moments_deviations()
+    # print(m.STFLOWSDOM)
+    return p,m,sol
+
+def get_path(baseline,variation,results_path):
+    if variation == 'baseline':
+        path = results_path+baseline+'/'
+    else:
+        path = results_path+'baseline_'+baseline+'_variations/'+variation+'/'
+    return path
     

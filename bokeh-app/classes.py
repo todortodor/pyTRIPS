@@ -999,7 +999,8 @@ class moments:
             self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
                                'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
-                               'UUPCOST','JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
+                               'UUPCOST','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
+                               'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
             self.list_of_moments = list_of_moments
@@ -1042,10 +1043,14 @@ class moments:
                              'SRGDP':1, 
                              'SRGDP_US':1, 
                              'SRGDP_RUS':1, 
-                              'STFLOW':1,
+                             'STFLOW':1,
                              'SDOMTFLOW':1,
                              'JUPCOST':1,
                              'UUPCOST':1,
+                             'PCOSTNOAGG':1,
+                             'PCOSTINTERNOAGG':1,
+                             'PCOST':1,
+                             'PCOSTINTER':1,
                              'JUPCOSTRD':1,
                               'TP':1,
                               'Z':1,
@@ -1095,6 +1100,10 @@ class moments:
                     'SRDUS':pd.Index(['scalar']), 
                     'JUPCOST':pd.Index(['scalar']), 
                     'UUPCOST':pd.Index(['scalar']), 
+                    'PCOSTNOAGG':pd.Index(['scalar']), 
+                    'PCOSTINTERNOAGG':pd.Index(['scalar']), 
+                    'PCOST':pd.Index(['scalar']), 
+                    'PCOSTINTER':pd.Index(['scalar']), 
                     'JUPCOSTRD':pd.Index(['scalar']), 
                     'SRGDP':pd.Index(self.countries, name='country'), 
                     'SRGDP_US':pd.Index(['scalar']), 
@@ -1159,7 +1168,8 @@ class moments:
         return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
-                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','JUPCOSTRD', 'TP', 'Z', 
+                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','PCOST','PCOSTINTER',
+                'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
     
@@ -1179,6 +1189,7 @@ class moments:
         self.ccs_moments = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
         self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
         self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
+        self.pat_fees = pd.read_csv(data_path+'final_pat_fees.csv',index_col=[0])
         
         N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
         S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
@@ -1216,7 +1227,21 @@ class moments:
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.TE_target = self.moments.loc['TE'].value 
         self.TO_target = self.moments.loc['TO'].value 
-        # self.GROWTH_target = self.GROWTH_target*10
+        self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
+            "destination_code != origin_code"
+            )['patent flows'].groupby('destination_code').sum().values).sum()/1e12
+        self.PCOST_target = self.PCOSTINTER_target+\
+            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12+\
+            self.pat_fees.loc[2,'fee']*self.cc_moments.loc[(2,2),'patent flows']/1e12
+        self.PCOSTINTERNOAGG_target = self.PCOSTINTER_target\
+            -self.pat_fees.loc[2,'fee']*self.cc_moments.query(
+                "destination_code != origin_code"
+                ).loc[2,'patent flows'].sum()/1e12\
+            -self.pat_fees.loc[7,'fee']*self.cc_moments.query(
+                        "destination_code != origin_code"
+                ).loc[7,'patent flows'].sum()/1e12
+        self.PCOSTNOAGG_target = self.PCOSTINTERNOAGG_target+\
+            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
         self.UUPCOST_target = self.moments.loc['UUPCOST'].value
@@ -1554,6 +1579,28 @@ class moments:
         #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
         # self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
+    def compute_PCOSTINTER(self,var,p):
+        off_diag_pflow = var.pflow.copy()
+        np.einsum('nn->n',off_diag_pflow)[...] = 0
+        self.PCOSTINTER = np.einsum('ni,n,,n->',
+                               off_diag_pflow,
+                               p.r_hjort,
+                               p.fe[1],
+                               var.w)
+        
+    def compute_PCOST(self,var,p):
+        self.PCOST = self.PCOSTINTER + var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]\
+            + var.pflow[1,1]*p.r_hjort[1]*p.fe[1]*var.w[1]
+            
+    def compute_PCOSTINTERNOAGG(self,var,p):
+        off_diag_pflow = var.pflow.copy()
+        np.einsum('nn->n',off_diag_pflow)[...] = 0
+        self.PCOSTINTERNOAGG = self.PCOSTINTER - off_diag_pflow[1,:].sum()*p.r_hjort[1]*p.fe[1]*var.w[1]\
+            - off_diag_pflow[6,:].sum()*p.r_hjort[6]*p.fe[1]*var.w[6]
+        
+    def compute_PCOSTNOAGG(self,var,p):
+        self.PCOSTNOAGG = self.PCOSTINTERNOAGG + var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]
+        
     def compute_TP(self,var,p):
         self.TP = var.pflow.sum()
         inter_pflow = remove_diag(var.pflow)
@@ -1699,6 +1746,10 @@ class moments:
         self.compute_GROWTH(var, p)
         self.compute_JUPCOST(var, p)
         self.compute_UUPCOST(var, p)
+        self.compute_PCOSTINTER(var,p)
+        self.compute_PCOST(var,p)
+        self.compute_PCOSTINTERNOAGG(var,p)
+        self.compute_PCOSTNOAGG(var,p)
         self.compute_TP(var,p)
         self.compute_Z(var,p)
         self.compute_SDOMTFLOW(var,p)
