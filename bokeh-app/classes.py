@@ -1931,5 +1931,17 @@ class history:
         except:
             pass
         p.write_params(path+str(self.saves)+'/')
-        self.saves += 1        
+        self.saves += 1  
+        
+class history_nash:
+    def __init__(self):
+        self.count = 0
+        self.delta = []
+        self.welfare = []
+        self.current_deltas = None
+        self.current_welfare = None
+    def update_current_deltas(self,new_deltas):
+        self.current_deltas = new_deltas
+    def update_current_welfare(self,new_welfare):
+        self.current_welfare = new_welfare
 

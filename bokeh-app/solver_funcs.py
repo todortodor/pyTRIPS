@@ -10,7 +10,7 @@ import numpy as np
 import aa
 import matplotlib.pyplot as plt
 import time
-from classes import cobweb, sol_class, moments, parameters, var
+from classes import cobweb, sol_class, moments, parameters, var, history_nash
 # import pandas as pd
 from scipy import optimize
 
@@ -501,7 +501,7 @@ def is_oscillating(deltas,column,window):
     #     return np.allclose(np.where(np.sign(a[:-1]) != np.sign(a[1:])) , np.arange(window-1))
     return (sign_changes[0].shape[0] >= window-2) or (np.all(a == 0))
 
-def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
+def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None):
     # print('solving')
     back_up_delta_value = p.delta[p.countries.index(c),1]
     # p.delta[p.countries.index(c),1] = 10**delta
@@ -534,6 +534,21 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
     # sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_it_baseline)
+    # print('solved')
+    
+    if hist is not None:
+        hist.delta.append(p.delta[p.countries.index(c),1])
+        hist.welfare.append(-sol_c.cons_eq_welfare[p.countries.index(c)])
+        plt.scatter(np.log(hist.delta),np.log(-np.array(hist.welfare)),color='grey')
+        plt.scatter(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1]), color = 'red',label='search optimization')
+        plt.annotate(c,(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1])),color='red')
+        plt.scatter(np.log(hist.current_deltas),np.log(-hist.current_welfare), color= 'blue',label='current state of the world')
+        for i,country in enumerate(p.countries):
+            plt.annotate(country,(np.log(hist.current_deltas)[i],np.log(-hist.current_welfare[i])))
+        plt.xlabel('Delta (log)')
+        plt.ylabel('Consumption equivalent welfare change (log)')
+        plt.legend()
+        plt.show()
     p.delta[p.countries.index(c),1] = back_up_delta_value
     p.guess = sol.x
     
@@ -542,6 +557,7 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline):
 
 def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     p.delta[...,1] = deltas
+    print(p.guess)
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     context = 'counterfactual',
                             cobweb_anim=False,tol =1e-15,
@@ -571,7 +587,7 @@ def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
-    # print(-sol_c.pop_average_welfare_change)
+    
     
     return -sol_c.pop_average_welfare_change
 
@@ -605,18 +621,17 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
-    
     return -sol_c.negishi_welfare_change
     
-def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta):
+def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_nash = None):
     new_deltas = np.zeros(len(p.countries))
     for i,c in enumerate(p.countries):
         delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta,
                                              method='bounded',
                                              # bounds=(np.log10(lb_delta), np.log10(ub_delta)),
                                              bounds=(lb_delta, ub_delta),
-                                             args = (p,c,sol_it_baseline),
-                                             # options={'disp':3},
+                                             args = (p,c,sol_it_baseline, hist_nash),
+                                              # options={'disp':3},
                                               tol=1e-8
                                              )
         # new_deltas[i] = 10**delta_min.x
@@ -625,7 +640,7 @@ def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta):
 
 def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                  plot_convergence = False,solver_options=None,tol=5e-5,window=4,
-                 damping = 1):
+                 damping = 1,plot_history = False):
     
     if solver_options is None:
         solver_options = dict(cobweb_anim=False,tol =1e-14,
@@ -682,6 +697,14 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
     #             'safeguard_factor': accel_safeguard_factor,
     #             'max_weight_norm': accel_max_weight_norm}
     # aa_wrk = aa.AndersonAccelerator(**aa_options)
+    
+    if plot_history:
+        hist_nash = history_nash()
+        hist_nash.update_current_deltas(np.log(x_old))
+        hist_nash.update_current_welfare(-np.ones(len(x_old)))
+    else:
+        hist_nash = None
+        
     while condition:
         print(it)
         if it != 0:
@@ -689,7 +712,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
             # x_old = (new_deltas+(damping-1)*x_old)/damping
             x_old = new_deltas
             p_it_baseline.delta[...,1] = x_old
-            
+        
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
                                                   context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,
@@ -719,7 +742,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
             
         # new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_it_baseline, lb_delta, ub_delta)
-        new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, ub_delta)
+        new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, ub_delta, hist_nash = hist_nash)
         
         p_it_baseline.delta[...,1] = new_deltas
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
@@ -749,6 +772,12 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         # sol_it_baseline.compute_price_indices(p_it_baseline)
         sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
         sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
+        
+        if plot_history:
+            # print(np.log(new_deltas))
+            # print(sol_it_baseline.cons_eq_welfare)
+            hist_nash.update_current_deltas(new_deltas)
+            hist_nash.update_current_welfare(-sol_it_baseline.cons_eq_welfare)
         
         deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
         welfares = np.concatenate([welfares,sol_it_baseline.cons_eq_welfare[:,None]],axis=1)

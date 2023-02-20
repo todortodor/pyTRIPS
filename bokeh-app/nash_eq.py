@@ -170,7 +170,13 @@ baseline_dics = [
     # {'baseline':'402',
     #                   'variation': '16.1.1'},
     {'baseline':'402',
-                      'variation': '17.1.1'},
+                      'variation': '2.1.2'},
+    {'baseline':'402',
+                      'variation': '2.1.3'},
+    {'baseline':'402',
+                      'variation': '17.1.2'},
+    {'baseline':'402',
+                      'variation': '17.1.3'},
     # {'baseline':'402',
     #                   'variation': '18.1.1'},
     ]
@@ -213,7 +219,7 @@ for baseline_dic in baseline_dics:
     # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)   
     
-    write = True
+    write = False
     
     method = 'fixed_point'
     

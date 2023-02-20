@@ -129,13 +129,14 @@ runs_params = [
     # {'number':1,
     #   'TO_target':0.0183,
     #   },
-    {'number':1.1,
+    {'number':1.3,
         'TO_target':0.0183,
       },
     ]
 baseline_number = '402'
 # variation_number = 1
-for variation_number in range(11,19):
+# for variation_number in range(11,19):
+for variation_number in [2,17]:
     print(variation_number)
     for run_params in runs_params:
         
@@ -161,10 +162,12 @@ for variation_number in range(11,19):
         m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.1/')
         if 'theta' not in p.calib_parameters:
             p.calib_parameters.append('theta')
-        if 'theta' in p.calib_parameters:
-            p.update_sigma_with_SRDUS_target(m)
             if 'TE' not in m.list_of_moments:
                 m.list_of_moments.append('TE')
+        # if 'theta' in p.calib_parameters:
+        # p.update_sigma_with_SRDUS_target(m)
+        # if 'TE' not in m.list_of_moments:
+        #     m.list_of_moments.append('TE')
         
         m.drop_CHN_IND_BRA_ROW_from_RD = True
         
