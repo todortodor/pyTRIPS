@@ -126,17 +126,52 @@ import pandas as pd
     # ]
 
 runs_params = [
-    # {'number':1,
-    #   'TO_target':0.0183,
-    #   },
-    {'number':1.3,
-        'TO_target':0.0183,
-      },
+    {"number":0,"TO_target":0.01},
+    {"number":1,"TO_target":0.0105},
+    {"number":2,"TO_target":0.011},
+    {"number":3,"TO_target":0.0115},
+    {"number":4,"TO_target":0.012},
+    {"number":5,"TO_target":0.0125},
+    {"number":6,"TO_target":0.013},
+    {"number":7,"TO_target":0.0135},
+    {"number":8,"TO_target":0.014},
+    {"number":9,"TO_target":0.0145},
+    {"number":10,"TO_target":0.015},
+    {"number":11,"TO_target":0.0155},
+    {"number":12,"TO_target":0.016},
+    {"number":13,"TO_target":0.0165},
+    {"number":14,"TO_target":0.017},
+    {"number":15,"TO_target":0.0175},
+    {"number":16,"TO_target":0.018},
+    {"number":17,"TO_target":0.0185},
+    {"number":18,"TO_target":0.019},
+    {"number":19,"TO_target":0.0195},
+    {"number":20,"TO_target":0.02},
+    {"number":21,"TO_target":0.0205},
+    {"number":22,"TO_target":0.021},
+    {"number":23,"TO_target":0.0215},
+    {"number":24,"TO_target":0.022},
+    {"number":25,"TO_target":0.0225},
+    {"number":26,"TO_target":0.023},
+    {"number":27,"TO_target":0.0235},
+    {"number":28,"TO_target":0.024},
+    {"number":29,"TO_target":0.0245},
+    {"number":30,"TO_target":0.025},
+    {"number":31,"TO_target":0.0255},
+    {"number":32,"TO_target":0.026},
+    {"number":33,"TO_target":0.0265},
+    {"number":34,"TO_target":0.027},
+    {"number":35,"TO_target":0.0275},
+    {"number":36,"TO_target":0.028},
+    {"number":37,"TO_target":0.0285},
+    {"number":38,"TO_target":0.029},
+    {"number":39,"TO_target":0.0295},
+    {"number":40,"TO_target":0.03}
     ]
-baseline_number = '402'
+baseline_number = '403'
 # variation_number = 1
 # for variation_number in range(11,19):
-for variation_number in [2,17]:
+for variation_number in [1]:
     print(variation_number)
     for run_params in runs_params:
         
@@ -147,7 +182,7 @@ for variation_number in [2,17]:
         # if new_run:
         p = parameters(n=7,s=2)
         # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-        p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.1/')
+        p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         start_time = time.perf_counter()
         
@@ -159,11 +194,11 @@ for variation_number in [2,17]:
         m.load_data()
         # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
-        m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.1/')
-        if 'theta' not in p.calib_parameters:
-            p.calib_parameters.append('theta')
-            if 'TE' not in m.list_of_moments:
-                m.list_of_moments.append('TE')
+        m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
+        # if 'theta' not in p.calib_parameters:
+        #     p.calib_parameters.append('theta')
+        #     if 'TE' not in m.list_of_moments:
+        #         m.list_of_moments.append('TE')
         # if 'theta' in p.calib_parameters:
         # p.update_sigma_with_SRDUS_target(m)
         # if 'TE' not in m.list_of_moments:
@@ -171,7 +206,7 @@ for variation_number in [2,17]:
         
         m.drop_CHN_IND_BRA_ROW_from_RD = True
         
-        # m.TO_target = np.float64(run_params['TO_target'])
+        m.TO_target = np.float64(run_params['TO_target'])
         
         # m.TO_target = np.array(run_params['TO_target'])
         # m.KM_target = np.float64(run_params['KM_target'])
@@ -288,103 +323,103 @@ for variation_number in [2,17]:
         p_sol.write_params(local_path+str(run_number)+'/')
         m.write_moments(local_path+str(run_number)+'/')
         
-        # ##%% Nash eq
-        # p_baseline = p_sol.copy()
+        ##%% Nash eq
+        p_baseline = p_sol.copy()
         
-        # sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
-        #                                 context = 'counterfactual',
-        #                         cobweb_anim=False,tol =1e-14,
-        #                         accelerate=False,
-        #                         accelerate_when_stable=True,
-        #                         cobweb_qty='phi',
-        #                         plot_convergence=False,
-        #                         plot_cobweb=False,
-        #                         safe_convergence=0.001,
-        #                         disp_summary=True,
-        #                         damping = 10,
-        #                         max_count = 3e3,
-        #                         accel_memory = 50, 
-        #                         accel_type1=True, 
-        #                         accel_regularization=1e-10,
-        #                         accel_relaxation=0.5, 
-        #                         accel_safeguard_factor=1, 
-        #                         accel_max_weight_norm=1e6,
-        #                         damping_post_acceleration=5
-        #                         # damping=10
-        #                           # apply_bound_psi_star=True
-        #                         )
+        sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=True,
+                                damping = 10,
+                                max_count = 3e3,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                # damping=10
+                                  # apply_bound_psi_star=True
+                                )
         
-        # sol_baseline.scale_P(p_baseline)
-        # # sol_baseline.compute_price_indices(p_baseline)
-        # sol_baseline.compute_non_solver_quantities(p_baseline)   
+        sol_baseline.scale_P(p_baseline)
+        # sol_baseline.compute_price_indices(p_baseline)
+        sol_baseline.compute_non_solver_quantities(p_baseline)   
         
-        # write = True
+        write = True
         
-        # method = 'fixed_point'
+        method = 'fixed_point'
         
-        # deltas,welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
-        #                   plot_convergence = True,solver_options=None,tol=1e-3)
+        deltas,welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
+                          plot_convergence = True,solver_options=None,tol=1e-3)
         
-        # p = p_baseline.copy()
-        # p.delta[...,1] = deltas[...,-1]
+        p = p_baseline.copy()
+        p.delta[...,1] = deltas[...,-1]
         
-        # sol, sol_c = fixed_point_solver(p,x0=p.guess,
-        #                                 context = 'counterfactual',
-        #                         cobweb_anim=False,tol =1e-14,
-        #                         accelerate=False,
-        #                         accelerate_when_stable=True,
-        #                         cobweb_qty='phi',
-        #                         plot_convergence=False,
-        #                         plot_cobweb=False,
-        #                         safe_convergence=0.001,
-        #                         disp_summary=False,
-        #                         damping = 10,
-        #                         max_count = 1e4,
-        #                         accel_memory = 50, 
-        #                         accel_type1=True, 
-        #                         accel_regularization=1e-10,
-        #                         accel_relaxation=0.5, 
-        #                         accel_safeguard_factor=1, 
-        #                         accel_max_weight_norm=1e6,
-        #                         damping_post_acceleration=5
-        #                         # damping=10
-        #                           # apply_bound_psi_star=True
-        #                         )
-        # # sol_c = var.var_from_vector(sol.x, p)    
-        # # sol_c.scale_tau(p)
-        # sol_c.scale_P(p)
-        # # sol_c.compute_price_indices(p)
-        # sol_c.compute_non_solver_quantities(p)
-        # sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
-        # sol_c.compute_world_welfare_changes(p,sol_baseline)
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                # damping=10
+                                  # apply_bound_psi_star=True
+                                )
+        # sol_c = var.var_from_vector(sol.x, p)    
+        # sol_c.scale_tau(p)
+        sol_c.scale_P(p)
+        # sol_c.compute_price_indices(p)
+        sol_c.compute_non_solver_quantities(p)
+        sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
+        sol_c.compute_world_welfare_changes(p,sol_baseline)
         
-        # if write:
-        #     if not os.path.exists('nash_eq_recaps/deltas.csv'):
-        #         deltas_df = pd.DataFrame(columns = ['baseline',
-        #                                         'variation',
-        #                                         'method'] + p_baseline.countries)
-        #         deltas_df.to_csv('nash_eq_recaps/deltas.csv')
-        #     deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
-        #     run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                     baseline_dic['variation'],
-        #                     method]+deltas[...,-1].tolist(), 
-        #                     index = deltas_df.columns).T
-        #     deltas_df = pd.concat([deltas_df, run],ignore_index=True)
-        #     deltas_df.to_csv('nash_eq_recaps/deltas.csv')
+        if write:
+            if not os.path.exists('nash_eq_recaps/deltas.csv'):
+                deltas_df = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'method'] + p_baseline.countries)
+                deltas_df.to_csv('nash_eq_recaps/deltas.csv')
+            deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            method]+deltas[...,-1].tolist(), 
+                            index = deltas_df.columns).T
+            deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+            deltas_df.to_csv('nash_eq_recaps/deltas.csv')
             
-        #     if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
-        #         cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-        #                                         'variation',
-        #                                         'method'] + p_baseline.countries + ['Equal','Negishi'])
-        #         cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
-        #     cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
-        #     run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                     baseline_dic['variation'],
-        #                     method]+welfares[...,-1].tolist()+[sol_c.cons_eq_pop_average_welfare_change,
-        #                                                         sol_c.cons_eq_negishi_welfare_change], 
-        #                     index = cons_eq_welfares.columns).T
-        #     cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
-        #     cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
+            if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
+                cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'method'] + p_baseline.countries + ['Equal','Negishi'])
+                cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
+            cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            method]+welfares[...,-1].tolist()+[sol_c.cons_eq_pop_average_welfare_change,
+                                                                sol_c.cons_eq_negishi_welfare_change], 
+                            index = cons_eq_welfares.columns).T
+            cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+            cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
         
         ##%% Coop eq
         lb_delta = 0.01

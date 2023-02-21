@@ -1936,10 +1936,13 @@ class history:
 class history_nash:
     def __init__(self):
         self.count = 0
+        self.make_a_pause = True
         self.delta = []
         self.welfare = []
         self.current_deltas = None
         self.current_welfare = None
+        self.expected_welfare = np.full(7,np.nan)
+        self.expected_deltas = np.full(7,np.nan)
     def update_current_deltas(self,new_deltas):
         self.current_deltas = new_deltas
     def update_current_welfare(self,new_welfare):

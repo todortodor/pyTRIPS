@@ -501,10 +501,11 @@ def is_oscillating(deltas,column,window):
     #     return np.allclose(np.where(np.sign(a[:-1]) != np.sign(a[1:])) , np.arange(window-1))
     return (sign_changes[0].shape[0] >= window-2) or (np.all(a == 0))
 
-def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None):
+def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None, reverse_search=False):
     # print('solving')
     back_up_delta_value = p.delta[p.countries.index(c),1]
     # p.delta[p.countries.index(c),1] = 10**delta
+    # p.delta[p.countries.index(c),1] = -delta
     p.delta[p.countries.index(c),1] = delta
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     context = 'counterfactual',
@@ -534,26 +535,35 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None):
     # sol_c.compute_price_indices(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_it_baseline)
-    # print('solved')
+    # print(hist.current_deltas)
     
     if hist is not None:
+        fig, ax = plt.subplots(figsize=(16,12))
         hist.delta.append(p.delta[p.countries.index(c),1])
         hist.welfare.append(-sol_c.cons_eq_welfare[p.countries.index(c)])
-        plt.scatter(np.log(hist.delta),np.log(-np.array(hist.welfare)),color='grey')
-        plt.scatter(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1]), color = 'red',label='search optimization')
-        plt.annotate(c,(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1])),color='red')
-        plt.scatter(np.log(hist.current_deltas),np.log(-hist.current_welfare), color= 'blue',label='current state of the world')
+        ax.scatter(np.log(hist.delta),np.log(-np.array(hist.welfare)),color='grey')
+        ax.scatter(np.log(hist.expected_deltas),np.log(-np.array(hist.expected_welfare)),color='grey',label='expected change')
         for i,country in enumerate(p.countries):
-            plt.annotate(country,(np.log(hist.current_deltas)[i],np.log(-hist.current_welfare[i])))
+            ax.annotate(country,(np.log(hist.expected_deltas)[i],np.log(-hist.expected_welfare[i])),color='grey')
+        ax.scatter(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1]), color = 'red',label='search optimization')
+        ax.annotate(c,(np.log(hist.delta)[-1],np.log(-np.array(hist.welfare)[-1])),color='red')
+        ax.scatter(np.log(hist.current_deltas),np.log(-hist.current_welfare), color= 'blue',label='current state of the world')
+        for i,country in enumerate(p.countries):
+            ax.annotate(country,(np.log(hist.current_deltas)[i],np.log(-hist.current_welfare[i])))
         plt.xlabel('Delta (log)')
         plt.ylabel('Consumption equivalent welfare change (log)')
         plt.legend()
         plt.show()
+        if hist.make_a_pause:
+            # input("Press Enter to run next iteration")
+            hist.make_a_pause = False
+        # time.sleep(5)
     p.delta[p.countries.index(c),1] = back_up_delta_value
     p.guess = sol.x
     
     return -sol_c.cons_eq_welfare[p.countries.index(c)]
-    
+    # return [-sol_c.cons_eq_welfare[p.countries.index(c)]]
+     
 
 def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
     p.delta[...,1] = deltas
@@ -623,24 +633,48 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     sol_c.compute_world_welfare_changes(p, sol_baseline)
     return -sol_c.negishi_welfare_change
     
-def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_nash = None):
+def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_nash = None, reverse_search = False):
     new_deltas = np.zeros(len(p.countries))
+    # if reverse_search:
+    #     bounds = (-ub_delta, -lb_delta)
+    # else:
+    bounds=(lb_delta, ub_delta)
     for i,c in enumerate(p.countries):
         delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta,
-                                             method='bounded',
-                                             # bounds=(np.log10(lb_delta), np.log10(ub_delta)),
-                                             bounds=(lb_delta, ub_delta),
-                                             args = (p,c,sol_it_baseline, hist_nash),
-                                              # options={'disp':3},
+                                              method='bounded',
+                                               bounds=bounds,
+                                              args = (p,c,sol_it_baseline, hist_nash, reverse_search),
+                                                # options={'disp':3},
                                               tol=1e-8
-                                             )
+                                              )
+        # rranges = (slice(lb_delta, ub_delta, 0.01),)
+        # delta_min = optimize.brute(func=minus_welfare_of_delta,#x0=np.array(p.delta[p.countries.index(c),1]),
+        #                                      # method='brute',
+        #                                      # bounds=(np.log10(lb_delta), np.log10(ub_delta)),
+        #                                        # bounds=(lb_delta, ub_delta),
+        #                                       ranges=(slice(lb_delta, ub_delta, 0.01),),
+        #                                      args = (p,c,sol_it_baseline, hist_nash),
+        #                                        # options={'disp':3},
+        #                                       # tol=1e-8
+        #                                      )
         # new_deltas[i] = 10**delta_min.x
+        # new_deltas[i] = (1-2*reverse_search)*delta_min.x
         new_deltas[i] = delta_min.x
+        if hist_nash is not None:
+            hist_nash.expected_deltas[i] = new_deltas[i]
+            # hist_nash.expected_deltas[i] = -delta_min.x
+            hist_nash.expected_welfare[i] = delta_min.fun
+            
+    if hist_nash is not None:
+        # input("Press Enter to run next iteration")
+        hist_nash.make_a_pause = True
+                
     return new_deltas
+    # return -new_deltas
 
 def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                  plot_convergence = False,solver_options=None,tol=5e-5,window=4,
-                 damping = 1,plot_history = False):
+                 damping = 1,plot_history = False,reverse_search=False):
     
     if solver_options is None:
         solver_options = dict(cobweb_anim=False,tol =1e-14,
@@ -700,7 +734,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
     
     if plot_history:
         hist_nash = history_nash()
-        hist_nash.update_current_deltas(np.log(x_old))
+        hist_nash.update_current_deltas(x_old)
         hist_nash.update_current_welfare(-np.ones(len(x_old)))
     else:
         hist_nash = None
@@ -742,7 +776,8 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
             
         # new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_it_baseline, lb_delta, ub_delta)
-        new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, ub_delta, hist_nash = hist_nash)
+        new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, 
+                                                    ub_delta, hist_nash = hist_nash,reverse_search = reverse_search)
         
         p_it_baseline.delta[...,1] = new_deltas
         sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
@@ -786,8 +821,8 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
         
         convergence.append(np.linalg.norm((new_deltas - x_old)/x_old))
         
-        print(convergence)
-        print((new_deltas-x_old)/x_old)
+        # print(convergence)
+        # print((new_deltas-x_old)/x_old)
         
         it += 1
         

@@ -20,7 +20,7 @@ baseline_number = '402'
 if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.0/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -33,13 +33,13 @@ if new_run:
     m = moments()
     m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.0/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
 
-if 'theta' in p.calib_parameters:
-    p.update_sigma_with_SRDUS_target(m)
+# if 'theta' in p.calib_parameters:
+#     p.update_sigma_with_SRDUS_target(m)
 
 # if 'fo' not in p.calib_parameters:
 #     p.calib_parameters.append('fo')
@@ -61,8 +61,8 @@ if 'theta' in p.calib_parameters:
 #     m.list_of_moments.append('SINNOVPATEU')
 # if 'SRDUS' not in m.list_of_moments:
 #     m.list_of_moments.append('SRDUS')
-if 'SRDUS' in m.list_of_moments:
-    m.list_of_moments.remove('SRDUS')
+# if 'SRDUS' in m.list_of_moments:
+#     m.list_of_moments.remove('SRDUS')
 # if 'SINNOVPATEU' in m.list_of_moments:
 #     m.list_of_moments.remove('SINNOVPATEU')
 # if 'DOMPATINEU' in m.list_of_moments:
@@ -70,10 +70,10 @@ if 'SRDUS' in m.list_of_moments:
 # if 'DOMPATINUS' in m.list_of_moments:
 #     m.list_of_moments.remove('DOMPATINUS')
 
-if 'DOMPATEU' in m.list_of_moments:
-    m.list_of_moments.remove('DOMPATEU')
-if 'DOMPATUS' in m.list_of_moments:
-    m.list_of_moments.remove('DOMPATUS')
+# if 'DOMPATEU' in m.list_of_moments:
+#     m.list_of_moments.remove('DOMPATEU')
+# if 'DOMPATUS' in m.list_of_moments:
+#     m.list_of_moments.remove('DOMPATUS')
 # if 'DOMPATINUS' not in m.list_of_moments:
 #     m.list_of_moments.append('DOMPATINUS')
 # if 'DOMPATINEU' not in m.list_of_moments:
@@ -95,21 +95,21 @@ if 'DOMPATUS' in m.list_of_moments:
 #     if 'PCOST' not in m.list_of_moments:
 #         m.list_of_moments.append('PCOST')
         
-# replacing UUPCOST with PCOST(INTER)NOAGG
-if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-    if 'UUPCOST' in m.list_of_moments:
-        m.list_of_moments.remove('UUPCOST')
-    if 'PCOSTNOAGG' in m.list_of_moments:
-        m.list_of_moments.remove('PCOSTNOAGG')
-    if 'PCOSTINTERNOAGG' not in m.list_of_moments:
-        m.list_of_moments.append('PCOSTINTERNOAGG')
-elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-    if 'UUPCOST' in m.list_of_moments:
-        m.list_of_moments.remove('UUPCOST')
-    if 'PCOSTINTERNOAGG' in m.list_of_moments:
-        m.list_of_moments.remove('PCOSTINTERNOAGG')
-    if 'PCOSTNOAGG' not in m.list_of_moments:
-        m.list_of_moments.append('PCOSTNOAGG')
+# # replacing UUPCOST with PCOST(INTER)NOAGG
+# if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+#     if 'UUPCOST' in m.list_of_moments:
+#         m.list_of_moments.remove('UUPCOST')
+#     if 'PCOSTNOAGG' in m.list_of_moments:
+#         m.list_of_moments.remove('PCOSTNOAGG')
+#     if 'PCOSTINTERNOAGG' not in m.list_of_moments:
+#         m.list_of_moments.append('PCOSTINTERNOAGG')
+# elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
+#     if 'UUPCOST' in m.list_of_moments:
+#         m.list_of_moments.remove('UUPCOST')
+#     if 'PCOSTINTERNOAGG' in m.list_of_moments:
+#         m.list_of_moments.remove('PCOSTINTERNOAGG')
+#     if 'PCOSTNOAGG' not in m.list_of_moments:
+#         m.list_of_moments.append('PCOSTNOAGG')
 
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
@@ -208,11 +208,11 @@ m.plot_moments(m.list_of_moments)
 # commentary = 'With PCOSTNOAGG and no DOMPAT'
 commentary = 'drop SRDUS with PCOSTNOAGG, no DOMPAT'
 # commentary = ''
-# baseline_number = '402'
+baseline_number = '403'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 18.0
+run_number = 1.0
 # run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
