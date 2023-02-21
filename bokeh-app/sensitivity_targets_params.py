@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '311'
+baseline = '403'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters(n=7,s=2)
 p_baseline.load_data(baseline_path)
@@ -29,6 +29,7 @@ m_baseline = moments()
 m_baseline.load_data()
 m_baseline.load_run(baseline_path)
 sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                       context='calibration',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
@@ -48,33 +49,16 @@ sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                         damping_post_acceleration=5
                         )
 
-sol_baseline = var.var_from_vector(sol.x, p_baseline)    
+sol_baseline = var.var_from_vector(sol.x, p_baseline,context = 'calibration')    
 sol_baseline.scale_P(p_baseline)
-sol_baseline.compute_price_indices(p_baseline)
+# sol_baseline.compute_price_indices(p_baseline)
 sol_baseline.compute_non_solver_quantities(p_baseline) 
 
 m_baseline.compute_moments(sol_baseline, p_baseline)
 
-# comments_dic = {'1':'1 : drop South in RD targeting',
-#                 '2.1':'2.1 : added domestic US to patent flow moment',
-#                 '2.2':'2.2 : added domestic EU to patent flow moment',
-#                 '2.3':'2.3 : added domestic US and EU to patent flow moment',
-#                 '3.1':'3.1 : added DOMPATUS',
-#                 '3.2':'3.2 : added DOMPATEU',
-#                 '3.3':'3.3 : added DOMPATUS and DOMPATUS',
-#                 '4.1':'4.1 : 21 and drop South in RD',
-#                 '4.2':'4.2 : 22 and drop South in RD',
-#                 '4.3':'4.3 : 23 and drop South in RD',
-#                 '5':'5 : patent cost relative to RD_US (JUPCOSTRD)',
-#                 '6':'6 : fix delta_US = 0.05 and drop JUPCOST',
-#                 '7':'7 : drop SRDUS'
-#                 }
-
 moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS',
-                     'DOMPATUS','DOMPATEU']
-# moments_to_change = ['ERDUS']
-parameters_to_change = ['kappa','gamma','rho']
-# parameters_to_change = ['nu_tilde']
+                     'SINNOVPATEU','DOMPATINUS','DOMPATINEU','TE']
+parameters_to_change = ['kappa','gamma','rho','zeta']
 
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 
@@ -112,9 +96,6 @@ make_dirs([parent_moment_result_path,
 dic_runs = dict([(mom, np.linspace(getattr(m_baseline,mom+'_target')*0.5,getattr(m_baseline,mom+'_target')*1.5,11))
                  for mom in moments_to_change])
 
-if 'ERDUS' in moments_to_change:
-    dic_runs['ERDUS'] = np.linspace(getattr(m_baseline,'ERDUS')*0.5,getattr(m_baseline,'ERDUS')*1.5,11)
-
 for k, v in dic_runs.items():
     print(k)
     print(v)
@@ -142,21 +123,19 @@ for k, v in dic_runs.items():
         m.drop_CHN_IND_BRA_ROW_from_RD = True
         p = parameters(n=7,s=2)
         p.load_data(baseline_path)
-        if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
-            m.list_of_moments.append('ERDUS')
-            if 'kappa' not in p.calib_parameters:
-                p.calib_parameters.append('kappa')
+        # if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
+        #     m.list_of_moments.append('ERDUS')
+        #     if 'kappa' not in p.calib_parameters:
+        #         p.calib_parameters.append('kappa')
         setattr(m,moment_to_change+'_target',target)
-        if 'theta' in p_baseline.calib_parameters:
-            p.update_sigma_with_SRDUS_target(m)
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()
         hist = history(*tuple(m.list_of_moments+['objective']))
         cond = True
         iterations = 0
-        max_iter = 10
+        max_iter = 5
         while cond:
-            if iterations < max_iter-1:
+            if iterations < max_iter-2:
                 test_ls = optimize.least_squares(fun = calibration_func,    
                                         x0 = p.make_p_vector(), 
                                         args = (p,m,p.guess,hist,start_time), 
@@ -189,6 +168,7 @@ for k, v in dic_runs.items():
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
         sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
+                                        context = 'calibration',
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -210,13 +190,11 @@ for k, v in dic_runs.items():
                                   # apply_bound_psi_star=True
                                 )
     
-        # sol_c = var.var_from_vector(sol.x, p_sol)    
-        # sol_c.scale_tau(p_sol)
-        p_sol.guess = sol.x
-        # sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
-        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 
+        p_sol.guess = sol.x
+        p_sol.tau = sol_c.tau
+        
         m.compute_moments(sol_c,p_sol)
         m.compute_moments_deviations()
         
@@ -224,7 +202,6 @@ for k, v in dic_runs.items():
         m.write_moments(result_path+str(i)+'/')
         
         write_calibration_results(dropbox_path+str(i),p_sol,m,sol_c,commentary = '')
-        # m.plot_moments(m.list_of_moments, save_plot = dropbox_path+str(i))
         
 #%% make calibration runs for different parameters
 
@@ -267,16 +244,14 @@ for k, v in dic_runs.items():
             if 'zeta' in p.calib_parameters:
                 p.calib_parameters.remove('zeta')
         setattr(p,par_to_change,par)
-        if 'theta' in p_baseline.calib_parameters:
-            p.update_sigma_with_SRDUS_target(m)
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()
         hist = history(*tuple(m.list_of_moments+['objective']))
         cond = True
         iterations = 0
-        max_iter = 10
+        max_iter = 5
         while cond:
-            if iterations < max_iter-1:
+            if iterations < max_iter-2:
                 test_ls = optimize.least_squares(fun = calibration_func,    
                                         x0 = p.make_p_vector(), 
                                         args = (p,m,p.guess,hist,start_time), 
@@ -308,7 +283,9 @@ for k, v in dic_runs.items():
             iterations += 1
         p_sol = p.copy()
         p_sol.update_parameters(test_ls.x)
-        sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
+        sol, sol_c = fixed_point_solver(p_sol,
+                                        context = 'calibration',
+                                        x0=p_sol.guess,
                                 cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -329,14 +306,11 @@ for k, v in dic_runs.items():
                                 # damping=10
                                   # apply_bound_psi_star=True
                                 )
-    
-        # sol_c = var.var_from_vector(sol.x, p_sol)    
-        # sol_c.scale_tau(p_sol)
-        p_sol.guess = sol.x
-        # sol_c.compute_non_solver_quantities(p_sol) 
         sol_c.scale_P(p_sol)
-        # sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p_sol) 
+        p_sol.guess = sol.x
+        p_sol.tau = sol_c.tau
+        
         m.compute_moments(sol_c,p_sol)
         m.compute_moments_deviations()
         
@@ -392,7 +366,8 @@ for moment_to_change in moments_to_change:
             m = moments()
             m.load_data()
             m.load_run(run_path)
-            sol, sol_c = fixed_point_solver(p,x0=p.guess,
+            sol, sol_c = fixed_point_solver(p,
+                                            context = 'calibration',x0=p.guess,
                                     cobweb_anim=False,tol =1e-14,
                                     accelerate=False,
                                     accelerate_when_stable=True,
@@ -411,7 +386,7 @@ for moment_to_change in moments_to_change:
                                     accel_max_weight_norm=1e6,
                                     damping_post_acceleration=5
                                     )
-            sol_c = var.var_from_vector(sol.x, p)    
+            sol_c = var.var_from_vector(sol.x, p,context='calibration')    
             sol_c.scale_P(p)
             sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p) 
@@ -435,7 +410,8 @@ for moment_to_change in moments_to_change:
             m = moments()
             m.load_data()
             m.load_run(run_path)
-            sol, sol_c = fixed_point_solver(p,x0=p.guess,
+            sol, sol_c = fixed_point_solver(p,
+                                            context = 'calibration',x0=p.guess,
                                     cobweb_anim=False,tol =1e-14,
                                     accelerate=False,
                                     accelerate_when_stable=True,
@@ -454,7 +430,7 @@ for moment_to_change in moments_to_change:
                                     accel_max_weight_norm=1e6,
                                     damping_post_acceleration=5
                                     )
-            sol_c = var.var_from_vector(sol.x, p)    
+            sol_c = var.var_from_vector(sol.x, p,context='calibration')    
             sol_c.scale_P(p)
             sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p) 
@@ -701,7 +677,9 @@ for parameter_to_change in parameters_to_change:
         m = moments()
         m.load_data()
         m.load_run(run_path)
-        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+        sol, sol_c = fixed_point_solver(p,
+                                        context = 'calibration',
+                                        x0=p.guess,
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
@@ -720,7 +698,7 @@ for parameter_to_change in parameters_to_change:
                                 accel_max_weight_norm=1e6,
                                 damping_post_acceleration=5
                                 )
-        sol_c = var.var_from_vector(sol.x, p)    
+        sol_c = var.var_from_vector(sol.x, p,context='calibration')    
         sol_c.scale_P(p)
         sol_c.compute_price_indices(p)
         sol_c.compute_non_solver_quantities(p) 
@@ -936,7 +914,9 @@ for moment_to_change in moments_to_change:
             m = moments()
             m.load_data()
             m.load_run(run_path)
-            sol, sol_c = fixed_point_solver(p,x0=p.guess,
+            sol, sol_c = fixed_point_solver(p,
+                                            context = 'calibration',
+                                            x0=p.guess,
                                     cobweb_anim=False,tol =1e-14,
                                     accelerate=False,
                                     accelerate_when_stable=True,
@@ -955,7 +935,7 @@ for moment_to_change in moments_to_change:
                                     accel_max_weight_norm=1e6,
                                     damping_post_acceleration=5
                                     )
-            sol_c = var.var_from_vector(sol.x, p)    
+            sol_c = var.var_from_vector(sol.x, p,context='calibration')    
             sol_c.scale_P(p)
             sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p) 
@@ -1018,6 +998,7 @@ for parameter_to_change in parameters_to_change:
             m.load_data()
             m.load_run(run_path)
             sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                            context = 'calibration',
                                     cobweb_anim=False,tol =1e-14,
                                     accelerate=False,
                                     accelerate_when_stable=True,
@@ -1036,7 +1017,7 @@ for parameter_to_change in parameters_to_change:
                                     accel_max_weight_norm=1e6,
                                     damping_post_acceleration=5
                                     )
-            sol_c = var.var_from_vector(sol.x, p)    
+            sol_c = var.var_from_vector(sol.x, p,context='calibration')    
             sol_c.scale_P(p)
             sol_c.compute_price_indices(p)
             sol_c.compute_non_solver_quantities(p) 

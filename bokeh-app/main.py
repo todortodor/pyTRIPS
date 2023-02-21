@@ -507,7 +507,8 @@ baselines_dic_sol_qty = {}
 # for baseline_nbr in ['201','202']:
 # for baseline_nbr in ['201']:
 
-baseline_list = ['311','312','401','402','403']    
+# baseline_list = ['311','312','401','402','403']    
+baseline_list = ['401','402','403']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -961,11 +962,11 @@ def section_end(s):
 cf_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-               if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+                if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #            if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
 # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
 # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
@@ -1180,7 +1181,8 @@ def get_data_nash_coop(baseline_nash_number):
     
     return welf_pop_weighted, welf_negishi, welf_nash
 
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
+# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['401','402','403'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
