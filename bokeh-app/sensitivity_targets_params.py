@@ -1207,7 +1207,7 @@ for scal_par in ['g_0','k','kappa']:
     
         
 for c_spec_par in ['delta']:
-    for i,c in enumerate(['US']):
+    for i,c in enumerate(['US','EUR']):
         list_of_dfs = []
         for qty,variation_dic in dic_of_variation_dics.items():
             df = pd.DataFrame()
@@ -1215,7 +1215,7 @@ for c_spec_par in ['delta']:
             df[qty] = [getattr(p,c_spec_par)[0,1] for p in variation_dic['p'].values()]
             list_of_dfs.append(df)
         big_df = reduce(lambda  left,right: pd.merge(left,right,on='Change',how='outer'), list_of_dfs)
-        df_dic['delta US'] = big_df
+        df_dic['delta '+c] = big_df
         
         list_of_dfs = []
         for qty,variation_dic in dic_of_variation_dics.items():
@@ -1280,5 +1280,5 @@ for k,df in df_dic.items():
 
 # big_df.to_csv(sensitivity_tables_path+'d_W_US_d_delta_US'+'.csv')   
 # big_df.to_csv(sensitivity_tables_path+'d_g_d_delta_US'+'.csv')   
-big_df.to_csv(sensitivity_tables_path+'RD_US'+'.csv')   
+# big_df.to_csv(sensitivity_tables_path+'RD_US'+'.csv')   
         

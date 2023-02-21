@@ -16,11 +16,11 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '402'
+baseline_number = '403'
 if new_run:
     p = parameters(n=7,s=2)
-    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
+    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -32,8 +32,8 @@ if new_run:
 
     m = moments()
     m.load_data()
-    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
+    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
@@ -206,13 +206,13 @@ m.plot_moments(m.list_of_moments)
 
 # commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
 # commentary = 'With PCOSTNOAGG and no DOMPAT'
-commentary = 'drop SRDUS with PCOSTNOAGG, no DOMPAT'
+commentary = 'diff loss function'
 # commentary = ''
 baseline_number = '403'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 1.0
+run_number = 3.0
 # run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

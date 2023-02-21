@@ -494,7 +494,8 @@ comments_dic['403'] = {'baseline':'bsln:TO:0.0183',
 '1.37':'1.37: TO: 0.0285',
 '1.38':'1.38: TO: 0.029',
 '1.39':'1.39: TO: 0.0295',
-'1.40':'1.40: TO: 0.03'
+'1.40':'1.40: TO: 0.03',
+'2.0':'2.0: ratio loss function'
     }
 
 # comments_dic['401'] = {"baseline":"baseline"}
@@ -902,7 +903,7 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 baselines_dic_sensi = {}
 
 # for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['311']:
+for baseline_nbr in ['403']:
     baselines_dic_sensi[baseline_nbr] = {}
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
@@ -911,7 +912,7 @@ for baseline_nbr in ['311']:
         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
 # baseline_sensi = '101'
-baseline_sensi = '311'
+baseline_sensi = '403'
 qty_sensi = 'delta US over nu'
 
 baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
@@ -928,7 +929,8 @@ p_sensi = figure(title="Sensitivity",
 colors_sensi = itertools.cycle(Category10[10])
 
 for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
-    p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+    if col!='zeta':
+        p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
 
 p_sensi.legend.click_policy="hide"
 p_sensi.legend.label_text_font_size = '8pt'
@@ -1398,8 +1400,10 @@ list_of_to_targets = np.linspace(0.01,0.03,41)
 
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
-cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
+# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
+cf_to_list = sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)
 
 def get_data_to_cf(to_target,country):
     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))

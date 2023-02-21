@@ -21,7 +21,7 @@ import matplotlib.pylab as pylab
 
 p_baseline = parameters(n=7,s=2)
 # p_baseline.load_data('calibration_results_matched_economy/baseline_402_variations/17.1.1/')
-p_baseline.load_data('calibration_results_matched_economy/baseline_402_variations/2.0/')
+p_baseline.load_data('calibration_results_matched_economy/baseline_402_variations/2.1.3/')
 
 deltas, welfares = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',
                  plot_convergence = False,solver_options=None,tol=5e-3,window=4,plot_history=True,

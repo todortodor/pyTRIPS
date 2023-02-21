@@ -193,6 +193,7 @@ def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None):
     back_up_delta = p.delta[0,1]
     p.delta[0,1] = p.delta[0,1]*(1+epsilon)
     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+                                    context = 'counterfactual',
                                   accelerate=False,
                                   accelerate_when_stable=True,
                                   plot_cobweb=False,
@@ -222,6 +223,7 @@ def compute_deriv_growth_to_patent_protec_US(sol_baseline,p,v0=None):
     back_up_delta = p.delta[0,1]
     p.delta[0,1] = p.delta[0,1]*(1+epsilon)
     sol, sol_c = fixed_point_solver(p,x0=v0,tol=1e-14,
+                                    context = 'counterfactual',
                                   accelerate=False,
                                   accelerate_when_stable=True,
                                   plot_cobweb=False,
