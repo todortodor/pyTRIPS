@@ -501,12 +501,7 @@ comments_dic['403'] = {'baseline':'bsln:TO:0.0183',
 '1.37':'1.37: TO: 0.0285',
 '1.38':'1.38: TO: 0.029',
 '1.39':'1.39: TO: 0.0295',
-'1.40':'1.40: TO: 0.03',
-'2.0':'2.0: ratio loss function',
-'3.0':'3.0: linear weight dim',
-'4.0':'4.0: log weight dim',
-'5.0':'5.0: ratio loss, sqrt weight dim',
-'6.0':'6.0: ratio loss, log weight dim'
+'1.40':'1.40: TO: 0.03'
     }
 
 comments_dic['404'] = {
