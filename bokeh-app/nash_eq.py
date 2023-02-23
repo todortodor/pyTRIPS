@@ -79,8 +79,8 @@ pylab.rcParams.update(params)
 #     ]
 
 baseline_dics = [
-    # {'baseline':'402',
-    #                   'variation': 'baseline'},
+    {'baseline':'404',
+                      'variation': 'baseline'},
     # {'baseline':'402',
     #                   'variation': '1.0'},
     # {'baseline':'402',
@@ -169,14 +169,14 @@ baseline_dics = [
     #                   'variation': '15.1.1'},
     # {'baseline':'402',
     #                   'variation': '16.1.1'},
-    {'baseline':'402',
-                      'variation': '2.1.2'},
-    {'baseline':'402',
-                      'variation': '2.1.3'},
-    {'baseline':'402',
-                      'variation': '17.1.2'},
-    {'baseline':'402',
-                      'variation': '17.1.3'},
+    # {'baseline':'402',
+    #                   'variation': '2.1.2'},
+    # {'baseline':'402',
+    #                   'variation': '2.1.3'},
+    # {'baseline':'402',
+    #                   'variation': '17.1.2'},
+    # {'baseline':'402',
+    #                   'variation': '17.1.3'},
     # {'baseline':'402',
     #                   'variation': '18.1.1'},
     ]
@@ -219,7 +219,7 @@ for baseline_dic in baseline_dics:
     # sol_baseline.compute_price_indices(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)   
     
-    write = False
+    write = True
     
     method = 'fixed_point'
     

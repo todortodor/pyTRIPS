@@ -106,26 +106,27 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     # df_scalar_moments_deviation = pd.DataFrame(columns = ['baseline'])
     # df_scalar_moments_deviation.index.name='x'
     for mom in list_of_moments:
-        if len(m_baseline.idx[mom]) == 1:
-            if mom != 'OUT':
+        if mom != 'objective':
+            if len(m_baseline.idx[mom]) == 1:
+                if mom != 'OUT':
+                    try:
+                        df_scalar_moments.loc[mom,'target'] = float(getattr(m_baseline,mom+'_target'))
+                        df_scalar_moments.loc[mom,'baseline'] = float(getattr(m_baseline,mom))
+                        # df_scalar_moments_deviation.loc[mom,'baseline'] = float(getattr(m_baseline,mom+'_deviation'))
+                    except:
+                        pass
+            else:
                 try:
-                    df_scalar_moments.loc[mom,'target'] = float(getattr(m_baseline,mom+'_target'))
-                    df_scalar_moments.loc[mom,'baseline'] = float(getattr(m_baseline,mom))
-                    # df_scalar_moments_deviation.loc[mom,'baseline'] = float(getattr(m_baseline,mom+'_deviation'))
+                    df = pd.DataFrame(index = m_baseline.idx[mom], 
+                                      columns = ['target','baseline'], 
+                                      # data = np.array([getattr(m_baseline,mom+'_target').ravel(), getattr(m_baseline,mom).ravel()])
+                                      )
+                    df.index.name='x'
+                    df['target'] = getattr(m_baseline,mom+'_target').ravel()
+                    df['baseline'] = getattr(m_baseline,mom).ravel()
+                    dic_df_mom[mom] = df
                 except:
                     pass
-        else:
-            try:
-                df = pd.DataFrame(index = m_baseline.idx[mom], 
-                                  columns = ['target','baseline'], 
-                                  # data = np.array([getattr(m_baseline,mom+'_target').ravel(), getattr(m_baseline,mom).ravel()])
-                                  )
-                df.index.name='x'
-                df['target'] = getattr(m_baseline,mom+'_target').ravel()
-                df['baseline'] = getattr(m_baseline,mom).ravel()
-                dic_df_mom[mom] = df
-            except:
-                pass
             
     for sol_qty in ['semi_elast_RD_delta','DT','psi_o_star']:
         df = pd.DataFrame(index = p_baseline.countries, 
@@ -159,6 +160,9 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         df['baseline'] = getattr(sol_baseline,'psi_m_star')[:,:,1].min(axis=0)
         dic_df_sol[sol_qty] = df
     
+    df_scalar_moments.loc['objective','target'] = 0.01
+    # df_scalar_moments.loc['objective','baseline'] = (m_baseline.deviation_vector()**2).sum()
+    df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
     dic_df_mom['scalars'] = df_scalar_moments
     # dic_df_mom['scalar deviations'] = df_scalar_moments_deviation
     return dic_df_param, dic_df_mom, dic_df_sol
@@ -188,7 +192,10 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
     for k in dic_df_mom.keys():
         if k == 'scalars':
             for i in dic_df_mom[k].index:
-                dic_df_mom[k].loc[i,run_name] = float(getattr(m,i))
+                if i == 'objective':
+                    dic_df_mom[k].loc[i,run_name] = m.objective_function()*28
+                else:
+                    dic_df_mom[k].loc[i,run_name] = float(getattr(m,i))
         if k == 'scalar deviations':
             for i in dic_df_mom[k].index:
                 dic_df_mom[k].loc[i,run_name] = float(getattr(m,i+'_deviation'))/m.weights_dict[i]
@@ -224,7 +231,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRDUS', 'SRGDP','UUPCOST', 'PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG','SINNOVPATUS',
  'SINNOVPATEU', 'TO','TP',
- 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW']
+ 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW','objective']
 
 comments_dic = {}
 
@@ -495,7 +502,27 @@ comments_dic['403'] = {'baseline':'bsln:TO:0.0183',
 '1.38':'1.38: TO: 0.029',
 '1.39':'1.39: TO: 0.0295',
 '1.40':'1.40: TO: 0.03',
-'2.0':'2.0: ratio loss function'
+'2.0':'2.0: ratio loss function',
+'3.0':'3.0: linear weight dim',
+'4.0':'4.0: log weight dim',
+'5.0':'5.0: ratio loss, sqrt weight dim',
+'6.0':'6.0: ratio loss, log weight dim'
+    }
+
+comments_dic['404'] = {
+    'baseline':'baseline',
+    '1.0':'1.0: SRDUS, UUPCOST, log loss',
+    '1.1':'1.1: SRDUS, UUPCOST, ratio loss',
+    '1.2':'1.2: SRDUS, PCOSTNOAGG, log loss',
+    '1.3':'1.3: SRDUS, PCOSTNOAGG, ratio loss',
+    '1.4':'1.4: no SRDUS, UUPCOST, log loss',
+    '1.5':'1.5: no SRDUS, UUPCOST, ratio loss',
+    '1.6':'1.6: no SRDUS, PCOSTNOAGG, log loss',
+    '1.7':'1.7: no SRDUS, PCOSTNOAGG, ratio loss',
+    '1.8':'1.8: no RD, UUPCOST, log loss',
+    '1.9':'1.9: no RD, UUPCOST, ratio loss',
+    '1.10':'1.10: no RD, PCOSTNOAGG, log loss',
+    '1.11':'1.11: no RD, PCOSTNOAGG, ratio loss',
     }
 
 # comments_dic['401'] = {"baseline":"baseline"}
@@ -504,12 +531,8 @@ baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-# for baseline_nbr in ['101','102','104']:
-# for baseline_nbr in ['201','202']:
-# for baseline_nbr in ['201']:
-
 # baseline_list = ['311','312','401','402','403']    
-baseline_list = ['401','402','403']    
+baseline_list = ['402','403','404']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -568,7 +591,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '402'
+baseline_mom = '404'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -633,12 +656,12 @@ legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=
 # legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
 #                     label_text_font_size="8pt",
 #                     spacing = 0, location=(10, -60))
-legend_mom_split_1 = Legend(items=legend_items_mom[:round(len(legend_items_mom)/2)], click_policy="hide", 
+legend_mom_split_1 = Legend(items=legend_items_mom[:round((len(legend_items_mom)+1)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
                     # location=(10, -60)
                     )
-legend_mom_split_2 = Legend(items=legend_items_mom[round(len(legend_items_mom)/2):], click_policy="hide", 
+legend_mom_split_2 = Legend(items=legend_items_mom[round((len(legend_items_mom)+1)/2):], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0
                     # , location=(10, -60)
@@ -661,8 +684,8 @@ def update_baseline_mom(attrname, old, new):
     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
                         for col in ds_mom.data if col in comments_dic[new]]
     # p_mom.legend.items = legend_items_mom
-    legend_mom_split_1.items = legend_items_mom[:round(len(legend_items_mom)/2)]
-    legend_mom_split_2.items = legend_items_mom[round(len(legend_items_mom)/2):]
+    legend_mom_split_1.items = legend_items_mom[:round((len(legend_items_mom)+1)/2)]
+    legend_mom_split_2.items = legend_items_mom[round((1+len(legend_items_mom))/2):]
     data_table_mom.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
@@ -704,7 +727,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '402'
+baseline_par = '404'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -743,12 +766,12 @@ legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=
 #                     # , location=(10, -30)
 #                     )
 
-legend_par_split_1 = Legend(items=legend_items_par[:round(len(legend_items_par)/2)], click_policy="hide", 
+legend_par_split_1 = Legend(items=legend_items_par[:round((len(legend_items_par)+1)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
                     # location=(10, -60)
                     )
-legend_par_split_2 = Legend(items=legend_items_par[round(len(legend_items_par)/2):], click_policy="hide", 
+legend_par_split_2 = Legend(items=legend_items_par[round((1+len(legend_items_par))/2):], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0
                     # , location=(10, -60)
@@ -779,8 +802,8 @@ def update_baseline_par(attrname, old, new):
                         for col in ds_par.data if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
     # p_par.legend.items = legend_items_par
-    legend_par_split_1.items = legend_items_par[:round(len(legend_items_par)/2)]
-    legend_par_split_2.items = legend_items_par[round(len(legend_items_par)/2):]
+    legend_par_split_1.items = legend_items_par[:round((1+len(legend_items_par))/2)]
+    legend_par_split_2.items = legend_items_par[round((len(legend_items_par)+1)/2):]
                       
     data_table_par.columns = [
             TableColumn(field="x"),
@@ -799,7 +822,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '402'
+baseline_sol_qty = '404'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -838,12 +861,12 @@ legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], re
 #                         label_text_font_size="8pt",spacing = 0
 #                         , location=(10, -30))
 
-legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round(len(legend_items_sol_qty)/2)], click_policy="hide", 
+legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
                     # location=(10, -60)
                     )
-legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round(len(legend_items_sol_qty)/2):], click_policy="hide", 
+legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0
                     # , location=(10, -60)
@@ -871,8 +894,8 @@ def update_baseline_sol_qty(attrname, old, new):
                             for col in ds_sol_qty.data  if col in comments_dic[new]]
     # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
     # p_sol_qty.legend.items = legend_items_sol_qty
-    legend_sol_qty_split_1.items = legend_items_sol_qty[:round(len(legend_items_sol_qty)/2)]
-    legend_sol_qty_split_2.items = legend_items_sol_qty[round(len(legend_items_sol_qty)/2):]
+    legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
+    legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
     data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_sol_qty(attrname, old, new):
@@ -955,18 +978,18 @@ sensitivity_report = column(controls_sensi,p_sensi)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '402'
+baseline_cf = '404'
 country_cf = 'USA'
 
 # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)+\
+            if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('401') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
-    #            if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
@@ -1051,11 +1074,11 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% Jacobian panel
 
-baseline_jac = '402'
+baseline_jac = '404'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
@@ -1147,7 +1170,7 @@ second_panel = row(sensitivity_report,counterfactuals_report,jac_report)
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '402'
+baseline_nash_coop = '404'
 
 dic_change_labels_for_403 = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
 
@@ -1184,7 +1207,7 @@ def get_data_nash_coop(baseline_nash_number):
     return welf_pop_weighted, welf_negishi, welf_nash
 
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['401','402','403'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1248,8 +1271,8 @@ columns = [
 explication = Div(text="In the legend, first is the quantity displayed and last\
                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
-                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation<br>\
-                          <br> No simple global Nash for 402 : 15.1")
+                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
+                          ")
 
 # help_panel = column(explication,data_table_eq)
 
@@ -1387,7 +1410,7 @@ def update_baseline_nash(attrname, old, new):
     #     p_eq.xaxis.major_label_overrides = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
     #     p_deltas_eq.xaxis.major_label_overrides = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
 
-baseline_jac_select.on_change('value', update_baseline_nash)
+baseline_nash_coop_select.on_change('value', update_baseline_nash)
 
 #%% counterfactuals 403 TO target
 
@@ -1485,7 +1508,7 @@ counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 
 # second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 # second_panel_bis = column(baseline_jac_select,row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
-second_panel_bis = column(baseline_jac_select,row(p_eq,counterfactuals_to_report),table_widget_welfares,p_deltas_eq,table_widget_deltas)
+second_panel_bis = column(baseline_nash_coop_select,row(p_eq,counterfactuals_to_report),table_widget_welfares,p_deltas_eq,table_widget_deltas)
 
 #%% Kogan paper
 

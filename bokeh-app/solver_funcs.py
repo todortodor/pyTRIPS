@@ -305,7 +305,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                   # apply_bound_psi_star=True
                                 )
     if sol.status == 'failed': 
-        print('trying slower')
+        print('trying safer')
         sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-14,
                                   accelerate=False,
                                   accelerate_when_stable=True,
@@ -313,7 +313,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0,
                                   plot_convergence=False,
                                   cobweb_qty='phi',
                                   disp_summary=False,
-                                  safe_convergence=0.1,
+                                  safe_convergence=0.001,
                                   max_count=2e3,
                                   damping = 10,
                                   accel_memory = 50, 

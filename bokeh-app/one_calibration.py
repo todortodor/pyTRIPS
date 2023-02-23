@@ -16,7 +16,7 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '403'
+baseline_number = '404'
 if new_run:
     p = parameters(n=7,s=2)
     p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
@@ -37,6 +37,8 @@ if new_run:
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
+    
+# m.SINNOVPATEU_target = np.float64(0.3475)
 
 # if 'theta' in p.calib_parameters:
 #     p.update_sigma_with_SRDUS_target(m)
@@ -206,13 +208,13 @@ m.plot_moments(m.list_of_moments)
 
 # commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
 # commentary = 'With PCOSTNOAGG and no DOMPAT'
-commentary = 'diff loss function'
+commentary = 'New baseline 404'
 # commentary = ''
-baseline_number = '403'
+baseline_number = '404'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 3.0
+run_number = 1.0
 # run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

@@ -144,8 +144,8 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
 #     ]
         
 baseline_dics = [
-    # {'baseline':'402',
-    #                   'variation': 'baseline'},
+    {'baseline':'404',
+                      'variation': 'baseline'},
     # {'baseline':'402',
     #                   'variation': '1.0'},
     # {'baseline':'402',
@@ -166,8 +166,8 @@ baseline_dics = [
     #                   'variation': '9.0'},
     # {'baseline':'402',
     #                   'variation': '10.0'},
-    {'baseline':'402',
-                      'variation': '11.0'},
+    # {'baseline':'402',
+    #                   'variation': '11.0'},
     # {'baseline':'402',
     #                   'variation': '12.0'},
     # {'baseline':'402',
