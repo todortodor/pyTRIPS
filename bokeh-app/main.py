@@ -912,9 +912,6 @@ moment_report = column(controls_mom,p_mom,data_table_mom)
 param_report = column(controls_par, p_par, data_table_par)
 sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 first_panel = row(moment_report,param_report,sol_qty_report)
-# from bokeh.io import output_file, show
-# show(first_panel)
-
 
 #%% sensitivities
 
@@ -931,7 +928,7 @@ for baseline_nbr in ['403']:
     
 # baseline_sensi = '101'
 baseline_sensi = '403'
-qty_sensi = 'delta US over nu'
+qty_sensi = 'objective'
 
 baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
 qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
@@ -969,6 +966,151 @@ baseline_sensi_select.on_change('value', update_baseline_sensi)
 qty_sensi_select.on_change('value', update_qty_sensi)
 
 sensitivity_report = column(controls_sensi,p_sensi)
+
+#%% weights sensitivities
+
+baselines_dic_sensi_weights = {}
+
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['404']:
+    baselines_dic_sensi_weights[baseline_nbr] = {}
+    baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
+    files_in_dir = os.listdir(baseline_sensi_weights_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
+    
+baseline_sensi_weights = '404'
+qty_sensi_weights = 'objective'
+
+baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
+qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
+
+ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
+p_sensi_weights = figure(title="Sensitivity to the weights", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in weight',
+                y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
+                y_axis_type="log",
+                tools = TOOLS)
+
+colors_sensi_weights = itertools.cycle(Category10[10])
+
+for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
+    if col!='zeta':
+        p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, legend_label=col)
+
+p_sensi_weights.legend.click_policy="hide"
+p_sensi_weights.legend.label_text_font_size = '8pt'
+p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
+
+def update_baseline_sensi_weights(attrname, old, new):
+    qty_sensi_weights = qty_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
+    
+def update_qty_sensi_weights(attrname, old, new):
+    baseline_sensi_weights = baseline_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
+
+controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
+# controls_mom.sizing_mode = 'scale_width'
+
+baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
+qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
+
+sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
+
+#%% Jacobian panel
+
+baseline_jac = '404'
+country_jac = 'USA'
+sector_jac = 'Patent'
+
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404'])
+
+baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
+files_in_dir = next(os.walk(baseline_jac_path))[1]
+run_list = [f for f in files_in_dir if f[0].isnumeric()]
+run_list = sorted(run_list, key=section)
+variation_jac_select = Select(value='baseline', title='Variation', 
+                              options=['baseline']+run_list)
+
+def update_list_of_runs_jac(attr, old, new):
+    baseline_jac_path = results_path+'baseline_'+new+'_variations/'
+    files_in_dir = next(os.walk(baseline_jac_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list = sorted(run_list, key=section)
+    variation_jac_select.options = ['baseline']+run_list
+
+if variation_jac_select.value == 'baseline':
+    path = results_path+baseline_jac_select.value+'/'
+else:
+    path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
+    
+p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+
+qty_jac_select = Select(value='delta', title='Parameter', options=p_jac.calib_parameters)
+country_jac_select = Select(value='USA', title='Country', options=p_jac.countries)
+sector_jac_select = Select(value='Patent', title='Sector', options=p_jac.sectors)
+
+if qty_jac_select.value in ['eta','T','delta','nu']:
+    idx_to_change_jac = p_jac.countries.index(country_jac_select.value),p_jac.sectors.index(sector_jac_select.value)
+if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
+    idx_to_change_jac = 0,p_jac.sectors.index(sector_jac_select.value)
+if qty_jac_select.value in ['k','g_0']:
+    idx_to_change_jac = 0
+
+qty_to_change_jac = qty_jac_select.value
+
+x_jac = compute_rough_jacobian(p_jac, m_jac, qty_to_change_jac, idx_to_change_jac, 
+                           change_by = 0.25, tol = 1e-14, damping = 5,
+                           max_count = 5e3)
+
+p_jac = figure(title="Rough jacobian computation", 
+               y_range=FactorRange(factors=m_jac.get_signature_list()),
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in contribution to objective function',
+                y_axis_label='Moment',
+                tools = TOOLS) 
+
+data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
+src_jac = ColumnDataSource(data_jac)
+
+# p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
+p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
+
+def update_jac(event):
+    if variation_jac_select.value == 'baseline':
+        path = results_path+baseline_jac_select.value+'/'
+    else:
+        path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
+    par_jac, m_jac, sol_jac = load(path, data_path=data_path)
+    if qty_jac_select.value in ['eta','T','delta','nu']:
+        idx_to_change_jac = par_jac.countries.index(country_jac_select.value),par_jac.sectors.index(sector_jac_select.value)
+    if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
+        idx_to_change_jac = par_jac.sectors.index(sector_jac_select.value)
+    if qty_jac_select.value in ['k','g_0']:
+        idx_to_change_jac = None
+    x_jac = compute_rough_jacobian(par_jac, m_jac, qty_jac_select.value, idx_to_change_jac, 
+                               change_by = 0.1, tol = 1e-14, damping = 5,
+                               max_count = 5e3)
+    data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
+    src_jac.data = data_jac
+    p_jac.y_range.factors = m_jac.get_signature_list()
+
+button_jac = Button(label="Compute")
+button_jac.on_event(ButtonClick, update_jac)
+
+controls_jac = row(baseline_jac_select, variation_jac_select, qty_jac_select, 
+                   country_jac_select, sector_jac_select, button_jac)
+
+baseline_jac_select.on_change('value', update_list_of_runs_jac)
+
+jac_report = column(controls_jac,p_jac)
+
+second_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 
 #%% counterfactuals
 
@@ -1065,98 +1207,99 @@ country_cf_select.on_change('value', update_country_cf)
 
 counterfactuals_report = column(controls_cf,p_cf)
 
-# second_panel = row(sensitivity_report)
+#%% counterfactuals 403 TO target
 
-#%% Jacobian panel
+# baseline_cf = '101'
+# baseline_to_cf = '403'
+country_to_cf = 'USA'
+to_target = 0.0185
 
-baseline_jac = '404'
-country_jac = 'USA'
-sector_jac = 'Patent'
+list_of_to_targets = np.linspace(0.01,0.03,41)
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404'])
+def section_end(s):
+     return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
+cf_to_list = sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)
 
-baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
-files_in_dir = next(os.walk(baseline_jac_path))[1]
-run_list = [f for f in files_in_dir if f[0].isnumeric()]
-run_list = sorted(run_list, key=section)
-variation_jac_select = Select(value='baseline', title='Variation', 
-                              options=['baseline']+run_list)
+def get_data_to_cf(to_target,country):
+    idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
+    df_to_cf = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf,len(cf_to_list)-1)]+'/'+country+'.csv')
+    if country != 'Harmonizing':
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
+    df_to_cf.set_index('delt',inplace=True)
+    return df_to_cf
 
-def update_list_of_runs_jac(attr, old, new):
-    baseline_jac_path = results_path+'baseline_'+new+'_variations/'
-    files_in_dir = next(os.walk(baseline_jac_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list = sorted(run_list, key=section)
-    variation_jac_select.options = ['baseline']+run_list
+def build_max(df_to_cf):
+    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category10[10][:len(df_max)]
+    return df_max
 
-if variation_jac_select.value == 'baseline':
-    path = results_path+baseline_jac_select.value+'/'
-else:
-    path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
-    
-p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+country_to_cf_select = Select(value=country_to_cf, 
+                            title='Country', 
+                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                            options=countries+['World','Harmonizing'])
 
-qty_jac_select = Select(value='delta', title='Parameter', options=p_jac.calib_parameters)
-country_jac_select = Select(value='USA', title='Country', options=p_jac.countries)
-sector_jac_select = Select(value='Patent', title='Sector', options=p_jac.sectors)
+df_to_cf = get_data_to_cf(to_target,country_cf)
+ds_to_cf = ColumnDataSource(df_to_cf)
+df_to_cf_max = build_max(df_to_cf)
+ds_to_cf_max = ColumnDataSource(df_to_cf_max)
 
-if qty_jac_select.value in ['eta','T','delta','nu']:
-    idx_to_change_jac = p_jac.countries.index(country_jac_select.value),p_jac.sectors.index(sector_jac_select.value)
-if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
-    idx_to_change_jac = 0,p_jac.sectors.index(sector_jac_select.value)
-if qty_jac_select.value in ['k','g_0']:
-    idx_to_change_jac = 0
+colors_to_cf = itertools.cycle(Category10[10])
+colors_to_cf_max = itertools.cycle(Category10[10])
 
-qty_to_change_jac = qty_jac_select.value
-
-x_jac = compute_rough_jacobian(p_jac, m_jac, qty_to_change_jac, idx_to_change_jac, 
-                           change_by = 0.25, tol = 1e-14, damping = 5,
-                           max_count = 5e3)
-
-p_jac = figure(title="Rough jacobian computation", 
-               y_range=FactorRange(factors=m_jac.get_signature_list()),
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 403", 
                 width = 1200,
                 height = 850,
-                x_axis_label='Change in contribution to objective function',
-                y_axis_label='Moment',
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
                 tools = TOOLS) 
 
-data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
-src_jac = ColumnDataSource(data_jac)
+for col in df_to_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
 
-# p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
-p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
+p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
 
-def update_jac(event):
-    if variation_jac_select.value == 'baseline':
-        path = results_path+baseline_jac_select.value+'/'
-    else:
-        path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
-    par_jac, m_jac, sol_jac = load(path, data_path=data_path)
-    if qty_jac_select.value in ['eta','T','delta','nu']:
-        idx_to_change_jac = par_jac.countries.index(country_jac_select.value),par_jac.sectors.index(sector_jac_select.value)
-    if qty_jac_select.value in ['fe','zeta','nu', 'fo']:
-        idx_to_change_jac = par_jac.sectors.index(sector_jac_select.value)
-    if qty_jac_select.value in ['k','g_0']:
-        idx_to_change_jac = None
-    x_jac = compute_rough_jacobian(par_jac, m_jac, qty_jac_select.value, idx_to_change_jac, 
-                               change_by = 0.1, tol = 1e-14, damping = 5,
-                               max_count = 5e3)
-    data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
-    src_jac.data = data_jac
-    p_jac.y_range.factors = m_jac.get_signature_list()
+# p_cf.extra_y_ranges['growth'] = DataRange1d()
+# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+     
+p_to_cf.legend.click_policy="hide"
+p_to_cf.legend.label_text_font_size = '8pt'
+p_to_cf.add_layout(p_to_cf.legend[0], 'right')
 
-button_jac = Button(label="Compute")
-button_jac.on_event(ButtonClick, update_jac)
+def update_baseline_to_cf(attrname, old, new):
+    country_to_cf = country_to_cf_select.value
+    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
+    df_to_cf = get_data_to_cf(new/100,country_to_cf)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
+    
+def update_country_to_cf(attrname, old, new):
+    # baseline_to_cf = baseline_cf_to_select.value
+    to_target = slider_to_cf.value/100
+    df_to_cf = get_data_to_cf(to_target,new)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
+    # ds_cf.data = get_data_cf(baseline_cf,new)
+    
+slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
+    
+controls_to_cf = row(slider_to_cf, country_to_cf_select)
+country_to_cf_select.on_change('value', update_country_to_cf)
+slider_to_cf.on_change('value', update_baseline_to_cf)
 
-controls_jac = row(baseline_jac_select, variation_jac_select, qty_jac_select, 
-                   country_jac_select, sector_jac_select, button_jac)
+counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 
-baseline_jac_select.on_change('value', update_list_of_runs_jac)
-
-jac_report = column(controls_jac,p_jac)
-
-second_panel = row(sensitivity_report,counterfactuals_report,jac_report)
+third_panel = row(counterfactuals_report, counterfactuals_to_report)
 
 #%% Nash / coop equilibrium
 
@@ -1407,103 +1550,15 @@ def update_baseline_nash(attrname, old, new):
 
 baseline_nash_coop_select.on_change('value', update_baseline_nash)
 
-#%% counterfactuals 403 TO target
-
-# baseline_cf = '101'
-# baseline_to_cf = '403'
-country_to_cf = 'USA'
-to_target = 0.0185
-
-list_of_to_targets = np.linspace(0.01,0.03,41)
-
-def section_end(s):
-     return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
-cf_to_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)
-
-def get_data_to_cf(to_target,country):
-    idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
-    df_to_cf = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf,len(cf_to_list)-1)]+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
-    df_to_cf.set_index('delt',inplace=True)
-    return df_to_cf
-
-def build_max(df_to_cf):
-    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category10[10][:len(df_max)]
-    return df_max
-
-country_to_cf_select = Select(value=country_to_cf, 
-                            title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
-                            options=countries+['World','Harmonizing'])
-
-df_to_cf = get_data_to_cf(to_target,country_cf)
-ds_to_cf = ColumnDataSource(df_to_cf)
-df_to_cf_max = build_max(df_to_cf)
-ds_to_cf_max = ColumnDataSource(df_to_cf_max)
-
-colors_to_cf = itertools.cycle(Category10[10])
-colors_to_cf_max = itertools.cycle(Category10[10])
-
-p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 403", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
-
-for col in df_to_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
-
-p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
-
-# p_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
-     
-p_to_cf.legend.click_policy="hide"
-p_to_cf.legend.label_text_font_size = '8pt'
-p_to_cf.add_layout(p_to_cf.legend[0], 'right')
-
-def update_baseline_to_cf(attrname, old, new):
-    country_to_cf = country_to_cf_select.value
-    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
-    df_to_cf = get_data_to_cf(new/100,country_to_cf)
-    ds_to_cf.data = df_to_cf
-    ds_to_cf_max.data = build_max(df_to_cf)
-    
-def update_country_to_cf(attrname, old, new):
-    # baseline_to_cf = baseline_cf_to_select.value
-    to_target = slider_to_cf.value/100
-    df_to_cf = get_data_to_cf(to_target,new)
-    ds_to_cf.data = df_to_cf
-    ds_to_cf_max.data = build_max(df_to_cf)
-    # ds_cf.data = get_data_cf(baseline_cf,new)
-    
-slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
-    
-controls_to_cf = row(slider_to_cf, country_to_cf_select)
-country_to_cf_select.on_change('value', update_country_to_cf)
-slider_to_cf.on_change('value', update_baseline_to_cf)
-
-counterfactuals_to_report = column(controls_to_cf,p_to_cf)
-
 # second_panel = row(sensitivity_report)
 
 # second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 # second_panel_bis = column(baseline_jac_select,row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
-second_panel_bis = column(baseline_nash_coop_select,row(p_eq,counterfactuals_to_report),table_widget_welfares,p_deltas_eq,table_widget_deltas)
+
+nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
+nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
+
+fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 
 #%% Kogan paper
 
@@ -1597,7 +1652,7 @@ p_kog2.legend.label_text_font_size = '8pt'
 p_kog2.add_layout(p_kog2.legend[0], 'right')
 p_kog2.add_tools(hover_tool_kog2)
 
-third_panel = row(p_kog,p_kog2)
+fifth_panel = row(p_kog,p_kog2)
 
-curdoc().add_root(column(first_panel, second_panel, second_panel_bis, third_panel))
+curdoc().add_root(column(first_panel, second_panel, third_panel, fourth_panel, fifth_panel))
 # curdoc().add_root(column(first_panel, second_panel))
