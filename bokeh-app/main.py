@@ -531,7 +531,8 @@ baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
 # baseline_list = ['311','312','401','402','403']    
-baseline_list = ['402','403','404']    
+# baseline_list = ['402','403','404']    
+baseline_list = ['403','404']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1126,9 +1127,9 @@ country_cf = 'USA'
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
+            if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -1349,7 +1350,8 @@ def get_data_nash_coop(baseline_nash_number):
     return welf_pop_weighted, welf_negishi, welf_nash
 
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
+# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['403','404'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
