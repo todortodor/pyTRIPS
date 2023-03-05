@@ -518,6 +518,10 @@ comments_dic['404'] = {
     '1.9':'1.9: no RD, UUPCOST, ratio loss',
     '1.10':'1.10: no RD, PCOSTNOAGG, log loss',
     '1.11':'1.11: no RD, PCOSTNOAGG, ratio loss',
+    '2.0':'2.0: sigma=2.7, SRDUS, UUPCOST',
+    '2.1':'2.1: sigma=2.7, no SRDUS, UUPCOST',
+    '2.2':'2.2: sigma=2.7, SRDUS, PCOSTNOAGG',
+    '2.3':'2.3: sigma=2.7, no SRDUS, PCOSTNOAGG',
     }
 
 # comments_dic['401'] = {"baseline":"baseline"}
@@ -919,7 +923,7 @@ baselines_dic_sensi = {}
 
 # for baseline_nbr in ['101','102','104']:
 for baseline_nbr in ['403']:
-    baselines_dic_sensi[baseline_nbr] = {}
+    baselines_dic_sensi[baseline_nbr] = {} 
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]

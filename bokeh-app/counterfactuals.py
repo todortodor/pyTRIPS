@@ -70,7 +70,13 @@ import time
 #                  ]
 baseline_dics = [
     {'baseline':'404',
-                      'variation': None},
+                      'variation': '2.0'},
+    {'baseline':'404',
+                      'variation': '2.1'},
+    {'baseline':'404',
+                      'variation': '2.2'},
+    {'baseline':'404',
+                      'variation': '2.3'},
     # {'baseline':'402',
     #                   'variation': '1.0'},
     # {'baseline':'402',
