@@ -229,9 +229,14 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
- 'SRDUS', 'SRGDP','UUPCOST', 'PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG','SINNOVPATUS',
- 'SINNOVPATEU', 'TO','TP',
- 'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW','objective']
+ 'SRDUS', 'SRGDP','UUPCOST','SINNOVPATUS',
+ 'SINNOVPATEU', 'TO','TE','DOMPATINUS','DOMPATINEU',
+ 'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW','objective']
+# list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
+#  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
+#  'SRDUS', 'SRGDP','UUPCOST', 'PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG','SINNOVPATUS',
+#  'SINNOVPATEU', 'TO','TP',
+#  'DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU','TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW','objective']
 
 comments_dic = {}
 
@@ -503,6 +508,49 @@ comments_dic['403'] = {'baseline':'bsln:TO:0.0183',
 '1.39':'1.39: TO: 0.0295',
 '1.40':'1.40: TO: 0.03'
     }
+comments_dic['405'] = {'baseline':'bsln:TO:0.0183',
+    '1.0':'1.0: TO: 0.01',
+'1.1':'1.1: TO: 0.0105',
+'1.2':'1.2: TO: 0.011',
+'1.3':'1.3: TO: 0.0115',
+'1.4':'1.4: TO: 0.012',
+'1.5':'1.5: TO: 0.0125',
+'1.6':'1.6: TO: 0.013',
+'1.7':'1.7: TO: 0.0135',
+'1.8':'1.8: TO: 0.014',
+'1.9':'1.9: TO: 0.0145',
+'1.10':'1.10: TO: 0.015',
+'1.11':'1.11: TO: 0.0155',
+'1.12':'1.12: TO: 0.016',
+'1.13':'1.13: TO: 0.0165',
+'1.14':'1.14: TO: 0.017',
+'1.15':'1.15: TO: 0.0175',
+'1.16':'1.16: TO: 0.018',
+'1.17':'1.17: TO: 0.0185',
+'1.18':'1.18: TO: 0.019',
+'1.19':'1.19: TO: 0.0195',
+'1.20':'1.20: TO: 0.02',
+'1.21':'1.21: TO: 0.0205',
+'1.22':'1.22: TO: 0.021',
+'1.23':'1.23: TO: 0.0215',
+'1.24':'1.24: TO: 0.022',
+'1.25':'1.25: TO: 0.0225',
+'1.26':'1.26: TO: 0.023',
+'1.27':'1.27: TO: 0.0235',
+'1.28':'1.28: TO: 0.024',
+'1.29':'1.29: TO: 0.0245',
+'1.30':'1.30: TO: 0.025',
+'1.31':'1.31: TO: 0.0255',
+'1.32':'1.32: TO: 0.026',
+'1.33':'1.33: TO: 0.0265',
+'1.34':'1.34: TO: 0.027',
+'1.35':'1.35: TO: 0.0275',
+'1.36':'1.36: TO: 0.028',
+'1.37':'1.37: TO: 0.0285',
+'1.38':'1.38: TO: 0.029',
+'1.39':'1.39: TO: 0.0295',
+'1.40':'1.40: TO: 0.03'
+    }
 
 comments_dic['404'] = {
     'baseline':'baseline',
@@ -532,7 +580,8 @@ baselines_dic_sol_qty = {}
 
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
-baseline_list = ['403','404']    
+# baseline_list = ['403','404','405']    
+baseline_list = ['404','405']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -591,7 +640,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '404'
+baseline_mom = '405'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -727,7 +776,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '404'
+baseline_par = '405'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -822,7 +871,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '404'
+baseline_sol_qty = '405'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -1028,11 +1077,12 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '404'
+baseline_jac = '405'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404'])
+# baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404','405'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['404','405'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
@@ -1226,7 +1276,7 @@ def section_end(s):
 # cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
 cf_to_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)
+            if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
 
 def get_data_to_cf(to_target,country):
     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
@@ -1259,7 +1309,7 @@ ds_to_cf_max = ColumnDataSource(df_to_cf_max)
 colors_to_cf = itertools.cycle(Category10[10])
 colors_to_cf_max = itertools.cycle(Category10[10])
 
-p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 403", 
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 405", 
                 width = 1200,
                 height = 850,
                 x_axis_label='Change in delta',
@@ -1313,9 +1363,9 @@ third_panel = row(counterfactuals_report, counterfactuals_to_report)
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '404'
+baseline_nash_coop = '405'
 
-dic_change_labels_for_403 = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
+dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
 def get_data_nash_coop(baseline_nash_number):
 
@@ -1330,8 +1380,8 @@ def get_data_nash_coop(baseline_nash_number):
     welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
     welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
-    welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_403)
-    welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_403)
+    welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_405)
+    welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_405)
     
     welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
     welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
@@ -1351,7 +1401,8 @@ def get_data_nash_coop(baseline_nash_number):
 
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['403','404'])
+# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['403','404'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['404','405'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1447,8 +1498,8 @@ def get_delta_nash_coop(baseline_number):
     deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
     deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
     
-    deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_403)
-    deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_403)
+    deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_405)
+    deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_405)
     
     deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
     deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)

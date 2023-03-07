@@ -125,49 +125,49 @@ import pandas as pd
     #   }
     # ]
 
-# runs_params = [
-#     {"number":0,"TO_target":0.01},
-#     {"number":1,"TO_target":0.0105},
-#     {"number":2,"TO_target":0.011},
-#     {"number":3,"TO_target":0.0115},
-#     {"number":4,"TO_target":0.012},
-#     {"number":5,"TO_target":0.0125},
-#     {"number":6,"TO_target":0.013},
-#     {"number":7,"TO_target":0.0135},
-#     {"number":8,"TO_target":0.014},
-#     {"number":9,"TO_target":0.0145},
-#     {"number":10,"TO_target":0.015},
-#     {"number":11,"TO_target":0.0155},
-#     {"number":12,"TO_target":0.016},
-#     {"number":13,"TO_target":0.0165},
-#     {"number":14,"TO_target":0.017},
-#     {"number":15,"TO_target":0.0175},
-#     {"number":16,"TO_target":0.018},
-#     {"number":17,"TO_target":0.0185},
-#     {"number":18,"TO_target":0.019},
-#     {"number":19,"TO_target":0.0195},
-#     {"number":20,"TO_target":0.02},
-#     {"number":21,"TO_target":0.0205},
-#     {"number":22,"TO_target":0.021},
-#     {"number":23,"TO_target":0.0215},
-#     {"number":24,"TO_target":0.022},
-#     {"number":25,"TO_target":0.0225},
-#     {"number":26,"TO_target":0.023},
-#     {"number":27,"TO_target":0.0235},
-#     {"number":28,"TO_target":0.024},
-#     {"number":29,"TO_target":0.0245},
-#     {"number":30,"TO_target":0.025},
-#     {"number":31,"TO_target":0.0255},
-#     {"number":32,"TO_target":0.026},
-#     {"number":33,"TO_target":0.0265},
-#     {"number":34,"TO_target":0.027},
-#     {"number":35,"TO_target":0.0275},
-#     {"number":36,"TO_target":0.028},
-#     {"number":37,"TO_target":0.0285},
-#     {"number":38,"TO_target":0.029},
-#     {"number":39,"TO_target":0.0295},
-#     {"number":40,"TO_target":0.03}
-#     ]
+runs_params = [
+    {"number":0,"TO_target":0.01},
+    {"number":1,"TO_target":0.0105},
+    {"number":2,"TO_target":0.011},
+    {"number":3,"TO_target":0.0115},
+    {"number":4,"TO_target":0.012},
+    {"number":5,"TO_target":0.0125},
+    {"number":6,"TO_target":0.013},
+    {"number":7,"TO_target":0.0135},
+    {"number":8,"TO_target":0.014},
+    {"number":9,"TO_target":0.0145},
+    {"number":10,"TO_target":0.015},
+    {"number":11,"TO_target":0.0155},
+    {"number":12,"TO_target":0.016},
+    {"number":13,"TO_target":0.0165},
+    {"number":14,"TO_target":0.017},
+    {"number":15,"TO_target":0.0175},
+    {"number":16,"TO_target":0.018},
+    {"number":17,"TO_target":0.0185},
+    {"number":18,"TO_target":0.019},
+    {"number":19,"TO_target":0.0195},
+    {"number":20,"TO_target":0.02},
+    {"number":21,"TO_target":0.0205},
+    {"number":22,"TO_target":0.021},
+    {"number":23,"TO_target":0.0215},
+    {"number":24,"TO_target":0.022},
+    {"number":25,"TO_target":0.0225},
+    {"number":26,"TO_target":0.023},
+    {"number":27,"TO_target":0.0235},
+    {"number":28,"TO_target":0.024},
+    {"number":29,"TO_target":0.0245},
+    {"number":30,"TO_target":0.025},
+    {"number":31,"TO_target":0.0255},
+    {"number":32,"TO_target":0.026},
+    {"number":33,"TO_target":0.0265},
+    {"number":34,"TO_target":0.027},
+    {"number":35,"TO_target":0.0275},
+    {"number":36,"TO_target":0.028},
+    {"number":37,"TO_target":0.0285},
+    {"number":38,"TO_target":0.029},
+    {"number":39,"TO_target":0.0295},
+    {"number":40,"TO_target":0.03}
+    ]
 
 # runs_params = []
 # i = 0
@@ -182,59 +182,59 @@ import pandas as pd
 #              })
 #             i += 1
             
-runs_params = [
- #    {'number': 0,
- #  'drop_SRDUS': False,
- #  'patenting_cost_moment': 'UUPCOST',
- #  'loss_func': 'log'},
- # {'number': 1,
- #  'drop_SRDUS': False,
- #  'patenting_cost_moment': 'UUPCOST',
- #  'loss_func': 'ratio'},
- # {'number': 2,
- #  'drop_SRDUS': False,
- #  'patenting_cost_moment': 'PCOSTNOAGG',
- #  'loss_func': 'log'},
- # {'number': 3,
- #  'drop_SRDUS': False,
- #  'patenting_cost_moment': 'PCOSTNOAGG',
- #  'loss_func': 'ratio'},
- # {'number': 4,
- #  'drop_SRDUS': True,
- #  'patenting_cost_moment': 'UUPCOST',
- #  'loss_func': 'log'},
- # {'number': 5,
- #  'drop_SRDUS': True,
- #  'patenting_cost_moment': 'UUPCOST',
- #  'loss_func': 'ratio'},
- # {'number': 6,
- #  'drop_SRDUS': True,
- #  'patenting_cost_moment': 'PCOSTNOAGG',
- #  'loss_func': 'log'},
- # {'number': 7,
- #  'drop_SRDUS': True,
- #  'patenting_cost_moment': 'PCOSTNOAGG',
- #  'loss_func': 'ratio'},
- {'number': 8,
-  'drop_RD': True,
-  'patenting_cost_moment': 'UUPCOST',
-  'loss_func': 'log'},
- {'number': 9,
-  'drop_RD': True,
-  'patenting_cost_moment': 'UUPCOST',
-  'loss_func': 'ratio'},
- {'number': 10,
-  'drop_RD': True,
-  'patenting_cost_moment': 'PCOSTNOAGG',
-  'loss_func': 'log'},
- {'number': 11,
-  'drop_RD': True,
-  'patenting_cost_moment': 'PCOSTNOAGG',
-  'loss_func': 'ratio'},
- ]
+# runs_params = [
+#  #    {'number': 0,
+#  #  'drop_SRDUS': False,
+#  #  'patenting_cost_moment': 'UUPCOST',
+#  #  'loss_func': 'log'},
+#  # {'number': 1,
+#  #  'drop_SRDUS': False,
+#  #  'patenting_cost_moment': 'UUPCOST',
+#  #  'loss_func': 'ratio'},
+#  # {'number': 2,
+#  #  'drop_SRDUS': False,
+#  #  'patenting_cost_moment': 'PCOSTNOAGG',
+#  #  'loss_func': 'log'},
+#  # {'number': 3,
+#  #  'drop_SRDUS': False,
+#  #  'patenting_cost_moment': 'PCOSTNOAGG',
+#  #  'loss_func': 'ratio'},
+#  # {'number': 4,
+#  #  'drop_SRDUS': True,
+#  #  'patenting_cost_moment': 'UUPCOST',
+#  #  'loss_func': 'log'},
+#  # {'number': 5,
+#  #  'drop_SRDUS': True,
+#  #  'patenting_cost_moment': 'UUPCOST',
+#  #  'loss_func': 'ratio'},
+#  # {'number': 6,
+#  #  'drop_SRDUS': True,
+#  #  'patenting_cost_moment': 'PCOSTNOAGG',
+#  #  'loss_func': 'log'},
+#  # {'number': 7,
+#  #  'drop_SRDUS': True,
+#  #  'patenting_cost_moment': 'PCOSTNOAGG',
+#  #  'loss_func': 'ratio'},
+#  {'number': 8,
+#   'drop_RD': True,
+#   'patenting_cost_moment': 'UUPCOST',
+#   'loss_func': 'log'},
+#  {'number': 9,
+#   'drop_RD': True,
+#   'patenting_cost_moment': 'UUPCOST',
+#   'loss_func': 'ratio'},
+#  {'number': 10,
+#   'drop_RD': True,
+#   'patenting_cost_moment': 'PCOSTNOAGG',
+#   'loss_func': 'log'},
+#  {'number': 11,
+#   'drop_RD': True,
+#   'patenting_cost_moment': 'PCOSTNOAGG',
+#   'loss_func': 'ratio'},
+#  ]
 
 
-baseline_number = '404'
+baseline_number = '405'
 # variation_number = 1
 # for variation_number in range(11,19):
 for variation_number in [1]:
@@ -244,6 +244,8 @@ for variation_number in [1]:
         print(run_params)
         baseline_dic = {'baseline':baseline_number,
                         'variation':str(variation_number)+'.'+str(run_params['number'])}
+        
+
         # new_run = True
         
         # if new_run:
@@ -273,21 +275,21 @@ for variation_number in [1]:
         
         m.drop_CHN_IND_BRA_ROW_from_RD = True
         
-        # m.TO_target = np.float64(run_params['TO_target'])
+        m.TO_target = np.float64(run_params['TO_target'])
         
         # if run_params['drop_SRDUS']:
         #     if 'SRDUS' in m.list_of_moments:
         #         m.list_of_moments.remove('SRDUS')
-        if run_params['drop_RD']:
-            if 'RD' in m.list_of_moments:
-                m.list_of_moments.remove('RD')
-        if run_params['patenting_cost_moment'] == 'PCOSTNOAGG':
-            if 'UUPCOST' in m.list_of_moments:
-                m.list_of_moments.remove('UUPCOST')
-            if 'PCOSTNOAGG' not in m.list_of_moments:
-                m.list_of_moments.append('PCOSTNOAGG')
+        # if run_params['drop_RD']:
+        #     if 'RD' in m.list_of_moments:
+        #         m.list_of_moments.remove('RD')
+        # if run_params['patenting_cost_moment'] == 'PCOSTNOAGG':
+        #     if 'UUPCOST' in m.list_of_moments:
+        #         m.list_of_moments.remove('UUPCOST')
+        #     if 'PCOSTNOAGG' not in m.list_of_moments:
+        #         m.list_of_moments.append('PCOSTNOAGG')
 
-        m.loss = run_params['loss_func']
+        # m.loss = run_params['loss_func']
         # m.dim_weight = run_params['dim_weight']
         
         # if new_run:
@@ -369,10 +371,10 @@ for variation_number in [1]:
         
         ##%% writing results as excel and locally
         
-        # commentary = 'TO:'+str(run_params['TO_target'])
-        commentary = 'drop_RD:'+str(run_params['drop_RD'])+\
-            ', patenting_cost_moment:'+run_params['patenting_cost_moment']+\
-            ', loss_func:'+run_params['loss_func']
+        commentary = 'TO:'+str(run_params['TO_target'])
+        # commentary = 'drop_RD:'+str(run_params['drop_RD'])+\
+        #     ', patenting_cost_moment:'+run_params['patenting_cost_moment']+\
+        #     ', loss_func:'+run_params['loss_func']
         dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
         local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
         # local_path = 'calibration_results_matched_economy/'
