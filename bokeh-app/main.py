@@ -1450,7 +1450,7 @@ dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, so
 button_compute_dyn = Button(label="Compute")
 button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
-qty_dyn_display_select = Select(value='g', title='Quantity', options=['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
                                                     'l_R','l_Ao','psi_o_star','PSI_CD',
                                                     'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPD','sum_n_PSI_MNP','sum_n_profit',
                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPD','sum_i_PSI_MNP','sum_i_profit'])
