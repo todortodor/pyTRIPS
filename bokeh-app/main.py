@@ -14,7 +14,7 @@ import pandas as pd
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
 # from bokeh.models import DataRange1d,Button, Slider,CheckboxButtonGroup, LinearAxis, FactorRange, Text, Div,Toggle, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
-from bokeh.models import Button, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import Button,Range1d, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 # from bokeh.models.formatters import NumeralTickFormatter
 # from bokeh.models.widgets.tables import NumberFormatter
 # from bokeh.palettes import Blues4
@@ -23,12 +23,13 @@ from datetime import datetime
 import random
 from bokeh.events import ButtonClick
 from classes import parameters, moments, var
-from data_funcs import compute_rough_jacobian
+from data_funcs import compute_rough_jacobian,rough_dyn_fixed_point_solver
 import numpy as np
 # from bokeh.models import LogScale, LinearScale
 import itertools
 from bokeh.palettes import Category10
 # import numpy as np
+import time
 
 
 # print(1)
@@ -1354,7 +1355,212 @@ slider_to_cf.on_change('value', update_baseline_to_cf)
 
 counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 
-third_panel = row(counterfactuals_report, counterfactuals_to_report)
+# third_panel = row(counterfactuals_report, counterfactuals_to_report)
+
+#%% dynamic solver
+
+baseline_dyn = '405'
+country_dyn = 'USA'
+sector_dyn = 'Patent'
+
+# baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['311','312','401','402','403','404','405'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['404','405'])
+
+baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
+files_in_dir = next(os.walk(baseline_dyn_path))[1]
+run_list = [f for f in files_in_dir if f[0].isnumeric()]
+run_list = sorted(run_list, key=section)
+variation_dyn_select = Select(value='baseline', title='Variation', 
+                              options=['baseline']+run_list)
+
+def update_list_of_runs_dyn(attr, old, new):
+    baseline_dyn_path = results_path+'baseline_'+new+'_variations/'
+    files_in_dir = next(os.walk(baseline_dyn_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list = sorted(run_list, key=section)
+    variation_dyn_select.options = ['baseline']+run_list
+
+country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW','World'])
+# country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
+slider_dyn = Slider(start=-1, end=1, value=0, step=0.01, title="Log change of delta")    
+
+state_computation = Div(text="Done")
+
+def create_column_data_source_from_dyn_sol(dyn_sol):
+    data_dyn = {}
+    data_dyn['time'] = dyn_sol.t_real
+    for agg_qty in ['g']:
+        data_dyn[agg_qty] = getattr(dyn_sol,agg_qty)
+    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn[c_qty+c] = getattr(dyn_sol,c_qty)[i,:].ravel()
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn[c_s_qty+c] = getattr(dyn_sol,c_s_qty)[i,1,:].ravel()
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPD','PSI_MNP','profit']:
+        temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
+        temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn['sum_n_'+c_c_s_qty+c] = temp_sum_n[i,1,:].ravel()
+            data_dyn['sum_i_'+c_c_s_qty+c] = temp_sum_i[i,1,:].ravel()
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn['real_final_consumption'+c] = (getattr(dyn_sol,'nominal_final_consumption')[i,:]/getattr(dyn_sol,'price_indices')[i,:]).ravel()
+    # for c_s_qty in ['l_R','l_Ae','l_Ao']:
+    # ds_dyn = ColumnDataSource(data_dyn)
+    return data_dyn
+
+def compute_dyn(event):
+    if variation_dyn_select.value == 'baseline':
+        path = results_path+baseline_dyn_select.value+'/'
+    else:
+        path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
+    p_dyn_cf = p_dyn.copy()
+    if country_dyn_select.value != 'World':
+        p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
+    else:
+        p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*(10**slider_dyn.value)
+    start = time.perf_counter()
+    dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+                                          t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+    # print('Done')
+    end = time.perf_counter()
+    # print(slider_dyn.value)
+    if country_dyn_select.value == 'World':
+        message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+    else:
+        message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+    state_computation.text = message
+    ds_dyn.data = create_column_data_source_from_dyn_sol(dyn_sol)
+    
+    # return dyn_sol, sol_c
+if variation_dyn_select.value == 'baseline':
+    path = results_path+baseline_dyn_select.value+'/'
+else:
+    path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
+p_dyn_cf = p_dyn.copy()
+if country_dyn_select.value != 'World':
+    p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
+else:
+    p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
+dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+                                      t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+
+button_compute_dyn = Button(label="Compute")
+button_compute_dyn.on_event(ButtonClick, compute_dyn)
+
+qty_dyn_display_select = Select(value='g', title='Quantity', options=['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+                                                    'l_R','l_Ao','psi_o_star','PSI_CD',
+                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPD','sum_n_PSI_MNP','sum_n_profit',
+                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPD','sum_i_PSI_MNP','sum_i_profit'])
+country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
+
+# df_dyn = pd.DataFrame(index=pd.Index(dyn_sol.t_real,name='time'))
+# df_dyn['Value'] = dyn_sol.r[p_dyn.countries.index(country_dyn_display_select.value),:]
+# ds_dyn = ColumnDataSource(df_dyn)
+data_dyn_default = create_column_data_source_from_dyn_sol(dyn_sol)
+ds_dyn = ColumnDataSource(data_dyn_default)
+delta = max(ds_dyn.data['g'])-min(ds_dyn.data['g'])
+if delta == 0:
+    delta = 1
+p_dyn_figure = figure(title="Dynamic solver",
+                width = 1200,
+                height = 850,
+                x_axis_label='Time',
+                y_axis_label='Value',
+                # x_axis_type="log",
+                tools = TOOLS,
+                x_range = (0,100),
+                y_range=(min(ds_dyn.data['g'])-delta*0.1,max(ds_dyn.data['g'])+delta*0.1)
+                )
+
+# p_dyn_figure.y_range=Range1d(min(ds_dyn.data['g']), max(ds_dyn.data['g']))
+
+lines_dyn = {}
+for col in data_dyn_default.keys():
+    if col != time:
+        lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
+        if col != 'g':
+            lines_dyn[col].visible = False
+            
+            
+# line_dyn = p_dyn_figure.line(x='time', y='g', source = ds_dyn)
+
+def update_graph_dyn(event):
+    # p_dyn_figure.renderers = []
+    if qty_dyn_display_select.value in ['g']:
+        col = qty_dyn_display_select.value
+    elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+                                'l_R','l_Ao','psi_o_star','PSI_CD',
+                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPD','sum_n_PSI_MNP','sum_n_profit',
+                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPD','sum_i_PSI_MNP','sum_i_profit']:
+        col = qty_dyn_display_select.value+country_dyn_display_select.value
+    # print(col)
+    lines_dyn[col].visible = True
+    for other_column in lines_dyn:
+        if other_column != col:
+            lines_dyn[other_column].visible = False
+    # print(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1)
+    # print(max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
+    # p_dyn_figure.y_range=Range1d(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1
+    #                              ,max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
+    delta = max(ds_dyn.data[col])-min(ds_dyn.data[col])
+    if delta == 0:
+        delta = 1
+    p_dyn_figure.y_range.start=min(ds_dyn.data[col])-delta*0.1
+    p_dyn_figure.y_range.end=max(ds_dyn.data[col])+delta*0.05
+        
+button_display_dyn = Button(label="Display")
+button_display_dyn.on_event(ButtonClick, update_graph_dyn)
+
+controls_dyn = row(baseline_dyn_select, variation_dyn_select, country_dyn_select, slider_dyn, button_compute_dyn, state_computation)
+controls_display_dyn = row(qty_dyn_display_select, 
+                           country_dyn_display_select,
+                           button_display_dyn)
+
+# data_dyn = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_dyn.get_signature_list(),x_dyn]).T)
+# src_dyn = ColumnDataSource(data_dyn)
+
+# # p_dyn.hbar(y = 'Moment',right = 'Contribution', source = src_dyn)
+# p_dyn.hbar(y = 'Moment',right = 'Contribution', source = src_dyn)
+
+# def update_dyn(event):
+#     if variation_dyn_select.value == 'baseline':
+#         path = results_path+baseline_dyn_select.value+'/'
+#     else:
+#         path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+#     par_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
+#     if qty_dyn_select.value in ['eta','T','delta','nu']:
+#         idx_to_change_dyn = par_dyn.countries.index(country_dyn_select.value),par_dyn.sectors.index(sector_dyn_select.value)
+#     if qty_dyn_select.value in ['fe','zeta','nu', 'fo']:
+#         idx_to_change_dyn = par_dyn.sectors.index(sector_dyn_select.value)
+#     if qty_dyn_select.value in ['k','g_0']:
+#         idx_to_change_dyn = None
+#     x_dyn = compute_rough_dynobian(par_dyn, m_dyn, qty_dyn_select.value, idx_to_change_dyn, 
+#                                change_by = 0.1, tol = 1e-14, damping = 5,
+#                                max_count = 5e3)
+#     data_dyn = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_dyn.get_signature_list(),x_dyn]).T)
+#     src_dyn.data = data_dyn
+#     p_dyn.y_range.factors = m_dyn.get_signature_list()
+
+# button_dyn = Button(label="Compute")
+# button_dyn.on_event(ButtonClick, update_dyn)
+
+# controls_dyn = row(baseline_dyn_select, variation_dyn_select, qty_dyn_select, 
+#                    country_dyn_select, sector_dyn_select, button_dyn)
+
+# baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
+
+dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
+
+
+third_panel = row(counterfactuals_report, counterfactuals_to_report, dyn_report)
+
+
+        
+    
+    
 
 #%% Nash / coop equilibrium
 
@@ -1606,11 +1812,6 @@ def update_baseline_nash(attrname, old, new):
     #     p_deltas_eq.xaxis.major_label_overrides = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
 
 baseline_nash_coop_select.on_change('value', update_baseline_nash)
-
-# second_panel = row(sensitivity_report)
-
-# second_panel_bis = column(row(p_eq,help_panel,column(plot, toggle)),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
-# second_panel_bis = column(baseline_jac_select,row(p_eq,help_panel),table_widget_welfares,row(p_deltas_eq,data_table_eq),table_widget_deltas)
 
 nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
 nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)

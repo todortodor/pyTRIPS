@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from classes import moments, parameters, var
+from classes import moments, parameters, var, dynamic_var
 
 def write_calibration_results(path,p,m,sol_c,commentary = None):
     writer = pd.ExcelWriter(path+'.xlsx', engine='xlsxwriter')
@@ -305,4 +305,162 @@ def get_path(baseline,variation,results_path):
     else:
         path = results_path+'baseline_'+baseline+'_variations/'+variation+'/'
     return path
+
+def repeat_for_all_times(array,Nt):
+    return np.repeat(array[..., np.newaxis],Nt,axis=len(array.shape))
+
+def guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin,C=20):
+    def build_guess(fin,init,C=C):
+        if len(fin.shape) == 2:
+            return (fin-init)[...,1:,None]*(
+                np.exp( -C* (dyn_var.t_cheby+1) )[None,None,:]-1
+                )/(np.exp(-2*C)-1)
+            # return (fin-init)[...,1:,None]*(
+            #     np.exp( -C* (np.linspace(-1,1,dyn_var.Nt)+1) )[None,None,:]-1
+            #     )/(np.exp(-2*C)-1)
+            # return (fin-init)[...,1:,None]*(
+            #     1 - np.exp( -C*dyn_var.map_parameter*(1+dyn_var.t_cheby)/(1-dyn_var.t_cheby) )[None,None,:]
+            #     )
+        elif len(fin.shape) == 3:
+            return (fin-init)[...,1:,None]*(
+                np.exp(-C* (dyn_var.t_cheby+1) )[None,None,None,:]-1
+                )/(np.exp(-2*C)-1)
+            # return (fin-init)[...,1:,None]*(
+            #     np.exp(-C* (np.linspace(-1,1,dyn_var.Nt)+1) )[None,None,None,:]-1
+            #     )/(np.exp(-2*C)-1)
+            # return (fin-init)[...,1:,None]*(
+            #     1 - np.exp( -C*dyn_var.map_parameter*(1+dyn_var.t_cheby)/(1-dyn_var.t_cheby) )[None,None,None,:]
+            #     )
+    guess = {}
+    # guess['PSI_CD'] = (dyn_var.PSI_CD_0-sol_fin.PSI_CD)[:,:,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,:]
+    # guess['PSI_MNP'] = (dyn_var.PSI_MNP_0-sol_fin.PSI_MNP)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
+    # guess['PSI_MPND'] = (dyn_var.PSI_MPND_0-sol_fin.PSI_MPND)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
+    # guess['PSI_MPD'] = (dyn_var.PSI_MPD_0-sol_fin.PSI_MPD)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
+    guess['PSI_CD'] = build_guess(sol_fin.PSI_CD,dyn_var.PSI_CD_0)
+    guess['PSI_MNP'] = build_guess(sol_fin.PSI_MNP,dyn_var.PSI_MNP_0)
+    guess['PSI_MPND'] = build_guess(sol_fin.PSI_MPND,dyn_var.PSI_MPND_0)
+    guess['PSI_MPD'] = build_guess(sol_fin.PSI_MPD,dyn_var.PSI_MPD_0)
+    return guess
+
+def rough_fixed_point_solver(p, context, x0=None, tol = 1e-10, damping = 5, max_count=1e6,
+                       safe_convergence=0.1, damping_post_acceleration=2,
+                       accelerate_when_stable=True):   
+    if x0 is None:
+        x0 = p.guess_from_params()
+    x_old = x0 
+        
+    condition = True
+    count = 0
+    convergence = []
+    x_new = None
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        
+        if count != 0:
+            x_old = (x_new+(damping-1)*x_old)/damping
+        init = var.var_from_vector(x_old,p,context=context,compute=False)
+        init.compute_solver_quantities(p)
+        
+        w = init.compute_wage(p)
+        Z = init.compute_expenditure(p)
+        l_R = init.compute_labor_research(p)[...,1:].ravel()
+        profit = init.compute_profit(p)[...,1:].ravel()
+        phi = init.compute_phi(p).ravel()
+      
+        x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
+
+        
+        x_new_decomp = get_vec_qty(x_new,p)
+        x_old_decomp = get_vec_qty(x_old,p)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['w','Z','profit','l_R','phi']]
+        condition = np.any(conditions)
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                damping = damping_post_acceleration
+
+    return init
+
+
+    
+def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-14, max_count=1e6,
+                       safe_convergence=0.1,damping=50, damping_post_acceleration=10):  
+    if sol_fin is None:
+        sol_fin = rough_fixed_point_solver(p,x0=p.guess,
+                                        context = 'counterfactual',tol =1e-14,
+                                safe_convergence=0.001,
+                                damping = 10,
+                                max_count = 5000,
+                                damping_post_acceleration=2
+                                )
+        sol_fin.scale_P(p)
+        sol_fin.compute_non_solver_quantities(p) 
+    
+    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin)
+    dyn_var.initiate_state_variables_0(sol_init)
+    
+    psis_guess = guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin)
+    
+    dic_of_guesses = {'price_indices':repeat_for_all_times(sol_fin.price_indices,dyn_var.Nt),
+                    'w':repeat_for_all_times(sol_fin.w,dyn_var.Nt),
+                    'Z':repeat_for_all_times(sol_fin.Z,dyn_var.Nt),
+                    'PSI_CD':psis_guess['PSI_CD'],
+                    'PSI_MNP':psis_guess['PSI_MNP'],
+                    'PSI_MPND':psis_guess['PSI_MPND'],
+                    'PSI_MPD':psis_guess['PSI_MPD'],
+                    'V_PD':repeat_for_all_times(sol_fin.V_PD,dyn_var.Nt)[...,1:,:],
+                    'V_NP':repeat_for_all_times(sol_fin.V_NP,dyn_var.Nt)[...,1:,:],
+                    'DELTA_V':repeat_for_all_times(sol_fin.V_P-sol_fin.V_NP,dyn_var.Nt)[...,1:,:]
+                    }
+    dyn_var.guess_from_dic(dic_of_guesses)
+    if x0 is not None:
+        dyn_var.guess_from_vector(x0)
+    
+    x_old = dyn_var.vector_from_var()
+        
+    condition = True
+    count = 0
+    convergence = []
+    x_new = None
+
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        if count != 0:
+            x_old = (x_new+(damping-1)*x_old)/damping
+            dyn_var.guess_from_vector(x_old)
+            numeraire = dyn_var.price_indices[0,:]
+            for qty in ['price_indices','w','Z']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,:]
+                setattr(dyn_var,qty,temp)
+            for qty in ['V_PD','DELTA_V','V_NP']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,None,None:]
+                setattr(dyn_var,qty,temp)
+            x_old = dyn_var.vector_from_var()
+        dyn_var.compute_solver_quantities(p)
+        x_new = np.concatenate([
+            dyn_var.compute_price_indices(p).ravel(),
+            dyn_var.compute_wage(p).ravel(),
+            dyn_var.compute_expenditure(p).ravel(),
+            dyn_var.compute_PSI_CD(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MNP(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPND(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPD(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_PD(p)[...,1:,:].ravel(),
+            dyn_var.compute_DELTA_V(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_NP(p)[...,1:,:].ravel(),
+            ],axis=0)
+
+        condition = np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old) > tol
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        
+        count += 1
+
+    return dyn_var, sol_fin, convergence[-1]
     
