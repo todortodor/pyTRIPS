@@ -1698,9 +1698,12 @@ class dynamic_var:
         # except:
         #     pass
         power = 1-1/p.gamma
+        
         integrand = np.exp((self.g*power-p.rho)*self.t_real)[None,:]\
             *(self.nominal_final_consumption/self.price_indices)**power\
                 /(self.sol_init.nominal_final_consumption/self.sol_init.price_indices)[:,None]**power
+        
+        self.integrand_welfare = (p.rho-self.sol_init.g*power)*integrand
         
         integral = np.zeros(p.N)
         for i in range(p.N):

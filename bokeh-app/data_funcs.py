@@ -461,6 +461,8 @@ def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, 
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
         
         count += 1
+    
+    dyn_var.compute_non_solver_quantities(p)
 
     return dyn_var, sol_fin, convergence[-1]
     

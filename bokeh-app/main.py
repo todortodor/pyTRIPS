@@ -1391,23 +1391,71 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
     data_dyn['time'] = dyn_sol.t_real
     for agg_qty in ['g']:
         data_dyn[agg_qty] = getattr(dyn_sol,agg_qty)
-    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption']:
+    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','integrand_welfare']:
         for i,c in enumerate(dyn_sol.countries):
             data_dyn[c_qty+c] = getattr(dyn_sol,c_qty)[i,:].ravel()
     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
         for i,c in enumerate(dyn_sol.countries):
-            data_dyn[c_s_qty+c] = getattr(dyn_sol,c_s_qty)[i,1,:].ravel()
+            if c_s_qty in ['PSI_CD']:
+                data_dyn[c_s_qty+c] = (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel()
+            else:
+                data_dyn[c_s_qty+c] = getattr(dyn_sol,c_s_qty)[i,1,:].ravel()
     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
-        temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
+        if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
+            temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
+            temp_sum_i = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=1)
+        else:
+            temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
+            temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
         for i,c in enumerate(dyn_sol.countries):
             data_dyn['sum_n_'+c_c_s_qty+c] = temp_sum_n[i,1,:].ravel()
             data_dyn['sum_i_'+c_c_s_qty+c] = temp_sum_i[i,1,:].ravel()
     for i,c in enumerate(dyn_sol.countries):
         data_dyn['real_final_consumption'+c] = (getattr(dyn_sol,'nominal_final_consumption')[i,:]/getattr(dyn_sol,'price_indices')[i,:]).ravel()
-    # for c_s_qty in ['l_R','l_Ae','l_Ao']:
-    # ds_dyn = ColumnDataSource(data_dyn)
-    return data_dyn
+    
+    data_dyn_init = {}
+    data_dyn_init['time'] = [0]
+    for agg_qty in ['g']:
+        data_dyn_init[agg_qty] = [getattr(dyn_sol.sol_init,agg_qty)]
+    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init[c_qty+c] = [getattr(dyn_sol.sol_init,c_qty)[i]]
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+        temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
+        temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+            data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
+        data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
+        data_dyn_init['integrand_welfare'+c] = [0]
+        
+    data_dyn_fin = {}
+    data_dyn_fin['time'] = [dyn_sol.t_inf]
+    for agg_qty in ['g']:
+        data_dyn_fin[agg_qty] = [getattr(dyn_sol.sol_fin,agg_qty)]
+    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin[c_qty+c] = [getattr(dyn_sol.sol_fin,c_qty)[i]]
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+        temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
+        temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+            data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
+        data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
+        data_dyn_fin['integrand_welfare'+c] = [0]
+        
+    return data_dyn, data_dyn_init, data_dyn_fin
 
 def compute_dyn(event):
     if variation_dyn_select.value == 'baseline':
@@ -1431,7 +1479,10 @@ def compute_dyn(event):
     else:
         message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
     state_computation.text = message
-    ds_dyn.data = create_column_data_source_from_dyn_sol(dyn_sol)
+    temp = create_column_data_source_from_dyn_sol(dyn_sol)
+    ds_dyn.data = temp[0]
+    ds_dyn_init.data = temp[1]
+    ds_dyn_fin.data = temp[2]
     
     # return dyn_sol, sol_c
 if variation_dyn_select.value == 'baseline':
@@ -1451,7 +1502,7 @@ button_compute_dyn = Button(label="Compute")
 button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
 qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                                    'l_R','l_Ao','psi_o_star','PSI_CD',
+                                                    'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare',
                                                     'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
 country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
@@ -1459,9 +1510,16 @@ country_dyn_display_select = Select(value='USA', title='Country', options=['USA'
 # df_dyn = pd.DataFrame(index=pd.Index(dyn_sol.t_real,name='time'))
 # df_dyn['Value'] = dyn_sol.r[p_dyn.countries.index(country_dyn_display_select.value),:]
 # ds_dyn = ColumnDataSource(df_dyn)
-data_dyn_default = create_column_data_source_from_dyn_sol(dyn_sol)
+temp = create_column_data_source_from_dyn_sol(dyn_sol)
+data_dyn_default = temp[0]
+data_dyn_init_default = temp[1]
+data_dyn_fin_default = temp[2]
 ds_dyn = ColumnDataSource(data_dyn_default)
-delta = max(ds_dyn.data['g'])-min(ds_dyn.data['g'])
+ds_dyn_init = ColumnDataSource(data_dyn_init_default)
+ds_dyn_fin = ColumnDataSource(data_dyn_fin_default)
+up_max = max([max(ds_dyn.data['g']), max(ds_dyn_fin.data['g']), max(ds_dyn_init.data['g'])])
+down_min = min([min(ds_dyn.data['g']), min(ds_dyn_fin.data['g']), min(ds_dyn_init.data['g'])])
+delta = up_max-down_min
 if delta == 0:
     delta = 1
 p_dyn_figure = figure(title="Dynamic solver",
@@ -1471,8 +1529,8 @@ p_dyn_figure = figure(title="Dynamic solver",
                 y_axis_label='Value',
                 # x_axis_type="log",
                 tools = TOOLS,
-                x_range = (0,100),
-                y_range=(min(ds_dyn.data['g'])-delta*0.1,max(ds_dyn.data['g'])+delta*0.1)
+                x_range = (-20,dyn_sol.t_inf+20),
+                y_range=(down_min-delta*0.1,up_max+delta*0.1)
                 )
 
 # p_dyn_figure.y_range=Range1d(min(ds_dyn.data['g']), max(ds_dyn.data['g']))
@@ -1483,7 +1541,20 @@ for col in data_dyn_default.keys():
         lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
         if col != 'g':
             lines_dyn[col].visible = False
+
+init_dyn = {}
+for col in data_dyn_init_default.keys():
+    if col != time:
+        init_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_init, color='red',size=8)
+        if col != 'g':
+            init_dyn[col].visible = False
             
+fin_dyn = {}
+for col in data_dyn_fin_default.keys():
+    if col != time:
+        fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
+        if col != 'g':
+            fin_dyn[col].visible = False
             
 # line_dyn = p_dyn_figure.line(x='time', y='g', source = ds_dyn)
 
@@ -1492,24 +1563,34 @@ def update_graph_dyn(event):
     if qty_dyn_display_select.value in ['g']:
         col = qty_dyn_display_select.value
     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                'l_R','l_Ao','psi_o_star','PSI_CD',
+                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare',
                                 'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                 'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
         col = qty_dyn_display_select.value+country_dyn_display_select.value
     # print(col)
     lines_dyn[col].visible = True
+    init_dyn[col].visible = True
+    fin_dyn[col].visible = True
+
     for other_column in lines_dyn:
         if other_column != col:
             lines_dyn[other_column].visible = False
+            init_dyn[other_column].visible = False
+            fin_dyn[other_column].visible = False
+            
     # print(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1)
     # print(max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
     # p_dyn_figure.y_range=Range1d(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1
     #                              ,max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
-    delta = max(ds_dyn.data[col])-min(ds_dyn.data[col])
+    up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
+    down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
+    delta = up_max-down_min
     if delta == 0:
         delta = 1
-    p_dyn_figure.y_range.start=min(ds_dyn.data[col])-delta*0.1
-    p_dyn_figure.y_range.end=max(ds_dyn.data[col])+delta*0.05
+    p_dyn_figure.y_range.start=down_min-delta*0.1
+    p_dyn_figure.y_range.end=up_max+delta*0.1
+    p_dyn_figure.x_range.start=-20
+    p_dyn_figure.x_range.end=dyn_sol.t_inf+20
         
 button_display_dyn = Button(label="Display")
 button_display_dyn.on_event(ButtonClick, update_graph_dyn)
@@ -1519,48 +1600,11 @@ controls_display_dyn = row(qty_dyn_display_select,
                            country_dyn_display_select,
                            button_display_dyn)
 
-# data_dyn = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_dyn.get_signature_list(),x_dyn]).T)
-# src_dyn = ColumnDataSource(data_dyn)
-
-# # p_dyn.hbar(y = 'Moment',right = 'Contribution', source = src_dyn)
-# p_dyn.hbar(y = 'Moment',right = 'Contribution', source = src_dyn)
-
-# def update_dyn(event):
-#     if variation_dyn_select.value == 'baseline':
-#         path = results_path+baseline_dyn_select.value+'/'
-#     else:
-#         path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-#     par_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
-#     if qty_dyn_select.value in ['eta','T','delta','nu']:
-#         idx_to_change_dyn = par_dyn.countries.index(country_dyn_select.value),par_dyn.sectors.index(sector_dyn_select.value)
-#     if qty_dyn_select.value in ['fe','zeta','nu', 'fo']:
-#         idx_to_change_dyn = par_dyn.sectors.index(sector_dyn_select.value)
-#     if qty_dyn_select.value in ['k','g_0']:
-#         idx_to_change_dyn = None
-#     x_dyn = compute_rough_dynobian(par_dyn, m_dyn, qty_dyn_select.value, idx_to_change_dyn, 
-#                                change_by = 0.1, tol = 1e-14, damping = 5,
-#                                max_count = 5e3)
-#     data_dyn = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_dyn.get_signature_list(),x_dyn]).T)
-#     src_dyn.data = data_dyn
-#     p_dyn.y_range.factors = m_dyn.get_signature_list()
-
-# button_dyn = Button(label="Compute")
-# button_dyn.on_event(ButtonClick, update_dyn)
-
-# controls_dyn = row(baseline_dyn_select, variation_dyn_select, qty_dyn_select, 
-#                    country_dyn_select, sector_dyn_select, button_dyn)
-
-# baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
-
 dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 
 third_panel = row(counterfactuals_report, counterfactuals_to_report, dyn_report)
 
-
-        
-    
-    
 
 #%% Nash / coop equilibrium
 
