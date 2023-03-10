@@ -1397,7 +1397,7 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
         for i,c in enumerate(dyn_sol.countries):
             data_dyn[c_s_qty+c] = getattr(dyn_sol,c_s_qty)[i,1,:].ravel()
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPD','PSI_MNP','profit']:
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
         temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
         temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
         for i,c in enumerate(dyn_sol.countries):
@@ -1452,8 +1452,8 @@ button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
 qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
                                                     'l_R','l_Ao','psi_o_star','PSI_CD',
-                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPD','sum_n_PSI_MNP','sum_n_profit',
-                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPD','sum_i_PSI_MNP','sum_i_profit'])
+                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
 country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
 
 # df_dyn = pd.DataFrame(index=pd.Index(dyn_sol.t_real,name='time'))
@@ -1493,8 +1493,8 @@ def update_graph_dyn(event):
         col = qty_dyn_display_select.value
     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
                                 'l_R','l_Ao','psi_o_star','PSI_CD',
-                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPD','sum_n_PSI_MNP','sum_n_profit',
-                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPD','sum_i_PSI_MNP','sum_i_profit']:
+                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
         col = qty_dyn_display_select.value+country_dyn_display_select.value
     # print(col)
     lines_dyn[col].visible = True
