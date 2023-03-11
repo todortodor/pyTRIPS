@@ -1424,8 +1424,12 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
         for i,c in enumerate(dyn_sol.countries):
             data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
-        temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
+        if c_c_s_qty == 'profit':
+            temp_sum_n = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=0)[:,1]
+            temp_sum_i = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=1)[:,1]
+        else:
+            temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
+            temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
         for i,c in enumerate(dyn_sol.countries):
             data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
             data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
@@ -1445,8 +1449,12 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
         for i,c in enumerate(dyn_sol.countries):
             data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
-        temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
+        if c_c_s_qty == 'profit':
+            temp_sum_n = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=0)[:,1]
+            temp_sum_i = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=1)[:,1]
+        else:
+            temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
+            temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
         for i,c in enumerate(dyn_sol.countries):
             data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
             data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
@@ -1524,7 +1532,7 @@ if delta == 0:
     delta = 1
 p_dyn_figure = figure(title="Dynamic solver",
                 width = 1200,
-                height = 850,
+                height = 750,
                 x_axis_label='Time',
                 y_axis_label='Value',
                 # x_axis_type="log",
