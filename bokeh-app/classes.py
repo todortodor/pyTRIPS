@@ -1721,7 +1721,7 @@ class dynamic_var:
         self.integral_welfare = (p.rho-self.sol_init.g*power)*integral
             
         self.cons_eq_welfare = ((p.rho-self.sol_init.g*power)
-                                *(integral[:,-1]+integrand[:,-1]/(p.rho-self.g[-1]*power)))**(1/power)
+                                *(integral[:,0]+integrand[:,0]/(p.rho-self.g[0]*power)))**(1/power)
     
     def compute_non_solver_quantities(self,p):
         self.compute_A(p)

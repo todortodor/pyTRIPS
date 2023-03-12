@@ -1170,102 +1170,185 @@ jac_report = column(controls_jac,p_jac)
 
 second_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 
-#%% counterfactuals
+# #%% counterfactuals
 
-# baseline_cf = '101'
-baseline_cf = '404'
-country_cf = 'USA'
+# # baseline_cf = '101'
+# baseline_cf = '404'
+# country_cf = 'USA'
 
-# p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
+# # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
+# def section_end(s):
+#      return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_list = sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+
+# # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
+# # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
+# country_cf_select = Select(value=country_cf, 
+#                             title='Country', 
+#                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+#                             options=countries+['World','Harmonizing'])
+
+# def get_data_cf(baseline,country):
+#     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+#     if country != 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+#     if country == 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+#     df_cf.set_index('delt',inplace=True)
+#     return df_cf
+
+# def build_max(df_cf):
+#     df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category10[10][:len(df_max)]
+#     return df_max
+
+# df_cf = get_data_cf(baseline_cf,country_cf)
+# ds_cf = ColumnDataSource(df_cf)
+# df_cf_max = build_max(df_cf)
+# ds_cf_max = ColumnDataSource(df_cf_max)
+
+# colors_cf = itertools.cycle(Category10[10])
+# colors_cf_max = itertools.cycle(Category10[10])
+
+# p_cf = figure(title="Patent protection counterfactual", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
+
+# for col in df_cf.columns:
+#     if col not in [0,'delt','growth']:
+#         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+
+# p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+
+# # p_cf.extra_y_ranges['growth'] = DataRange1d()
+# # p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# # p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+     
+# p_cf.legend.click_policy="hide"
+# p_cf.legend.label_text_font_size = '8pt'
+# p_cf.add_layout(p_cf.legend[0], 'right')
+
+# def update_baseline_cf(attrname, old, new):
+#     country_cf = country_cf_select.value
+#     ds_cf.data = get_data_cf(new,country_cf)
+#     df_cf = get_data_cf(new,country_cf)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
+    
+# def update_country_cf(attrname, old, new):
+#     baseline_cf = baseline_cf_select.value
+#     df_cf = get_data_cf(baseline_cf,new)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
+#     # ds_cf.data = get_data_cf(baseline_cf,new)
+    
+# controls_cf = row(baseline_cf_select, country_cf_select)
+# # controls_mom.sizing_mode = 'scale_width'
+
+# baseline_cf_select.on_change('value', update_baseline_cf)
+# country_cf_select.on_change('value', update_country_cf)
+
+# counterfactuals_report = column(controls_cf,p_cf)
+
+#%% counterfactuals 405 TO target with dynamics
+
+country_to_cf_dyn = 'USA'
+to_target_dyn = 0.0185
+
+list_of_to_targets_dyn = np.linspace(0.01,0.03,41)
+
 def section_end(s):
-     return [int(_) for _ in s.split("_")[-1].split(".")]
-cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+      return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
+cf_to_list = sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
 
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
-country_cf_select = Select(value=country_cf, 
-                            title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
-                            options=countries+['World','Harmonizing'])
+def get_data_to_cf_dyn(to_target_dyn,country):
+    idx_to_cf_dyn = np.argmin(np.abs(list_of_to_targets_dyn-to_target_dyn))
+    df_to_cf_dyn = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf_dyn,len(cf_to_list)-1)]+'/dyn_'+country+'.csv')
+    df_to_cf_dyn.set_index('delt',inplace=True)
+    return df_to_cf_dyn
 
-def get_data_cf(baseline,country):
-    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-    df_cf.set_index('delt',inplace=True)
-    return df_cf
-
-def build_max(df_cf):
-    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+def build_max(df_to_cf):
+    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
     df_max.index.name = 'label'
     df_max.columns = ['xmax','max'] 
     df_max = df_max.loc[countries]
     df_max['colors'] = Category10[10][:len(df_max)]
     return df_max
 
-df_cf = get_data_cf(baseline_cf,country_cf)
-ds_cf = ColumnDataSource(df_cf)
-df_cf_max = build_max(df_cf)
-ds_cf_max = ColumnDataSource(df_cf_max)
+country_to_cf_dyn_select = Select(value=country_to_cf_dyn, 
+                            title='Country', 
+                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                            options=countries+['World'])
 
-colors_cf = itertools.cycle(Category10[10])
-colors_cf_max = itertools.cycle(Category10[10])
+df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,country_to_cf_dyn)
+ds_to_cf_dyn = ColumnDataSource(df_to_cf_dyn)
+df_to_cf_dyn_max = build_max(df_to_cf_dyn)
+ds_to_cf_dyn_max = ColumnDataSource(df_to_cf_dyn_max)
 
-p_cf = figure(title="Patent protection counterfactual", 
+colors_to_cf_dyn = itertools.cycle(Category10[10])
+colors_to_cf_dyn_max = itertools.cycle(Category10[10])
+
+p_to_cf_dyn = figure(title="With transitional dynamics patent protection counterfactual as function of TO target, baseline 405", 
                 width = 1200,
                 height = 850,
                 x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                y_axis_label='Normalized Consumption equivalent welfare',
                 x_axis_type="log",
                 tools = TOOLS) 
 
-for col in df_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+for col in df_to_cf_dyn.columns:
+    if col not in [0,'delt']:
+        p_to_cf_dyn.line(x='delt', y=col, source = ds_to_cf_dyn, 
+                         color=next(colors_to_cf_dyn),line_width = 2, legend_label=col)
 
-p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+p_to_cf_dyn.circle(x = 'xmax', y = 'max', source = ds_to_cf_dyn_max, size=4, color='colors')
 
-# p_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
-     
-p_cf.legend.click_policy="hide"
-p_cf.legend.label_text_font_size = '8pt'
-p_cf.add_layout(p_cf.legend[0], 'right')
+p_to_cf_dyn.legend.click_policy="hide"
+p_to_cf_dyn.legend.label_text_font_size = '8pt'
+p_to_cf_dyn.add_layout(p_to_cf_dyn.legend[0], 'right')
 
-def update_baseline_cf(attrname, old, new):
-    country_cf = country_cf_select.value
-    ds_cf.data = get_data_cf(new,country_cf)
-    df_cf = get_data_cf(new,country_cf)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+def update_baseline_to_cf_dyn(attrname, old, new):
+    country_to_cf_dyn = country_to_cf_dyn_select.value
+    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
+    df_to_cf_dyn = get_data_to_cf_dyn(new/100,country_to_cf_dyn)
+    ds_to_cf_dyn.data = df_to_cf_dyn
+    ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
     
-def update_country_cf(attrname, old, new):
-    baseline_cf = baseline_cf_select.value
-    df_cf = get_data_cf(baseline_cf,new)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+def update_country_to_cf_dyn(attrname, old, new):
+    # baseline_to_cf = baseline_cf_to_select.value
+    to_target_dyn = slider_to_cf_dyn.value/100
+    df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,new)
+    ds_to_cf_dyn.data = df_to_cf_dyn
+    ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
     # ds_cf.data = get_data_cf(baseline_cf,new)
     
-controls_cf = row(baseline_cf_select, country_cf_select)
-# controls_mom.sizing_mode = 'scale_width'
+slider_to_cf_dyn = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
+    
+controls_to_cf_dyn = row(slider_to_cf_dyn, country_to_cf_dyn_select)
+country_to_cf_dyn_select.on_change('value', update_country_to_cf_dyn)
+slider_to_cf_dyn.on_change('value', update_baseline_to_cf_dyn)
 
-baseline_cf_select.on_change('value', update_baseline_cf)
-country_cf_select.on_change('value', update_country_cf)
+counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
-counterfactuals_report = column(controls_cf,p_cf)
-
-#%% counterfactuals 403 TO target
+#%% counterfactuals 405 TO target
 
 # baseline_cf = '101'
 # baseline_to_cf = '403'
@@ -1304,7 +1387,7 @@ country_to_cf_select = Select(value=country_to_cf,
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
                             options=countries+['World','Harmonizing'])
 
-df_to_cf = get_data_to_cf(to_target,country_cf)
+df_to_cf = get_data_to_cf(to_target,country_to_cf)
 ds_to_cf = ColumnDataSource(df_to_cf)
 df_to_cf_max = build_max(df_to_cf)
 ds_to_cf_max = ColumnDataSource(df_to_cf_max)
@@ -1640,7 +1723,8 @@ controls_display_dyn = row(qty_dyn_display_select,
 dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 
-third_panel = row(counterfactuals_report, counterfactuals_to_report, dyn_report)
+# third_panel = row(counterfactuals_report, counterfactuals_to_report, dyn_report)
+third_panel = row(counterfactuals_to_report,counterfactuals_to_dyn_report,  dyn_report)
 
 
 #%% Nash / coop equilibrium
