@@ -1601,8 +1601,9 @@ def update_graph_dyn(event):
         col = qty_dyn_display_select.value+country_dyn_display_select.value
     # print(col)
     lines_dyn[col].visible = True
-    init_dyn[col].visible = True
-    fin_dyn[col].visible = True
+    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare','second_term_sum_welfare']:
+        init_dyn[col].visible = True
+        fin_dyn[col].visible = True
 
     for other_column in lines_dyn:
         if other_column != col:
