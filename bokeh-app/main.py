@@ -1283,6 +1283,12 @@ def get_data_to_cf_dyn(to_target_dyn,country):
     idx_to_cf_dyn = np.argmin(np.abs(list_of_to_targets_dyn-to_target_dyn))
     df_to_cf_dyn = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf_dyn,len(cf_to_list)-1)]+'/dyn_'+country+'.csv')
     df_to_cf_dyn.set_index('delt',inplace=True)
+    if country != 'World':
+        df_to_cf_dyn['static_for_main_country'] = pd.read_csv(
+            cf_path+cf_to_list[min(idx_to_cf_dyn,len(cf_to_list)-1)]+'/'+country+'.csv'
+            )[country].values
+    else:
+        df_to_cf_dyn['static_for_main_country'] = np.nan
     return df_to_cf_dyn
 
 def build_max(df_to_cf):
@@ -1300,6 +1306,7 @@ country_to_cf_dyn_select = Select(value=country_to_cf_dyn,
 
 df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,country_to_cf_dyn)
 ds_to_cf_dyn = ColumnDataSource(df_to_cf_dyn)
+# print(df_to_cf_dyn)
 df_to_cf_dyn_max = build_max(df_to_cf_dyn)
 ds_to_cf_dyn_max = ColumnDataSource(df_to_cf_dyn_max)
 
@@ -1315,9 +1322,13 @@ p_to_cf_dyn = figure(title="With transitional dynamics patent protection counter
                 tools = TOOLS) 
 
 for col in df_to_cf_dyn.columns:
-    if col not in [0,'delt']:
+    if col not in [0,'delt','static_for_main_country']:
         p_to_cf_dyn.line(x='delt', y=col, source = ds_to_cf_dyn, 
                          color=next(colors_to_cf_dyn),line_width = 2, legend_label=col)
+    if col == 'static_for_main_country':
+        p_to_cf_dyn.line(x='delt', y=col, source = ds_to_cf_dyn, 
+                         color='grey',line_width = 2, legend_label=col, 
+                         line_dash = 'dashed')
 
 p_to_cf_dyn.circle(x = 'xmax', y = 'max', source = ds_to_cf_dyn_max, size=4, color='colors')
 
@@ -1329,6 +1340,7 @@ def update_baseline_to_cf_dyn(attrname, old, new):
     country_to_cf_dyn = country_to_cf_dyn_select.value
     # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
     df_to_cf_dyn = get_data_to_cf_dyn(new/100,country_to_cf_dyn)
+    # print(df_to_cf_dyn)
     ds_to_cf_dyn.data = df_to_cf_dyn
     ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
     
@@ -1336,6 +1348,7 @@ def update_country_to_cf_dyn(attrname, old, new):
     # baseline_to_cf = baseline_cf_to_select.value
     to_target_dyn = slider_to_cf_dyn.value/100
     df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,new)
+    # print(df_to_cf_dyn)
     ds_to_cf_dyn.data = df_to_cf_dyn
     ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
     # ds_cf.data = get_data_cf(baseline_cf,new)
@@ -1483,7 +1496,8 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
     data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
     for agg_qty in ['g']:
         data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
-    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','integrand_welfare','second_term_sum_welfare','integral_welfare']:
+    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+                  'integrand_welfare','second_term_sum_welfare','integral_welfare']:
         for i,c in enumerate(dyn_sol.countries):
             data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
@@ -1534,6 +1548,7 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
         data_dyn_init['integrand_welfare'+c] = [None]
         data_dyn_init['integral_welfare'+c] = [None]
         data_dyn_init['second_term_sum_welfare'+c] = [None]
+        data_dyn_init['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
         
     data_dyn_fin = {}
     data_dyn_fin['time'] = [dyn_sol.t_inf]
@@ -1561,6 +1576,7 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
         data_dyn_fin['integrand_welfare'+c] = [None]
         data_dyn_fin['integral_welfare'+c] = [None]
         data_dyn_fin['second_term_sum_welfare'+c] = [None]
+        data_dyn_fin['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
         
     return data_dyn, data_dyn_init, data_dyn_fin
 
@@ -1609,7 +1625,8 @@ button_compute_dyn = Button(label="Compute")
 button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
 qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
-                                                                      'real_final_consumption','l_R','l_Ao','psi_o_star',
+                                                    'real_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+                                                    'l_R','l_Ao','psi_o_star',
                                                     'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
                                                     'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
@@ -1678,15 +1695,20 @@ def update_graph_dyn(event):
     if qty_dyn_display_select.value in ['g']:
         col = qty_dyn_display_select.value
     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+                                          'ratios_of_consumption_levels_change_not_normalized',
                                 'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
                                 'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                 'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
         col = qty_dyn_display_select.value+country_dyn_display_select.value
     # print(col)
     lines_dyn[col].visible = True
-    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare','second_term_sum_welfare']:
+    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
+                                            'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
         init_dyn[col].visible = True
         fin_dyn[col].visible = True
+    else:
+        init_dyn[col].visible = False
+        fin_dyn[col].visible = False
 
     for other_column in lines_dyn:
         if other_column != col:

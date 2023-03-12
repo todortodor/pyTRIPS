@@ -14,7 +14,8 @@ from scipy.special import gamma
 import time
 import os
 import seaborn as sns
-# import aa
+import warnings
+warnings.simplefilter('ignore', np.RankWarning)
 
 class parameters:     
     def __init__(self, n=7, s=2, data_path = None):
@@ -1723,11 +1724,16 @@ class dynamic_var:
         self.cons_eq_welfare = ((p.rho-self.sol_init.g*power)
                                 *(integral[:,0]+integrand[:,0]/(p.rho-self.g[0]*power)))**(1/power)
     
+    def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
+        self.ratios_of_consumption_levels_change_not_normalized = \
+            (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
+    
     def compute_non_solver_quantities(self,p):
         self.compute_A(p)
         self.compute_PSI_S(p)
         # self.compute_welfare(p)
         self.compute_consumption_equivalent_welfare(p)
+        self.compute_ratios_of_consumption_levels_change_not_normalized(p)
     
     def plot_country(self,country_idx,title=None,initial=False,history=False):
         fig,ax = plt.subplots(5,2,figsize = (15,10),layout = 'constrained')
