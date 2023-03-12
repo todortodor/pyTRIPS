@@ -30,6 +30,8 @@ import itertools
 from bokeh.palettes import Category10
 # import numpy as np
 import time
+import warnings
+warnings.simplefilter('ignore', np.RankWarning)
 
 
 # print(1)
@@ -1386,20 +1388,29 @@ slider_dyn = Slider(start=-1, end=1, value=0, step=0.01, title="Log change of de
 
 state_computation = Div(text="Done")
 
+def fit_and_eval(vec,dyn_sol):
+    fit = np.polyval(np.polyfit(dyn_sol.t_real,
+                vec,
+                dyn_sol.Nt),np.linspace(0,dyn_sol.t_inf,2001))
+    return fit
+
 def create_column_data_source_from_dyn_sol(dyn_sol):
     data_dyn = {}
-    data_dyn['time'] = dyn_sol.t_real
+    # data_dyn['time'] = dyn_sol.t_real
+    data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
     for agg_qty in ['g']:
-        data_dyn[agg_qty] = getattr(dyn_sol,agg_qty)
-    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','integrand_welfare']:
+        data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
+    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','integrand_welfare','second_term_sum_welfare','integral_welfare']:
         for i,c in enumerate(dyn_sol.countries):
-            data_dyn[c_qty+c] = getattr(dyn_sol,c_qty)[i,:].ravel()
+            data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
         for i,c in enumerate(dyn_sol.countries):
             if c_s_qty in ['PSI_CD']:
-                data_dyn[c_s_qty+c] = (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel()
+                data_dyn[c_s_qty+c] = fit_and_eval(
+                    (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel(),dyn_sol)
             else:
-                data_dyn[c_s_qty+c] = getattr(dyn_sol,c_s_qty)[i,1,:].ravel()
+                data_dyn[c_s_qty+c] = fit_and_eval(
+                    getattr(dyn_sol,c_s_qty)[i,1,:].ravel(),dyn_sol)
     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
         if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
             temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
@@ -1408,10 +1419,11 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
             temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
             temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
         for i,c in enumerate(dyn_sol.countries):
-            data_dyn['sum_n_'+c_c_s_qty+c] = temp_sum_n[i,1,:].ravel()
-            data_dyn['sum_i_'+c_c_s_qty+c] = temp_sum_i[i,1,:].ravel()
+            data_dyn['sum_n_'+c_c_s_qty+c] = fit_and_eval(temp_sum_n[i,1,:].ravel(),dyn_sol)
+            data_dyn['sum_i_'+c_c_s_qty+c] = fit_and_eval(temp_sum_i[i,1,:].ravel(),dyn_sol)
     for i,c in enumerate(dyn_sol.countries):
-        data_dyn['real_final_consumption'+c] = (getattr(dyn_sol,'nominal_final_consumption')[i,:]/getattr(dyn_sol,'price_indices')[i,:]).ravel()
+        data_dyn['real_final_consumption'+c] = fit_and_eval((getattr(dyn_sol,'nominal_final_consumption')[i,:]
+                                                /getattr(dyn_sol,'price_indices')[i,:]).ravel(),dyn_sol)
     
     data_dyn_init = {}
     data_dyn_init['time'] = [0]
@@ -1436,7 +1448,9 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
     for i,c in enumerate(dyn_sol.countries):
         data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
         data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
-        data_dyn_init['integrand_welfare'+c] = [0]
+        data_dyn_init['integrand_welfare'+c] = [None]
+        data_dyn_init['integral_welfare'+c] = [None]
+        data_dyn_init['second_term_sum_welfare'+c] = [None]
         
     data_dyn_fin = {}
     data_dyn_fin['time'] = [dyn_sol.t_inf]
@@ -1461,7 +1475,9 @@ def create_column_data_source_from_dyn_sol(dyn_sol):
     for i,c in enumerate(dyn_sol.countries):
         data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
         data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
-        data_dyn_fin['integrand_welfare'+c] = [0]
+        data_dyn_fin['integrand_welfare'+c] = [None]
+        data_dyn_fin['integral_welfare'+c] = [None]
+        data_dyn_fin['second_term_sum_welfare'+c] = [None]
         
     return data_dyn, data_dyn_init, data_dyn_fin
 
@@ -1509,8 +1525,9 @@ dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, so
 button_compute_dyn = Button(label="Compute")
 button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
-qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                                    'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare',
+qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
+                                                                      'real_final_consumption','l_R','l_Ao','psi_o_star',
+                                                    'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
                                                     'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
 country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
@@ -1540,6 +1557,13 @@ p_dyn_figure = figure(title="Dynamic solver",
                 x_range = (-20,dyn_sol.t_inf+20),
                 y_range=(down_min-delta*0.1,up_max+delta*0.1)
                 )
+
+hover_tool_eq = HoverTool()
+hover_tool_eq.tooltips = [
+    ("Time", "$x"),
+    ("value", "$y")
+    ] 
+p_dyn_figure.add_tools(hover_tool_eq)
 
 # p_dyn_figure.y_range=Range1d(min(ds_dyn.data['g']), max(ds_dyn.data['g']))
 
@@ -1571,7 +1595,7 @@ def update_graph_dyn(event):
     if qty_dyn_display_select.value in ['g']:
         col = qty_dyn_display_select.value
     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare',
+                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
                                 'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                 'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
         col = qty_dyn_display_select.value+country_dyn_display_select.value
@@ -1590,8 +1614,12 @@ def update_graph_dyn(event):
     # print(max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
     # p_dyn_figure.y_range=Range1d(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1
     #                              ,max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
-    up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
-    down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
+    try:
+        up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
+        down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
+    except:
+        up_max = max(ds_dyn.data[col])
+        down_min = min(ds_dyn.data[col])
     delta = up_max-down_min
     if delta == 0:
         delta = 1

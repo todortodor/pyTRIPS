@@ -1703,18 +1703,25 @@ class dynamic_var:
             *(self.nominal_final_consumption/self.price_indices)**power\
                 /(self.sol_init.nominal_final_consumption/self.sol_init.price_indices)[:,None]**power
         
-        self.integrand_welfare = (p.rho-self.sol_init.g*power)*integrand
+        # print('here')
         
-        integral = np.zeros(p.N)
+        self.integrand_welfare = (p.rho-self.sol_init.g*power)*integrand
+        self.second_term_sum_welfare = (p.rho-self.sol_init.g*power)*integrand/(p.rho-self.g[None,:]*power)
+        
+        # print(self.integrand_welfare)
+        
+        integral = np.zeros((p.N,self.Nt))
         for i in range(p.N):
-            integral[i] = np.polyval(
+            integral[i,:] = np.polyval(
                 np.polyint(np.polyfit(self.t_real,
                             integrand[i,:],
                             self.Nt)),self.t_real
-                )[-1]
+                )
+            
+        self.integral_welfare = (p.rho-self.sol_init.g*power)*integral
             
         self.cons_eq_welfare = ((p.rho-self.sol_init.g*power)
-                                *(integral+integrand[:,-1]/(p.rho-self.g[-1]*power)))**(1/power)
+                                *(integral[:,-1]+integrand[:,-1]/(p.rho-self.g[-1]*power)))**(1/power)
     
     def compute_non_solver_quantities(self,p):
         self.compute_A(p)
