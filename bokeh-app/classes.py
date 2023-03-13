@@ -1676,10 +1676,21 @@ class dynamic_var:
         return DELTA_V
     
     def compute_A(self,p):
-        self.A = np.exp(self.g*self.t_cheby*self.t_inf/2)
+        # np.polyval(np.polyint(np.polyfit(self.t_real,
+        #                     self.g,
+        #                     self.Nt)),self.t_real)
+        # self.A = np.exp(self.g*self.t_cheby*self.t_inf/2)
+        self.A = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
+                            self.g,
+                            self.Nt)),self.t_real))
         
     def compute_PSI_S(self,p):
-        self.PSI_S = np.exp(self.g_s*self.t_cheby[None,:]*self.t_inf/2)
+        # self.PSI_S = np.exp(self.g_s*self.t_cheby[None,:]*self.t_inf/2)
+        self.PSI_S = np.zeros((p.S,self.Nt))
+        for s,_ in enumerate(p.sectors):
+            self.PSI_S[s,:] = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
+                            self.g_s[s,:],
+                            self.Nt)),self.t_real))
         
     # def compute_welfare(self,p):
     #     power = 1-1/p.gamma
@@ -1689,51 +1700,48 @@ class dynamic_var:
     #                              1/(p.rho-self.g*power))/power
     
     def compute_consumption_equivalent_welfare(self,p):
-        # try:
-        #     power = 1-1/p.gamma
-        #     self.cons_eq_welfare = np.einsum('nt,n,,t->nt',
-        #                                      self.nominal_final_consumption/self.price_indices,
-        #                                      1/self.sol_init.cons,
-        #                                      p.rho-self.sol_init.g*power,
-        #                                      p.rho-self.g*power)**(1/power)
-        # except:
-        #     pass
         power = 1-1/p.gamma
+
+        self.integrand_welfare = np.einsum(',t,nt->nt',
+                              p.rho-self.sol_init.g*power,
+                              np.exp(-p.rho*self.t_real),
+                              self.ratios_of_consumption_levels_change_not_normalized**power)
         
-        integrand = np.exp((self.g*power-p.rho)*self.t_real)[None,:]\
-            *(self.nominal_final_consumption/self.price_indices)**power\
-                /(self.sol_init.nominal_final_consumption/self.sol_init.price_indices)[:,None]**power
+        self.second_term_sum_welfare = self.integrand_welfare/(p.rho-self.g[None,:]*power)
         
-        # print('here')
-        
-        self.integrand_welfare = (p.rho-self.sol_init.g*power)*integrand
-        self.second_term_sum_welfare = (p.rho-self.sol_init.g*power)*integrand/(p.rho-self.g[None,:]*power)
-        
-        # print(self.integrand_welfare)
-        
-        integral = np.zeros((p.N,self.Nt))
+        self.integral_welfare = np.zeros((p.N,self.Nt))
         for i in range(p.N):
-            integral[i,:] = np.polyval(
+            self.integral_welfare[i,:] = np.polyval(
                 np.polyint(np.polyfit(self.t_real,
-                            integrand[i,:],
+                            self.integrand_welfare[i,:],
                             self.Nt)),self.t_real
                 )
-            
-        self.integral_welfare = (p.rho-self.sol_init.g*power)*integral
-            
-        self.cons_eq_welfare = ((p.rho-self.sol_init.g*power)
-                                *(integral[:,0]+integrand[:,0]/(p.rho-self.g[0]*power)))**(1/power)
+
+        self.cons_eq_welfare = (self.integral_welfare[:,0]+self.integrand_welfare[:,0]/(p.rho-self.g[0]*power))**(1/power)
     
     def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
+        # self.ratios_of_consumption_levels_change_not_normalized = \
+        #     (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
+    
         self.ratios_of_consumption_levels_change_not_normalized = \
-            (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
+            (self.nominal_final_consumption/self.price_indices)*self.A[None,:]/self.sol_init.cons[:,None]
+    
+    # def compute_world_welfare_changes(self,p,baseline):
+    #     one_ov_gamma = 1/p.gamma
+    #     numerator = (p.labor**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
+    #     denominator = (p.labor**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
+    #     self.cons_eq_pop_average_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
+        
+    #     numerator = (baseline.cons**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
+    #     denominator = baseline.cons.sum()*(p.rho-self.g*(1-one_ov_gamma))
+    #     self.cons_eq_negishi_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
     
     def compute_non_solver_quantities(self,p):
         self.compute_A(p)
         self.compute_PSI_S(p)
-        # self.compute_welfare(p)
-        self.compute_consumption_equivalent_welfare(p)
         self.compute_ratios_of_consumption_levels_change_not_normalized(p)
+        self.compute_consumption_equivalent_welfare(p)
+        
     
     def plot_country(self,country_idx,title=None,initial=False,history=False):
         fig,ax = plt.subplots(5,2,figsize = (15,10),layout = 'constrained')
