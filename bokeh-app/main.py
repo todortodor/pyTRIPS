@@ -1283,7 +1283,7 @@ def get_data_to_cf_dyn(to_target_dyn,country):
     idx_to_cf_dyn = np.argmin(np.abs(list_of_to_targets_dyn-to_target_dyn))
     df_to_cf_dyn = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf_dyn,len(cf_to_list)-1)]+'/dyn_'+country+'.csv')
     df_to_cf_dyn.set_index('delt',inplace=True)
-    if country != 'World':
+    if country not in ['World','Harmonizing']:
         df_to_cf_dyn['static_for_main_country'] = pd.read_csv(
             cf_path+cf_to_list[min(idx_to_cf_dyn,len(cf_to_list)-1)]+'/'+country+'.csv'
             )[country].values
@@ -1301,8 +1301,8 @@ def build_max(df_to_cf):
 
 country_to_cf_dyn_select = Select(value=country_to_cf_dyn, 
                             title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
-                            options=countries+['World'])
+                            # options=countries+['World','World_2','Harmonizing_2'])
+                            options=countries+['World','Harmonizing'])
 
 df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,country_to_cf_dyn)
 ds_to_cf_dyn = ColumnDataSource(df_to_cf_dyn)
