@@ -1717,7 +1717,7 @@ class dynamic_var:
                             self.Nt)),self.t_real
                 )
 
-        self.cons_eq_welfare = (self.integral_welfare[:,0]+self.integrand_welfare[:,0]/(p.rho-self.g[0]*power))**(1/power)
+        self.cons_eq_welfare = (self.integral_welfare[:,0]+self.second_term_sum_welfare[:,0])**(1/power)
     
     def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
         # self.ratios_of_consumption_levels_change_not_normalized = \
