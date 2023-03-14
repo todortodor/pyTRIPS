@@ -1705,7 +1705,7 @@ class dynamic_var:
         self.integrand_welfare = np.einsum(',t,nt->nt',
                               p.rho-self.sol_init.g*power,
                               np.exp(-p.rho*self.t_real),
-                              self.ratios_of_consumption_levels_change_not_normalized**power)
+                              (self.ratios_of_consumption_levels_change_not_normalized*np.exp(self.sol_init.g*self.t_real)[None,:])**power)
         
         self.second_term_sum_welfare = self.integrand_welfare/(p.rho-self.g[None,:]*power)
         
@@ -1724,7 +1724,7 @@ class dynamic_var:
         #     (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
     
         self.ratios_of_consumption_levels_change_not_normalized = \
-            (self.nominal_final_consumption/self.price_indices)*self.A[None,:]/self.sol_init.cons[:,None]
+            (self.nominal_final_consumption/self.price_indices)*self.A[None,:]*np.exp(-self.sol_init.g*self.t_real)[None,:]/self.sol_init.cons[:,None]
     
     # def compute_world_welfare_changes(self,p,baseline):
     #     one_ov_gamma = 1/p.gamma
