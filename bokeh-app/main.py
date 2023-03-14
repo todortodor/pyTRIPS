@@ -575,7 +575,10 @@ comments_dic['404'] = {
     '2.3':'2.3: sigma=2.7, no SRDUS, PCOSTNOAGG',
     }
 
-# comments_dic['401'] = {"baseline":"baseline"}
+comments_dic['501'] = {
+    "baseline":"baseline",
+    '1.0':'1.0: Higher growth weight'
+    }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -584,7 +587,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['404','405']    
+baseline_list = ['404','405','501']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -643,7 +646,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '405'
+baseline_mom = '501'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -779,7 +782,7 @@ mom_select.on_change('value', update_mom)
    
 
 # baseline_par = '101'
-baseline_par = '405'
+baseline_par = '501'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -874,7 +877,7 @@ par_select.on_change('value', update_par)
 # p_par.add_layout(p_par.legend[0], 'bottom right')
 
 # baseline_sol_qty = '101'
-baseline_sol_qty = '405'
+baseline_sol_qty = '501'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -1080,12 +1083,12 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '405'
+baseline_jac = '501'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
 # baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404','405'])
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['404','405'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['404','405','501'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
@@ -1170,100 +1173,194 @@ jac_report = column(controls_jac,p_jac)
 
 second_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 
-# #%% counterfactuals
+#%% counterfactuals
 
-# # baseline_cf = '101'
-# baseline_cf = '404'
-# country_cf = 'USA'
+# baseline_cf = '101'
+baseline_cf = '501'
+country_cf = 'USA'
 
-# # p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
-# def section_end(s):
-#      return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-#     # sorted([s for s in os.listdir(cf_path) 
-#     #             if s[9:].startswith('402') and s.startswith('baseline')], key=section_end)#+\
-#     # sorted([s for s in os.listdir(cf_path) 
-#     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-#     # sorted([s for s in os.listdir(cf_path) 
-#     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+# p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
+def section_end(s):
+      return [int(_) for _ in s.split("_")[-1].split(".")]
+cf_list = sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-# # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
-# # baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
-# country_cf_select = Select(value=country_cf, 
-#                             title='Country', 
-#                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
-#                             options=countries+['World','Harmonizing'])
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
+country_cf_select = Select(value=country_cf, 
+                            title='Country', 
+                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                            options=countries+['World','Harmonizing'])
 
-# def get_data_cf(baseline,country):
-#     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-#     if country != 'Harmonizing':
-#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-#     if country == 'Harmonizing':
-#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-#     df_cf.set_index('delt',inplace=True)
-#     return df_cf
+def get_data_cf(baseline,country):
+    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+    if country != 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+    df_cf.set_index('delt',inplace=True)
+    return df_cf
 
-# def build_max(df_cf):
-#     df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-#     df_max.index.name = 'label'
-#     df_max.columns = ['xmax','max'] 
-#     df_max = df_max.loc[countries]
-#     df_max['colors'] = Category10[10][:len(df_max)]
-#     return df_max
+def build_max(df_cf):
+    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category10[10][:len(df_max)]
+    return df_max
 
-# df_cf = get_data_cf(baseline_cf,country_cf)
-# ds_cf = ColumnDataSource(df_cf)
-# df_cf_max = build_max(df_cf)
-# ds_cf_max = ColumnDataSource(df_cf_max)
+df_cf = get_data_cf(baseline_cf,country_cf)
+ds_cf = ColumnDataSource(df_cf)
+df_cf_max = build_max(df_cf)
+ds_cf_max = ColumnDataSource(df_cf_max)
 
-# colors_cf = itertools.cycle(Category10[10])
-# colors_cf_max = itertools.cycle(Category10[10])
+colors_cf = itertools.cycle(Category10[10])
+colors_cf_max = itertools.cycle(Category10[10])
 
-# p_cf = figure(title="Patent protection counterfactual", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in delta',
-#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                 x_axis_type="log",
-#                 tools = TOOLS) 
+p_cf = figure(title="Patent protection counterfactual", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
+                tools = TOOLS) 
 
-# for col in df_cf.columns:
-#     if col not in [0,'delt','growth']:
-#         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+for col in df_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
-# p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
 
-# # p_cf.extra_y_ranges['growth'] = DataRange1d()
-# # p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# # p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+# p_cf.extra_y_ranges['growth'] = DataRange1d()
+# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
      
-# p_cf.legend.click_policy="hide"
-# p_cf.legend.label_text_font_size = '8pt'
-# p_cf.add_layout(p_cf.legend[0], 'right')
+p_cf.legend.click_policy="hide"
+p_cf.legend.label_text_font_size = '8pt'
+p_cf.add_layout(p_cf.legend[0], 'right')
 
-# def update_baseline_cf(attrname, old, new):
-#     country_cf = country_cf_select.value
-#     ds_cf.data = get_data_cf(new,country_cf)
-#     df_cf = get_data_cf(new,country_cf)
-#     ds_cf.data = df_cf
-#     ds_cf_max.data = build_max(df_cf)
+def update_baseline_cf(attrname, old, new):
+    country_cf = country_cf_select.value
+    ds_cf.data = get_data_cf(new,country_cf)
+    df_cf = get_data_cf(new,country_cf)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
     
-# def update_country_cf(attrname, old, new):
-#     baseline_cf = baseline_cf_select.value
-#     df_cf = get_data_cf(baseline_cf,new)
-#     ds_cf.data = df_cf
-#     ds_cf_max.data = build_max(df_cf)
-#     # ds_cf.data = get_data_cf(baseline_cf,new)
+def update_country_cf(attrname, old, new):
+    baseline_cf = baseline_cf_select.value
+    df_cf = get_data_cf(baseline_cf,new)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    # ds_cf.data = get_data_cf(baseline_cf,new)
     
-# controls_cf = row(baseline_cf_select, country_cf_select)
-# # controls_mom.sizing_mode = 'scale_width'
+controls_cf = row(baseline_cf_select, country_cf_select)
+# controls_mom.sizing_mode = 'scale_width'
 
-# baseline_cf_select.on_change('value', update_baseline_cf)
-# country_cf_select.on_change('value', update_country_cf)
+baseline_cf_select.on_change('value', update_baseline_cf)
+country_cf_select.on_change('value', update_country_cf)
 
-# counterfactuals_report = column(controls_cf,p_cf)
+counterfactuals_report = column(controls_cf,p_cf)
+
+#%% counterfactuals 405 TO target
+
+# baseline_cf = '101'
+# baseline_to_cf = '403'
+country_to_cf = 'USA'
+to_target = 0.0185
+
+list_of_to_targets = np.linspace(0.01,0.03,41)
+
+def section_end(s):
+     return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
+cf_to_list = sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
+
+def get_data_to_cf(to_target,country):
+    idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
+    df_to_cf = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf,len(cf_to_list)-1)]+'/'+country+'.csv')
+    if country != 'Harmonizing':
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
+    df_to_cf.set_index('delt',inplace=True)
+    return df_to_cf
+
+def build_max(df_to_cf):
+    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category10[10][:len(df_max)]
+    return df_max
+
+country_to_cf_select = Select(value=country_to_cf, 
+                            title='Country', 
+                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
+                            options=countries+['World','Harmonizing'])
+
+df_to_cf = get_data_to_cf(to_target,country_to_cf)
+ds_to_cf = ColumnDataSource(df_to_cf)
+df_to_cf_max = build_max(df_to_cf)
+ds_to_cf_max = ColumnDataSource(df_to_cf_max)
+
+colors_to_cf = itertools.cycle(Category10[10])
+colors_to_cf_max = itertools.cycle(Category10[10])
+
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 405", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
+                tools = TOOLS) 
+
+for col in df_to_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
+
+p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
+
+# p_cf.extra_y_ranges['growth'] = DataRange1d()
+# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
+# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
+     
+p_to_cf.legend.click_policy="hide"
+p_to_cf.legend.label_text_font_size = '8pt'
+p_to_cf.add_layout(p_to_cf.legend[0], 'right')
+
+def update_baseline_to_cf(attrname, old, new):
+    country_to_cf = country_to_cf_select.value
+    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
+    df_to_cf = get_data_to_cf(new/100,country_to_cf)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
+    
+def update_country_to_cf(attrname, old, new):
+    # baseline_to_cf = baseline_cf_to_select.value
+    to_target = slider_to_cf.value/100
+    df_to_cf = get_data_to_cf(to_target,new)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
+    # ds_cf.data = get_data_cf(baseline_cf,new)
+    
+slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
+    
+controls_to_cf = row(slider_to_cf, country_to_cf_select)
+country_to_cf_select.on_change('value', update_country_to_cf)
+slider_to_cf.on_change('value', update_baseline_to_cf)
+
+counterfactuals_to_report = column(controls_to_cf,p_to_cf)
+
+third_panel = row(counterfactuals_report, counterfactuals_to_report)
 
 #%% counterfactuals 405 TO target with dynamics
 
@@ -1361,108 +1458,16 @@ slider_to_cf_dyn.on_change('value', update_baseline_to_cf_dyn)
 
 counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
-#%% counterfactuals 405 TO target
 
-# baseline_cf = '101'
-# baseline_to_cf = '403'
-country_to_cf = 'USA'
-to_target = 0.0185
-
-list_of_to_targets = np.linspace(0.01,0.03,41)
-
-def section_end(s):
-     return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
-cf_to_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
-
-def get_data_to_cf(to_target,country):
-    idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
-    df_to_cf = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf,len(cf_to_list)-1)]+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
-    df_to_cf.set_index('delt',inplace=True)
-    return df_to_cf
-
-def build_max(df_to_cf):
-    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category10[10][:len(df_max)]
-    return df_max
-
-country_to_cf_select = Select(value=country_to_cf, 
-                            title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
-                            options=countries+['World','Harmonizing'])
-
-df_to_cf = get_data_to_cf(to_target,country_to_cf)
-ds_to_cf = ColumnDataSource(df_to_cf)
-df_to_cf_max = build_max(df_to_cf)
-ds_to_cf_max = ColumnDataSource(df_to_cf_max)
-
-colors_to_cf = itertools.cycle(Category10[10])
-colors_to_cf_max = itertools.cycle(Category10[10])
-
-p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 405", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
-
-for col in df_to_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
-
-p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
-
-# p_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
-     
-p_to_cf.legend.click_policy="hide"
-p_to_cf.legend.label_text_font_size = '8pt'
-p_to_cf.add_layout(p_to_cf.legend[0], 'right')
-
-def update_baseline_to_cf(attrname, old, new):
-    country_to_cf = country_to_cf_select.value
-    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
-    df_to_cf = get_data_to_cf(new/100,country_to_cf)
-    ds_to_cf.data = df_to_cf
-    ds_to_cf_max.data = build_max(df_to_cf)
-    
-def update_country_to_cf(attrname, old, new):
-    # baseline_to_cf = baseline_cf_to_select.value
-    to_target = slider_to_cf.value/100
-    df_to_cf = get_data_to_cf(to_target,new)
-    ds_to_cf.data = df_to_cf
-    ds_to_cf_max.data = build_max(df_to_cf)
-    # ds_cf.data = get_data_cf(baseline_cf,new)
-    
-slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
-    
-controls_to_cf = row(slider_to_cf, country_to_cf_select)
-country_to_cf_select.on_change('value', update_country_to_cf)
-slider_to_cf.on_change('value', update_baseline_to_cf)
-
-counterfactuals_to_report = column(controls_to_cf,p_to_cf)
-
-# third_panel = row(counterfactuals_report, counterfactuals_to_report)
 
 #%% dynamic solver
 
-baseline_dyn = '405'
+baseline_dyn = '501'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
 # baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['311','312','401','402','403','404','405'])
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['404','405'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['404','405','501'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
 files_in_dir = next(os.walk(baseline_dyn_path))[1]
@@ -1746,7 +1751,7 @@ dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 
 # third_panel = row(counterfactuals_report, counterfactuals_to_report, dyn_report)
-third_panel = row(counterfactuals_to_report,counterfactuals_to_dyn_report,  dyn_report)
+third_bis_panel = row(counterfactuals_to_dyn_report,  dyn_report)
 
 
 #%% Nash / coop equilibrium
@@ -1756,7 +1761,8 @@ third_panel = row(counterfactuals_to_report,counterfactuals_to_dyn_report,  dyn_
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '405'
+# baseline_nash_coop = '405'
+baseline_nash_coop = '501'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1795,7 +1801,7 @@ def get_data_nash_coop(baseline_nash_number):
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
 # baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['403','404'])
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['404','405'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['404','405','501'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2099,5 +2105,5 @@ p_kog2.add_tools(hover_tool_kog2)
 
 fifth_panel = row(p_kog,p_kog2)
 
-curdoc().add_root(column(first_panel, second_panel, third_panel, fourth_panel, fifth_panel))
+curdoc().add_root(column(first_panel, second_panel, third_panel, third_bis_panel, fourth_panel, fifth_panel))
 # curdoc().add_root(column(first_panel, second_panel))

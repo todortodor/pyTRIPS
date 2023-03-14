@@ -40,7 +40,9 @@ pylab.rcParams.update(params)
 #     ]
 baseline_dics = [
     {'baseline':'501',
-                      'variation':'baseline'}
+                      'variation':'1.0'}
+    # {'baseline':'501',
+    #                   'variation':'baseline'}
     ]
 
 for baseline_dic in baseline_dics:    

@@ -65,8 +65,10 @@ import time
 #     #                   'variation': '18.0'}
 #     ]
 baseline_dics = [
+    # {'baseline':'501',
+    #                   'variation': None},
     {'baseline':'501',
-                      'variation': None},
+                      'variation': '1.0'},
     ]
 
 for baseline_dic in baseline_dics:

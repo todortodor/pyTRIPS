@@ -39,8 +39,8 @@ TE; Trade elasticity
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total
 SPATDEST; total patent applications received in each destination country as share of world total
-TWSPFLOW; trade weighted ratio of international bilateral patent flows to international world patenting
-TWSPFLOWDOM; trade weighted ratio of patent flows to world patenting
+TWSPFLOW; Trade weighted ratio of international bilateral patent flows to international world patenting
+TWSPFLOWDOM; Trade weighted ratio of patent flows to world patenting
 DOMPATEU; domestic patent EU as share of patents from EU
 DOMPATUS; domestic patent US as share of patents from US
 DOMPATINEU; domestic patent EU as share of EU patents
