@@ -1,26 +1,26 @@
 moment;description
-GPDIFF;Difference between sectors price index growth rate
-GROWTH;Growth rate
-KM;Kogan Moment
+GPDIFF;Price growth difference (non-patenting minus patenting)
+GROWTH;Aggregate growth rate
+KM;Value of patents relative toRD expenditure in US
 KM_GDP;Kogan Moment relative to GDP of the US
-OUT;Total world output
-RD;RD expenditures to GDP ratio 
+OUT;World output
+RD;RD expenditures relative to GDP
 RD_US;US RD expenditures to GDP ratio 
 RD_RUS;RD expenditures to GDP ratio, ratio to the US
-RP;Relative prices 
-SPFLOW;Ratio of international bilateral patent flows to international world patenting
+RP;Price indices relative to US
+SPFLOW;International patent shares
 SPFLOW_US;Ratio of bilateral patent flows to the US to international world patenting
 SPFLOW_RUS;Ratio of international bilateral patent flows to international world patenting, ratio to the US
 SPFLOWDOM;Ratio of patent flows to world patenting
 SPFLOWDOM_US;Ratio of patent flows to the US to world patenting
 SPFLOWDOM_RUS;Ratio of patent flows to world patenting, ratio to the US-US patent flow
-SRDUS;Share of sector 1 produced by firms performing R&D in the US 
-SRGDP;Share of world real GDP 
+SRDUS;Market share of innovative firms in US
+SRGDP;World real GDP shares
 SRGDP_US;US share of world real GDP 
 SRGDP_RUS;Share of world real GDP, ratio with the US
 STFLOW;Ratio of bilateral trade flow to world output
 JUPCOST;Patenting cost in Japan for the US
-UUPCOST;Patenting cost in US for the US
+UUPCOST;Expenditure in domestic patent application in US
 PCOSTINTER;Patenting cost of all international patent flows
 PCOST;Patenting cost of all international patent flows plus domestic patent flows of the US and EU
 PCOSTINTERNOAGG;Patenting cost of all international patent flows excluding ones to EU and ROW
@@ -31,11 +31,11 @@ Z;country expenditure
 SDOMTFLOW;Sector specific domestic trade flows as shares of total economy
 STFLOWSDOM;Trade flows as ratio to the domestic trade flow
 SINNOVPATEU; Share of innovations patented in Europe
-SINNOVPATUS; Share of innovations patented in the US
+SINNOVPATUS; Share of innovations patented in US
 NUR; Ratio of diffusion : Nu_tilde/Nu
 RDGDPUS; RD spending as share of gdp in the US
-TO; Turnover
-TE; Trade elasticity
+TO; Turnover in US imports
+TE; Trade elasticity in patenting sector
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total
 SPATDEST; total patent applications received in each destination country as share of world total
@@ -43,6 +43,6 @@ TWSPFLOW; Trade weighted ratio of international bilateral patent flows to intern
 TWSPFLOWDOM; Trade weighted ratio of patent flows to world patenting
 DOMPATEU; domestic patent EU as share of patents from EU
 DOMPATUS; domestic patent US as share of patents from US
-DOMPATINEU; domestic patent EU as share of EU patents
-DOMPATINUS; domestic patent US as share of US patents
+DOMPATINEU; Share of domestic patentsin inward patents in Europe
+DOMPATINUS; Share of domestic patentsin inward patents in US
 ERDUS; semi elasticity of RD with respect to delta in the US

@@ -46,16 +46,16 @@ countries_names = {'USA':'USA','EUR':'Europe','JAP':'Japan','CHN':'China',
                   'BRA':'Brazil','IND':'India','ROW':'Rest of the world'}
 
 parameters_description = {
-    'delta':'Patent protection parameter',
-    'g_0':'Growth rate in non-patenting sector',
-    'f_o':'Fixed initial patenting cost',
-    'f_e':'Following patents additional cost',
-    'k':'Parameter k',
-    'nu':'Diffusion speed',
-    'theta':'Trade elasticty',
-    'zeta':'Parameter zeta',
+    'delta':'Patent protection',
+    'g_0':'Growth rate of no patenting sector',
+    'f_o':'Patent preparation cost',
+    'f_e':'Patent application cost',
+    'k':'Shape parameter of Pareto quality distribution',
+    'nu':'technology diffusion rate',
+    'theta':'Shape parameter of Frechet productivity distribution',
+    'zeta':'Product obsolescence rate',
     'T':'Productivty',
-    'eta':'Parameter eta'
+    'eta':'RD efficiency'
     }
 
 #%% create output folder
@@ -140,7 +140,7 @@ if annotate_with_labels:
 plt.xlabel('Data')
 plt.ylabel('Model')
 
-plt.title(m_baseline.description.loc[moment,'description'])
+# plt.title(m_baseline.description.loc[moment,'description'])
 
 plt.xscale('log')
 plt.yscale('log')
@@ -189,7 +189,7 @@ if annotate_with_labels:
 plt.xlabel('Data')
 plt.ylabel('Model')
 
-plt.title(m_baseline.description.loc[moment,'description'])
+# plt.title(m_baseline.description.loc[moment,'description'])
 
 plt.xscale('log')
 plt.yscale('log')
@@ -351,7 +351,7 @@ fig, ax = plt.subplots()
 ax.bar(x,y)
     
 # plt.xlabel('Country')
-plt.ylabel(parameter)
+plt.ylabel(r'$\eta$',rotation=0,fontsize = 30)
 
 plt.title(parameters_description[parameter])
 
@@ -387,7 +387,7 @@ fig, ax = plt.subplots()
 ax.bar(x,y)
     
 # plt.xlabel('Country')
-plt.ylabel(parameter)
+plt.ylabel(parameter,rotation=0)
 
 plt.title(parameters_description[parameter]+' in non patenting sector')
 
@@ -421,9 +421,9 @@ fig, ax = plt.subplots()
 ax.bar(x,y)
     
 # plt.xlabel('Country')
-plt.ylabel(parameter)
+plt.ylabel(parameter,rotation=0)
 
-plt.title(parameters_description[parameter]+' in non patenting sector')
+plt.title(parameters_description[parameter]+' in patenting sector')
 
 for save_format in save_formats:
     plt.savefig(save_path+parameter+'.'+save_format,format=save_format)
@@ -446,8 +446,10 @@ df.to_csv(save_path+parameter+'_patent_sector.csv')
 
 #%% Unilateral patent protections counterfactuals
 
+recap_growth_rate = pd.DataFrame(columns = ['delta_change']+p_baseline.countries+['World'])
+
 for c in p_baseline.countries+['World']:
-# for c in ['EUR']:
+# for c in ['World']:
     recap = pd.DataFrame(columns = ['delta_change','growth','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -478,22 +480,25 @@ for c in p_baseline.countries+['World']:
             recap.loc[run, 'world_negishi'] = sol_c.cons_eq_negishi_welfare_change
             recap.loc[run, 'world_equal'] = sol_c.cons_eq_pop_average_welfare_change
             recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
+            
+            recap_growth_rate.loc[run,'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
+            recap_growth_rate.loc[run,c] = sol_c.g
 
     fig,ax = plt.subplots()
     # ax2 = ax.twinx()
     
-    ax.set_ylabel('Normalized consumption equivalent welfare change')
+    ax.set_ylabel('Welfare change')
     if c in p_baseline.countries:
-        ax.set_xlabel('Change in delta of '+countries_names[c])
+        ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
-        ax.set_xlabel('Change in delta of all countries')
+        ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
     # ax2.set_ylabel('Growth rate change')
 
     for i,country in enumerate(p_baseline.countries):
         ax.plot(recap.delta_change,recap[country],color=sns.color_palette()[i],label=countries_names[country])
     
-    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World welfare\nNegishi weights')
-    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World welfare\nPopulation weights')
+    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
+    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
     # ax.plot([],[],color='grey',ls='-.',label='Growth rate')
     
     # ax.plot(recap.delta_change,recap['growth'].values/(recap.loc[recap.delta_change == 1]['growth'].values),color='grey',ls='-.',label='Growth rate')
@@ -501,8 +506,9 @@ for c in p_baseline.countries+['World']:
     
     # ax2.legend()
     ax.legend()
-    plt.title('Response to unilateral patent protection change')
+    # plt.title('Response to unilateral patent protection change')
     plt.xscale('log')
+    # plt.yscale('log')
     for save_format in save_formats:
         plt.savefig(save_path+c+'_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
     plt.show()
@@ -518,6 +524,42 @@ for c in p_baseline.countries+['World']:
                       )
     recap.to_csv(save_path+c+'_unilateral_patent_protection_counterfactual.csv')
 
+#%%
+
+for with_world in [True,False]:
+
+    fig,ax = plt.subplots()
+    
+    ax.set_ylabel('Growth rate (%)')
+    ax.set_xlabel(r'Proportional change of $\delta$')
+    
+    for i,country in enumerate(p_baseline.countries):
+        ax.plot(recap_growth_rate.delta_change,
+                recap_growth_rate[country]*100,
+                color=sns.color_palette()[i],
+                label=countries_names[country])
+    if with_world:
+        ax.plot(recap_growth_rate.delta_change,
+                recap_growth_rate['World']*100,color='grey',
+                label='All countries',ls='--')
+    ax.legend()
+    plt.xscale('log')
+    for save_format in save_formats:
+        if with_world:
+            save_name = save_path+'growth_rate_unilateral_patent_protection_counterfactual_with_world.'
+        else:
+            save_name = save_path+'growth_rate_unilateral_patent_protection_counterfactual.'
+        plt.savefig(save_name+save_format,format=save_format)
+    plt.show()
+    
+    caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
+    
+    
+    recap_growth_rate.style.to_latex(save_name+'tex',
+                      caption=caption,
+                      **save_to_tex_options
+                      )
+    recap_growth_rate.to_csv(save_name+'csv')
 
 
 #%% Nash table
@@ -681,7 +723,7 @@ all_coop_negishies = all_coop_negishies.drop_duplicates(['baseline',
 
 run_coop_negishi= all_coop_negishies.loc[(all_coop_negishies.baseline == int(baseline))
                                      & (all_coop_negishies.variation == variation)
-                                     & (all_coop_negishies.aggregation_method == 'pop_weighted')]
+                                     & (all_coop_negishies.aggregation_method == 'negishi')]
 
 p_coop_negishi = p_baseline.copy()
 p_coop_negishi.delta[:,1] = run_coop_negishi[p_baseline.countries].values.squeeze()

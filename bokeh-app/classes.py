@@ -1718,7 +1718,56 @@ class dynamic_var:
                 )
 
         self.cons_eq_welfare = (self.integral_welfare[:,0]+self.second_term_sum_welfare[:,0])**(1/power)
-    
+        
+        # population-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       (p.labor[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *(p.labor**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        self.cons_eq_pop_average_welfare_change = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/(p.labor**(1/p.gamma)*self.sol_init.cons**power).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        # negishi-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       (self.sol_init.cons[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *(self.sol_init.cons**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        self.cons_eq_negishi_welfare_change = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/(self.sol_init.cons).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        
     def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
         # self.ratios_of_consumption_levels_change_not_normalized = \
         #     (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
