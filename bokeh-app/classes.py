@@ -255,7 +255,9 @@ class parameters:
     def update_khi_and_r_hjort(self, new_khi):
         #new_khi = 1 will remove the hjort factor
         self.khi = new_khi
-        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
+        self.r_hjort = ((self.data.gdp.iloc[0]*np.array(self.data.labor)*self.data.price_level
+                        /(self.data.labor.iloc[0]*self.data.price_level.iloc[0]*np.array(self.data.gdp))
+                        )**(1-self.khi)).values
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))

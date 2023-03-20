@@ -578,7 +578,8 @@ comments_dic['404'] = {
 
 comments_dic['501'] = {
     "baseline":"baseline",
-    '1.0':'1.0: Higher growth weight'
+    '1.0':'1.0: Higher growth weight',
+    '2.0':'2.0: Hjort correction on real GDP'
     }
 
 baselines_dic_param = {}
@@ -996,7 +997,8 @@ dyn_cf_list = sorted([s for s in os.listdir(cf_path)
 
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(dyn_cf_path)) 
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(dyn_cf_list, key=section_end)])
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in dyn_cf_list])
+# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in dyn_cf_list])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['501_1.0'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])

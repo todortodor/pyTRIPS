@@ -72,7 +72,7 @@ except:
 #%% Choose a run, load parameters, moments, solution
 
 baseline = '501'
-variation = '1.0'
+variation = '2.0'
 
 output_path = 'output/'
 output_name = 'draft_NBER'
