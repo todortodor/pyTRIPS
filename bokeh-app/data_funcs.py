@@ -90,6 +90,15 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df_psi_o_star['psi_o_star'] = sol_c.psi_o_star.ravel()
     df_psi_o_star.to_excel(writer,sheet_name='psi_o_star')
     
+    df_g_s = pd.DataFrame(index = pd.Index(p.sectors,name='sector'))
+    df_g_s['g_s'] = sol_c.g_s
+    df_g_s.to_excel(writer,sheet_name='sectoral_growth_rates')
+    
+    df_r_and_g = pd.DataFrame(index = ['aggregate'])
+    df_r_and_g.loc['g','aggregate'] = sol_c.g
+    df_r_and_g.loc['r','aggregate'] = sol_c.r
+    df_r_and_g.to_excel(writer,sheet_name='growth_interest_rates')
+    
     df_sales = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
     df_sales['M share of sales'] = sol_c.X_M[:,:,1].ravel()
     # df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].ravel()
@@ -137,7 +146,7 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df_share_patented['share_innov_patented'] = sol_c.share_innov_patented.ravel()
     df_share_patented.to_excel(writer,sheet_name='share of innovations patented')
     
-    writer.save()
+    writer.close()
 
 def compare_params(dic, save=False, save_path=None, color_gradient = True):
     n_col = min(1,round(len(dic)/25)+1)
