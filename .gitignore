@@ -17,3 +17,4 @@ bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_14.1/H
 bokeh-app/counterfactual_recaps/unilateral_patent_protection/baseline_104_14.1/World_2.csv
 bokeh-app/explore_psi_star_min.py
 output/
+*.pdf
