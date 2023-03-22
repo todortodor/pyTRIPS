@@ -948,6 +948,12 @@ class var:
         numerator = (baseline.cons**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
         denominator = baseline.cons.sum()*(p.rho-self.g*(1-one_ov_gamma))
         self.cons_eq_negishi_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
+        
+    def compute_world_welfare_changes_custom_weights(self,p,baseline,weights):
+        one_ov_gamma = 1/p.gamma
+        numerator = (weights**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
+        denominator = (weights**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
+        self.cons_eq_custom_weights_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
     
         # return phi
 # class var_calibration(var):

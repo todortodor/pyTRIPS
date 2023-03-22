@@ -998,7 +998,7 @@ dyn_cf_list = sorted([s for s in os.listdir(cf_path)
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(dyn_cf_path)) 
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(dyn_cf_list, key=section_end)])
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in dyn_cf_list])
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['501_1.0'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['501_1.0','501_2.0'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
@@ -1466,7 +1466,7 @@ equilibrium_type ='Nash'
 baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=['501'])
 variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
                             title='Variation', 
-                            options=['1.0'])
+                            options=['1.0','2.0'])
 equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
 
 def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):

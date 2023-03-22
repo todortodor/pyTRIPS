@@ -25,7 +25,8 @@ plt.rcParams.update({'font.size': 25})
 plt.rcParams['text.usetex'] = False
 
 baseline_dics = [
-    {'baseline':'501','variation': '1.0'}
+    # {'baseline':'501','variation': '1.0'},
+    {'baseline':'501','variation': '2.0'}
     ]
 
 # baseline_dics = [
@@ -57,8 +58,8 @@ for baseline_dic in baseline_dics:
     p_baseline = parameters(n=7,s=2)
     p_baseline.load_data(baseline_path)
     
-    # for equilibrium in ['nash_eq','coop_negishi_eq','coop_equal_eq']:
-    for equilibrium in ['coop_negishi_eq','coop_equal_eq']:
+    for equilibrium in ['nash_eq','coop_negishi_eq','coop_equal_eq']:
+    # for equilibrium in ['nash_eq']:
     
         if baseline_dic['variation'] == 'baseline':
             local_path = \
@@ -169,7 +170,8 @@ for baseline_dic in baseline_dics:
 #%% make recaps
 
 baseline_dics = [
-    {'baseline':'501','variation': '1.0'}
+    # {'baseline':'501','variation': '1.0'},
+    {'baseline':'501','variation': '2.0'}
     ]
 
 nash_deltas = pd.read_csv('nash_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(['baseline','variation'],keep='last')
@@ -186,8 +188,8 @@ coop_equal_deltas = coop_equal_deltas.loc[coop_equal_deltas.aggregation_method =
 coop_equal_deltas['variation'] = coop_equal_deltas['variation'].astype('str')
 coop_equal_deltas['baseline'] = coop_equal_deltas['baseline'].astype('str')
 
-# for equilibrium in ['nash_eq','coop_negishi_eq','coop_equal_eq']:
-for equilibrium in ['nash_eq']:
+for equilibrium in ['nash_eq','coop_negishi_eq','coop_equal_eq']:
+# for equilibrium in ['nash_eq']:
     
     recaps_path = f'counterfactual_recaps/around_dyn_{equilibrium}/'
     
