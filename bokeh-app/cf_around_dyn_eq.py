@@ -170,7 +170,6 @@ for baseline_dic in baseline_dics:
 #%% make recaps
 
 baseline_dics = [
-    # {'baseline':'501','variation': '1.0'},
     {'baseline':'501','variation': '2.0'}
     ]
 

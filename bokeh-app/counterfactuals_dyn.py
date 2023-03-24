@@ -15,51 +15,7 @@ from classes import moments, parameters, var, dynamic_var
 from solver_funcs import fixed_point_solver, dyn_fixed_point_solver
 import time
 
-# baseline_dics = [
-#     {'baseline':'405','variation': '1.0'},
-#     {'baseline':'405','variation': '1.1'},
-#     {'baseline':'405','variation': '1.2'},
-#     {'baseline':'405','variation': '1.3'},
-#     {'baseline':'405','variation': '1.4'},
-#     {'baseline':'405','variation': '1.5'},
-#     {'baseline':'405','variation': '1.6'},
-#     {'baseline':'405','variation': '1.7'},
-#     {'baseline':'405','variation': '1.8'},
-#     {'baseline':'405','variation': '1.9'},
-#     {'baseline':'405','variation': '1.10'},
-#     {'baseline':'405','variation': '1.11'},
-#     {'baseline':'405','variation': '1.12'},
-#     {'baseline':'405','variation': '1.13'},
-#     {'baseline':'405','variation': '1.14'},
-#     {'baseline':'405','variation': '1.15'},
-#     {'baseline':'405','variation': '1.16'},
-#     {'baseline':'405','variation': '1.17'},
-#     {'baseline':'405','variation': '1.18'},
-#     {'baseline':'405','variation': '1.19'},
-#     {'baseline':'405','variation': '1.20'},
-#     {'baseline':'405','variation': '1.21'},
-#     {'baseline':'405','variation': '1.22'},
-#     {'baseline':'405','variation': '1.23'},
-#     {'baseline':'405','variation': '1.24'},
-#     {'baseline':'405','variation': '1.25'},
-#     {'baseline':'405','variation': '1.26'},
-#     {'baseline':'405','variation': '1.27'},
-#     {'baseline':'405','variation': '1.28'},
-#     {'baseline':'405','variation': '1.29'},
-#     {'baseline':'405','variation': '1.30'},
-#     {'baseline':'405','variation': '1.31'},
-#     {'baseline':'405','variation': '1.32'},
-#     {'baseline':'405','variation': '1.33'},
-#     {'baseline':'405','variation': '1.34'},
-#     {'baseline':'405','variation': '1.35'},
-#     {'baseline':'405','variation': '1.36'},
-#     {'baseline':'405','variation': '1.37'},
-#     {'baseline':'405','variation': '1.38'},
-#     {'baseline':'405','variation': '1.39'},
-#     {'baseline':'405','variation': '1.40'}
-#     ]
 baseline_dics = [
-    # {'baseline':'501','variation': None},
     {'baseline':'501','variation': '2.0'}
     ]
 
