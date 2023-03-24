@@ -14,159 +14,50 @@ from solver_funcs import find_nash_eq
 from data_funcs import write_calibration_results
 import os
 import numpy as np
-# from solver_funcs import find_nash_eq, minus_welfare_of_delta
 import pandas as pd
 
-# runs_params = [
-#     {'number':0,
-#       'KM_target':0.06,
-#       'TO_target':0.05,
-#       'kappa':0.5
-#       },
-#     {'number':1,
-#       'KM_target':0.09277,
-#       'TO_target':0.05,
-#       'kappa':0.5
-#       },
-#     {'number':2,
-#       'KM_target':0.1322,
-#       'TO_target':0.05,
-#       'kappa':0.5
-#       },
-#     {'number':3,
-#       'KM_target':0.06,
-#       'TO_target':0.036,
-#       'kappa':0.5
-#       },
-#     {'number':4,
-#       'KM_target':0.09277,
-#       'TO_target':0.036,
-#       'kappa':0.5
-#       },
-#     {'number':5,
-#       'KM_target':0.1322,
-#       'TO_target':0.036,
-#       'kappa':0.5
-#       },
-#     {'number':6,
-#       'KM_target':0.06,
-#       'TO_target':0.0242 ,
-#       'kappa':0.5
-#       },
-#     {'number':7,
-#       'KM_target':0.09277,
-#       'TO_target':0.0242 ,
-#       'kappa':0.5
-#       },
-#     {'number':8,
-#       'KM_target':0.1322,
-#       'TO_target':0.0242 ,
-#       'kappa':0.5
-#       },
-#     {'number':9,
-#       'KM_target':0.06,
-#       'TO_target':0.0242,
-#       'kappa':0.5
-#       },
-#     {'number':10,
-#       'KM_target':0.09277,
-#       'TO_target':0.0242,
-#       'kappa':0.5
-#       },
-#     {'number':11,
-#       'KM_target':0.1322,
-#       'TO_target':0.0242,
-#       'kappa':0.5
-#       },
-    # {'number':9,
-    #   'KM_target':0.06,
-    #   'TO_target':0.05,
-    #   'kappa':0.7474
-    #   },
-    # {'number':10,
-    #   'KM_target':0.09277,
-    #   'TO_target':0.05,
-    #   'kappa':0.7474
-    #   },
-    # {'number':11,
-    #   'KM_target':0.1322,
-    #   'TO_target':0.05,
-    #   'kappa':0.7474
-    #   },
-    # {'number':12,
-    #   'KM_target':0.06,
-    #   'TO_target':0.036,
-    #   'kappa':0.7474
-    #   },
-    # {'number':13,
-    #   'KM_target':0.09277,
-    #   'TO_target':0.036,
-    #   'kappa':0.7474
-    #   },
-    # {'number':14,
-    #   'KM_target':0.1322,
-    #   'TO_target':0.036,
-    #   'kappa':0.7474
-    #   },
-    # {'number':15,
-    #   'KM_target':0.06,
-    #   'TO_target':0.0124,
-    #   'kappa':0.7474
-    #   },
-    # {'number':16,
-    #   'KM_target':0.09277,
-    #   'TO_target':0.0124,
-    #   'kappa':0.7474
-    #   },
-    # {'number':17,
-    #   'KM_target':0.1322,
-    #   'TO_target':0.0124,
-    #   'kappa':0.7474
-    #   }
-    # ]
-
 runs_params = [
-    {"number":0,"TO_target":0.01},
-    {"number":1,"TO_target":0.0105},
-    {"number":2,"TO_target":0.011},
-    {"number":3,"TO_target":0.0115},
-    {"number":4,"TO_target":0.012},
-    {"number":5,"TO_target":0.0125},
-    {"number":6,"TO_target":0.013},
-    {"number":7,"TO_target":0.0135},
-    {"number":8,"TO_target":0.014},
-    {"number":9,"TO_target":0.0145},
-    {"number":10,"TO_target":0.015},
-    {"number":11,"TO_target":0.0155},
-    {"number":12,"TO_target":0.016},
-    {"number":13,"TO_target":0.0165},
-    {"number":14,"TO_target":0.017},
-    {"number":15,"TO_target":0.0175},
-    {"number":16,"TO_target":0.018},
-    {"number":17,"TO_target":0.0185},
-    {"number":18,"TO_target":0.019},
-    {"number":19,"TO_target":0.0195},
-    {"number":20,"TO_target":0.02},
-    {"number":21,"TO_target":0.0205},
-    {"number":22,"TO_target":0.021},
-    {"number":23,"TO_target":0.0215},
-    {"number":24,"TO_target":0.022},
-    {"number":25,"TO_target":0.0225},
-    {"number":26,"TO_target":0.023},
-    {"number":27,"TO_target":0.0235},
-    {"number":28,"TO_target":0.024},
-    {"number":29,"TO_target":0.0245},
-    {"number":30,"TO_target":0.025},
-    {"number":31,"TO_target":0.0255},
-    {"number":32,"TO_target":0.026},
-    {"number":33,"TO_target":0.0265},
-    {"number":34,"TO_target":0.027},
-    {"number":35,"TO_target":0.0275},
-    {"number":36,"TO_target":0.028},
-    {"number":37,"TO_target":0.0285},
-    {"number":38,"TO_target":0.029},
-    {"number":39,"TO_target":0.0295},
-    {"number":40,"TO_target":0.03}
+    {"number":0.0,"TO_target":0.01},
+    {"number":0.1,"TO_target":0.0105},
+    {"number":0.2,"TO_target":0.011},
+    {"number":0.3,"TO_target":0.0115},
+    {"number":0.4,"TO_target":0.012},
+    {"number":0.5,"TO_target":0.0125},
+    {"number":0.6,"TO_target":0.013},
+    {"number":0.7,"TO_target":0.0135},
+    {"number":0.8,"TO_target":0.014},
+    {"number":0.9,"TO_target":0.0145},
+    {"number":0.10,"TO_target":0.015},
+    {"number":0.11,"TO_target":0.0155},
+    {"number":0.12,"TO_target":0.016},
+    {"number":0.13,"TO_target":0.0165},
+    {"number":0.14,"TO_target":0.017},
+    {"number":0.15,"TO_target":0.0175},
+    {"number":0.16,"TO_target":0.018},
+    {"number":0.17,"TO_target":0.0185},
+    {"number":0.18,"TO_target":0.019},
+    {"number":0.19,"TO_target":0.0195},
+    {"number":0.20,"TO_target":0.02},
+    # {"number":21,"TO_target":0.0205},
+    # {"number":22,"TO_target":0.021},
+    # {"number":23,"TO_target":0.0215},
+    # {"number":24,"TO_target":0.022},
+    # {"number":25,"TO_target":0.0225},
+    # {"number":26,"TO_target":0.023},
+    # {"number":27,"TO_target":0.0235},
+    # {"number":28,"TO_target":0.024},
+    # {"number":29,"TO_target":0.0245},
+    # {"number":30,"TO_target":0.025},
+    # {"number":31,"TO_target":0.0255},
+    # {"number":32,"TO_target":0.026},
+    # {"number":33,"TO_target":0.0265},
+    # {"number":34,"TO_target":0.027},
+    # {"number":35,"TO_target":0.0275},
+    # {"number":36,"TO_target":0.028},
+    # {"number":37,"TO_target":0.0285},
+    # {"number":38,"TO_target":0.029},
+    # {"number":39,"TO_target":0.0295},
+    # {"number":40,"TO_target":0.03}
     ]
 
 # runs_params = []
@@ -234,10 +125,10 @@ runs_params = [
 #  ]
 
 
-baseline_number = '405'
+baseline_number = '501'
 # variation_number = 1
 # for variation_number in range(11,19):
-for variation_number in [1]:
+for variation_number in [2]:
     # print(variation_number)
     
     for run_params in runs_params:
@@ -250,8 +141,8 @@ for variation_number in [1]:
         
         # if new_run:
         p = parameters(n=7,s=2)
-        p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-        # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
+        # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+        p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         start_time = time.perf_counter()
         
@@ -261,8 +152,8 @@ for variation_number in [1]:
         
         m = moments()
         m.load_data()
-        m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-        # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
+        # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+        m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:
         #     p.calib_parameters.append('theta')
@@ -624,9 +515,51 @@ for variation_number in [1]:
                     )
             
             
-            # solve here opt_deltas
-            
             p.delta[...,1] = sol.x
+            solution_welfare = -sol.fun
+            
+            #make a 'corner check'
+            corner_corrected_deltas = p.delta[...,1].copy()
+            for i,c in enumerate(p_baseline.countries):
+                p_corner = p.copy()
+                p_corner.delta[i,1] = ub_delta
+                sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
+                                                context = 'counterfactual',
+                                                cobweb_anim=False,tol =1e-15,
+                                                accelerate=False,
+                                                accelerate_when_stable=True,
+                                                cobweb_qty='profit',
+                                                plot_convergence=False,
+                                                plot_cobweb=False,
+                                                safe_convergence=0.001,
+                                                disp_summary=False,
+                                                # apply_bound_psi_star = False,
+                                                damping = 10,
+                                                max_count = 1e4,
+                                                accel_memory = 50, 
+                                                accel_type1=True, 
+                                                accel_regularization=1e-10,
+                                                accel_relaxation=0.5, 
+                                                accel_safeguard_factor=1, 
+                                                accel_max_weight_norm=1e6,
+                                                damping_post_acceleration=5
+                                                # damping=10
+                                                  # apply_bound_psi_star=True
+                                                )
+                sol_corner.compute_non_solver_quantities(p_corner)
+                sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+                sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+                # sol_corner.compute_world_welfare_changes_custom_weights(p, sol_baseline, weights)
+                if aggregation_method == 'negishi':
+                    if sol_corner.cons_eq_negishi_welfare_change > solution_welfare:
+                        print('corner was better for ',c)
+                        corner_corrected_deltas[i] = ub_delta
+                if aggregation_method == 'pop_weighted':
+                    if sol_corner.cons_eq_pop_average_welfare_change > solution_welfare:
+                        print('corner was better for ',c)
+                        corner_corrected_deltas[i] = ub_delta
+                    
+            p.delta[...,1] = corner_corrected_deltas
             
             sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                             context = 'counterfactual',
@@ -688,7 +621,9 @@ for variation_number in [1]:
                                 index = cons_eq_welfares.columns).T
                 cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
-            
+        
+        #%%
+        
         ## %% counterfactuals
         
         if baseline_dic['variation'] is None:

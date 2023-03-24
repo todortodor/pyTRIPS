@@ -138,11 +138,58 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     
     return -dyn_sol_c.cons_eq_negishi_welfare_change
         
+# baseline_dics = [
+#     {'baseline':'501',
+#                       'variation':'1.0'},
+#     {'baseline':'501',
+#                       'variation':'2.0'}
+#     ]
+
 baseline_dics = [
+    # {'baseline':'501',
+    #                   'variation':'1.0'},
     {'baseline':'501',
-                      'variation':'1.0'},
+                      'variation':'2.0.0'},
     {'baseline':'501',
-                      'variation':'2.0'}
+                      'variation':'2.0.1'},
+    {'baseline':'501',
+                      'variation':'2.0.2'},
+    {'baseline':'501',
+                      'variation':'2.0.3'},
+    {'baseline':'501',
+                      'variation':'2.0.4'},
+    {'baseline':'501',
+                      'variation':'2.0.5'},
+    {'baseline':'501',
+                      'variation':'2.0.6'},
+    {'baseline':'501',
+                      'variation':'2.0.7'},
+    {'baseline':'501',
+                      'variation':'2.0.8'},
+    {'baseline':'501',
+                      'variation':'2.0.9'},
+    {'baseline':'501',
+                      'variation':'2.0.10'},
+    {'baseline':'501',
+                      'variation':'2.0.11'},
+    {'baseline':'501',
+                      'variation':'2.0.12'},
+    {'baseline':'501',
+                      'variation':'2.0.13'},
+    {'baseline':'501',
+                      'variation':'2.0.14'},
+    {'baseline':'501',
+                      'variation':'2.0.15'},
+    {'baseline':'501',
+                      'variation':'2.0.16'},
+    {'baseline':'501',
+                      'variation':'2.0.17'},
+    {'baseline':'501',
+                      'variation':'2.0.18'},
+    {'baseline':'501',
+                      'variation':'2.0.19'},
+    {'baseline':'501',
+                      'variation':'2.0.20'},
     ]
 
 lb_delta = 0.01
