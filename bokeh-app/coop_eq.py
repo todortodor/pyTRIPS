@@ -95,100 +95,67 @@ def minus_welfare_of_delta_negishi_weighted(deltas,p,sol_baseline):
     
     
     return -sol_c.cons_eq_negishi_welfare_change
-
-# baseline_dics = []
-
-# for baseline_number in ['101','102','104']:
-#     baseline_dics.append({'baseline':baseline_number,
-#                       'variation':'baseline'})
-    
-#     files_in_dir = next(os.walk('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'))[1]
-#     run_list = [f for f in files_in_dir if f[0].isnumeric()]
-#     run_list.sort(key=float)
-    
-#     for run in run_list:
-#         baseline_dics.append({'baseline':baseline_number,
-#                           'variation':run})
         
 # baseline_dics = [
-#     # {'baseline':'312',
-#     #                   'variation': 'baseline'},
-#     # {'baseline':'312',
+#     {'baseline':'404',
+#                       'variation':'2.0'},
+#     {'baseline':'404',
+#                       'variation': '2.1'},
+#     {'baseline':'404',
+#                       'variation': '2.2'},
+#     {'baseline':'404',
+#                       'variation': '2.3'},
+#     # {'baseline':'402',
 #     #                   'variation': '1.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '2.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '3.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '4.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '5.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '6.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '7.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '8.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '9.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '10.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
 #     #                   'variation': '11.0'},
-#     # {'baseline':'312',
+#     # {'baseline':'402',
+#     #                   'variation': '12.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '13.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '14.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '15.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '16.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '17.0'},
+#     # {'baseline':'402',
+#     #                   'variation': '18.0'},
+#     # {'baseline':'402',
 #     #                   'variation': '11.1'},
-#     {'baseline':'312',
-#                       'variation': '11.2'},
-#     {'baseline':'312',
-#                       'variation': '11.3'},
+#     # {'baseline':'402',
+#     #                   'variation': '11.2'},
+#     # {'baseline':'402',
+#     #                   'variation': '11.3'},
 #     ]
-        
+
 baseline_dics = [
-    {'baseline':'404',
-                      'variation': 'baseline'},
-    # {'baseline':'402',
-    #                   'variation': '1.0'},
-    # {'baseline':'402',
-    #                   'variation': '2.0'},
-    # {'baseline':'402',
-    #                   'variation': '3.0'},
-    # {'baseline':'402',
-    #                   'variation': '4.0'},
-    # {'baseline':'402',
-    #                   'variation': '5.0'},
-    # {'baseline':'402',
-    #                   'variation': '6.0'},
-    # {'baseline':'402',
-    #                   'variation': '7.0'},
-    # {'baseline':'402',
-    #                   'variation': '8.0'},
-    # {'baseline':'402',
-    #                   'variation': '9.0'},
-    # {'baseline':'402',
-    #                   'variation': '10.0'},
-    # {'baseline':'402',
-    #                   'variation': '11.0'},
-    # {'baseline':'402',
-    #                   'variation': '12.0'},
-    # {'baseline':'402',
-    #                   'variation': '13.0'},
-    # {'baseline':'402',
-    #                   'variation': '14.0'},
-    # {'baseline':'402',
-    #                   'variation': '15.0'},
-    # {'baseline':'402',
-    #                   'variation': '16.0'},
-    # {'baseline':'402',
-    #                   'variation': '17.0'},
-    # {'baseline':'402',
-    #                   'variation': '18.0'},
-    # {'baseline':'402',
-    #                   'variation': '11.1'},
-    # {'baseline':'402',
-    #                   'variation': '11.2'},
-    # {'baseline':'402',
-    #                   'variation': '11.3'},
+    {'baseline':'501',
+                      'variation':'1.0'},
+    {'baseline':'501',
+                      'variation':'2.0'}
     ]
+
 
 lb_delta = 0.01
 ub_delta = 12
@@ -240,7 +207,7 @@ for baseline_dic in baseline_dics:
         if aggregation_method == 'pop_weighted':
             sol = optimize.minimize(fun = minus_welfare_of_delta_pop_weighted,
                                     x0 = p.delta[...,1],
-                                    tol = 1e-8,
+                                    tol = 1e-15,
                                     args=(p,sol_baseline),
                                     # options = {'disp':True},
                                     bounds=bounds,
@@ -248,16 +215,59 @@ for baseline_dic in baseline_dics:
         if aggregation_method == 'negishi':
             sol = optimize.minimize(fun = minus_welfare_of_delta_negishi_weighted,
                                     x0 = p.delta[...,1],
-                                    tol = 1e-8,
+                                    tol = 1e-15,
                                     args=(p,sol_baseline),
                                     # options = {'disp':True},
                                     bounds=bounds
                 )
         
+        p.delta[...,1] = sol.x
+        solution_welfare = -sol.fun
+        
+        #make a 'corner check'
+        corner_corrected_deltas = p.delta[...,1].copy()
+        for i,c in enumerate(p_baseline.countries):
+            p_corner = p.copy()
+            p_corner.delta[i,1] = ub_delta
+            sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
+                                            context = 'counterfactual',
+                                            cobweb_anim=False,tol =1e-15,
+                                            accelerate=False,
+                                            accelerate_when_stable=True,
+                                            cobweb_qty='profit',
+                                            plot_convergence=False,
+                                            plot_cobweb=False,
+                                            safe_convergence=0.001,
+                                            disp_summary=False,
+                                            # apply_bound_psi_star = False,
+                                            damping = 10,
+                                            max_count = 1e4,
+                                            accel_memory = 50, 
+                                            accel_type1=True, 
+                                            accel_regularization=1e-10,
+                                            accel_relaxation=0.5, 
+                                            accel_safeguard_factor=1, 
+                                            accel_max_weight_norm=1e6,
+                                            damping_post_acceleration=5
+                                            # damping=10
+                                              # apply_bound_psi_star=True
+                                            )
+            sol_corner.compute_non_solver_quantities(p_corner)
+            sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+            sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+            # sol_corner.compute_world_welfare_changes_custom_weights(p, sol_baseline, weights)
+            if aggregation_method == 'negishi':
+                if sol_corner.cons_eq_negishi_welfare_change > solution_welfare:
+                    print('corner was better for ',c)
+                    corner_corrected_deltas[i] = ub_delta
+            if aggregation_method == 'pop_weighted':
+                if sol_corner.cons_eq_pop_average_welfare_change > solution_welfare:
+                    print('corner was better for ',c)
+                    corner_corrected_deltas[i] = ub_delta
+                
+        p.delta[...,1] = corner_corrected_deltas
         
         # solve here opt_deltas
-        
-        p.delta[...,1] = sol.x
         
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                         context = 'counterfactual',

@@ -16,11 +16,11 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '404'
+baseline_number = '501'
 if new_run:
     p = parameters(n=7,s=2)
-    p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
+    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
     # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
@@ -32,13 +32,19 @@ if new_run:
 
     m = moments()
     m.load_data()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.1.3/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     
     # m_back_up = m.copy()
     # p_back_up = m.copy()
-    
-# m.SINNOVPATEU_target = np.float64(0.3475)
+
+# p.update_khi_and_r_hjort(0.16)
+
+# m.weights_dict['GROWTH'] = 3
+
+# m.TO_target = np.float64(0.015629)
+
+# p.sigma = np.array([2.7,2.7])
 
 # if 'theta' in p.calib_parameters:
 #     p.update_sigma_with_SRDUS_target(m)
@@ -125,7 +131,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 5
+max_iter = 10
 # if avoid_bad_nash:
 #     x0 = np.concatenate([p.make_p_vector()
 
@@ -208,13 +214,13 @@ m.plot_moments(m.list_of_moments)
 
 # commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
 # commentary = 'With PCOSTNOAGG and no DOMPAT'
-commentary = 'New baseline 404'
+commentary = 'Hjort factors with real GDP instead of GDP'
 # commentary = ''
-baseline_number = '404'
+baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 # local_path = 'calibration_results_matched_economy/'
-run_number = 1.0
+run_number = 2.0
 # run_str = '4.'
 # run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
