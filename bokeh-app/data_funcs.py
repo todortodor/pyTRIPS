@@ -10,14 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import os
 from classes import moments, parameters, var, dynamic_var
 
 def write_calibration_results(path,p,m,sol_c,commentary = None):
     writer = pd.ExcelWriter(path+'.xlsx', engine='xlsxwriter')
-    # summary = pd.DataFrame({'calibrated parameters':str(calib_parameters),
-    #                        'targeted moments':m.list_of_moments,
-    #                        'summary':commentary})
-    # summary = pd.DataFrame(columns=['summary'])
     workbook = writer.book
     worksheet = workbook.add_worksheet('Summary')
     writer.sheets['Summary'] = worksheet
@@ -52,14 +49,11 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     
     scalar_moments = pd.DataFrame(columns=['model','target'])
     for mom in m.get_list_of_moments():
-        # print(mom)
         if np.array(getattr(m,mom)).size == 1:
             scalar_moments.loc[mom] = [getattr(m,mom),getattr(m,mom+'_target')]
         else:
             moment = getattr(m,mom)
             moment_target = getattr(m,mom+'_target')
-            # df = pd.DataFrame(data = [np.array(moment).ravel(),np.array(moment_target).ravel()],
-            #                   index=m.idx[mom], columns = ['model','target'])
             df = pd.DataFrame({'model':np.array(moment).ravel(),'target':np.array(moment_target).ravel()},
                               index=m.idx[mom])
             df.to_excel(writer,sheet_name=mom)
@@ -101,29 +95,18 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     
     df_sales = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
     df_sales['M share of sales'] = sol_c.X_M[:,:,1].ravel()
-    # df_sales['CL share of sales'] = sol_c.X_CL[:,:,1].ravel()
     df_sales['CD share of sales'] = sol_c.X_CD[:,:,1].ravel()
     df_sales['total to check'] = df_sales['M share of sales'] + df_sales['CD share of sales']
     df_sales.to_excel(writer,sheet_name='monopolistic_competitive_shares')
     
-    # df_expenditure = pd.DataFrame(index=pd.MultiIndex.from_product([p.countries, p.countries],names=['destination','origin']))
-    # df_expenditure['M share of expenditure'] = sol_c.X_M[:,:,1]
-    # df_expenditure['CL share of expenditure'] = sol_c.X_CL[:,:,1]
-    # df_expenditure['CD share of expenditure'] = sol_c.X_CD[:,:,1].sum(axis=1)
-    # df_expenditure['total check'] = df_expenditure['M share of expenditure']\
-    #     + df_expenditure['CL share of expenditure'] + df_expenditure['CD share of expenditure']
-    # df_expenditure.to_excel(writer,sheet_name='expenditures_shares')    
-    
     df_qualities = pd.DataFrame(index=pd.Index(p.countries,name='country'))
     df_qualities['PSI_M'] = sol_c.PSI_M[...,1].sum(axis=1)
-    # df_qualities['PSI_CL'] = sol_c.PSI_CL[...,1].sum(axis=1)
     df_qualities['PSI_CD'] = sol_c.PSI_CD[...,1]
     df_qualities['total check'] = df_qualities['PSI_M']+df_qualities['PSI_CD']
     df_qualities.to_excel(writer,sheet_name='aggregate_qualities')    
     
     df_prices = pd.DataFrame(index=pd.Index(p.countries,name='country'))
     df_prices['P_M'] = sol_c.P_M[...,1]
-    # df_prices['P_CL'] = sol_c.P_CL[...,1]
     df_prices['P_CD'] = sol_c.P_CD[...,1]
     df_prices['P'] = sol_c.price_indices
     df_prices.to_excel(writer,sheet_name='prices')
@@ -147,88 +130,6 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
     df_share_patented.to_excel(writer,sheet_name='share of innovations patented')
     
     writer.close()
-
-def compare_params(dic, save=False, save_path=None, color_gradient = True):
-    n_col = min(1,round(len(dic)/25)+1)
-    if color_gradient:
-        colors = sns.color_palette("Spectral", n_colors = len(dic))
-    else:
-        colors = sns.color_palette()
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Delta of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'delta')
-    plt.show()    
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'One over delta of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,1/par.delta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'one_over_delta')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T non patenting sector of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.T[:,0],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'T_non_patenting')
-    plt.show()   
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'T patenting sector of the countries' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.T[:,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.yscale('log')
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'T_patenting')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    title = 'Eta of the countries' 
-
-
-    for i,(com,par) in enumerate(dic.items()):
-        ax.plot(par.countries,par.eta[...,1],label=com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'eta')
-    plt.show() 
-    
-    fig,ax = plt.subplots(figsize = (12,8))
-    ax2 = ax.twinx()
-    title = 'fo, fe, nu, nu_tilde' 
-    for i,(com,par) in enumerate(dic.items()):
-        ax.scatter(['fe', 'nu'],
-                   [par.fe[1], par.nu[1]],label=com,color=colors[i])
-        ax2.scatter(['nu_tilde'], par.nu_tilde[1], label = com,color=colors[i])
-    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-    plt.title(title)
-    ax.set_ylabel('fo, fe, nu')
-    ax2.set_yscale('log')
-    ax2.set_ylabel('nu_tilde')
-    if save:
-        plt.tight_layout()
-        plt.savefig(save_path+'scalar_params')
-    plt.show()    
 
 def get_vec_qty(x,p):
     res = {'w':x[0:p.N],
@@ -262,7 +163,6 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibr
         init = var.var_from_vector(x_old,p_diff,compute=False, context = context)
         init.compute_solver_quantities(p_diff)
         w = init.compute_wage(p_diff)
-        # Z = init.compute_world_expenditure(p_diff)
         Z = init.compute_expenditure(p_diff)
         l_R = init.compute_labor_research(p_diff)[...,1:].ravel()
         profit = init.compute_profit(p_diff)[...,1:].ravel()
@@ -275,9 +175,6 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibr
         condition = np.any(conditions) and count<max_count
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
         count += 1
-    # print(count)
-    # plt.semilogy(convergence)
-    # plt.show()
     sol_c = var.var_from_vector(x_old,p_diff,compute=True, context = context)
     sol_c.scale_P(p_diff)
     sol_c.compute_non_solver_quantities(p_diff)
@@ -290,22 +187,14 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibr
 def load(path, data_path=None, context = 'calibration'):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
-    # if path.endswith('20.1/') or path.endswith('20.2/'):
-    #     p.r_hjort[3] = 17.33029162
-    # if path.endswith('19.1/') or path.endswith('19.2/'):
-    #     p.r_hjort[4] = 17.33029162
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
-    # sol.compute_non_solver_aggregate_qualities(p)
-    # sol.compute_non_solver_quantities(p)
     sol.scale_P(p)
-    sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
     m = moments()
     m.load_data(data_path)
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
-    # print(m.STFLOWSDOM)
     return p,m,sol
 
 def get_path(baseline,variation,results_path):
@@ -324,27 +213,11 @@ def guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin,C=20):
             return (fin-init)[...,1:,None]*(
                 np.exp( -C* (dyn_var.t_cheby+1) )[None,None,:]-1
                 )/(np.exp(-2*C)-1)
-            # return (fin-init)[...,1:,None]*(
-            #     np.exp( -C* (np.linspace(-1,1,dyn_var.Nt)+1) )[None,None,:]-1
-            #     )/(np.exp(-2*C)-1)
-            # return (fin-init)[...,1:,None]*(
-            #     1 - np.exp( -C*dyn_var.map_parameter*(1+dyn_var.t_cheby)/(1-dyn_var.t_cheby) )[None,None,:]
-            #     )
         elif len(fin.shape) == 3:
             return (fin-init)[...,1:,None]*(
                 np.exp(-C* (dyn_var.t_cheby+1) )[None,None,None,:]-1
                 )/(np.exp(-2*C)-1)
-            # return (fin-init)[...,1:,None]*(
-            #     np.exp(-C* (np.linspace(-1,1,dyn_var.Nt)+1) )[None,None,None,:]-1
-            #     )/(np.exp(-2*C)-1)
-            # return (fin-init)[...,1:,None]*(
-            #     1 - np.exp( -C*dyn_var.map_parameter*(1+dyn_var.t_cheby)/(1-dyn_var.t_cheby) )[None,None,None,:]
-            #     )
     guess = {}
-    # guess['PSI_CD'] = (dyn_var.PSI_CD_0-sol_fin.PSI_CD)[:,:,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,:]
-    # guess['PSI_MNP'] = (dyn_var.PSI_MNP_0-sol_fin.PSI_MNP)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
-    # guess['PSI_MPND'] = (dyn_var.PSI_MPND_0-sol_fin.PSI_MPND)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
-    # guess['PSI_MPD'] = (dyn_var.PSI_MPD_0-sol_fin.PSI_MPD)[...,None]*(np.exp(1-np.linspace(-1,1,dyn_var.Nt))-np.exp(2))[None,None,None,:]
     guess['PSI_CD'] = build_guess(sol_fin.PSI_CD,dyn_var.PSI_CD_0)
     guess['PSI_MNP'] = build_guess(sol_fin.PSI_MNP,dyn_var.PSI_MNP_0)
     guess['PSI_MPND'] = build_guess(sol_fin.PSI_MPND,dyn_var.PSI_MPND_0)
@@ -394,8 +267,6 @@ def rough_fixed_point_solver(p, context, x0=None, tol = 1e-10, damping = 5, max_
 
     return init
 
-
-    
 def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-14, max_count=1e6,
                        safe_convergence=0.1,damping=50, damping_post_acceleration=10):  
     if sol_fin is None:
@@ -474,4 +345,63 @@ def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, 
     dyn_var.compute_non_solver_quantities(p)
 
     return dyn_var, sol_fin, convergence[-1]
+
+def make_counterfactual_recap(p_baseline, sol_baseline, country,
+                              local_path,recap_path,harmonizing_country='USA',
+                              dynamics=False,Nt=25,t_inf=500):
+    try:
+        os.mkdir(recap_path)
+    except:
+        pass
+    recap = pd.DataFrame(columns = ['delt','growth']+p_baseline.countries)
+    recap_dyn = pd.DataFrame(columns = ['delt']+p_baseline.countries)
+    if country in p_baseline.countries:
+        idx_country = p_baseline.countries.index(country)
+    if country == 'Harmonizing':
+        idx_country = p_baseline.countries.index(harmonizing_country)
+    country_path = local_path+country+'/'
+    files_in_dir = next(os.walk(country_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list.sort(key=float)
+    
+    for run in run_list:
+        p = parameters(n=7,s=2)
+        p.load_data(country_path+run+'/')
+        
+        sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+        sol_c.scale_P(p)
+        sol_c.compute_non_solver_quantities(p)
+        sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+        if country in p_baseline.countries:
+            recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
+            recap_dyn.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
+        if country == 'World':
+            recap.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
+            recap_dyn.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
+        if country == 'Harmonizing':
+            recap.loc[run, 'delt'] = np.log(
+                p.delta[1,1]/p_baseline.delta[1,1]
+                )/np.log(
+                    p_baseline.delta[idx_country,1]/p_baseline.delta[1,1]
+                    )
+            recap_dyn.loc[run, 'delt'] = np.log(
+                p.delta[1,1]/p_baseline.delta[1,1]
+                )/np.log(
+                    p_baseline.delta[idx_country,1]/p_baseline.delta[1,1]
+                    )
+        recap.loc[run, 'growth'] = sol_c.g
+        recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
+        
+        if dynamics:
+            dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+                                                    Nt=Nt,t_inf=t_inf,
+                                                    sol_init = sol_baseline,
+                                                    sol_fin = sol_c)
+            dyn_sol_c.compute_non_solver_quantities(p)
+            recap_dyn.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
+            
+    if not dynamics:
+        recap.to_csv(recap_path+country+'.csv', index=False)
+    if dynamics:
+        recap_dyn.to_csv(recap_path+'dyn_'+country+'.csv', index=False)
     

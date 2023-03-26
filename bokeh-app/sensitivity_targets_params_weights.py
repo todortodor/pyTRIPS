@@ -15,7 +15,7 @@ import os
 import seaborn as sns
 from classes import moments, parameters, var, history
 from solver_funcs import calibration_func, fixed_point_solver, compute_deriv_welfare_to_patent_protec_US, compute_deriv_growth_to_patent_protec_US
-from data_funcs import write_calibration_results, compare_params
+from data_funcs import write_calibration_results
 from functools import reduce
 from tqdm import tqdm
 

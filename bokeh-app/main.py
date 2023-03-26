@@ -1,52 +1,24 @@
 from os.path import dirname, join
 import os
-# import sys
-# import __main__
-# import datetime
-# os.chdir(dirname(__file__))
-# os.path.realpath("__file__")
-# if __name__ == "__main__":
-#     print("__file__")
-
 import pandas as pd
-# from scipy.signal import savgol_filter
-
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-# from bokeh.models import DataRange1d,Button, Slider,CheckboxButtonGroup, LinearAxis, FactorRange, Text, Div,Toggle, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 from bokeh.models import Button,Range1d, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
-# from bokeh.models.formatters import NumeralTickFormatter
-# from bokeh.models.widgets.tables import NumberFormatter
-# from bokeh.palettes import Blues4
 from bokeh.plotting import figure
-from datetime import datetime
-import random
 from bokeh.events import ButtonClick
 from classes import parameters, moments, var
 from data_funcs import compute_rough_jacobian,rough_dyn_fixed_point_solver
 import numpy as np
-# from bokeh.models import LogScale, LinearScale
 import itertools
 from bokeh.palettes import Category10
-# import numpy as np
 import time
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
-
-# print(1)
-
 def load(path, data_path=None, context = 'calibration'):
     p = parameters(n=7,s=2,data_path=data_path)
     p.load_data(path)
-    # if path.endswith('20.1/') or path.endswith('20.2/'):
-    #     p.r_hjort[3] = 17.33029162
-    # if path.endswith('19.1/') or path.endswith('19.2/'):
-    #     p.r_hjort[4] = 17.33029162
-    # print(path)
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
-    # sol.compute_non_solver_aggregate_qualities(p)
-    # sol.compute_non_solver_quantities(p)
     sol.scale_P(p)
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
@@ -55,7 +27,6 @@ def load(path, data_path=None, context = 'calibration'):
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
-    # print(m.STFLOWSDOM)
     return p,m,sol
 
 def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments):
@@ -74,10 +45,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     df_scalar_params.index.name='x'
     
     for param in params:
-        # print(param)
-        # print(getattr(p_baseline,param)[p_baseline.mask[param]].squeeze().shape == (14,))
         if hasattr(p_baseline,param):
-            # print(param,getattr(p_baseline,param))
             if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 1:
                 if param == 'k':
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
@@ -106,8 +74,6 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
     df_scalar_moments.index.name='x'
-    # df_scalar_moments_deviation = pd.DataFrame(columns = ['baseline'])
-    # df_scalar_moments_deviation.index.name='x'
     for mom in list_of_moments:
         if mom != 'objective':
             if len(m_baseline.idx[mom]) == 1:
@@ -115,7 +81,6 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                     try:
                         df_scalar_moments.loc[mom,'target'] = float(getattr(m_baseline,mom+'_target'))
                         df_scalar_moments.loc[mom,'baseline'] = float(getattr(m_baseline,mom))
-                        # df_scalar_moments_deviation.loc[mom,'baseline'] = float(getattr(m_baseline,mom+'_deviation'))
                     except:
                         pass
             else:
@@ -164,10 +129,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         dic_df_sol[sol_qty] = df
     
     df_scalar_moments.loc['objective','target'] = 0.01
-    # df_scalar_moments.loc['objective','baseline'] = (m_baseline.deviation_vector()**2).sum()
     df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
     dic_df_mom['scalars'] = df_scalar_moments
-    # dic_df_mom['scalar deviations'] = df_scalar_moments_deviation
     return dic_df_param, dic_df_mom, dic_df_sol
 
 def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol, p, m, sol, run_name):
@@ -579,7 +542,8 @@ comments_dic['404'] = {
 comments_dic['501'] = {
     "baseline":"baseline",
     '1.0':'1.0: Higher growth weight',
-    '2.0':'2.0: Hjort correction on real GDP'
+    '2.0':'2.0: Hjort correction on real GDP',
+    '3.0':'3.0: Not dropping RD in the South',
     }
 
 baselines_dic_param = {}
@@ -754,36 +718,16 @@ def update_mom(attrname, old, new):
         slope2.visible = True
         slope3.visible = True
         slope4.visible = True
-        # slope5.visible = True
-        # slope6.visible = True
     else:
         slope2.visible = False
         slope3.visible = False
         slope4.visible = False
-        # slope5.visible = False
-        # slope6.visible = False
 
-# def update_legend():
-#     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
-#                         for col in ds_mom.data if col in comments_dic[new]]
-#     p_mom.legend.items = legend_items_mom
-    
-# checkbox_buttons_labels = ["Variations .0", "Variations .1", "Variations .2"]
-# checkbox_button_group = CheckboxButtonGroup(labels=checkbox_buttons_labels, active=[0, 1],
-                                            # )
-# checkbox_button_group.on_change('value', update_legend)
-
-
-# controls_mom = row(baseline_mom_select, mom_select, checkbox_button_group)
 controls_mom = row(baseline_mom_select, mom_select)
 
 baseline_mom_select.on_change('value', update_baseline_mom)
 mom_select.on_change('value', update_mom)
 
-# curdoc().add_root(row(p_par, controls))
-   
-
-# baseline_par = '101'
 baseline_par = '501'
 par = 'delta'
 
@@ -804,14 +748,10 @@ hover_tool_par.tooltips = [
     ]
 
 p_par.add_tools(hover_tool_par)
-# p_par.sizing_mode = 'scale_width'
-# colors_par = itertools.cycle(Category20.values()(len(baselines_dic_param[baseline_par][par].columns)))
 colors_par = itertools.cycle(Category10[10])
 lines_par = {}
 
 for col in baselines_dic_param[baseline_par][par].columns:
-    # lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
-    #                             line_width = 2, legend_label=comments_dic[col])
     lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
                                 line_width = 2)
     if col != 'baseline':
@@ -819,36 +759,22 @@ for col in baselines_dic_param[baseline_par][par].columns:
 
 legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
                     for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
-# legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8pt",spacing = 0
-#                     # , location=(10, -30)
-#                     )
 
 legend_par_split_1 = Legend(items=legend_items_par[:round((len(legend_items_par)+1)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
-                    # location=(10, -60)
                     )
 legend_par_split_2 = Legend(items=legend_items_par[round((1+len(legend_items_par))/2):], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0
-                    # , location=(10, -60)
                     )
-# p_par.add_layout(legend_par, 'right')
+
 p_par.add_layout(legend_par_split_1, 'right')
 p_par.add_layout(legend_par_split_2, 'right')
-# p_par.legend.click_policy="hide"
-# p_par.legend.label_text_font_size = '8pt'
-# p_par.legend.spacing = 0
-# p_par.add_layout(p_par.legend[0], 'right')
-
-
 
 columns_par = [
         TableColumn(field="x"),
     ]+[TableColumn(field=col) for col in list(comments_dic[baseline_par].keys())]
-# columns_par = [
-#         TableColumn(field="x"),
-#     ]+[TableColumn(field=col) for col in baselines_dic_param[baseline_par][par].columns]
 
 data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
 
@@ -857,8 +783,6 @@ def update_baseline_par(attrname, old, new):
     ds_par.data = baselines_dic_param[new][par]
     legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
                         for col in ds_par.data if col in comments_dic[new]]
-    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
-    # p_par.legend.items = legend_items_par
     legend_par_split_1.items = legend_items_par[:round((1+len(legend_items_par))/2)]
     legend_par_split_2.items = legend_items_par[round((len(legend_items_par)+1)/2):]
                       
@@ -872,13 +796,10 @@ def update_par(attrname, old, new):
     ds_par.data = baselines_dic_param[baseline_par][new]
 
 controls_par = row(baseline_par_select, par_select)
-# controls_par.sizing_mode = 'scale_width'
 
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
-# p_par.add_layout(p_par.legend[0], 'bottom right')
 
-# baseline_sol_qty = '101'
 baseline_sol_qty = '501'
 sol_qty = 'psi_o_star'
 
@@ -899,14 +820,10 @@ hover_tool_sol_qty.tooltips = [
     ]
 
 p_sol_qty.add_tools(hover_tool_sol_qty)
-# p_par.sizing_mode = 'scale_width'
-# colors_par = itertools.cycle(Category20.values()(len(baselines_dic_param[baseline_par][par].columns)))
 colors_sol_qty = itertools.cycle(Category10[10])
 lines_sol_qty = {}
 
 for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
-    # lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
-    #                             line_width = 2, legend_label=comments_dic[col])
     lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, color=next(colors_sol_qty),
                                 line_width = 2)
     if col != 'baseline':
@@ -914,28 +831,17 @@ for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
 
 legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
                         for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
-# legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
-#                         label_text_font_size="8pt",spacing = 0
-#                         , location=(10, -30))
 
 legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
-                    # location=(10, -60)
                     )
 legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0
-                    # , location=(10, -60)
                     )
-# p_sol_qty.add_layout(legend_sol_qty, 'right')
 p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
 p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
-# p_par.legend.click_policy="hide"
-# p_par.legend.label_text_font_size = '8pt'
-# p_par.legend.spacing = 0
-# p_par.add_layout(p_par.legend[0], 'right')
-
 
 
 columns_sol_qty = [
@@ -949,8 +855,6 @@ def update_baseline_sol_qty(attrname, old, new):
     ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
     legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
                             for col in ds_sol_qty.data  if col in comments_dic[new]]
-    # legend_par = Legend(items=legend_items_par, click_policy="hide", label_text_font_size="8px",spacing = 0)
-    # p_sol_qty.legend.items = legend_items_sol_qty
     legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
     legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
     data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
@@ -961,16 +865,11 @@ def update_sol_qty(attrname, old, new):
     ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new]
 
 controls_sol_qty = row(baseline_sol_qty_select, sol_qty_select)
-# controls_par.sizing_mode = 'scale_width'
 
 baseline_sol_qty_select.on_change('value', update_baseline_sol_qty)
 sol_qty_select.on_change('value', update_sol_qty)
-# p_par.add_layout(p_par.legend[0], 'bottom right')
 
-
-# moment_report = column(controls_mom,p_mom)
 moment_report = column(controls_mom,p_mom,data_table_mom)
-# param_report = column(controls_par, p_par)
 param_report = column(controls_par, p_par, data_table_par)
 sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 
@@ -979,11 +878,9 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 
 #%% dynamic counterfactuals
 
-# baseline_dyn_cf = '101'
 baseline_dyn_cf = '501_1.0'
 country_dyn_cf = 'USA'
 
-# p_baseline,m_baseline,sol_baseline = load(results_path+baseline_dyn_cf+'/',data_path = data_path)
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
@@ -995,13 +892,9 @@ dyn_cf_list = sorted([s for s in os.listdir(cf_path)
     # sorted([s for s in os.listdir(dyn_cf_path) 
     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(dyn_cf_path)) 
-# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in sorted(dyn_cf_list, key=section_end)])
-# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=[s[9:] for s in dyn_cf_list])
 baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['501_1.0','501_2.0'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
                             options=countries+['World','Harmonizing'])
 
 def get_data_dyn_cf(baseline,country):
@@ -1038,10 +931,6 @@ for col in df_dyn_cf.columns:
         p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, color=next(colors_dyn_cf),line_width = 2, legend_label=col)
 
 p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
-
-# p_dyn_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_dyn_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_dyn_cf.line(x='delt', y='growth', source = ds_dyn_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
      
 p_dyn_cf.legend.click_policy="hide"
 p_dyn_cf.legend.label_text_font_size = '8pt'
@@ -1059,10 +948,8 @@ def update_country_dyn_cf(attrname, old, new):
     df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
     ds_dyn_cf.data = df_dyn_cf
     ds_dyn_cf_max.data = build_max(df_dyn_cf)
-    # ds_dyn_cf.data = get_data_dyn_cf(baseline_dyn_cf,new)
     
 controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
-# controls_mom.sizing_mode = 'scale_width'
 
 baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
 country_dyn_cf_select.on_change('value', update_country_dyn_cf)
@@ -1078,8 +965,6 @@ list_of_to_targets_dyn = np.linspace(0.01,0.03,41)
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
 cf_to_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
 
@@ -1105,12 +990,10 @@ def build_max(df_to_cf):
 
 country_to_cf_dyn_select = Select(value=country_to_cf_dyn, 
                             title='Country', 
-                            # options=countries+['World','World_2','Harmonizing_2'])
                             options=countries+['World','Harmonizing'])
 
 df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,country_to_cf_dyn)
 ds_to_cf_dyn = ColumnDataSource(df_to_cf_dyn)
-# print(df_to_cf_dyn)
 df_to_cf_dyn_max = build_max(df_to_cf_dyn)
 ds_to_cf_dyn_max = ColumnDataSource(df_to_cf_dyn_max)
 
@@ -1142,20 +1025,15 @@ p_to_cf_dyn.add_layout(p_to_cf_dyn.legend[0], 'right')
 
 def update_baseline_to_cf_dyn(attrname, old, new):
     country_to_cf_dyn = country_to_cf_dyn_select.value
-    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
     df_to_cf_dyn = get_data_to_cf_dyn(new/100,country_to_cf_dyn)
-    # print(df_to_cf_dyn)
     ds_to_cf_dyn.data = df_to_cf_dyn
     ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
     
 def update_country_to_cf_dyn(attrname, old, new):
-    # baseline_to_cf = baseline_cf_to_select.value
     to_target_dyn = slider_to_cf_dyn.value/100
     df_to_cf_dyn = get_data_to_cf_dyn(to_target_dyn,new)
-    # print(df_to_cf_dyn)
     ds_to_cf_dyn.data = df_to_cf_dyn
     ds_to_cf_dyn_max.data = build_max(df_to_cf_dyn)
-    # ds_cf.data = get_data_cf(baseline_cf,new)
     
 slider_to_cf_dyn = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
     
@@ -1171,7 +1049,6 @@ baseline_dyn = '501'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
-# baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['311','312','401','402','403','404','405'])
 baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['404','405','501'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
@@ -1189,7 +1066,6 @@ def update_list_of_runs_dyn(attr, old, new):
     variation_dyn_select.options = ['baseline']+run_list
 
 country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW','World'])
-# country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
 slider_dyn = Slider(start=-1, end=1, value=0, step=0.01, title="Log change of delta")    
 
 state_computation = Div(text="Done")
@@ -1202,7 +1078,6 @@ def fit_and_eval(vec,dyn_sol):
 
 def create_column_data_source_from_dyn_sol(dyn_sol):
     data_dyn = {}
-    # data_dyn['time'] = dyn_sol.t_real
     data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
     for agg_qty in ['g']:
         data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
@@ -1304,9 +1179,7 @@ def compute_dyn(event):
     start = time.perf_counter()
     dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
                                           t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
-    # print('Done')
     end = time.perf_counter()
-    # print(slider_dyn.value)
     if country_dyn_select.value == 'World':
         message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
     else:
@@ -1317,7 +1190,6 @@ def compute_dyn(event):
     ds_dyn_init.data = temp[1]
     ds_dyn_fin.data = temp[2]
     
-    # return dyn_sol, sol_c
 if variation_dyn_select.value == 'baseline':
     path = results_path+baseline_dyn_select.value+'/'
 else:
@@ -1342,9 +1214,6 @@ qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r
                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
 country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'])
 
-# df_dyn = pd.DataFrame(index=pd.Index(dyn_sol.t_real,name='time'))
-# df_dyn['Value'] = dyn_sol.r[p_dyn.countries.index(country_dyn_display_select.value),:]
-# ds_dyn = ColumnDataSource(df_dyn)
 temp = create_column_data_source_from_dyn_sol(dyn_sol)
 data_dyn_default = temp[0]
 data_dyn_init_default = temp[1]
@@ -1362,7 +1231,6 @@ p_dyn_figure = figure(title="Dynamic solver",
                 height = 750,
                 x_axis_label='Time',
                 y_axis_label='Value',
-                # x_axis_type="log",
                 tools = TOOLS,
                 x_range = (-20,dyn_sol.t_inf+20),
                 y_range=(down_min-delta*0.1,up_max+delta*0.1)
@@ -1374,8 +1242,6 @@ hover_tool_eq.tooltips = [
     ("value", "$y")
     ] 
 p_dyn_figure.add_tools(hover_tool_eq)
-
-# p_dyn_figure.y_range=Range1d(min(ds_dyn.data['g']), max(ds_dyn.data['g']))
 
 lines_dyn = {}
 for col in data_dyn_default.keys():
@@ -1397,11 +1263,8 @@ for col in data_dyn_fin_default.keys():
         fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
         if col != 'g':
             fin_dyn[col].visible = False
-            
-# line_dyn = p_dyn_figure.line(x='time', y='g', source = ds_dyn)
 
 def update_graph_dyn(event):
-    # p_dyn_figure.renderers = []
     if qty_dyn_display_select.value in ['g']:
         col = qty_dyn_display_select.value
     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
@@ -1410,7 +1273,6 @@ def update_graph_dyn(event):
                                 'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
                                 'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
         col = qty_dyn_display_select.value+country_dyn_display_select.value
-    # print(col)
     lines_dyn[col].visible = True
     if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
                                             'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
@@ -1425,11 +1287,6 @@ def update_graph_dyn(event):
             lines_dyn[other_column].visible = False
             init_dyn[other_column].visible = False
             fin_dyn[other_column].visible = False
-            
-    # print(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1)
-    # print(max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
-    # p_dyn_figure.y_range=Range1d(min(ds_dyn.data[col])-(min(ds_dyn.data[col])>0)*min(ds_dyn.data[col])*0.1+(min(ds_dyn.data[col])<0)*min(ds_dyn.data[col])*0.1
-    #                              ,max(ds_dyn.data[col])+(max(ds_dyn.data[col])>0)*max(ds_dyn.data[col])*0.1-(max(ds_dyn.data[col])<0)*max(ds_dyn.data[col])*0.1)
     try:
         up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
         down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
@@ -1523,8 +1380,6 @@ def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,eq
             ][countries].values.squeeze()
         
     df = pd.DataFrame(index = pd.Index(countries,name='country'))
-    # print(eq_deltas)
-    # print(eq_welfares)
     df['deltas'] = eq_deltas
     df['welfares'] = eq_welfares
     df['colors'] = Category10[10][:len(df)]
@@ -1638,13 +1493,9 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 
 
 #%% Nash / coop equilibrium
-
-# nash_eq_path = 'nash_eq_recaps/'
-# coop_eq_path = 'coop_eq_recaps/'
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-# baseline_nash_coop = '405'
 baseline_nash_coop = '501'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
@@ -1655,10 +1506,7 @@ def get_data_nash_coop(baseline_nash_number):
                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
     welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation'],keep='last').sort_values(['baseline','variation'])
-    
-    # welf_coop['pop w av'] = ((welf_coop[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
-    # welf_nash['pop w av'] = ((welf_nash[p_baseline.countries].T.values*p_baseline.data.labor.values[:,None]).sum(axis=0)/p_baseline.data.labor.values.sum())
-    
+        
     welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
     welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
@@ -1668,8 +1516,6 @@ def get_data_nash_coop(baseline_nash_number):
     welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
     welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    # welf_coop = welf_coop.sort_values(['baseline','sorting'])
-    # welf_nash = welf_nash.sort_values(['baseline','sorting'])
     welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
@@ -1681,9 +1527,6 @@ def get_data_nash_coop(baseline_nash_number):
     
     return welf_pop_weighted, welf_negishi, welf_nash
 
-# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['311','312','401','402','403'])
-# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['402','403','404'])
-# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['403','404'])
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['404','405','501'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
@@ -1730,28 +1573,16 @@ hover_tool_eq.tooltips = [
     ] 
 p_eq.add_tools(hover_tool_eq)
 
-# data_table_eq = dict(
-#         runs=[run for run in comments_dic[baseline_sol_qty].keys()],
-#         comments=[comment for comment in comments_dic[baseline_sol_qty].values()],
-#     )
-# source_table_eq = ColumnDataSource(data_table_eq)
-
 columns = [
         TableColumn(field="runs", title="Runs"),
         TableColumn(field="comments", title="Description"),
     ]
-# data_table_eq = DataTable(source=source_table_eq, columns=columns, width=400, height=600,
-                            # autosize_mode="force_fit"
-                          # )
 
-# explication = Text(text="First is the quantity displayed\n'Negishi coop equal' means that we display the ")
 explication = Div(text="In the legend, first is the quantity displayed and last\
                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
                           ")
-
-# help_panel = column(explication,data_table_eq)
 
 data_table_welfares = pd.concat([welf_nash.set_index('run'),
               welf_negishi.set_index('run'),
@@ -1760,17 +1591,14 @@ data_table_welfares = pd.concat([welf_nash.set_index('run'),
             keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
-            # ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 source_table_welfares = ColumnDataSource(data_table_welfares)
 columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=850, height=400,
-                            # autosize_mode="force_fit"
                           )
 
-# p_eq.show()
 def get_delta_nash_coop(baseline_number):
     deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
@@ -1786,8 +1614,6 @@ def get_delta_nash_coop(baseline_number):
     deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
     deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    # deltas_coop = deltas_coop.sort_values(['baseline','sorting'])
-    # deltas_nash = deltas_nash.sort_values(['baseline','sorting'])
     deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
@@ -1809,14 +1635,11 @@ colors_deltas_negishi = itertools.cycle(Category10[10])
 colors_deltas_pop_weighted = itertools.cycle(Category10[10])
 colors_deltas_nash = itertools.cycle(Category10[10])
 
-# x_range = deltas_nash['run'].to_list()
-
 p_deltas_eq = figure(title="Static cooperative and Nash equilibrium", 
                 width = 1200,
                 height = 850,
                 x_range = x_range_nash,
                 y_axis_type="log",
-                # x_axis_label='Run',
                 y_axis_label='Delta',
                 tools = TOOLS
                 ) 
@@ -1853,14 +1676,12 @@ data_table_deltas = pd.concat([deltas_nash.set_index('run'),
             keys=['Nash','Coop Negishi','Coop equal'],
             names=['type','run'],
             sort=False
-            # ).reset_index().sort_values(['baseline','sorting','type'])[['run','type']+p_baseline.countries]
             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
 
 source_table_deltas = ColumnDataSource(data_table_deltas)
 columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
 table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=850, height=400,
-                            # autosize_mode="force_fit"
                           )
 
 def update_baseline_nash(attrname, old, new):
@@ -1877,15 +1698,8 @@ def update_baseline_nash(attrname, old, new):
     ds_deltas_pop_weighted.data = deltas_pop_weighted
     ds_deltas_nash.data = deltas_nash
     
-    # if new != '403':
     p_eq.x_range.factors = welf_nash['run'].to_list()
     p_deltas_eq.x_range.factors = welf_nash['run'].to_list()
-    # else:
-    #     p_eq.x_range.factors = [comments_dic['403'][k][4:] for k in comments_dic['403']][:len(p_eq.x_range.factors)]
-    #     p_deltas_eq.x_range.factors = p_eq.x_range.factors
-    # if new == '403':
-    #     p_eq.xaxis.major_label_overrides = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
-    #     p_deltas_eq.xaxis.major_label_overrides = {'403, '+k:comments_dic['403'][k] for k in comments_dic['403']}
 
 baseline_nash_coop_select.on_change('value', update_baseline_nash)
 
@@ -1901,7 +1715,6 @@ third_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_
 baseline_cf = '501_1.0'
 country_cf = 'USA'
 
-# p_baseline,m_baseline,sol_baseline = load(results_path+baseline_cf+'/',data_path = data_path)
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
@@ -1913,12 +1726,9 @@ cf_list = sorted([s for s in os.listdir(cf_path)
     # sorted([s for s in os.listdir(cf_path) 
     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(os.listdir(cf_path)) 
-# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in sorted(cf_list, key=section_end)])
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
                             options=countries+['World','Harmonizing'])
 
 def get_data_cf(baseline,country):
@@ -1959,10 +1769,6 @@ for col in df_cf.columns:
         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
 p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
-
-# p_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
      
 p_cf.legend.click_policy="hide"
 p_cf.legend.label_text_font_size = '8pt'
@@ -1980,10 +1786,8 @@ def update_country_cf(attrname, old, new):
     df_cf = get_data_cf(baseline_cf,new)
     ds_cf.data = df_cf
     ds_cf_max.data = build_max(df_cf)
-    # ds_cf.data = get_data_cf(baseline_cf,new)
     
 controls_cf = row(baseline_cf_select, country_cf_select)
-# controls_mom.sizing_mode = 'scale_width'
 
 baseline_cf_select.on_change('value', update_baseline_cf)
 country_cf_select.on_change('value', update_country_cf)
@@ -1993,8 +1797,6 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% counterfactuals 405 TO target
 
-# baseline_cf = '101'
-# baseline_to_cf = '403'
 country_to_cf = 'USA'
 to_target = 0.0185
 
@@ -2002,8 +1804,6 @@ list_of_to_targets = np.linspace(0.01,0.03,41)
 
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = list(reversed(sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('403') and s.startswith('baseline')], key=section_end)))
 cf_to_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
 
@@ -2027,7 +1827,6 @@ def build_max(df_to_cf):
 
 country_to_cf_select = Select(value=country_to_cf, 
                             title='Country', 
-                            # options=countries+['World','Harmonizing','World_2','Harmonizing_2'])
                             options=countries+['World','Harmonizing'])
 
 df_to_cf = get_data_to_cf(to_target,country_to_cf)
@@ -2051,10 +1850,6 @@ for col in df_to_cf.columns:
         p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
 
 p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
-
-# p_cf.extra_y_ranges['growth'] = DataRange1d()
-# p_cf.add_layout(LinearAxis(y_range_name='growth', axis_label='Growth rate'), 'right')
-# p_cf.line(x='delt', y='growth', source = ds_cf, color = 'black', legend_label = 'growth',y_range_name = 'growth')
      
 p_to_cf.legend.click_policy="hide"
 p_to_cf.legend.label_text_font_size = '8pt'
@@ -2062,18 +1857,15 @@ p_to_cf.add_layout(p_to_cf.legend[0], 'right')
 
 def update_baseline_to_cf(attrname, old, new):
     country_to_cf = country_to_cf_select.value
-    # ds_to_cf.data = get_data_to_cf(new,country_to_cf)
     df_to_cf = get_data_to_cf(new/100,country_to_cf)
     ds_to_cf.data = df_to_cf
     ds_to_cf_max.data = build_max(df_to_cf)
     
 def update_country_to_cf(attrname, old, new):
-    # baseline_to_cf = baseline_cf_to_select.value
     to_target = slider_to_cf.value/100
     df_to_cf = get_data_to_cf(to_target,new)
     ds_to_cf.data = df_to_cf
     ds_to_cf_max.data = build_max(df_to_cf)
-    # ds_cf.data = get_data_cf(baseline_cf,new)
     
 slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
     
@@ -2090,7 +1882,6 @@ fourth_panel = row(counterfactuals_report, counterfactuals_to_report)
 
 baselines_dic_sensi = {}
 
-# for baseline_nbr in ['101','102','104']:
 for baseline_nbr in ['403']:
     baselines_dic_sensi[baseline_nbr] = {} 
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
@@ -2099,7 +1890,6 @@ for baseline_nbr in ['403']:
     for f in files_in_dir:
         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-# baseline_sensi = '101'
 baseline_sensi = '403'
 qty_sensi = 'objective'
 
@@ -2133,7 +1923,6 @@ def update_qty_sensi(attrname, old, new):
     ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
 
 controls_sensi = row(baseline_sensi_select, qty_sensi_select)
-# controls_mom.sizing_mode = 'scale_width'
 
 baseline_sensi_select.on_change('value', update_baseline_sensi)
 qty_sensi_select.on_change('value', update_qty_sensi)
@@ -2187,7 +1976,6 @@ def update_qty_sensi_weights(attrname, old, new):
     ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
 
 controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
-# controls_mom.sizing_mode = 'scale_width'
 
 baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
 qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
@@ -2200,7 +1988,6 @@ baseline_jac = '501'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-# baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['311','312','401','402','403','404','405'])
 baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['404','405','501'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
@@ -2252,7 +2039,6 @@ p_jac = figure(title="Rough jacobian computation",
 data_jac = pd.DataFrame(columns = ['Moment','Contribution'], data=np.array([m_jac.get_signature_list(),x_jac]).T)
 src_jac = ColumnDataSource(data_jac)
 
-# p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
 p_jac.hbar(y = 'Moment',right = 'Contribution', source = src_jac)
 
 def update_jac(event):
@@ -2289,8 +2075,6 @@ fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 
 #%% Kogan paper
 
-# TOOLS="pan,wheel_zoom,box_zoom,reset"
-
 colors_kog = itertools.cycle(Category10[10])
 
 df_kog = pd.read_csv(data_path+'koga_updated.csv')
@@ -2301,7 +2085,6 @@ p_kog = figure(title="Kogan moment updated / extrapolated",
                 height = 850,
                 x_axis_label='Issue Date',
                 y_axis_type="log",
-                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
                 tools = TOOLS) 
 
 l_kog = {}
@@ -2314,7 +2097,6 @@ for i,col in enumerate(df_kog.columns):
                   name = col)
 
 hover_tool_kog = HoverTool(
-    # line_policy='nearest',
     tooltips = [
         ("Issue date", "$x"),
         ('ValuePerPatent', '@ValuePerPatent'),
@@ -2328,14 +2110,12 @@ hover_tool_kog = HoverTool(
     renderers = [l_kog[4]]
 )
 p_kog.add_tools(hover_tool_kog)
-# hover_tool_kog.renderers.append(l_kog[0])
 
 p_kog.legend.click_policy="hide"
 p_kog.legend.label_text_font_size = '8pt'
 p_kog.add_layout(p_kog.legend[0], 'right')
 
 
-#
 colors_kog2 = itertools.cycle(Category10[10])
 
 df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
@@ -2345,8 +2125,6 @@ p_kog2 = figure(title="Kogan moment",
                 width = 1200,
                 height = 850,
                 x_axis_label='Market Prior',
-                # y_axis_type="log",
-                # y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
                 tools = TOOLS) 
 
 l_kog2 = {}
@@ -2358,7 +2136,6 @@ for i,col in enumerate(df_kog2.columns):
                   line_width = 2, legend_label=col, color=next(colors_kog2))
 
 hover_tool_kog2 = HoverTool(
-    # line_policy='nearest',
     tooltips = [
         ("market prior", "$x"),
         ('1950 to 2007', '@from1950to2007'),
@@ -2383,4 +2160,3 @@ p_kog2.add_tools(hover_tool_kog2)
 sixth_panel = row(p_kog,p_kog2)
 
 curdoc().add_root(column(first_panel, second_panel, third_panel, fourth_panel, fifth_panel, sixth_panel))
-# curdoc().add_root(column(first_panel, second_panel))

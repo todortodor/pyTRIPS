@@ -10,7 +10,7 @@ from scipy import optimize
 import time
 from classes import moments, parameters,  var, history
 from solver_funcs import calibration_func, fixed_point_solver, compute_deriv_welfare_to_patent_protec_US
-from data_funcs import write_calibration_results, compare_params
+from data_funcs import write_calibration_results
 import os
 import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
@@ -21,14 +21,7 @@ if new_run:
     p = parameters(n=7,s=2)
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
     p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
-    # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo']
-    # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'd']
     start_time = time.perf_counter()
-    
-# list_of_moments = ['GPDIFF','GROWTH', 'KM', 'OUT', 'RD_US','RD_RUS', 'RP',
-#                     'SRDUS','SPFLOWDOM','SPFLOWDOM_US','SPFLOWDOM_RUS', 'SRGDP',
-#                     'SRGDP_US','SRGDP_RUS', 'JUPCOST',
-#                     'SINNOVPATUS','TE','TO']
 
     m = moments()
     m.load_data()
@@ -120,51 +113,32 @@ if new_run:
 #         m.list_of_moments.append('PCOSTNOAGG')
 
 
-m.drop_CHN_IND_BRA_ROW_from_RD = True
-
-avoid_bad_nash = False
- 
+m.drop_CHN_IND_BRA_ROW_from_RD = False
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
-    bad_nash_weight = 1e2
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
 max_iter = 10
-# if avoid_bad_nash:
-#     x0 = np.concatenate([p.make_p_vector()
 
 while cond:
     if iterations < max_iter - 2:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
-                                args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
+                                args = (p,m,p.guess,hist,start_time), 
                                 bounds = bounds,
-                                # method= 'dogbox',
-                                # loss='arctan',
-                                # jac='3-point',
                                 max_nfev=1e8,
-                                # ftol=1e-14, 
                                 xtol=1e-10, 
-                                # gtol=1e-14,
-                                # f_scale=scale,
                                 verbose = 2)
     else:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
-                                args = (p,m,p.guess,hist,start_time,avoid_bad_nash,bad_nash_weight), 
+                                args = (p,m,p.guess,hist,start_time), 
                                 bounds = bounds,
-                                # method= 'dogbox',
-                                # loss='arctan',
-                                # jac='3-point',
                                 max_nfev=1e8,
-                                # ftol=1e-14, 
                                 xtol=1e-16, 
-                                # gtol=1e-14,
-                                # f_scale=scale,
                                 verbose = 2)
-        # cond = test_ls.nfev>15
     cond = iterations < max_iter
     iterations += 1
     p.update_parameters(test_ls.x)
@@ -183,7 +157,6 @@ sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         cobweb_qty='phi',
                         plot_convergence=False,
                         plot_cobweb=False,
-                        
                         safe_convergence=0.001,
                         disp_summary=True,
                         damping = 10,
@@ -195,15 +168,10 @@ sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
                         damping_post_acceleration=5
-                        # damping=10
-                          # apply_bound_psi_star=True
                         )
-p_sol.guess = sol.x
-# sol_c = var.var_from_vector(sol.x, p_sol)    
-# sol_c = var.var_from_vector(p_sol.guess, p_sol)    
+p_sol.guess = sol.x 
 sol_c.scale_P(p_sol)
 
-# sol_c.compute_price_indices(p_sol)
 sol_c.compute_non_solver_quantities(p_sol) 
 p_sol.tau = sol_c.tau
 m.compute_moments(sol_c,p_sol)
@@ -212,17 +180,12 @@ m.plot_moments(m.list_of_moments)
 
 #%% writing results as excel and locally
 
-# commentary = 'With DOMPATINUS/EU and SINNOVPATEU'
-# commentary = 'With PCOSTNOAGG and no DOMPAT'
-commentary = 'Hjort factors with real GDP instead of GDP'
-# commentary = ''
+commentary = ''
 baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-# local_path = 'calibration_results_matched_economy/'
-run_number = 2.0
+run_number = 3.0
 # run_str = '4.'
-# run_number = baseline_number
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False
@@ -249,57 +212,3 @@ p_sol.write_params(local_path+str(run_number)+'/')
 m.write_moments(local_path+str(run_number)+'/')
 # p_sol.write_params(local_path+run_str+'/')
 # m.write_moments(local_path+run_str+'/')
-
-#%%
-import matplotlib.pyplot as plt
-# jac = test_ls.jac
-# IND_idx = -4
-m_sign_list = ['GPDIFF',
-  'GROWTH',
-  'KM',
-  'OUT',
-  'RD',
-  'RD',
-  'RD',
-  'RP',
-  'RP',
-  'RP',
-  'RP',
-  'RP',
-  'RP',
-  'RP',
-  'SRDUS',
-  'SRGDP',
-  'SRGDP',
-  'SRGDP',
-  'SRGDP',
-  'SRGDP',
-  'SRGDP',
-  'SRGDP',
-  'JUPCOST',
-  'SINNOVPATUS',
-  'TO',
-  'SPFLOW USA_EUR', 'SPFLOW USA_JAP', 'SPFLOW USA_CHN', 'SPFLOW USA_BRA', 'SPFLOW USA_IND', 'SPFLOW USA_ROW', 'SPFLOW EUR_USA', 'SPFLOW EUR_JAP', 'SPFLOW EUR_CHN', 'SPFLOW EUR_BRA', 'SPFLOW EUR_IND', 'SPFLOW EUR_ROW', 'SPFLOW JAP_USA', 'SPFLOW JAP_EUR', 'SPFLOW JAP_CHN', 'SPFLOW JAP_BRA', 'SPFLOW JAP_IND', 'SPFLOW JAP_ROW', 'SPFLOW CHN_USA', 'SPFLOW CHN_EUR', 'SPFLOW CHN_JAP', 'SPFLOW CHN_BRA', 'SPFLOW CHN_IND', 'SPFLOW CHN_ROW', 'SPFLOW BRA_USA', 'SPFLOW BRA_EUR', 'SPFLOW BRA_JAP', 'SPFLOW BRA_CHN', 'SPFLOW BRA_IND', 'SPFLOW BRA_ROW', 'SPFLOW IND_USA', 'SPFLOW IND_EUR', 'SPFLOW IND_JAP', 'SPFLOW IND_CHN', 'SPFLOW IND_BRA', 'SPFLOW IND_ROW', 'SPFLOW ROW_USA', 'SPFLOW ROW_EUR', 'SPFLOW ROW_JAP', 'SPFLOW ROW_CHN', 'SPFLOW ROW_BRA', 'SPFLOW ROW_IND',
-  'DOMPATEU',
-  'DOMPATUS']
-
-# for i in range(3,6):
-# fig,ax=plt.subplots(figsize = (20,10))
-# ax.plot(jac[:,-4])
-# ax.set_xticks(np.arange(len(jac[:,-4])))
-# ax.set_xticklabels(m_sign_list,rotation = 45)
-# plt.show()
-fig,ax=plt.subplots(figsize = (15,20))
-ax.plot(m.deviation_vector()-m_back_up.deviation_vector(),np.arange(len(m.deviation_vector())))
-ax.set_yticks(np.arange(len(m.deviation_vector())))
-ax.set_yticklabels(m_sign_list)
-plt.grid()
-
-plt.show()
-
-# SPFLOW_sign = []
-# for c1 in p.countries:
-#     for c2 in p.countries:
-#         if c1 != c2:
-#             SPFLOW_sign.append('SPFLOW '+c1+'_'+c2)
-# print(SPFLOW_sign)
