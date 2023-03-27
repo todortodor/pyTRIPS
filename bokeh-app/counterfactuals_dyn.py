@@ -18,7 +18,7 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'501','variation': '2.0'}
+    {'baseline':'501','variation': '3.0'}
     ]
 
 for baseline_dic in baseline_dics:
@@ -74,20 +74,23 @@ for baseline_dic in baseline_dics:
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
     for c in p_baseline.countries:
-        make_counterfactual(p_baseline,c,local_path,dynamics=False)
+        make_counterfactual(p_baseline,c,local_path,
+                            sol_baseline=sol_baseline,dynamics=True)
         make_counterfactual_recap(p_baseline, sol_baseline, c,
                                       local_path,recap_path,
-                                      dynamics=False,Nt=25,t_inf=500)
+                                      dynamics=True,Nt=25,t_inf=500)
     
-    make_counterfactual(p_baseline,'World',local_path,dynamics=False)
+    make_counterfactual(p_baseline,'World',local_path,
+                        sol_baseline=sol_baseline,dynamics=True)
     make_counterfactual_recap(p_baseline, sol_baseline, 'World',
                                   local_path,recap_path,
-                                  dynamics=False,Nt=25,t_inf=500)
+                                  dynamics=True,Nt=25,t_inf=500)
     
-    make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
+    make_counterfactual(p_baseline,'Harmonizing',local_path,
+                        sol_baseline=sol_baseline,dynamics=True)
     make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
                                   local_path,recap_path,
-                                  dynamics=False,Nt=25,t_inf=500)
+                                  dynamics=True,Nt=25,t_inf=500)
     
 #%%
 for country in p_baseline.countries:

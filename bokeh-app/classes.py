@@ -24,26 +24,23 @@ class parameters:
         self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
         N = len(self.countries)
         self.N = N
-        # self.sectors = ['Non patent', 'Patent', 'other', 'other2'][:s]
         self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
         S = len(self.sectors)
         self.S = S
-        self.eta = np.ones((N, S))*0.02  # could be over one
+        self.eta = np.ones((N, S))*0.02
         self.eta[:, 0] = 0
-        self.T = np.ones((N, S))*1.5  # could be anything >0
-        # self.T = np.ones(N)*1.5  # could be anything >0
-        self.k = 1.33350683                 #
-        self.rho = 0.02  # 0.001 - 0.02
+        self.T = np.ones((N, S))*1.5
+        self.k = 1.33350683
+        self.rho = 0.02
         self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
-        self.fe = np.ones(S)  # could be over one
-        self.fo = np.ones(S)  # could be over one
-        self.sigma = np.ones(S)*3  #
-        self.theta = np.ones(S)*5   #
-        # self.zeta = np.ones(S)*0.01
+        self.fe = np.ones(S)
+        self.fo = np.ones(S)
+        self.sigma = np.ones(S)*3
+        self.theta = np.ones(S)*5
         self.zeta = np.ones(S)*0.01
-        self.g_0 = 0.01  # makes sense to be low
-        self.kappa = 0.5            #
-        self.gamma = 0.5       #
+        self.g_0 = 0.01
+        self.kappa = 0.5
+        self.gamma = 0.5 
         self.delta = np.ones((N, S))*0.05
         self.nu = np.ones(S)*0.1 #
         self.nu_tilde = np.ones(S)*0.1
@@ -51,18 +48,11 @@ class parameters:
         self.d = 1.0
         self.khi = 1.0
         
-        # self.off_diag_mask = np.ones((N,N,S),bool).ravel()
-        # self.off_diag_mask[np.s_[::(N+1)*S]] = False
-        # self.off_diag_mask[np.s_[1::(N+1)*S]] = False
-        # self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
-        # self.diag_mask = np.invert(self.off_diag_mask)
-        
         self.unit = 1e6
-        # print(data_path)
+        
         self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
         self.trade_flows = self.trade_flows.reshape((N,N,S))
         self.OUT = self.trade_flows.sum()
-        # self.trade_shares = (self.trade_flows/(np.diagonal(self.trade_flows).transpose())[:,None,:])
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
         self.beta = np.einsum('nis->s',self.trade_shares)
         self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
@@ -79,7 +69,6 @@ class parameters:
         
         self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
         
-        # self.unit_labor = self.labor_raw.mean()
         self.unit_labor = 1e9
         self.labor = self.labor_raw/self.unit_labor
         
@@ -89,10 +78,6 @@ class parameters:
         self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
         
         self.deficit_share_world_output = self.deficit_raw/self.data.output.sum() 
-
-        
-        # self.unit = self.gdp_raw.mean()
-        
         
         co = 1e-6
         cou = 1e5
@@ -160,7 +145,6 @@ class parameters:
                     'beta':pd.Index(self.sectors, name='sector'),
                     'T':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                         , names=['country','sector']),
-                     # 'T':pd.Index(self.countries, name = 'country'),
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
@@ -173,10 +157,8 @@ class parameters:
                     'nu_tilde':[np.s_[0]],
                     'kappa':None,
                     'k':None,
-                    # 'tau':[np.s_[::(N+1)*S],np.s_[1::(N+1)*S]],
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    # 'delta':[np.s_[::S],np.s_[S-1]],
                     'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
@@ -224,15 +206,11 @@ class parameters:
          'kappa','gamma','delta','nu','nu_tilde','d','khi','r_hjort','tau']
             
     def guess_from_params(self):
-        # price_guess = self.data.price_level.values
         Z_guess = self.data.expenditure.values/self.unit
         w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)*100
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
-        # psi_star_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*100
         profit_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*0.01
         phi_guess = np.ones((self.N,self.N,self.S)).ravel()#*0.01
-        # vec = np.concatenate((w_guess,Z_guess,l_R_guess,psi_star_guess,phi_guess), axis=0)
-        # print(Z_guess.shape,w_guess.shape)
         vec = np.concatenate((w_guess,Z_guess,l_R_guess,profit_guess,phi_guess), axis=0)
         return vec
     
@@ -330,7 +308,6 @@ class parameters:
             setattr(self,'calib_parameters',df[0].to_list())
         except:
             pass
-        # self.beta = np.einsum('nis->s',self.trade_shares)
             
     def make_parameters_bounds(self):
         lb = []
@@ -371,9 +348,7 @@ class cobweb:
         time.sleep(pause)
         
 class var:
-    def __init__(self, context):
-        N = 7
-        S = 2
+    def __init__(self, context, N = 7, S = 2):
         self.off_diag_mask = np.ones((N,N,S),bool).ravel()
         self.off_diag_mask[np.s_[::(N+1)*S]] = False
         self.off_diag_mask[np.s_[1::(N+1)*S]] = False
@@ -415,17 +390,10 @@ class var:
             np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
         init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
         if compute:
-            # init.compute_growth(p)
-            # init.compute_aggregate_qualities(p)
-            # init.compute_sectoral_prices(p)
-            # init.compute_trade_shares(p)
-            # init.compute_labor_allocations(p)
-            # init.compute_price_indices(p)
             init.compute_solver_quantities(p)
         return init
 
     def vector_from_var(self):
-        # price = self.price_indices
         w = self.w
         l_R = self.l_R[...,1:].ravel()
         profit = self.profit[...,1:].ravel()
@@ -457,15 +425,12 @@ class var:
         self.G = self.r+p.zeta-self.g+self.g_s+p.nu
         
     def compute_patenting_thresholds(self, p):
-        d_np = (p.d-1)*np.identity(p.N)+1
-        A = np.einsum('n,n,s,i,i,ni->nis',
+        A = np.einsum('n,n,s,i,i->nis',
                                self.w,
                                p.r_hjort,
                                p.fe[1:],
                                1/self.w,
                                1/p.r_hjort,
-                               # 1/p.fo[1:],
-                               d_np,
                                )
         
         denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
@@ -485,7 +450,6 @@ class var:
             x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:])/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
             cond = np.any(x_old != x_new)
             it+=1
-        # print(np.maximum(A*(x_new[None,:,:]/self.psi_C[...,1:]-1),0).sum(axis=0))
 
         condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=p.fo[None,1:]
         x_new[condition] = psi_star_n_star[...,1:][condition]
@@ -512,7 +476,6 @@ class var:
         
         self.PSI_CD = np.ones((p.N,p.S))
         self.PSI_CD[...,1:] = 1-self.PSI_M[...,1:].sum(axis=1)
-        # self.PSI_CD[self.PSI_CD<0] = 0
 
     def compute_sectoral_prices(self, p):
         power = p.sigma-1
@@ -523,23 +486,13 @@ class var:
 
         self.P_M = np.full((p.N, p.S),np.inf)
         self.P_M[:,1:] = (A/(A+B))**(1/(1-p.sigma))[None, 1:]
-        # self.P_M[:, 1:] = np.divide(
-        #     (A+B)[:, 1:], A[:, 1:], out=np.full_like(A[:, 1:], np.inf), where=A[:, 1:] > 0)**(1/(p.sigma-1))[None, 1:]
         
         self.P_CD = np.ones((p.N, p.S))
         self.P_CD[:,1:] = (B/(A+B))**(1/(1-p.sigma))[None, 1:]
-        # self.P_CD[:,1:] = np.divide(
-        #     A+B, B, out=np.full_like(B, np.inf), where=B > 0)**(1/(p.sigma-1))[None, :]
-        
-        # self.P_CL[np.isnan(self.P_CL)] = np.inf #!!!
-        # self.P_CD[np.isnan(self.P_CD)] = np.inf
-        # self.P_M[np.isnan(self.P_M)] = np.inf
         
     def compute_labor_allocations(self, p):
-        d_np = (p.d-1)*np.identity(p.N)+1
         self.l_Ae = np.zeros((p.N,p.N,p.S))
-        self.l_Ae[...,1:] = np.einsum('ni,n,s,is,is,nis -> ins',
-                          d_np,
+        self.l_Ae[...,1:] = np.einsum('n,s,is,is,nis -> ins',
                          p.r_hjort,
                          p.fe[1:],
                          p.eta[...,1:],
@@ -556,17 +509,6 @@ class var:
                          )
         self.l_P = p.labor-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
         
-        # self.X_M[np.isnan(self.X_M)] = 0 #!!!
-        # self.X_CD[np.isnan(self.X_CD)] = 0
-        # self.X_CL[np.isnan(self.X_CL)] = 0
-        
-    # def compute_expenditure(self, p):
-    #     A = np.einsum('nis->i', p.trade_shares*self.Z_sum)
-    #     B = np.einsum('i,nis->i', self.w, self.l_Ae)
-    #     C = p.deficit_share_world_output*self.Z_sum
-    #     D = np.einsum('n,ins->i', self.w, self.l_Ae)
-    #     self.Z = (A+B-(C+D))
-        
     def compute_price_indices(self, p, assign = True):
         power = (p.sigma-1)
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
@@ -574,7 +516,6 @@ class var:
         B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
         temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:]*(A+B))
         one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
-        # price_indices = ( (gamma((p.theta+1-p.sigma)/p.sigma)*(A+B+C))**(p.beta[None, :]/(1- p.sigma[None, :])) ).prod(axis=1)
         price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :]/(p.sigma[None, :]-1)) ).prod(axis=1)
         if assign:
             self.price_indices = price_indices
@@ -582,35 +523,6 @@ class var:
             return price_indices
         
     def compute_trade_flows_and_shares(self, p, assign = True):
-        # if self.context == 'calibration':
-        #     X = p.trade_shares*self.Z.sum()
-        #     # numerator_prefact_A = np.einsum('nis,nis->nis',
-        #     #                       self.PSI_M,
-        #     #                       self.phi**(p.sigma-1)[None, None, :])
-        #     temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-        #     denominator_M = np.einsum('nis,ns,ns->nis',
-        #                             self.PSI_M[..., 1:],
-        #                             # 1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-        #                             # np.divide(1,temp, out=np.full_like(temp, np.inf), where=temp>0),
-        #                             1/temp,
-        #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-        #                             )
-        #     denominator_CD = np.einsum('nis,ns,ns->nis',
-        #                                self.phi[..., 1:]**(p.theta-(p.sigma-1))[None,None,1:],
-        #                                1/(self.phi[..., 1:]**(p.theta)[None,None,1:]).sum(axis=1),
-        #                                self.P_CD[..., 1:]**(1-p.sigma[None,1:])
-        #                                )
-        #     X_M = np.zeros((p.N, p.N, p.S))
-        #     X_CD = X.copy()
-        #     X_M[...,1:] = denominator_M*X[...,1:]/(denominator_M + denominator_CD)
-        #     X_CD[...,1:] = denominator_CD*X[...,1:]/(denominator_M + denominator_CD)
-        #     if assign:
-        #         self.X_M = X_M
-        #         self.X_CD = X_CD
-        #         self.X = X
-        #     else:
-        #         return X_M,X_CD,X
-        # elif self.context == 'counterfactual':
             temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
             X_M = np.zeros((p.N, p.N, p.S))
             X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
@@ -635,8 +547,6 @@ class var:
                 self.X = X
             else:
                 return X_M,X_CD,X
-        # else:
-        #     print('context attribute needs to be either "calibration" or "counterfactual"')
         
     def compute_solver_quantities(self,p):
         self.compute_growth(p)
@@ -645,25 +555,19 @@ class var:
         self.compute_sectoral_prices(p)
         self.compute_labor_allocations(p)
         self.compute_trade_flows_and_shares(p)
-        # self.compute_expenditure(p)
         self.compute_price_indices(p)
 
     def compute_wage(self, p):
         wage = (p.alpha[None, :] * (self.X - self.X_M/p.sigma[None, None, :]).sum(axis=0)
                 ).sum(axis=1)/self.l_P
-        # assert np.isnan(wage).sum() == 0, 'nan in wage'
-        # assert np.all(self.l_P > 0), 'non positive production labor'
-        # assert np.all(wage > 0), 'non positive wage'
         return wage
             
     def compute_labor_research(self, p):
-        d_np = (p.d-1)*np.identity(p.N)+1
         A1 = ((p.k/(p.k-1))*self.profit[...,1:]/self.G[None,None,1:]).sum(axis=0)
-        A2 = np.einsum('nis,n,s,ni,n,i,nis->is',
+        A2 = np.einsum('nis,n,s,n,i,nis->is',
                        self.psi_m_star[...,1:]**-p.k,
                        self.w,
                        p.fe[1:],
-                       d_np,
                        p.r_hjort,
                        1/self.w,
                        p.k*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k-1))-1
@@ -683,16 +587,12 @@ class var:
                                 1/self.PSI_M[...,1:])
         return profit
     
-    # def compute_world_expenditure(self,p):
-    #     return np.array(self.Z.sum())[None]
-    
     def compute_expenditure(self, p):
         A = np.einsum('nis->i', self.X)
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
         C = p.deficit_share_world_output*self.Z.sum()
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
         Z = (A+B-(C+D))
-        # Z = A-C
         return Z
     
     def compute_phi(self, p):
@@ -714,7 +614,6 @@ class var:
             
             phi = np.einsum('nis,nns,ns,ns,ns->nis',
                     f_phi**(1/p.theta)[None,None,:],
-                    # 1/np.diagonal(phi).transpose(),
                     f_phi**(-1/p.theta)[None,None,:],
                     p.T**(1/p.theta[None,:]),
                     self.w[:,None]**(-p.alpha[None,:]),
@@ -762,8 +661,6 @@ class var:
             /np.einsum('nns->ns',self.phi)[:,None,:]
     
     def compute_tau(self,p, assign = True):
-        # self.tau = np.ones((p.N,p.N,p.S))
-        # tau = np.diagonal(self.phi).transpose()[None,:,:]/self.phi
         tau = np.einsum('is,nis,is,is->nis',
                         p.T**(1/p.theta[None,:]),
                         1/self.phi,
@@ -810,7 +707,7 @@ class var:
         self.pflow = np.einsum('nis,is,is->nis',
                               self.psi_m_star[...,1:]**(-p.k),
                               p.eta[...,1:],
-                              self.l_R[...,1:]**(1-p.kappa)#!!!
+                              self.l_R[...,1:]**(1-p.kappa)
                               ).squeeze()
         
     def compute_share_of_innovations_patented(self,p):
@@ -883,10 +780,6 @@ class var:
                               self.w,
                               1/(self.G[None,:]-p.nu[None,:]+p.delta)
                               )
-        # self.V_P = np.einsum('nis,ns->nis',
-        #                      self.profit+p.delta[:,None,:]*self.V_NP+p.nu[None,None,:]*self.V_PD,
-        #                      self.G[None,:]+p.delta
-        #                      )
         
         self.V_P = np.einsum('nis,i,ns->nis',
                              self.profit,
@@ -895,20 +788,6 @@ class var:
                              )
         
         self.V = np.zeros((p.N,p.S))
-        # A = (p.k/(p.k-1))*self.V_NP[...,1:]*(1-self.psi_m_star[...,1:]**(1-p.k))
-        # B = (p.k/(p.k-1))*self.V_P[...,1:]*self.psi_m_star[...,1:]**(1-p.k)
-        # C = np.einsum('nis,n,s,n->nis',
-        #               self.psi_m_star[...,1:]**(-p.k),
-        #               self.w,
-        #               p.fe[1:],
-        #               p.r_hjort
-        #               )
-        # D = np.einsum('is,i,i,s->is',
-        #               self.psi_o_star[...,1:],
-        #               self.w,
-        #               p.r_hjort,
-        #               p.fo[1:])
-        # self.V[...,1:] = A.sum(axis=0) + B.sum(axis=0) - C.sum(axis=0) - D
         
         A1 = ((p.k/(p.k-1))*self.V_NP[...,1:]).sum(axis=0)
         A2 = np.einsum('nis,n,s,n,nis->is',
@@ -954,105 +833,6 @@ class var:
         numerator = (weights**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
         denominator = (weights**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
         self.cons_eq_custom_weights_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
-    
-        # return phi
-# class var_calibration(var):
-#     def __init__(self):
-#         super().__init__()
-    
-    # def check_trade_flows_and_shares(self, p):
-    #     temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-    #     X_M = np.zeros((p.N, p.N, p.S))
-    #     X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
-    #                             self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
-    #                             self.PSI_M[..., 1:],
-    #                             1/temp,
-    #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
-    #                             p.beta[1:],
-    #                             self.Z
-    #                             )
-    #     X_CD = np.einsum('nis,ns,ns,s,n->nis',
-    #                                 self.phi**(p.theta)[None,None,:],
-    #                                 1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-    #                                 self.P_CD**(1-p.sigma[None,:]),
-    #                                 p.beta,
-    #                                 self.Z
-    #                                 )
-    #     X = X_M+X_CD
-    #     return X
-    
-    # def check_phi(self,p):
-    #     denominator_M = np.zeros((p.N, p.N, p.S))
-    #     denominator_M[..., 1:] = np.einsum('nis,nis,ns,ns->nis',
-    #                             self.PSI_M[..., 1:],
-    #                             self.phi[..., 1:]**((p.sigma-1)-p.theta)[None, None, 1:],
-    #                             1/((self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)),
-    #                             self.P_M[..., 1:]**(1-p.sigma[None, 1:])
-    #                             )
-    #     denominator_CD = np.einsum('ns,ns->ns',
-    #                                 1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-    #                                 self.P_CD**(1-p.sigma[None,:])
-    #                                 )
-    #     one_over_denominator = 1/(denominator_M + denominator_CD[:,None,:])
-    #     phi = np.einsum('nis,s,n,nis->nis',
-    #                     self.X,
-    #                     1/p.beta,
-    #                     1/self.Z,
-    #                     one_over_denominator)**(1/p.theta)[None,None,:]
-    #     return phi
-        
-
-# class var_counterfactual(var):
-#     def __init__(self):
-#         super().__init__()
-        
-#     def compute_trade_flows_and_shares(self, p):
-#         temp = (self.PSI_M[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
-#         self.X_M = np.zeros((p.N, p.N, p.S))
-#         self.X_M[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
-#                                 self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
-#                                 self.PSI_M[..., 1:],
-#                                 1/temp,
-#                                 self.P_M[..., 1:]**(1-p.sigma[None, 1:]),
-#                                 p.beta[1:],
-#                                 self.Z
-#                                 )
-#         self.X_CD = np.einsum('nis,ns,ns,s,n->nis',
-#                                    self.phi**(p.theta)[None,None,:],
-#                                    1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
-#                                    self.P_CD**(1-p.sigma[None,:]),
-#                                    p.beta,
-#                                    self.Z
-#                                    )
-#         self.X = self.X_M+self.X_CD
-    
-#     def compute_phi(self, p):
-#         phi = np.einsum('is,nis,is,is->nis',
-#                 p.T**(1/p.theta[None,:]),
-#                 1/p.tau,
-#                 self.w[:,None]**(-p.alpha[None,:]),
-#                 self.price_indices[:,None]**(p.alpha[None,:]-1))
-#         return phi
-    
-#     @staticmethod
-#     def var_from_vector(vec,p, compute = True):
-#         init = var_counterfactual()    
-#         init.guess_wage(vec[0:p.N])
-#         init.guess_Z(vec[p.N:p.N+p.N])
-#         init.guess_labor_research(
-#             np.insert(vec[p.N+p.N:p.N+p.N+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
-#         init.guess_profit(
-#             np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
-#         init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
-#         if compute:
-#             # init.compute_growth(p)
-#             # init.compute_aggregate_qualities(p)
-#             # init.compute_sectoral_prices(p)
-#             # init.compute_trade_shares(p)
-#             # init.compute_labor_allocations(p)
-#             # init.compute_price_indices(p)
-#             init.compute_solver_quantities(p)
-#         return init
 
 def alt(n):
     alt = []
@@ -1077,9 +857,6 @@ def cheb_neuman_right(N):
     D = np.outer(c, np.array([1]*(N+1))/c) / (dX + np.identity(N+1))
     D = D - np.diag(np.sum(D,axis=1))
     D[0:int(N/2),:] = 0
-    # D[0:4,:] = 0
-    # D[-1,:] = 0
-    # D[:,0] = 0
     return D, x
 
 class dynamic_var:
@@ -1090,8 +867,6 @@ class dynamic_var:
         self.t = np.linspace(-1,1,self.Nt)
         self.D,self.t_cheby = cheb(self.Nt-1)
         self.D_neuman,self.t_cheby = cheb_neuman_right(self.Nt-1)
-        # self.t_real = self.t_inf-np.arccos(self.t_cheby)*self.t_inf/np.pi
-        # self.t_real = (self.t_cheby+1)*self.t_inf/2
         self.t_real = (self.t_cheby+1)*self.t_inf/2
         self.sol_init = sol_init
         self.sol_fin = sol_fin
@@ -1103,7 +878,6 @@ class dynamic_var:
             print(key, ',', str(type(item))[8:-2])
             
     def vector_from_var(self):
-        # price = self.price_indices
         price_indices = self.price_indices.ravel()
         w = self.w.ravel()
         Z = self.Z.ravel()
@@ -1136,12 +910,6 @@ class dynamic_var:
         init.guess_from_dic(dic_of_guesses)
         init.guess_from_vector(vec)
         if compute:
-            # init.compute_growth(p)
-            # init.compute_aggregate_qualities(p)
-            # init.compute_sectoral_prices(p)
-            # init.compute_trade_shares(p)
-            # init.compute_labor_allocations(p)
-            # init.compute_price_indices(p)
             init.compute_solver_quantities(p)
         return init
     
@@ -1185,11 +953,6 @@ class dynamic_var:
         self.guess_V_PD(x_old[idx:idx_end].reshape(self.V_PD[...,1:,:].shape)
                           ,only_patenting_sectors=True)
         idx = idx_end        
-        
-        # idx_end += self.V_P[...,1:,:].size
-        # self.guess_V_P(x_old[idx:idx_end].reshape(self.V_P[...,1:,:].shape)
-        #                   ,only_patenting_sectors=True)
-        # idx = idx_end
         
         idx_end += self.DELTA_V[...,1:,:].size
         self.guess_DELTA_V(x_old[idx:idx_end].reshape(self.DELTA_V[...,1:,:].shape)
@@ -1341,13 +1104,11 @@ class dynamic_var:
                                1/p.r_hjort,
                                )
         
-        # denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
         self.psi_C = np.full((p.N,p.N,p.S,self.Nt),np.inf)
         self.psi_C[...,1:,:] = np.einsum('nt,s,n,nist->nist',
                                          self.w,
                                          p.fe[1:],
                                          p.r_hjort,
-                                         # 1/(self.V_P[...,1:,:]-self.V_NP[...,1:,:])
                                          1/(self.DELTA_V[...,1:,:])
                                          )
         self.psi_star = np.maximum(self.psi_C,1)
@@ -1355,8 +1116,6 @@ class dynamic_var:
         
         x_old = np.max(self.psi_C[...,1:,:], axis=0)
         mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
-        
-        # print((A()self.psi_C[...,1:,:] == 0).sum())
         
         condition = np.maximum(A*(psi_star_n_star[None,:,1:,:]/self.psi_C[...,1:,:]-1),0).sum(axis=0)>=p.fo[None,1:,None]
         
@@ -1366,24 +1125,18 @@ class dynamic_var:
         print_once= True
         
         while cond:
-            if it>20 and print_once:
-                print('stuck')
-                print_once = False
-                self.plot_numerical_derivatives()
             if it>0:
                 x_old = x_new
             mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
             x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:,None])/np.sum(A/self.psi_C[...,1:,:],axis=0,where=mask)
             cond = np.any(x_old[~condition] != x_new[~condition])
-            # cond = np.any(x_old != x_new)
+            if it>40 and print_once:
+                print('stuck')
+                print_once = False
+                self.plot_numerical_derivatives()
+                cond = False
             it+=1
-            # print(x_new.min())
-            # plt.plot(x_new.ravel())
-            # plt.show()
-            # print(it)
-        # print(np.maximum(A*(x_new[None,:,:]/self.psi_C[...,1:]-1),0).sum(axis=0))
-
-        # condition = np.maximum(A*(psi_star_n_star[None,:,1:,:]/self.psi_C[...,1:,:]-1),0).sum(axis=0)>=p.fo[None,1:,None]
+            
         x_new[condition] = psi_star_n_star[...,1:,:][condition]
         self.psi_o_star = np.full((p.N,p.S,self.Nt),np.inf)
         self.psi_o_star[...,1:,:] = x_new
@@ -1391,22 +1144,7 @@ class dynamic_var:
         self.psi_m_star[...,1:,:] = np.maximum(self.psi_o_star[None,:,1:,:],self.psi_star[...,1:,:])
         
     def compute_V(self,p):
-        self.V = np.zeros((p.N,p.S,self.Nt))
-        # A = (p.k/(p.k-1))*self.V_NP[...,1:,:]*(1-self.psi_m_star[...,1:,:]**(1-p.k))
-        # B = (p.k/(p.k-1))*self.V_P[...,1:,:]*self.psi_m_star[...,1:,:]**(1-p.k)
-        # C = np.einsum('nist,nt,s,n->nist',
-        #               self.psi_m_star[...,1:,:]**(-p.k),
-        #               self.w,
-        #               p.fe[1:],
-        #               p.r_hjort
-        #               )
-        # D = np.einsum('ist,it,i,s->ist',
-        #               self.psi_o_star[...,1:,:],
-        #               self.w,
-        #               p.r_hjort,
-        #               p.fo[1:])
-        # self.V[...,1:,:] = A.sum(axis=0) + B.sum(axis=0) - C.sum(axis=0) - D
-        
+        self.V = np.zeros((p.N,p.S,self.Nt))        
         A1 = ((p.k/(p.k-1))*self.V_NP[...,1:,:]).sum(axis=0)
         A2 = np.einsum('nist,nt,s,n,nist->ist',
                        self.psi_m_star[...,1:,:]**-p.k,
@@ -1488,13 +1226,7 @@ class dynamic_var:
     def compute_interest_rate(self,p):
         self.CP_growth_rate = 2*np.einsum('tu,nu->nt',self.D_neuman,self.nominal_final_consumption)\
             /(self.t_inf*self.nominal_final_consumption)
-        # self.CP_growth_rate = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nu->nt',self.D_neuman,self.nominal_final_consumption)\
-        #     /(self.nominal_final_consumption)
-        #!!! TODO add time derivative
         self.r = p.rho + (self.g[None,:]+self.CP_growth_rate)/p.gamma
-        # self.r = p.rho + (self.g[None,:])/p.gamma
-        # plt.plot(CP_growth_rate.ravel())
         
     def compute_solver_quantities(self,p):
         self.compute_phi(p)
@@ -1521,7 +1253,6 @@ class dynamic_var:
         C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
         D = np.einsum('nt,inst->it', self.w, self.l_Ae)
         Z = (A+B-(C+D))
-        # Z = A-C
         return Z
         
     def compute_price_indices(self,p):
@@ -1536,9 +1267,6 @@ class dynamic_var:
         
     def compute_PSI_CD(self,p):
         self.PSI_CD_dot = 2*np.einsum('tu,nsu->nst',self.D_neuman,self.PSI_CD[...,1:,:])/self.t_inf
-        # self.PSI_CD_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nsu->nst',self.D_neuman,self.PSI_CD[...,1:,:])
-        #!!! TODO add time derivative
         PSI_CD = np.zeros((p.N,p.S,self.Nt))
         numA = np.einsum('s,nist->nst',
             p.nu[1:],
@@ -1554,15 +1282,11 @@ class dynamic_var:
                            1/(self.g_s[1:,:]+p.zeta[1:,None])
                            )-self.PSI_CD_0[...,1:,None]
         PSI_CD[...,-1] = 0
-        # PSI_CD[...,0] = 0
         
         return PSI_CD
         
     def compute_PSI_MNP(self,p):
         self.PSI_MNP_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MNP[...,1:,:])/self.t_inf
-        # self.PSI_MNP_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MNP[...,1:,:])
-        #!!! TODO add time derivative
         PSI_MNP = np.zeros((p.N,p.N,p.S,self.Nt))
         numA = p.k*np.einsum('is,ist,nist->nist',
             p.eta[:,1:],
@@ -1580,16 +1304,12 @@ class dynamic_var:
                            )-self.PSI_MNP_0[...,1:,None]
         
         PSI_MNP[...,-1] = 0
-        # PSI_MNP[...,0] = 0
         
         return PSI_MNP
         
         
     def compute_PSI_MPND(self,p):
         self.PSI_MPND_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPND[...,1:,:])/self.t_inf
-        # self.PSI_MPND_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPND[...,1:,:])
-        #!!! TODO add time derivative
         PSI_MPND = np.zeros((p.N,p.N,p.S,self.Nt))
         numA = p.k*np.einsum('is,ist,nist->nist',
             p.eta[:,1:],
@@ -1603,20 +1323,12 @@ class dynamic_var:
                            )-self.PSI_MPND_0[...,1:,None]
         
         PSI_MPND[...,-1] = 0
-        # PSI_MPND[...,0] = 0
         
         return PSI_MPND
         
         
     def compute_PSI_MPD(self,p):
         self.PSI_MPD_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPD[...,1:,:])/self.t_inf
-        # self.PSI_MPD_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPD[...,1:,:])
-        #!!! TODO add time derivative
-        # print(PSI_MPD_dot[...,1:,:])
-        # plt.plot(PSI_MPD_dot.ravel())
-        # plt.title('PSI_MPD')
-        # plt.show()
         PSI_MPD = np.zeros((p.N,p.N,p.S,self.Nt))
         numA = np.einsum('s,nist->nist',
             p.nu[1:],
@@ -1629,15 +1341,11 @@ class dynamic_var:
                            )-self.PSI_MPD_0[...,1:,None]
         
         PSI_MPD[...,-1] = 0
-        # PSI_MPD[...,0] = 0
         
         return PSI_MPD
         
     def compute_V_PD(self,p):
         self.V_PD_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_PD[...,1:,:])/self.t_inf
-        # self.V_PD_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.V_PD[...,1:,:])
-        #!!! TODO add time derivative
         V_PD = np.zeros((p.N,p.N,p.S,self.Nt))
         V_PD[...,1:,:] = np.einsum('nist,nist->nist',
                                    self.profit[...,1:,:]+self.V_PD_dot,
@@ -1647,9 +1355,6 @@ class dynamic_var:
         
     def compute_V_NP(self,p):
         self.V_NP_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_NP[...,1:,:])/self.t_inf
-        # self.V_NP_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.V_NP[...,1:,:])
-        #!!! TODO add time derivative
         V_NP = np.zeros((p.N,p.N,p.S,self.Nt))
         V_NP[...,1:,:] = np.einsum('nist,ist->nist',
                                    self.profit[...,1:,:]+self.V_NP_dot,
@@ -1658,10 +1363,8 @@ class dynamic_var:
         return V_NP
         
     def compute_V_P(self,p):
+        #Not used, replaced by DELTA_V = V_P - V_NP
         self.V_P_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_P[...,1:,:])/self.t_inf
-        # self.V_P_dot = ((self.t_cheby+self.map_parameter)**2/(2*self.map_parameter))\
-        #     *np.einsum('tu,nisu->nist',self.D_neuman,self.V_P[...,1:,:])
-        #!!! TODO add time derivative
         V_P = np.zeros((p.N,p.N,p.S,self.Nt))
         V_P[...,1:,:] = np.einsum('nist,nist->nist',
                                    self.profit[...,1:,:]+p.delta[:,None,1:,None]*self.V_NP[...,1:,:]\
@@ -1672,9 +1375,7 @@ class dynamic_var:
         return V_P
     
     def compute_DELTA_V(self,p):
-        
         self.DELTA_V_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.DELTA_V[...,1:,:])/self.t_inf
-        #!!! TODO add time derivative
         DELTA_V = np.zeros((p.N,p.N,p.S,self.Nt))
         DELTA_V[...,1:,:] = np.einsum('nist,nist->nist',
                                    p.nu[None,None,1:,None]*self.V_PD[...,1:,:]+self.DELTA_V_dot,
@@ -1684,29 +1385,17 @@ class dynamic_var:
         return DELTA_V
     
     def compute_A(self,p):
-        # np.polyval(np.polyint(np.polyfit(self.t_real,
-        #                     self.g,
-        #                     self.Nt)),self.t_real)
-        # self.A = np.exp(self.g*self.t_cheby*self.t_inf/2)
         self.A = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
                             self.g,
                             self.Nt)),self.t_real))
         
     def compute_PSI_S(self,p):
-        # self.PSI_S = np.exp(self.g_s*self.t_cheby[None,:]*self.t_inf/2)
         self.PSI_S = np.zeros((p.S,self.Nt))
         for s,_ in enumerate(p.sectors):
             self.PSI_S[s,:] = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
                             self.g_s[s,:],
                             self.Nt)),self.t_real))
-        
-    # def compute_welfare(self,p):
-    #     power = 1-1/p.gamma
-    #     self.welfare = np.einsum('nt,t,t->nt',
-    #                              (self.nominal_final_consumption/self.price_indices)**power,
-    #                              self.A**power,
-    #                              1/(p.rho-self.g*power))/power
-    
+            
     def compute_consumption_equivalent_welfare(self,p):
         power = 1-1/p.gamma
 
@@ -1777,21 +1466,8 @@ class dynamic_var:
         
         
     def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
-        # self.ratios_of_consumption_levels_change_not_normalized = \
-        #     (self.nominal_final_consumption/self.price_indices)*np.exp((self.g-self.sol_init.g)*self.t_real)[None,:]/self.sol_init.cons[:,None]
-    
         self.ratios_of_consumption_levels_change_not_normalized = \
             (self.nominal_final_consumption/self.price_indices)*self.A[None,:]*np.exp(-self.sol_init.g*self.t_real)[None,:]/self.sol_init.cons[:,None]
-    
-    # def compute_world_welfare_changes(self,p,baseline):
-    #     one_ov_gamma = 1/p.gamma
-    #     numerator = (p.labor**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
-    #     denominator = (p.labor**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
-    #     self.cons_eq_pop_average_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
-        
-    #     numerator = (baseline.cons**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
-    #     denominator = baseline.cons.sum()*(p.rho-self.g*(1-one_ov_gamma))
-    #     self.cons_eq_negishi_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
     
     def compute_non_solver_quantities(self,p):
         self.compute_A(p)
@@ -1857,10 +1533,8 @@ class dynamic_var:
                 
                 try:
                     fit = np.polyfit(self.t_cheby,
-                                      # self.welfare[i,:]/self.welfare[i,0],
                                       self.welfare[i,:],
                                       self.Nt)
-                    # ax[3,1].scatter(self.t_real,self.welfare[i,:]/self.welfare[i,0],zorder=-i*10)
                     ax[3,1].scatter(self.t_real,self.welfare[i,:],zorder=-i*10)
                     ax[3,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
                             np.polyval(fit, cheb(500)[1]),zorder=-i*10)
@@ -1869,10 +1543,8 @@ class dynamic_var:
                 
                 try:
                     fit = np.polyfit(self.t_cheby,
-                                      # self.cons_eq_welfare[i,:]/self.cons_eq_welfare[i,0],
                                       self.cons_eq_welfare[i,:],
                                       self.Nt)
-                    # ax[4,1].scatter(self.t_real,self.cons_eq_welfare[i,:]/self.cons_eq_welfare[i,0],marker='*',zorder=-i*10)
                     ax[4,1].scatter(self.t_real,self.cons_eq_welfare[i,:],marker='*',zorder=-i*10)
                     ax[4,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
                             np.polyval(fit, cheb(500)[1]),ls='--',zorder=-i*10)
@@ -1886,8 +1558,6 @@ class dynamic_var:
             ax[0,0].scatter(self.t_real,self.w[country_idx,:])
             ax[0,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
                     np.polyval(fit, cheb(500)[1]))
-            # ax[0,0].plot((cheb(500)[1]), 
-            #         np.polyval(fit, cheb(500)[1]))
             
             fit = np.polyfit(self.t_cheby,
                               self.price_indices[country_idx,:],
@@ -1895,8 +1565,6 @@ class dynamic_var:
             ax[1,0].scatter(self.t_real,self.price_indices[country_idx,:])
             ax[1,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
                     np.polyval(fit, cheb(500)[1]))
-            # ax[1,0].plot((cheb(500)[1]), 
-            #         np.polyval(fit, cheb(500)[1]))
             
             fit = np.polyfit(self.t_cheby,
                               self.Z[country_idx,:],
@@ -1904,8 +1572,6 @@ class dynamic_var:
             ax[0,1].scatter(self.t_real,self.Z[country_idx,:])
             ax[0,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
                     np.polyval(fit, cheb(500)[1]))
-            # ax[0,1].plot((cheb(500)[1]), 
-            #         np.polyval(fit, cheb(500)[1]))
             
             fit = np.polyfit(self.t_cheby,
                               self.PSI_CD[country_idx,1,:],
@@ -1913,8 +1579,6 @@ class dynamic_var:
             ax[1,1].scatter(self.t_real,self.PSI_CD[country_idx,1,:])
             ax[1,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
                     np.polyval(fit, cheb(500)[1]))
-            # ax[1,1].plot((cheb(500)[1]), 
-            #         np.polyval(fit, cheb(500)[1]))
             
             if not initial:
                 fit = np.polyfit(self.t_cheby,
@@ -1923,8 +1587,6 @@ class dynamic_var:
                 ax[2,0].scatter(self.t_real,self.psi_o_star[country_idx,1,:])
                 ax[2,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
                         np.polyval(fit, cheb(500)[1]))
-                # ax[2,0].plot((cheb(500)[1]), 
-                #         np.polyval(fit, cheb(500)[1]))
                 
                 fit = np.polyfit(self.t_cheby,
                                   self.g,
@@ -1932,8 +1594,6 @@ class dynamic_var:
                 ax[2,1].scatter(self.t_real,self.g)
                 ax[2,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
                         np.polyval(fit, cheb(500)[1]))
-                # ax[2,1].plot((cheb(500)[1]), 
-                #         np.polyval(fit, cheb(500)[1]))
                 
                 fit = np.polyfit(self.t_cheby,
                                   self.r[0,:],
@@ -1941,8 +1601,6 @@ class dynamic_var:
                 ax[4,0].scatter(self.t_real,self.r[0,:])
                 ax[4,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
                         np.polyval(fit, cheb(500)[1]))
-                # ax[4,0].plot((cheb(500)[1]), 
-                #         np.polyval(fit, cheb(500)[1]))
             
             try:
                 fit = np.polyfit(self.t_cheby,
@@ -1951,43 +1609,8 @@ class dynamic_var:
                 ax[3,0].scatter(self.t_real,self.l_R[country_idx,1,:])
                 ax[3,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
                         np.polyval(fit, cheb(500)[1]))
-                # ax[3,0].plot((cheb(500)[1]), 
-                #         np.polyval(fit, cheb(500)[1]))
             except:
                 pass
-            
-            # try:
-            #     # fit = np.polyfit(self.t_cheby,
-            #     #                   self.welfare[country_idx,:]/self.welfare[country_idx,0],
-            #     #                   self.Nt)
-            #     fit = np.polyfit(self.t_cheby,
-            #                       self.welfare[country_idx,:],
-            #                       self.Nt)
-            #     # ax[3,1].scatter(self.t_real,self.welfare[country_idx,:]/self.welfare[country_idx,0])
-            #     ax[3,1].scatter(self.t_real,self.welfare[country_idx,:])
-            #     # ax[3,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
-            #     #         np.polyval(fit, cheb(500)[1]),label = 'utility')
-            #     ax[3,1].plot((cheb(500)[1]), 
-            #             np.polyval(fit, cheb(500)[1]),label = 'utility')
-            # except:
-            #     pass
-            
-            # try:
-            #     # fit = np.polyfit(self.t_cheby,
-            #     #                   self.cons_eq_welfare[country_idx,:]/self.cons_eq_welfare[country_idx,0],
-            #     #                   self.Nt)
-            #     fit = np.polyfit(self.t_cheby,
-            #                       self.cons_eq_welfare[country_idx,:],
-            #                       self.Nt)
-            #     # ax[4,1].scatter(self.t_real,self.cons_eq_welfare[country_idx,:]/self.cons_eq_welfare[country_idx,0],color='green')
-            #     ax[4,1].scatter(self.t_real,self.cons_eq_welfare[country_idx,:],color='green')
-            #     # ax[4,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
-            #     #         np.polyval(fit, cheb(500)[1]),color='green',label = 'cons eq welfare (ss normalized)')
-            #     ax[4,1].plot((cheb(500)[1]), 
-            #             np.polyval(fit, cheb(500)[1]),color='green',label = 'cons eq welfare (ss normalized)')
-                
-            # except:
-            #     pass
             
             if self.sol_init is not None:
                 ax[0,0].scatter([0],[self.sol_init.w[country_idx]],color='red')
@@ -2008,11 +1631,7 @@ class dynamic_var:
                     ax[2,0].scatter([self.t_inf],[self.sol_fin.psi_o_star[country_idx,1]],color='red')
                     ax[2,1].scatter([self.t_inf],[self.sol_fin.g],color='red')
                     ax[3,0].scatter([self.t_inf],[self.sol_fin.l_R[country_idx,1]],color='red')
-            
-        
-        # if history:
-        #     self.history_PSI_CD.append()
-        
+                    
         if title is not None:
             plt.suptitle(title)
         ax[0,0].set_title('w')
@@ -2031,7 +1650,6 @@ class dynamic_var:
             ax[4,1].set_title('DELTA V')
         if country_idx == 'all':
             ax[0,0].legend()
-        # plt.legend()
         plt.show()
         
     def plot_all_countries(self):
@@ -2450,92 +2068,6 @@ class moments:
         df = pd.DataFrame(data = {'moments':self.list_of_moments,
                                   'weights':[self.weights_dict[mom] for mom in self.list_of_moments]})
         df.to_csv(path+'list_of_moments.csv',index=False)
-    
-    @staticmethod
-    def compare_moments(dic = None, lis = None, save_path = None, contin_cmap = False,list_of_moments=None):
-        if dic is None and lis is not None:
-            coms = ['m'+str(i) for i,_ in enumerate(lis)]
-            moms_c = lis
-        elif lis is None and dic is not None:
-            coms = [k for k in dic.keys()]
-            moms_c = [v for v in dic.values()]
-        n_col = int(np.floor(len(dic)/25))+1
-        colors = sns.color_palette("Spectral", n_colors = len(dic))
-        scalar_moments_collection = [ [] for _ in range(len(coms)) ]
-        scalar_moments = []
-        if list_of_moments is None:
-            list_of_moments = moms_c[0].list_of_moments
-        for mom in list_of_moments:
-            print(mom)
-            if np.array(getattr(moms_c[0],mom)).size == 1:
-                scalar_moments.append(mom)
-                print('\n'+mom+' target :',getattr(moms_c[0],mom+'_target'))
-                for i,mom_c in enumerate(moms_c):
-                    # scalar_moments_collection[i].append(getattr(mom_c,mom)/getattr(mom_c,mom+'_target'))
-                    scalar_moments_collection[i].append((getattr(mom_c,mom+'_deviation')/mom_c.weights_dict[mom])**2)
-                    print(coms[i]+' : ',getattr(mom_c,mom))
-            else:
-                fig,ax = plt.subplots(figsize = (12,8))
-                for i,mom_c in enumerate(moms_c):
-                    if contin_cmap:
-                        ax.scatter(getattr(mom_c,mom+'_target').ravel(),getattr(mom_c,mom).ravel()
-                                   ,label = coms[i],lw=2,marker = 'x',color=colors[i])
-                    else:
-                        ax.scatter(getattr(mom_c,mom+'_target').ravel(),getattr(mom_c,mom).ravel()
-                                   ,label = coms[i],lw=2,marker = 'x')
-                ax.plot([getattr(mom_c,mom+'_target').min(),
-                          getattr(mom_c,mom+'_target').max()]
-                        ,[getattr(mom_c,mom+'_target').min(),
-                          getattr(mom_c,mom+'_target').max()], 
-                        ls = '--', lw=1, color = 'k')
-                if mom not in ['SPFLOWDOM','SPFLOW','SPFLOWDOM_RUS','SPFLOW_RUS',
-                               'STFLOW','SDOMTFLOW','TWSPFLOWDOM','TWSPFLOW']:
-                    texts = [plt.text(getattr(mom_c,mom+'_target')[i],getattr(mom_c,mom)[i],idx) 
-                              for i,idx in enumerate(mom_c.idx[mom])]
-                # ax.plot([0,
-                #           getattr(mom_c,mom+'_target').max()]
-                #         ,[0,
-                #           getattr(mom_c,mom+'_target').max()], ls = '--', lw=0.5)
-                ax.set_xlabel('target')
-                plt.title(mom+' targeting')
-                plt.yscale('log')
-                plt.xscale('log')
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-                if save_path is not None:
-                    plt.tight_layout()
-                    plt.savefig(save_path+mom)
-                plt.show()
-            if mom == 'TO':
-                fig,ax = plt.subplots(figsize = (12,8))
-                for i,mom_c in enumerate(moms_c):
-                    if contin_cmap:
-                        ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2,color=colors[i])
-                    else:
-                        ax.plot(mom_c.idx['turnover'],mom_c.turnover[:,1],label = coms[i],lw=2)
-                plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-                plt.title('turnover')
-                if save_path is not None:
-                    plt.tight_layout()
-                    plt.savefig(save_path+'turnover')
-                plt.show()
-        fig,ax = plt.subplots(figsize = (12,8))
-        for i,scalars_of_one_run in enumerate(scalar_moments_collection):
-            if contin_cmap:
-                ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i],color=colors[i])
-            else:
-                ax.scatter(scalar_moments,scalars_of_one_run, label = coms[i])
-        # ax.plot(scalar_moments,np.ones_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        ax.plot(scalar_moments,np.zeros_like(scalar_moments,dtype='float'),ls = '--', lw=1, color = 'k')
-        # if np.any([np.any(np.array(scalars_of_one_run)>10) 
-        #            for scalars_of_one_run in scalar_moments_collection]):
-        #     plt.yscale('log')
-        plt.title('scalar moments deviation')
-        plt.xticks(rotation=45, ha='right')
-        plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left",ncol=n_col)
-        if save_path is not None:
-            plt.tight_layout()
-            plt.savefig(save_path+'scalar_moments')
-        plt.show()
         
     def compute_STFLOW(self,var,p):
         self.STFLOW = (var.X)/var.X.sum()
@@ -2544,13 +2076,6 @@ class moments:
         self.STFLOWSDOM = (var.X)/np.einsum('nns->ns',var.X)[:,None,:]
         
     def compute_SPFLOW(self,var,p):
-        # numerator = np.einsum('nis,is,is->nis',
-        #                       var.psi_star[...,1:]**(-p.k),
-        #                       p.eta[...,1:],
-        #                       var.l_R[...,1:]**(1-p.k)
-        #                       )
-        # numerator = remove_diag(numerator)
-        # pflow = remove_diag(var.pflow)
         pflow = var.pflow
         self.SPFLOWDOM = pflow/pflow.sum()
         inter_pflow = remove_diag(var.pflow)
@@ -2564,21 +2089,11 @@ class moments:
         self.SPFLOWDOM_RUS = self.SPFLOWDOM/self.SPFLOWDOM_US
         
     def compute_TWSPFLOW(self,var,p):
-        # numerator = np.einsum('nis,is,is->nis',
-        #                       var.psi_star[...,1:]**(-p.k),
-        #                       p.eta[...,1:],
-        #                       var.l_R[...,1:]**(1-p.k)
-        #                       )
-        # numerator = remove_diag(numerator)
-        # pflow = remove_diag(var.pflow)
         pflow = var.pflow
         self.TWSPFLOWDOM = pflow*p.trade_flows[...,1]/(pflow.sum()*p.trade_flows[...,1].sum())
         inter_pflow = remove_diag(var.pflow)
         off_diag_trade_flows = remove_diag(p.trade_flows[...,1])
-        self.TWSPFLOW = inter_pflow*off_diag_trade_flows/(inter_pflow.sum()*off_diag_trade_flows.sum())
-    
-    # def compute_SPFLOWRUS(self,var,p):
-        
+        self.TWSPFLOW = inter_pflow*off_diag_trade_flows/(inter_pflow.sum()*off_diag_trade_flows.sum())        
         
     def compute_OUT(self,var,p):
         self.OUT = var.Z.sum()
@@ -2593,8 +2108,6 @@ class moments:
         self.RP = var.price_indices/var.price_indices[0]
         
     def compute_RD(self,var,p):
-        # numerator = var.w[:,None]*var.l_R + np.einsum('i,ins->is',var.w,var.l_Ao)\
-        #     + np.einsum('n,ins->is',var.w,var.l_Ao)
         numerator = var.w[:,None]*var.l_R + np.einsum('i,is->is',var.w,var.l_Ao)\
             + np.einsum('n,ins->is',var.w,var.l_Ae)
         self.RD = np.einsum('is,i->i',
@@ -2628,18 +2141,11 @@ class moments:
         self.Z = var.Z
     
     def compute_JUPCOST(self,var,p):
-        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
         self.JUPCOST = var.pflow[2,0]*p.r_hjort[2]*p.fe[1]*var.w[2]
-        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[2]*p.fe[1]*var.w[2]
-        #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_UUPCOST(self,var,p):
-        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[0]*p.fo[1]*var.w[0] + p.r_hjort[2]*p.fe[1]*var.w[2])
         self.UUPCOST = var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]
-        # self.JUPCOST = var.pflow[2,0]*(p.r_hjort[2]*p.fe[1]*var.w[2]
-        #                                +p.r_hjort[0]*p.fo[1]*var.w[0])
-        # self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_PCOSTINTER(self,var,p):
         off_diag_pflow = var.pflow.copy()
@@ -2831,18 +2337,7 @@ class moments:
         self.compute_ERDUS(var, p)
         
     def compute_moments_deviations(self):
-        # for mom in self.get_list_of_moments():
-        #     setattr(self,
-        #             mom+'_deviation',
-        #             self.weights_dict[mom]*((getattr(self,mom) - getattr(self,mom+'_target'))
-        #                     /(getattr(self,mom+'_target')*np.sqrt(getattr(self,mom+'_target').size)))
-        #             )
-        # for mom in self.get_list_of_moments():
-        #     setattr(self,
-        #             mom+'_deviation',
-        #             self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
-        #             /(getattr(self,mom+'_target').size)
-        #             )
+
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
                 
@@ -2919,7 +2414,6 @@ class moments:
             new_SPFLOW = current_inter_PFLOW/current_inter_PFLOW.sum()
             new_target = current_target/current_target.sum()
             self.SPFLOW_deviation = self.weights_dict['SPFLOW']*np.abs(np.log(new_SPFLOW/new_target))/new_target.size**(1/2)
-            # print(self.SPFLOW_deviation.shape)
             
     def deviation_vector(self,list_of_moments = None):
         if list_of_moments is None:

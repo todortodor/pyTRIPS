@@ -85,7 +85,7 @@ for baseline_dic in baseline_dics:
                          static_eq_deltas = None,custom_weights=weights,
                          custom_x0 = np.array([0.01,0.01,0.01,12,12,12,12]))
         
-        write = False
+        write = True
         if write:
             if not os.path.exists('coop_eq_recaps/deltas_from_equal_to_negishi.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',

@@ -25,50 +25,8 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'501',
-    #                   'variation':'1.0'},
     {'baseline':'501',
-                      'variation':'2.0.0'},
-    {'baseline':'501',
-                      'variation':'2.0.1'},
-    {'baseline':'501',
-                      'variation':'2.0.2'},
-    {'baseline':'501',
-                      'variation':'2.0.3'},
-    {'baseline':'501',
-                      'variation':'2.0.4'},
-    {'baseline':'501',
-                      'variation':'2.0.5'},
-    {'baseline':'501',
-                      'variation':'2.0.6'},
-    {'baseline':'501',
-                      'variation':'2.0.7'},
-    {'baseline':'501',
-                      'variation':'2.0.8'},
-    {'baseline':'501',
-                      'variation':'2.0.9'},
-    {'baseline':'501',
-                      'variation':'2.0.10'},
-    {'baseline':'501',
-                      'variation':'2.0.11'},
-    {'baseline':'501',
-                      'variation':'2.0.12'},
-    {'baseline':'501',
-                      'variation':'2.0.13'},
-    {'baseline':'501',
-                      'variation':'2.0.14'},
-    {'baseline':'501',
-                      'variation':'2.0.15'},
-    {'baseline':'501',
-                      'variation':'2.0.16'},
-    {'baseline':'501',
-                      'variation':'2.0.17'},
-    {'baseline':'501',
-                      'variation':'2.0.18'},
-    {'baseline':'501',
-                      'variation':'2.0.19'},
-    {'baseline':'501',
-                      'variation':'2.0.20'},
+                      'variation':'3.0'}
     ]
 
 lb_delta = 0.01
@@ -101,7 +59,7 @@ for baseline_dic in baseline_dics:
                          solver_options=None,tol=1e-15,
                          static_eq_deltas = static_eq_deltas,custom_weights=None)
         
-        write = False
+        write = True
         if write:
             if not os.path.exists('coop_eq_recaps/dyn_deltas.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',

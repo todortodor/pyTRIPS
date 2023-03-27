@@ -156,7 +156,8 @@ def guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin,C=20):
     guess['PSI_MPD'] = build_guess(sol_fin.PSI_MPD,dyn_var.PSI_MPD_0)
     return guess
     
-def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, damping = 10, max_count=1e6,
+def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
+                           damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
                        plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
                        cobweb_coord = 1, plot_convergence = True,
@@ -1015,6 +1016,7 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
+    p.guess = sol_c.vector_from_var()
     if aggregation_method == 'custom_weights':
         sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
 
@@ -1027,6 +1029,7 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
     
     if dynamics:
         sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_init=sol_baseline, Nt=23,
+                                                x0 = p.dyn_guess,
                                               t_inf=500,
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -1047,8 +1050,33 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
                                 accel_max_weight_norm=1e6,
                                 damping_post_acceleration=10
                                 )
-
+        if sol.status == 'failed':
+            p.dyn_guess=None
+            sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_init=sol_baseline, Nt=23,
+                                                    x0 = p.dyn_guess,
+                                                  t_inf=500,
+                                    cobweb_anim=False,tol =1e-14,
+                                    accelerate=False,
+                                    accelerate_when_stable=False,
+                                    cobweb_qty='l_R',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    plot_live = False,
+                                    safe_convergence=1e-8,
+                                    disp_summary=False,
+                                    damping = 60,
+                                    max_count = 50000,
+                                    accel_memory =5, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=1, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=10
+                                    )
+            
         dyn_sol_c.compute_non_solver_quantities(p)
+        p.dyn_guess = dyn_sol_c.vector_from_var()
         if aggregation_method == 'custom_weights':
             dyn_sol_c.compute_world_welfare_changes_custom_weights(p, custom_weights)
 
@@ -1075,7 +1103,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                                 plot_convergence=False,
                                 plot_cobweb=False,
                                 safe_convergence=0.001,
-                                disp_summary=True,
+                                disp_summary=False,
                                 damping = 10,
                                 max_count = 3e3,
                                 accel_memory = 50, 
