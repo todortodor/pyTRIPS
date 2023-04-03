@@ -89,8 +89,9 @@ def fixed_point_solver(p, context, x0=None, tol = 1e-15, damping = 10, max_count
                       for qty in ['w','Z','profit','l_R','phi']]
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
-        if plot_live and count>100:
-            plt.plot(x_new)
+        if plot_live and count>500 and count%500 == 0:
+            plt.plot(convergence)
+            plt.yscale('log')
             plt.show()
         
         count += 1
@@ -989,28 +990,32 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
     else:
         return p_it_baseline, sol_it
 
-def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_method,custom_weights=None):
+def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_method,
+                                 custom_weights=None,custom_sol_options=None):
     p.delta[...,1] = deltas
-    # print(p.delta[...,1])
+    print(p.delta[...,1])
+    if custom_sol_options is None:
+        custom_sol_options = dict(cobweb_anim=False,tol =1e-15,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 5,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=2
+                                )
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     context = 'counterfactual',
-                            cobweb_anim=False,tol =1e-15,
-                            accelerate=False,
-                            accelerate_when_stable=True,
-                            cobweb_qty='phi',
-                            plot_convergence=False,
-                            plot_cobweb=False,
-                            safe_convergence=0.001,
-                            disp_summary=False,
-                            damping = 5,
-                            max_count = 1e4,
-                            accel_memory = 50, 
-                            accel_type1=True, 
-                            accel_regularization=1e-10,
-                            accel_relaxation=0.5, 
-                            accel_safeguard_factor=1, 
-                            accel_max_weight_norm=1e6,
-                            damping_post_acceleration=2
+                            **custom_sol_options
                             )
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
@@ -1095,8 +1100,10 @@ def find_coop_eq(p_baseline,aggregation_method,
                  static_eq_deltas = None,custom_weights=None,
                  custom_x0 = None):
     
+    custom_sol_options = solver_options
+    
     if solver_options is None:
-        solver_options = dict(cobweb_anim=False,tol =1e-14,
+        solver_options = dict(cobweb_anim=False,tol =1e-15,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -1137,7 +1144,8 @@ def find_coop_eq(p_baseline,aggregation_method,
     sol = optimize.minimize(fun = minus_world_welfare_of_delta,
                             x0 = x0,
                             tol = tol,
-                            args=(p,sol_baseline,dynamics,aggregation_method,custom_weights),
+                            args=(p,sol_baseline,dynamics,aggregation_method,
+                                  custom_weights,custom_sol_options),
                             # options = {'disp':True},
                             bounds=bounds
         )
@@ -1153,23 +1161,7 @@ def find_coop_eq(p_baseline,aggregation_method,
         
         sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
                                         context = 'counterfactual',
-                                        cobweb_anim=False,tol =1e-15,
-                                        accelerate=False,
-                                        accelerate_when_stable=True,
-                                        cobweb_qty='profit',
-                                        plot_convergence=False,
-                                        plot_cobweb=False,
-                                        safe_convergence=0.001,
-                                        disp_summary=False,
-                                        damping = 10,
-                                        max_count = 1e4,
-                                        accel_memory = 50, 
-                                        accel_type1=True, 
-                                        accel_regularization=1e-10,
-                                        accel_relaxation=0.5, 
-                                        accel_safeguard_factor=1, 
-                                        accel_max_weight_norm=1e6,
-                                        damping_post_acceleration=5
+                                        **solver_options
                                         )
         sol_corner.compute_non_solver_quantities(p_corner)
         sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
@@ -1225,23 +1217,7 @@ def find_coop_eq(p_baseline,aggregation_method,
     
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     context = 'counterfactual',
-                            cobweb_anim=False,tol =1e-15,
-                            accelerate=False,
-                            accelerate_when_stable=True,
-                            cobweb_qty='phi',
-                            plot_convergence=False,
-                            plot_cobweb=False,
-                            safe_convergence=0.001,
-                            disp_summary=False,
-                            damping = 10,
-                            max_count = 1e4,
-                            accel_memory = 50, 
-                            accel_type1=True, 
-                            accel_regularization=1e-10,
-                            accel_relaxation=0.5, 
-                            accel_safeguard_factor=1, 
-                            accel_max_weight_norm=1e6,
-                            damping_post_acceleration=5
+                            **solver_options
                             )
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
