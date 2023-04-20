@@ -2168,7 +2168,7 @@ labels_leg_patstat= {
     'alternative 4':'alt 4 : no domestic allocation',
     'julian latest code':'julian latest code',
     }
-tot = pd.read_csv('patstat_compar.csv').set_index(
+tot = pd.read_csv(join(dirname(__file__),'patstat_compar.csv')).set_index(
     ['destination_code','origin_code']
     ).sort_index(
     ).round()
