@@ -2159,4 +2159,51 @@ p_kog2.add_tools(hover_tool_kog2)
 #!!! sixth_panel
 sixth_panel = row(p_kog,p_kog2)
 
-curdoc().add_root(column(first_panel, second_panel, third_panel, fourth_panel, fifth_panel, sixth_panel))
+#%%
+
+tot = pd.read_csv('patstat_compar.csv')
+
+ds_patstat = ColumnDataSource(tot)
+# TOOLS="pan,wheel_zoom,box_zoom,reset,save"
+p_patstat = figure(title="Patent flows", 
+                width = 1200,
+                height = 850,
+                x_axis_type="log",
+                y_axis_type="log",
+                x_axis_label='Calibration data', 
+                # y_axis_label='Model implied',
+                tools = TOOLS)
+hover_tool = HoverTool()
+hover_tool.tooltips = [
+    ("index", "@x"),
+    ("(calibration data,alternative)", "($x,$y)"),
+    ]
+labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+              x_offset=2, y_offset=2, source=ds_patstat, text_font_size="7pt")
+p_patstat.add_layout(labels_patstat)
+p_patstat.add_tools(hover_tool)
+
+slope_patstat = Slope(gradient=1, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=1)
+p_patstat.add_layout(slope_patstat)
+lines_patstat = {}
+colors_patstat = itertools.cycle(Category10[10])
+for i,col in enumerate(tot.columns):
+    if col not in ['x','calibration data']:
+        lines_patstat[col] = p_patstat.circle('calibration data', col, 
+                source = ds_patstat, 
+                size=5, color=next(colors_patstat))
+legend_items = [LegendItem(label=labels_patstat[col], renderers=[lin_par])
+                    for col, lin_par in lines_patstat.items() if col not in ['x','calibration data']]
+
+legend = Legend(items=legend_items, click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    )
+p_patstat.add_layout(legend, 'right')
+
+seventh_panel = row(p_kog,p_kog2)
+
+curdoc().add_root(column(first_panel, second_panel, third_panel, 
+                         fourth_panel, fifth_panel, sixth_panel,
+                         seventh_panel))
