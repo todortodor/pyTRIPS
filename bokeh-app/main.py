@@ -560,7 +560,6 @@ def section(s):
 for baseline_nbr in baseline_list:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
-        
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path)
     baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr], baselines_dic_sol_qty[baseline_nbr]\
         = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments)
@@ -572,7 +571,6 @@ for baseline_nbr in baseline_list:
         run_list = sorted(run_list, key=section)
     
         for run in run_list:
-            # print(run)
             if run not in ['2.1.9','99']:
                 p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
                 a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
@@ -2160,8 +2158,20 @@ p_kog2.add_tools(hover_tool_kog2)
 sixth_panel = row(p_kog,p_kog2)
 
 #%%
-
-tot = pd.read_csv('patstat_compar.csv')
+labels_leg_patstat= {
+    'baseline':'baseline',
+    'calibration data':'calibration data',
+    'WIPO data':'WIPO data',
+    'alternative 1':'alt 1 : no sector filtering',
+    'alternative 2':'alt 2 : no ML predictions',
+    'alternative 3':'alt 3 : diff origin weight',
+    'alternative 4':'alt 4 : no domestic allocation',
+    'julian latest code':'julian latest code',
+    }
+tot = pd.read_csv('patstat_compar.csv').set_index(
+    ['destination_code','origin_code']
+    ).sort_index(
+    ).round()
 
 ds_patstat = ColumnDataSource(tot)
 # TOOLS="pan,wheel_zoom,box_zoom,reset,save"
@@ -2193,8 +2203,9 @@ for i,col in enumerate(tot.columns):
         lines_patstat[col] = p_patstat.circle('calibration data', col, 
                 source = ds_patstat, 
                 size=5, color=next(colors_patstat))
-legend_items = [LegendItem(label=labels_patstat[col], renderers=[lin_par])
-                    for col, lin_par in lines_patstat.items() if col not in ['x','calibration data']]
+legend_items = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
+                    for col, lin_par in lines_patstat.items() if col not in 
+                    ['x','calibration data']]
 
 legend = Legend(items=legend_items, click_policy="hide", 
                     label_text_font_size="8pt",
@@ -2202,7 +2213,12 @@ legend = Legend(items=legend_items, click_policy="hide",
                     )
 p_patstat.add_layout(legend, 'right')
 
-seventh_panel = row(p_kog,p_kog2)
+columns_patstat = [
+        TableColumn(field="x"),
+    ]+[TableColumn(field=col) for col in tot.columns]
+data_table_patstat = DataTable(source=ds_patstat, columns = columns_patstat, width=1200, height=400)
+
+seventh_panel = column(p_patstat,data_table_patstat)
 
 curdoc().add_root(column(first_panel, second_panel, third_panel, 
                          fourth_panel, fifth_panel, sixth_panel,
