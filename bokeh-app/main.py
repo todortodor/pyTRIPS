@@ -2183,15 +2183,16 @@ p_patstat = figure(title="Patent flows",
                 height = 850,
                 x_axis_type="log",
                 y_axis_type="log",
-                x_axis_label='Calibration data', 
+                x_axis_label='Baseline', 
                 # y_axis_label='Model implied',
                 tools = TOOLS)
 hover_tool = HoverTool()
 hover_tool.tooltips = [
     ("index", "@x"),
-    ("(calibration data,alternative)", "($x,$y)"),
+    ("(baseline,alternative)", "($x,$y)"),
     ]
-labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+# labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+labels_patstat = LabelSet(y='WIPO data', x='baseline', text='x',
               x_offset=2, y_offset=2, source=ds_patstat, text_font_size="7pt")
 p_patstat.add_layout(labels_patstat)
 p_patstat.add_tools(hover_tool)
@@ -2202,13 +2203,18 @@ p_patstat.add_layout(slope_patstat)
 lines_patstat = {}
 colors_patstat = itertools.cycle(Category10[10])
 for i,col in enumerate(tot.columns):
-    if col not in ['x','calibration data']:
-        lines_patstat[col] = p_patstat.circle('calibration data', col, 
+    if col not in ['x','baseline']:
+        # lines_patstat[col] = p_patstat.circle('calibration data', col, 
+        lines_patstat[col] = p_patstat.circle('baseline', col, 
                 source = ds_patstat, 
                 size=5, color=next(colors_patstat))
+        if col != 'WIPO data':
+            lines_patstat[col].visible = False
+            
 legend_items = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
                     for col, lin_par in lines_patstat.items() if col not in 
-                    ['x','calibration data']]
+                    # ['x','calibration data']]
+                    ['x','baseline']]
 
 legend = Legend(items=legend_items, click_policy="hide", 
                     label_text_font_size="8pt",
@@ -2221,7 +2227,65 @@ columns_patstat = [
     ]+[TableColumn(field=col) for col in tot.columns]
 data_table_patstat = DataTable(source=ds_patstat, columns = columns_patstat, width=1200, height=400)
 
-seventh_panel = column(p_patstat,data_table_patstat)
+#%%
+
+tot_13 = pd.read_csv(join(dirname(__file__),'patstat_compar_13.csv')).set_index(
+    ['destination_code','origin_code']
+    ).sort_index(
+    ).round()
+
+ds_patstat_13 = ColumnDataSource(tot_13)
+# TOOLS="pan,wheel_zoom,box_zoom,reset,save"
+p_patstat_13 = figure(title="Patent flows", 
+                width = 1200,
+                height = 850,
+                x_axis_type="log",
+                y_axis_type="log",
+                x_axis_label='Baseline', 
+                # y_axis_label='Model implied',
+                tools = TOOLS)
+hover_tool = HoverTool()
+hover_tool.tooltips = [
+    ("index", "@x"),
+    ("(baseline,alternative)", "($x,$y)"),
+    ]
+# labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+labels_patstat_13 = LabelSet(y='WIPO data', x='baseline', text='x',
+              x_offset=2, y_offset=2, source=ds_patstat_13, text_font_size="7pt")
+p_patstat_13.add_layout(labels_patstat_13)
+p_patstat_13.add_tools(hover_tool)
+
+slope_patstat_13 = Slope(gradient=1, y_intercept=0,
+              line_color='black', line_dash='dashed', line_width=1)
+p_patstat_13.add_layout(slope_patstat_13)
+lines_patstat_13 = {}
+colors_patstat_13 = itertools.cycle(Category10[10])
+for i,col in enumerate(tot_13.columns):
+    if col not in ['x','baseline']:
+        # lines_patstat[col] = p_patstat.circle('calibration data', col, 
+        lines_patstat_13[col] = p_patstat_13.circle('baseline', col, 
+                source = ds_patstat_13, 
+                size=5, color=next(colors_patstat_13))
+legend_items_13 = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
+                    for col, lin_par in lines_patstat_13.items() if col not in 
+                    # ['x','calibration data']]
+                    ['x','baseline']]
+
+legend_13 = Legend(items=legend_items_13, click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    )
+p_patstat_13.add_layout(legend_13, 'right')
+
+columns_patstat_13 = [
+        TableColumn(field="x"),
+    ]+[TableColumn(field=col) for col in tot_13.columns]
+data_table_patstat_13 = DataTable(source=ds_patstat_13, columns = columns_patstat_13, width=1200, height=400)
+
+
+
+seventh_panel = row(column(p_patstat,data_table_patstat),
+                    column(p_patstat_13,data_table_patstat_13))
 
 curdoc().add_root(column(first_panel, second_panel, third_panel, 
                          fourth_panel, fifth_panel, sixth_panel,
