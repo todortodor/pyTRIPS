@@ -2166,7 +2166,7 @@ labels_leg_patstat= {
     'alternative 2':'alt 2 : no ML predictions',
     'alternative 3':'alt 3 : diff origin weight',
     'alternative 4':'alt 4 : no domestic allocation',
-    'alternative 5':'alt 5 : only granted patents (no ML)',
+    'alternative 5':'alt 5 : only granted patents',
     'alternative 6':'alt 6 : no ML predi for EPO',
     'alternative 7':'alt 7 : no ML predi for WIPO',
     'julian latest code':'julian latest code',
