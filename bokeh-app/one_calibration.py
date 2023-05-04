@@ -18,9 +18,10 @@ from solver_funcs import find_nash_eq, minus_welfare_of_delta
 new_run = True
 baseline_number = '501'
 if new_run:
-    p = parameters(n=7,s=2)
+    p = parameters()
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    p.load_data()
+    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     start_time = time.perf_counter()
 
     m = moments()
@@ -28,8 +29,8 @@ if new_run:
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     
-    # m_back_up = m.copy()
-    # p_back_up = m.copy()
+    m_back_up = m.copy()
+    p_back_up = p.copy()
 
 # p.update_khi_and_r_hjort(0.16)
 

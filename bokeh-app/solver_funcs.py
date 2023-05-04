@@ -394,6 +394,7 @@ def compute_deriv_growth_to_patent_protec_US(sol_baseline,p,v0=None):
     return (sol_c.g-sol_baseline.g)/epsilon
 
 def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+    # print(p.make_p_vector())
     p.update_parameters(vec_parameters)
     if 'khi' in p.calib_parameters:
         p.update_khi_and_r_hjort(p.khi)

@@ -18,67 +18,7 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 class parameters:     
-    def __init__(self, n=7, s=2, data_path = None):
-        if data_path is None:
-            data_path = 'data/'
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
-        N = len(self.countries)
-        self.N = N
-        self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
-        S = len(self.sectors)
-        self.S = S
-        self.eta = np.ones((N, S))*0.02
-        self.eta[:, 0] = 0
-        self.T = np.ones((N, S))*1.5
-        self.k = 1.33350683
-        self.rho = 0.02
-        self.alpha = np.concatenate((np.array([0.5758, 0.3545]),np.ones(s)*0.5))[:s]
-        self.fe = np.ones(S)
-        self.fo = np.ones(S)
-        self.sigma = np.ones(S)*3
-        self.theta = np.ones(S)*5
-        self.zeta = np.ones(S)*0.01
-        self.g_0 = 0.01
-        self.kappa = 0.5
-        self.gamma = 0.5 
-        self.delta = np.ones((N, S))*0.05
-        self.nu = np.ones(S)*0.1 #
-        self.nu_tilde = np.ones(S)*0.1
-        self.nu_R = np.array(1)
-        self.d = 1.0
-        self.khi = 1.0
-        
-        self.unit = 1e6
-        
-        self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
-        self.trade_flows = self.trade_flows.reshape((N,N,S))
-        self.OUT = self.trade_flows.sum()
-        self.trade_shares = self.trade_flows/self.trade_flows.sum()
-        self.beta = np.einsum('nis->s',self.trade_shares)
-        self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
-        
-        self.data = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
-        
-        self.labor_raw = np.concatenate(
-            (self.data.labor.values,np.ones(n)*self.data.labor.values[-1])
-            )[:n]
-        
-        self.gdp_raw = np.concatenate(
-            (self.data.gdp.values,np.ones(n)*self.data.gdp.values[-1])
-            )[:n]
-        
-        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
-        
-        self.unit_labor = 1e9
-        self.labor = self.labor_raw/self.unit_labor
-        
-        self.deficit_raw = np.concatenate(
-            (self.data.deficit.values,np.zeros(n))
-              )[:n]
-        self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
-        
-        self.deficit_share_world_output = self.deficit_raw/self.data.output.sum() 
-        
+    def __init__(self):   
         co = 1e-6
         cou = 1e5
         self.lb_dict = {'sigma':1,
@@ -121,6 +61,76 @@ class parameters:
                          'khi':1,
                          'r_hjort':cou,
                          'd':cou}
+        
+        self.calib_parameters = None
+        self.guess = None
+        self.dyn_guess = None
+        
+        self.g_0 = 0.01
+        self.kappa = 0.5
+        self.gamma = 0.5 
+        self.k = 1.33350683
+        self.rho = 0.02
+        self.d = 1.0
+        self.data_path = None
+        self.unit = 1e6
+    
+    def load_data(self,data_path=None):
+        if data_path is None:
+            data_path = 'data/data_leg/'
+        
+        self.data_path = data_path
+        
+        self.data = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
+        N = len(self.data.index)
+        self.N = N
+        
+        self.sectors = ['Non patent', 'Patent']
+        S = len(self.sectors)
+        self.S = S
+        
+        if N==7:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+        if N==13:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+            
+        self.data_sectors = pd.read_csv(data_path+'sector_moments.csv',index_col=[0])
+        self.alpha = self.data_sectors['alpha'].values
+        # self.beta = self.data_sectors['beta'].values
+        
+        self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
+        self.trade_flows = self.trade_flows.reshape((N,N,S))
+        self.trade_shares = self.trade_flows/self.trade_flows.sum()
+        self.beta = np.einsum('nis->s',self.trade_shares)
+        
+        self.khi = 0.16
+        
+        self.labor_raw = self.data.labor.values
+        self.unit_labor = 1e9
+        self.labor = self.labor_raw/self.unit_labor
+        
+        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
+        
+        self.deficit_raw = self.data.deficit.values
+        self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
+        self.deficit_share_world_output = self.deficit_raw/self.data.output.sum()
+        
+        self.unit = 1e6
+        
+        self.eta = np.ones((N, S))*0.02
+        self.eta[:, 0] = 0
+        self.sigma = np.ones(S)*3
+        self.theta = np.ones(S)*5
+        self.zeta = np.ones(S)*0.01
+        self.T = np.ones((N, S))*1.5
+        self.fe = np.ones(S)
+        self.fo = np.ones(S)
+        self.delta = np.ones((N, S))*0.05
+        self.nu = np.ones(S)*0.1 #
+        self.nu_tilde = np.ones(S)*0.1
+        
+        self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
         
         self.idx = {'sigma':pd.Index(self.sectors, name='sector'),
                     'theta':pd.Index(self.sectors, name='sector'),
@@ -182,9 +192,49 @@ class parameters:
             else:
                 self.mask[par_name] = np.ones_like(par,bool)
         
-        self.calib_parameters = None
-        self.guess = None
-        self.dyn_guess = None
+    
+    def load_run(self,path,list_of_params = None):
+        try:
+            df = pd.read_csv(path+'calib_parameters.csv',header=None)
+            setattr(self,'calib_parameters',df[0].to_list())
+        except:
+            pass
+            
+        try:
+            df = pd.read_csv(path+'guess.csv',header=None)
+            setattr(self,'guess',df.values.squeeze())
+        except:
+            pass
+        
+        try:
+            df = pd.read_csv(path+'dyn_guess.csv',header=None)
+            setattr(self,'dyn_guess',df.values.squeeze())
+        except:
+            pass
+        
+        try:
+            df = pd.read_csv(path+'data_path.csv',header=None)
+            setattr(self,'N',df.loc['nbr_of_countries','run'])
+            setattr(self,'S',df.loc['nbr_of_sectors','run'])
+            setattr(self,'data_path',df.loc['data_path','run'])
+        except:
+            setattr(self,'N',7)
+            setattr(self,'S',2)
+            setattr(self,'data_path','data/data_leg/')
+        
+        self.load_data(self.data_path)
+        
+        if list_of_params is None:
+            list_of_params = self.get_list_of_params()
+        for pa_name in list_of_params:
+            try:
+                df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
+                setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
+            except:
+                if pa_name == 'd':
+                    self.d = np.array(1.0)
+                else:
+                    pass
         
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -276,38 +326,11 @@ class parameters:
         if self.calib_parameters is not None:
             df = pd.DataFrame(data = self.calib_parameters)
             df.to_csv(path+'calib_parameters.csv',index=False,header=None)
-        
             
-    def load_data(self,path,list_of_params = None):
-        if list_of_params is None:
-            list_of_params = self.get_list_of_params()
-        for pa_name in list_of_params:
-            try:
-                df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-                setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
-            except:
-                if pa_name == 'd':
-                    self.d = np.array(1.0)
-                else:
-                    pass
-            
-        try:
-            df = pd.read_csv(path+'guess.csv',header=None)
-            setattr(self,'guess',df.values.squeeze())
-        except:
-            pass
-        
-        try:
-            df = pd.read_csv(path+'dyn_guess.csv',header=None)
-            setattr(self,'dyn_guess',df.values.squeeze())
-        except:
-            pass
-        
-        try:
-            df = pd.read_csv(path+'calib_parameters.csv',header=None)
-            setattr(self,'calib_parameters',df[0].to_list())
-        except:
-            pass
+        df = pd.DataFrame(index=['data_path','nbr_of_countries',
+                                 'nbr_of_sectors'])
+        df['run'] = [self.data_path,self.N,self.S]
+        df.to_csv(path+'data_path.csv')
             
     def make_parameters_bounds(self):
         lb = []
@@ -1691,9 +1714,7 @@ def eps(x):
     return 1-np.exp(-x)
     
 class moments:
-    def __init__(self,list_of_moments = None, n=7, s=2):
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW'][:n]+[i for i in range(n-7)]
-        self.sectors = ['Non patent', 'Patent']+['other'+str(i) for i in range(s-2)]
+    def __init__(self,list_of_moments = None):
         if list_of_moments is None:
             self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
@@ -1751,6 +1772,145 @@ class moments:
                               'ERDUS':3
                              }
         
+        self.drop_CHN_IND_BRA_ROW_from_RD = True
+        self.add_domestic_US_to_SPFLOW = False
+        self.add_domestic_EU_to_SPFLOW = False
+        
+        self.loss = 'log'
+        self.dim_weight = 'lin'
+    
+    def get_signature_list(self, list_of_moments = None):
+        if list_of_moments is None:
+            list_of_moments = self.list_of_moments
+        l = []
+        for mom in list_of_moments:
+            # if self.idx[mom][0] == 'scalar':
+            #     l.extend([mom])
+            # else:
+            if mom == 'RD' or mom =='RD_RDUS':
+                if self.drop_CHN_IND_BRA_ROW_from_RD:
+                    l.extend([mom+' '+str(x) for x in list(self.idx[mom])[:3]])
+            else:        
+                l.extend([mom+' '+str(x) for x in list(self.idx[mom])])
+        return l
+    
+    @staticmethod
+    def get_list_of_moments():
+        return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
+                'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
+                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
+                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','PCOST','PCOSTINTER',
+                'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z', 
+                'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
+                'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
+    
+    def elements(self):
+        for key, item in sorted(self.__dict__.items()):
+            print(key, ',', str(type(item))[8:-2])
+            
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
+    
+    def load_data(self,data_path = None):
+        
+        if data_path is None:
+            data_path = 'data/data_leg/'
+        
+        self.data_path = data_path
+        
+        self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
+        self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
+        self.ccs_moments = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
+        self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
+        self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
+        self.pat_fees = pd.read_csv(data_path+'final_pat_fees.csv',index_col=[0])
+        
+        N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
+        S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
+        
+        if N==7:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+        if N==13:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+        self.sectors = ['Non patent', 'Patent']
+        
+        self.unit = 1e6
+        self.STFLOW_target = (self.ccs_moments.trade/
+                              self.ccs_moments.trade.sum()).values.reshape(N,N,S)
+        self.STFLOWSDOM_target = self.ccs_moments.trade.values.reshape(N,N,S)\
+            /np.einsum('nns->ns',self.ccs_moments.trade.values.reshape(N,N,S))[:,None,:]
+        self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
+        self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
+        self.SPFLOW_US_target = self.cc_moments.loc[1]['patent flows'].values/self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
+        self.SPFLOW_RUS_target = (pd.DataFrame(self.cc_moments['patent flows']/self.cc_moments.loc[1]['patent flows']))
+        self.SPFLOW_RUS_target = self.SPFLOW_RUS_target.query("destination_code != origin_code")['patent flows'].values.reshape((N,N-1))
+        self.SPFLOWDOM_target = self.cc_moments['patent flows'].values
+        self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N))/self.SPFLOWDOM_target.sum()
+        self.SPFLOWDOM_US_target = self.SPFLOWDOM_target[0,0]
+        self.SPFLOWDOM_RUS_target = self.SPFLOWDOM_target/self.SPFLOWDOM_US_target
+        self.OUT_target = self.c_moments.expenditure.sum()/self.unit
+        self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
+                            /(self.c_moments.gdp/self.c_moments.price_level).sum()
+        self.SRGDP_US_target = self.SRGDP_target[0]
+        self.SRGDP_RUS_target = self.SRGDP_target/self.SRGDP_US_target
+        self.RP_target = self.c_moments.price_level.values
+        self.RD_target = self.c_moments.rnd_gdp.values
+        self.RD_US_target = self.RD_target[0]
+        self.RD_RUS_target = self.RD_target/self.RD_US_target
+        self.KM_target = self.moments.loc['KM'].value
+        self.KM_GDP_target = self.KM_target*self.RD_US_target
+        self.NUR_target = self.moments.loc['NUR'].value
+        self.SRDUS_target = self.moments.loc['SRDUS'].value
+        self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
+        self.GROWTH_target = self.moments.loc['GROWTH'].value 
+        self.ERDUS_target = self.moments.loc['ERDUS'].value 
+        self.TE_target = self.moments.loc['TE'].value 
+        self.TO_target = self.moments.loc['TO'].value 
+        self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
+            "destination_code != origin_code"
+            )['patent flows'].groupby('destination_code').sum().values).sum()/1e12
+        self.PCOST_target = self.PCOSTINTER_target+\
+            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12+\
+            self.pat_fees.loc[2,'fee']*self.cc_moments.loc[(2,2),'patent flows']/1e12
+        self.PCOSTINTERNOAGG_target = self.PCOSTINTER_target\
+            -self.pat_fees.loc[2,'fee']*self.cc_moments.query(
+                "destination_code != origin_code"
+                ).loc[2,'patent flows'].sum()/1e12\
+            -self.pat_fees.loc[7,'fee']*self.cc_moments.query(
+                        "destination_code != origin_code"
+                ).loc[7,'patent flows'].sum()/1e12
+        self.PCOSTNOAGG_target = self.PCOSTINTERNOAGG_target+\
+            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12
+        self.Z_target = self.c_moments.expenditure.values/self.unit
+        self.JUPCOST_target = self.moments.loc['JUPCOST'].value
+        self.UUPCOST_target = self.moments.loc['UUPCOST'].value
+        self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
+        self.TP_target = self.moments.loc['TP'].value
+        self.TP_data = self.cc_moments['patent flows'].sum()
+        self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
+        self.DOMPATUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=1)['patent flows'].sum()
+        self.DOMPATINEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=0)['patent flows'].sum()
+        self.DOMPATINUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=0)['patent flows'].sum()
+        self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
+        self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
+        self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
+        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
+        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)#/self.unit
+        self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
+        self.sales_mark_up_US_target = self.moments.loc['sales_mark_up_US'].value
+        self.DOMPATRATUSEU_target = (self.cc_moments.query("destination_code == origin_code")['patent flows']\
+            /(self.cc_moments.loc[1]['patent flows'].sum() + self.cc_moments.loc[2]['patent flows'].sum())).values
+        self.SPATORIG_target = self.cc_moments['patent flows'].groupby('origin_code').sum().values\
+            /self.cc_moments['patent flows'].sum()
+        self.SPATDEST_target = self.cc_moments['patent flows'].groupby('destination_code').sum().values\
+            /self.cc_moments['patent flows'].sum()
+        self.TWSPFLOW_target = self.SPFLOW_target*self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].values.reshape((N,N-1))\
+            /self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].sum()
+        self.TWSPFLOWDOM_target = self.SPFLOWDOM_target*self.ccs_moments.loc[:,:,1]['trade'].values.reshape((N,N))\
+            /self.ccs_moments.loc[:,:,1]['trade'].sum()
+            
         self.idx = {'GPDIFF':pd.Index(['scalar']), 
                     'GROWTH':pd.Index(['scalar']), 
                     'KM':pd.Index(['scalar']), 
@@ -1820,137 +1980,20 @@ class moments:
                        'TWSPFLOW':(len(self.countries),len(self.countries)-1),
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
                        }
-        
-        self.drop_CHN_IND_BRA_ROW_from_RD = True
-        self.add_domestic_US_to_SPFLOW = False
-        self.add_domestic_EU_to_SPFLOW = False
-        
-        self.loss = 'log'
-        self.dim_weight = 'lin'
-    
-    def get_signature_list(self, list_of_moments = None):
-        if list_of_moments is None:
-            list_of_moments = self.list_of_moments
-        l = []
-        for mom in list_of_moments:
-            # if self.idx[mom][0] == 'scalar':
-            #     l.extend([mom])
-            # else:
-            if mom == 'RD' or mom =='RD_RDUS':
-                if self.drop_CHN_IND_BRA_ROW_from_RD:
-                    l.extend([mom+' '+str(x) for x in list(self.idx[mom])[:3]])
-            else:        
-                l.extend([mom+' '+str(x) for x in list(self.idx[mom])])
-        return l
-    
-    @staticmethod
-    def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
-                'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
-                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
-                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','PCOST','PCOSTINTER',
-                'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z', 
-                'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
-                'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
-    
-    def elements(self):
-        for key, item in sorted(self.__dict__.items()):
-            print(key, ',', str(type(item))[8:-2])
-            
-    def copy(self):
-        frame = deepcopy(self)
-        return frame
-    
-    def load_data(self,data_path = None):
-        if data_path is None:
-            data_path = 'data/'
-        self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
-        self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
-        self.ccs_moments = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
-        self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
-        self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
-        self.pat_fees = pd.read_csv(data_path+'final_pat_fees.csv',index_col=[0])
-        
-        N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
-        S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
-        self.unit = 1e6
-        self.STFLOW_target = (self.ccs_moments.trade/
-                              self.ccs_moments.trade.sum()).values.reshape(N,N,S)
-        self.STFLOWSDOM_target = self.ccs_moments.trade.values.reshape(N,N,S)\
-            /np.einsum('nns->ns',self.ccs_moments.trade.values.reshape(N,N,S))[:,None,:]
-        self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
-        self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
-        # self.SPFLOW_US_target = self.SPFLOW_target[0,:]
-        # self.SPFLOW_RUS_target = self.SPFLOW_target/self.SPFLOW_US_target
-        self.SPFLOW_US_target = self.cc_moments.loc[1]['patent flows'].values/self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
-        self.SPFLOW_RUS_target = (pd.DataFrame(self.cc_moments['patent flows']/self.cc_moments.loc[1]['patent flows']))
-        self.SPFLOW_RUS_target = self.SPFLOW_RUS_target.query("destination_code != origin_code")['patent flows'].values.reshape((N,N-1))
-        self.SPFLOWDOM_target = self.cc_moments['patent flows'].values
-        self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N))/self.SPFLOWDOM_target.sum()
-        self.SPFLOWDOM_US_target = self.SPFLOWDOM_target[0,0]
-        self.SPFLOWDOM_RUS_target = self.SPFLOWDOM_target/self.SPFLOWDOM_US_target
-        self.OUT_target = self.c_moments.expenditure.sum()/self.unit
-        self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
-                            /(self.c_moments.gdp/self.c_moments.price_level).sum()
-        self.SRGDP_US_target = self.SRGDP_target[0]
-        self.SRGDP_RUS_target = self.SRGDP_target/self.SRGDP_US_target
-        self.RP_target = self.c_moments.price_level.values
-        self.RD_target = self.c_moments.rnd_gdp.values
-        self.RD_US_target = self.RD_target[0]
-        self.RD_RUS_target = self.RD_target/self.RD_US_target
-        self.KM_target = self.moments.loc['KM'].value
-        self.KM_GDP_target = self.KM_target*self.RD_US_target
-        self.NUR_target = self.moments.loc['NUR'].value
-        self.SRDUS_target = self.moments.loc['SRDUS'].value
-        self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
-        self.GROWTH_target = self.moments.loc['GROWTH'].value 
-        self.ERDUS_target = self.moments.loc['ERDUS'].value 
-        self.TE_target = self.moments.loc['TE'].value 
-        self.TO_target = self.moments.loc['TO'].value 
-        self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
-            "destination_code != origin_code"
-            )['patent flows'].groupby('destination_code').sum().values).sum()/1e12
-        self.PCOST_target = self.PCOSTINTER_target+\
-            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12+\
-            self.pat_fees.loc[2,'fee']*self.cc_moments.loc[(2,2),'patent flows']/1e12
-        self.PCOSTINTERNOAGG_target = self.PCOSTINTER_target\
-            -self.pat_fees.loc[2,'fee']*self.cc_moments.query(
-                "destination_code != origin_code"
-                ).loc[2,'patent flows'].sum()/1e12\
-            -self.pat_fees.loc[7,'fee']*self.cc_moments.query(
-                        "destination_code != origin_code"
-                ).loc[7,'patent flows'].sum()/1e12
-        self.PCOSTNOAGG_target = self.PCOSTINTERNOAGG_target+\
-            self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12
-        self.Z_target = self.c_moments.expenditure.values/self.unit
-        self.JUPCOST_target = self.moments.loc['JUPCOST'].value
-        self.UUPCOST_target = self.moments.loc['UUPCOST'].value
-        self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
-        self.TP_target = self.moments.loc['TP'].value
-        self.TP_data = self.cc_moments['patent flows'].sum()
-        self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
-        self.DOMPATUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=1)['patent flows'].sum()
-        self.DOMPATINEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=0)['patent flows'].sum()
-        self.DOMPATINUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=0)['patent flows'].sum()
-        self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
-        self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
-        self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
-        self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
-        self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)#/self.unit
-        self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
-        self.sales_mark_up_US_target = self.moments.loc['sales_mark_up_US'].value
-        self.DOMPATRATUSEU_target = (self.cc_moments.query("destination_code == origin_code")['patent flows']\
-            /(self.cc_moments.loc[1]['patent flows'].sum() + self.cc_moments.loc[2]['patent flows'].sum())).values
-        self.SPATORIG_target = self.cc_moments['patent flows'].groupby('origin_code').sum().values\
-            /self.cc_moments['patent flows'].sum()
-        self.SPATDEST_target = self.cc_moments['patent flows'].groupby('destination_code').sum().values\
-            /self.cc_moments['patent flows'].sum()
-        self.TWSPFLOW_target = self.SPFLOW_target*self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].values.reshape((N,N-1))\
-            /self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].sum()
-        self.TWSPFLOWDOM_target = self.SPFLOWDOM_target*self.ccs_moments.loc[:,:,1]['trade'].values.reshape((N,N))\
-            /self.ccs_moments.loc[:,:,1]['trade'].sum()
     
     def load_run(self,path):
+        try:
+            df = pd.read_csv(path+'data_path.csv',header=None)
+            setattr(self,'N',df.loc['nbr_of_countries','run'])
+            setattr(self,'S',df.loc['nbr_of_sectors','run'])
+            setattr(self,'data_path',df.loc['data_path','run'])
+        except:
+            setattr(self,'N',7)
+            setattr(self,'S',2)
+            setattr(self,'data_path','data/data_leg/')
+        
+        self.load_data(self.data_path)
+            
         df = pd.read_csv(path+'list_of_moments.csv')
         self.list_of_moments = df['moments'].tolist()
         df.set_index('moments',inplace=True)
