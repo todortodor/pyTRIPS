@@ -2157,7 +2157,8 @@ p_kog2.add_tools(hover_tool_kog2)
 #!!! sixth_panel
 sixth_panel = row(p_kog,p_kog2)
 
-#%%
+#%% 7 countries comparison of patent flows data
+
 labels_leg_patstat= {
     'baseline':'baseline',
     'calibration data':'calibration data',
@@ -2227,7 +2228,7 @@ columns_patstat = [
     ]+[TableColumn(field=col) for col in tot.columns]
 data_table_patstat = DataTable(source=ds_patstat, columns = columns_patstat, width=1200, height=400)
 
-#%%
+#%% 13 countries comparison of patent flows data
 
 tot_13 = pd.read_csv(join(dirname(__file__),'patstat_compar_13.csv')).set_index(
     ['destination_code','origin_code']
