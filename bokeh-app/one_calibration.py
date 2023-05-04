@@ -113,7 +113,7 @@ if new_run:
 #         m.list_of_moments.append('PCOSTNOAGG')
 
 
-m.drop_CHN_IND_BRA_ROW_from_RD = False
+m.drop_CHN_IND_BRA_ROW_from_RD = True
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
