@@ -2159,18 +2159,17 @@ sixth_panel = row(p_kog,p_kog2)
 
 #%% 7 countries comparison of patent flows data
 
-labels_leg_patstat= {
+labels_leg_patstat = {
     'baseline':'baseline',
     'calibration data':'calibration data',
     'WIPO data':'WIPO data',
     'alternative 1':'alt 1 : no sector filtering',
-    'alternative 2':'alt 2 : no ML predictions',
+    'alternative 2':'alt 2 : first applicant only',
     'alternative 3':'alt 3 : diff origin weight',
     'alternative 4':'alt 4 : no domestic allocation',
     'alternative 5':'alt 5 : only granted patents',
     'alternative 6':'alt 6 : no ML predi for EPO',
-    'alternative 7':'alt 7 : no ML predi for WIPO',
-    'alternative 8':'alt 8 : only first applicant considered',
+    'alternative 7':'alt 7 : with ML predi for WIPO',
     'julian latest code':'julian latest code',
     }
 tot = pd.read_csv(join(dirname(__file__),'patstat_compar.csv')).set_index(
