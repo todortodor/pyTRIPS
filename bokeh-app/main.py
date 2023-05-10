@@ -2160,7 +2160,7 @@ sixth_panel = row(p_kog,p_kog2)
 #%% 7 countries comparison of patent flows data
 
 labels_leg_patstat = {
-    'baseline':'baseline',
+    'baseline':'pre IN treatment',
     'calibration data':'calibration data',
     'WIPO data':'WIPO data',
     'alternative 1':'alt 1 : no sector filtering',
@@ -2170,7 +2170,7 @@ labels_leg_patstat = {
     'alternative 5':'alt 5 : only granted patents',
     'alternative 6':'alt 6 : no ML predi for EPO',
     'alternative 7':'alt 7 : with ML predi for WIPO',
-    'after IN treatment':'after IN treatment',
+    'after IN treatment':'baseline',
     'julian latest code':'julian latest code',
     }
 tot = pd.read_csv(join(dirname(__file__),'patstat_compar.csv')).set_index(
@@ -2194,7 +2194,7 @@ hover_tool.tooltips = [
     ("(baseline,alternative)", "($x,$y)"),
     ]
 # labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
-labels_patstat = LabelSet(y='WIPO data', x='baseline', text='x',
+labels_patstat = LabelSet(y='WIPO data', x='after IN treatment', text='x',
               x_offset=2, y_offset=2, source=ds_patstat, text_font_size="7pt")
 p_patstat.add_layout(labels_patstat)
 p_patstat.add_tools(hover_tool)
@@ -2205,9 +2205,9 @@ p_patstat.add_layout(slope_patstat)
 lines_patstat = {}
 colors_patstat = itertools.cycle(Category10[10])
 for i,col in enumerate(tot.columns):
-    if col not in ['x','baseline']:
+    if col not in ['x','after IN treatment']:
         # lines_patstat[col] = p_patstat.circle('calibration data', col, 
-        lines_patstat[col] = p_patstat.circle('baseline', col, 
+        lines_patstat[col] = p_patstat.circle('after IN treatment', col, 
                 source = ds_patstat, 
                 size=5, color=next(colors_patstat))
         if col != 'WIPO data':
@@ -2216,7 +2216,7 @@ for i,col in enumerate(tot.columns):
 legend_items = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
                     for col, lin_par in lines_patstat.items() if col not in 
                     # ['x','calibration data']]
-                    ['x','baseline']]
+                    ['x','after IN treatment']]
 
 legend = Legend(items=legend_items, click_policy="hide", 
                     label_text_font_size="8pt",
