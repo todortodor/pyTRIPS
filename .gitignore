@@ -21,3 +21,5 @@ output/
 *.png
 *.eps
 *.zip
+bokeh-app/.ipynb_checkpoints/exploring_counterfactuals-checkpoint.ipynb
+bokeh-app/exploring_counterfactuals.ipynb
