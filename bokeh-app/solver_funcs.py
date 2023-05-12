@@ -421,29 +421,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                             accel_max_weight_norm=1e6,
                             damping_post_acceleration=1
                             )
-    if sol.status == 'failed': 
-        print('trying standard guess')
-        sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=None,
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='l_R',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                safe_convergence=0.1,
-                                disp_summary=False,
-                                damping = 2,
-                                max_count = 1000,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=1
-                                # damping=10
-                                  # apply_bound_psi_star=True
-                                )
+    
     if sol.status == 'failed': 
         print('trying safer')
         sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-14,
@@ -578,6 +556,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
                   , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort)
     hist.count += 1
+    # print(hist.count)
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
@@ -611,6 +590,29 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None,
                             accel_max_weight_norm=1e6,
                             damping_post_acceleration=5
                             ) 
+    if sol.status != 'successful':
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='phi',
+                                plot_convergence=True,
+                                plot_cobweb=True,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                )
+        if sol.status != 'successful':
+            print(p.delta,'failed2')
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_it_baseline)
@@ -896,6 +898,30 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
                                 accel_max_weight_norm=1e6,
                                 damping_post_acceleration=5
                                 )
+        # if sol.status != 'successful':
+        #     sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+        #                             context = 'counterfactual',
+        #                             cobweb_anim=False,tol =1e-14,
+        #                             accelerate=False,
+        #                             accelerate_when_stable=False,
+        #                             cobweb_qty='phi',
+        #                             plot_convergence=True,
+        #                             plot_cobweb=True,
+        #                             safe_convergence=0.001,
+        #                             disp_summary=False,
+        #                             damping = 10,
+        #                             max_count = 1e4,
+        #                             accel_memory = 50, 
+        #                             accel_type1=True, 
+        #                             accel_regularization=1e-10,
+        #                             accel_relaxation=0.5, 
+        #                             accel_safeguard_factor=1, 
+        #                             accel_max_weight_norm=1e6,
+        #                             damping_post_acceleration=5
+        #                             )
+        #     if sol.status != 'successful':
+        #         print(p_it_baseline.delta,'failed2')
+
         sol_it_baseline.scale_P(p_it_baseline)
         sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
         sol_it_baseline.compute_consumption_equivalent_welfare(p_it_baseline, sol_baseline)
@@ -994,9 +1020,9 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
 def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_method,
                                  custom_weights=None,custom_sol_options=None):
     p.delta[...,1] = deltas
-    print(p.delta[...,1])
+    # print(p.delta[...,1])
     if custom_sol_options is None:
-        custom_sol_options = dict(cobweb_anim=False,tol =1e-15,
+        custom_sol_options = dict(cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -1018,11 +1044,41 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
                                     context = 'counterfactual',
                             **custom_sol_options
                             )
+    if sol.status == 'successful':
+        p.guess = sol_c.vector_from_var()
+    else:
+        print(p.delta,'failed')
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='phi',
+                                plot_convergence=True,
+                                plot_cobweb=True,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                )
+        if sol.status == 'successful':
+            p.guess = sol_c.vector_from_var()
+        else:
+            print(p.delta,'failed2')
+            p.guess = None
+    # p.guess = sol_c.vector_from_var()
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
     sol_c.compute_world_welfare_changes(p, sol_baseline)
-    p.guess = sol_c.vector_from_var()
+    
     if aggregation_method == 'custom_weights':
         sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
 
@@ -1104,7 +1160,7 @@ def find_coop_eq(p_baseline,aggregation_method,
     custom_sol_options = solver_options
     
     if solver_options is None:
-        solver_options = dict(cobweb_anim=False,tol =1e-15,
+        solver_options = dict(cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -1276,7 +1332,7 @@ def make_counterfactual(p_baseline,country,local_path,
         idx_country = p_baseline.countries.index(country)
         
     for i,delt in enumerate(delta_factor_array):
-        print(delt)
+        # print(delt)
         if country in p_baseline.countries:
             p.delta[idx_country,1] = p_baseline.delta[idx_country,1] * delt
         if country == 'World':
@@ -1287,7 +1343,7 @@ def make_counterfactual(p_baseline,country,local_path,
                 ]**delt
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
-                                cobweb_anim=False,tol =1e-15,
+                                cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -1310,7 +1366,32 @@ def make_counterfactual(p_baseline,country,local_path,
         if sol.status == 'successful':
             p.guess = sol_c.vector_from_var()
         else:
-            p.guess = None
+            print(country,delt,'failed')
+            sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
+                                    cobweb_anim=False,tol =1e-14,
+                                    accelerate=False,
+                                    accelerate_when_stable=False,
+                                    cobweb_qty='phi',
+                                    plot_convergence=True,
+                                    plot_cobweb=True,
+                                    safe_convergence=0.001,
+                                    disp_summary=False,
+                                    damping = 10,
+                                    max_count = 1e4,
+                                    accel_memory = 50, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=0.5, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=5
+                                    )
+            if sol.status == 'successful':
+                p.guess = sol_c.vector_from_var()
+            else:
+                print(country,delt,'failed2')
+                p.guess = None
             
         if dynamics:
             sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_baseline,sol_fin=sol_c,

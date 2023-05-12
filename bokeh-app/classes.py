@@ -75,7 +75,7 @@ class parameters:
         self.data_path = None
         self.unit = 1e6
     
-    def load_data(self,data_path=None):
+    def load_data(self,data_path=None,keep_already_calib_params=False):
         if data_path is None:
             data_path = 'data/data_leg/'
         
@@ -103,32 +103,30 @@ class parameters:
         self.trade_flows = self.trade_flows.reshape((N,N,S))
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
         self.beta = np.einsum('nis->s',self.trade_shares)
-        
-        self.khi = 0.16
-        
-        self.labor_raw = self.data.labor.values
-        self.unit_labor = 1e9
-        self.labor = self.labor_raw/self.unit_labor
-        
-        self.r_hjort = (self.data.gdp.iloc[0]*np.array(self.data.labor)/(self.data.labor.iloc[0]*np.array(self.data.gdp)))**(1-self.khi)
-        
         self.deficit_raw = self.data.deficit.values
         self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
         self.deficit_share_world_output = self.deficit_raw/self.data.output.sum()
-        
+        self.unit_labor = 1e9
         self.unit = 1e6
+        self.khi = 0.16
+        self.labor_raw = self.data.labor.values
+        self.labor = self.labor_raw/self.unit_labor
+        self.r_hjort = ((self.data.gdp.iloc[0]*np.array(self.data.labor)*self.data.price_level
+                        /(self.data.labor.iloc[0]*self.data.price_level.iloc[0]*np.array(self.data.gdp))
+                        )**(1-self.khi)).values
         
-        self.eta = np.ones((N, S))*0.02
-        self.eta[:, 0] = 0
-        self.sigma = np.ones(S)*3
-        self.theta = np.ones(S)*5
-        self.zeta = np.ones(S)*0.01
-        self.T = np.ones((N, S))*1.5
-        self.fe = np.ones(S)
-        self.fo = np.ones(S)
-        self.delta = np.ones((N, S))*0.05
-        self.nu = np.ones(S)*0.1 #
-        self.nu_tilde = np.ones(S)*0.1
+        if not keep_already_calib_params:
+            self.eta = np.ones((N, S))*0.02
+            self.eta[:, 0] = 0
+            self.sigma = np.ones(S)*3
+            self.theta = np.ones(S)*5
+            self.zeta = np.ones(S)*0.01
+            self.T = np.ones((N, S))*1.5
+            self.fe = np.ones(S)
+            self.fo = np.ones(S)
+            self.delta = np.ones((N, S))*0.05
+            self.nu = np.ones(S)*0.1 #
+            self.nu_tilde = np.ones(S)*0.1
         
         self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
         

@@ -16,14 +16,16 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 def load(path, data_path=None, context = 'calibration'):
-    p = parameters(n=7,s=2,data_path=data_path)
-    p.load_data(path)
+    # p = parameters(data_path=data_path)
+    p = parameters()
+    # p.load_data(path)
+    p.load_run(path)
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
     sol.scale_P(p)
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
     m = moments()
-    m.load_data(data_path)
+    # m.load_data(data_path)
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
@@ -544,7 +546,46 @@ comments_dic['501'] = {
     '1.0':'1.0: Higher growth weight',
     '2.0':'2.0: Hjort correction on real GDP',
     '3.0':'3.0: Not dropping RD in the South',
+    '4.0':'4.0: First calibration with new data',
     }
+
+comments_dic['502'] = {
+    "baseline":"baseline 2005",
+    "1.0":"baseline 1995"
+    }
+
+comments_dic['601'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -553,10 +594,11 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['404','405','501']    
+baseline_list = ['404','405','501','601']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
+ 
 for baseline_nbr in baseline_list:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
@@ -610,11 +652,16 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '501'
+baseline_mom = '601'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
 mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mom[baseline_mom].keys()))
+
+x_mom_select = Select(value='baseline', title='x-axis target', options=list(comments_dic[baseline_mom].keys()))
+
+def update_x_axis_mom_matching_options(attr, old, new):
+    x_mom_select.options = list(comments_dic[new].keys())
 
 ds_mom = ColumnDataSource(baselines_dic_mom[baseline_mom][mom])
 p_mom = figure(title="Moment matching", 
@@ -708,6 +755,7 @@ def update_baseline_mom(attrname, old, new):
     data_table_mom.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
+    x_mom_select.value = 'baseline'
     
 def update_mom(attrname, old, new):
     baseline_mom = baseline_mom_select.value
@@ -720,13 +768,38 @@ def update_mom(attrname, old, new):
         slope2.visible = False
         slope3.visible = False
         slope4.visible = False
+    x_mom_select.value = 'baseline'
+        
+def update_x_axis_target(attrname, old, new):
+    baseline_mom = baseline_mom_select.value
+    mom = mom_select.value
+    df_temp = ds_mom.data.copy()
+    if new == 'baseline':
+        path_x_axis = results_path+baseline_mom+'/'
+    else:
+        path_x_axis = results_path+'baseline_'+baseline_mom+'_variations/'+new+'/'
+    if mom != 'scalars':
+        m_temp = moments()
+        m_temp.load_run(path_x_axis)
+        df_temp['target'] = getattr(m_temp,mom+'_target').ravel()
+        # df_temp['target'] = pd.read_csv(path_x_axis+mom)['target']
+    else:
+        m_temp = moments()
+        m_temp.load_run(path_x_axis)
+        for i,x in enumerate(df_temp['x']):
+            if x != 'objective':
+                df_temp['target'][i] = float(getattr(m_temp,x+'_target'))
+    ds_mom.data = df_temp
 
-controls_mom = row(baseline_mom_select, mom_select)
+controls_mom = row(baseline_mom_select, mom_select, x_mom_select)
 
 baseline_mom_select.on_change('value', update_baseline_mom)
-mom_select.on_change('value', update_mom)
+baseline_mom_select.on_change('value', update_x_axis_mom_matching_options)
 
-baseline_par = '501'
+mom_select.on_change('value', update_mom)
+x_mom_select.on_change('value', update_x_axis_target)
+
+baseline_par = '601'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -798,7 +871,7 @@ controls_par = row(baseline_par_select, par_select)
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
-baseline_sol_qty = '501'
+baseline_sol_qty = '601'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -822,7 +895,8 @@ colors_sol_qty = itertools.cycle(Category10[10])
 lines_sol_qty = {}
 
 for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
-    lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, color=next(colors_sol_qty),
+    lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, 
+                                        color=next(colors_sol_qty),
                                 line_width = 2)
     if col != 'baseline':
         lines_sol_qty[col].visible = False
@@ -873,6 +947,82 @@ sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 
 #!!! first panel
 first_panel = row(moment_report,param_report,sol_qty_report)
+
+#%% Time series
+
+baseline_time = '601'
+par_time = 'delta'
+par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
+
+years_time = [y for y in range(1990,2019)]
+runs_time = ['1.'+str(i) for i in range(29)]
+
+def build_time_series(par_time):
+    # df = baselines_dic_param[baseline_time][par_time].T.reindex(
+    #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+    #     )
+    df = baselines_dic_param[baseline_time][par_time].copy()
+    df = df[runs_time]
+    # print(df)
+    df.columns = years_time
+    df = df.T
+    df = df.reindex(
+        columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+        )
+    df.index.name = 'year'
+    return df
+
+df_par_time = build_time_series(par_time)
+ds_par_time = ColumnDataSource(df_par_time)
+p_par_time = figure(title="Time series for baseline 601", 
+               width = 1500,
+               height = 850,
+           y_axis_label='Parameter',
+           tools = TOOLS)
+hover_tool_par_time = HoverTool()
+hover_tool_par_time.tooltips = [
+    ("Year", "@year"),
+    ("value", "$y")
+    ]
+
+p_par_time.add_tools(hover_tool_par_time)
+colors_par_time = itertools.cycle(Category10[10])
+lines_par_time = {}
+
+for col in df_par_time.columns:
+    if col != 'kappa':
+        lines_par_time[col] = p_par_time.line(x='year', y=col, 
+                                        source = ds_par_time, 
+                                        color=next(colors_par_time),
+                                        line_width = 2,
+                                        # legend_label=col
+                                        )
+
+legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                        for col in countries]
+legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
+                    label_text_font_size="10pt",
+                    )
+p_par_time.add_layout(legend_par_time , 'right')
+    
+def update_par_time(attrname, old, new):
+    df_par_time = build_time_series(new)
+    ds_par_time.data = df_par_time
+    if new!='scalars':
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in countries]
+    else:
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+    legend_par_time.items = legend_items_par_time
+
+controls_par_time = row(par_time_select)
+
+par_time_select.on_change('value', update_par_time)
+
+par_time_report = column(controls_par_time, p_par_time)    
+
+first_panel_bis = row(par_time_report)
 
 #%% dynamic counterfactuals
 
@@ -926,7 +1076,8 @@ p_dyn_cf = figure(title="With transitional dynamics patent protection counterfac
 
 for col in df_dyn_cf.columns:
     if col not in [0,'delt']:
-        p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, color=next(colors_dyn_cf),line_width = 2, legend_label=col)
+        p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
+                      color=next(colors_dyn_cf),line_width = 2, legend_label=col)
 
 p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
      
@@ -1307,6 +1458,8 @@ controls_display_dyn = row(qty_dyn_display_select,
                            country_dyn_display_select,
                            button_display_dyn)
 
+baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
+
 dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 #!!! second panel
@@ -1494,7 +1647,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '501'
+baseline_nash_coop = '601'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1525,7 +1678,8 @@ def get_data_nash_coop(baseline_nash_number):
     
     return welf_pop_weighted, welf_negishi, welf_nash
 
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', options=['404','405','501'])
+baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
+                                   options=['404','405','501','601'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1710,13 +1864,15 @@ third_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '501_1.0'
+baseline_cf = '601_1.15'
 country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)+\
+            if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
                 if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -2289,6 +2445,9 @@ data_table_patstat_13 = DataTable(source=ds_patstat_13, columns = columns_patsta
 seventh_panel = row(column(p_patstat,data_table_patstat),
                     column(p_patstat_13,data_table_patstat_13))
 
-curdoc().add_root(column(first_panel, second_panel, third_panel, 
+#%% build curdoc
+
+curdoc().add_root(column(first_panel, first_panel_bis, second_panel, 
+                         third_panel, 
                          fourth_panel, fifth_panel, sixth_panel,
                          seventh_panel))

@@ -71,7 +71,7 @@ config_dics = [{
     for N in [7,13]
     ]
 
-write = True
+write = False
 
 for config_dic in config_dics:
     year = config_dic['year']
@@ -94,13 +94,13 @@ for config_dic in config_dics:
     crosswalk_countries['country_code'] = np.minimum(crosswalk_countries['country_code'],nbr_of_countries)
 
     gdp_deflator = pd.read_csv(WDI_data_path+'WDI_gdp_deflator.csv',
-                               keep_default_na=False,
-                               na_values=na_values,
-                               skiprows=4).set_index('Country Code')
+                                keep_default_na=False,
+                                na_values=na_values,
+                                skiprows=4).set_index('Country Code')
 
     WDI_data = pd.read_csv(WDI_data_path+'WDI_10032023_data.csv',
-                           keep_default_na=False,
-                           na_values=na_values)
+                            keep_default_na=False,
+                            na_values=na_values)
     gdp_WLD = WDI_data.loc[(WDI_data['Series Code'] == 'NY.GDP.MKTP.CD') & (
         WDI_data['Country Code'] == 'WLD')]
     gdp = WDI_data.loc[WDI_data['Series Code'] == 'NY.GDP.MKTP.CD']
@@ -130,11 +130,11 @@ for config_dic in config_dics:
     rnd_gdp['rnd'] = rnd_gdp['gdp']*rnd_gdp['rnd_gdp']
 
     rnd_gdp = pd.merge(rnd_gdp.reset_index().set_index('Country Code').rename_axis('country'),
-                       crosswalk_countries,
-                       left_index=True,
-                       right_index=True,
-                       how='left'
-                       ).reset_index().set_index(['country', 'year'])
+                        crosswalk_countries,
+                        left_index=True,
+                        right_index=True,
+                        how='left'
+                        ).reset_index().set_index(['country', 'year'])
     
     price_levels = WDI_data.loc[WDI_data['Series Code'].isin(
         ['PA.NUS.PPPC.RF', 'NY.GDP.MKTP.CD'])]
@@ -154,11 +154,11 @@ for config_dic in config_dics:
         values='value'
     )
     price_levels = pd.merge(price_levels.reset_index().set_index('Country Code').rename_axis('country'),
-                       crosswalk_countries,
-                       left_index=True,
-                       right_index=True,
-                       how='left'
-                       ).reset_index().set_index(['country', 'year'])
+                        crosswalk_countries,
+                        left_index=True,
+                        right_index=True,
+                        how='left'
+                        ).reset_index().set_index(['country', 'year'])
     
     if write:
         try:
@@ -379,13 +379,13 @@ for config_dic in config_dics:
         for destination_code in range(1, nbr_of_countries+1):
             if (origin_code, destination_code) not in pflows.index:
                 pflows.loc[(origin_code, destination_code),
-                           'patent flows'] = pflows['patent flows'].min()
+                            'patent flows'] = pflows['patent flows'].min()
 
     pflows.sort_index(inplace=True)
     
     # correct Indian patent flows with wipo data and deflate it
     indian_flows = pd.read_csv(pflows_path+f'patent_flows_from_wipo/unscaled_IN_{nbr_of_countries}_countries.csv'
-                               ).set_index(['year', 'origin_code']).loc[year]
+                                ).set_index(['year', 'origin_code']).loc[year]
 
     for factor_type in ["app_per_family",
                         "first_applicant",

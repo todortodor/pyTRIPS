@@ -16,8 +16,36 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'501',
-                      'variation': '3.0'}
+    # {'baseline':'601','variation': 'baseline'},
+    # {'baseline':'601','variation': '1.0'},
+    # {'baseline':'601','variation': '1.1'},
+    # {'baseline':'601','variation': '1.2'},
+    # {'baseline':'601','variation': '1.3'},
+    # {'baseline':'601','variation': '1.4'},
+    # {'baseline':'601','variation': '1.5'},
+    # {'baseline':'601','variation': '1.6'},
+    # {'baseline':'601','variation': '1.7'},
+    # {'baseline':'601','variation': '1.8'},
+    # {'baseline':'601','variation': '1.9'},
+    # {'baseline':'601','variation': '1.10'},
+    # {'baseline':'601','variation': '1.11'},
+    # {'baseline':'601','variation': '1.12'},
+    # {'baseline':'601','variation': '1.13'},
+    # {'baseline':'601','variation': '1.14'},
+    # {'baseline':'601','variation': '1.15'},
+    # {'baseline':'601','variation': '1.16'},
+    # {'baseline':'601','variation': '1.17'},
+    # {'baseline':'601','variation': '1.18'},
+    # {'baseline':'601','variation': '1.19'},
+    # {'baseline':'601','variation': '1.20'},
+    {'baseline':'601','variation': '1.21'},
+    {'baseline':'601','variation': '1.22'},
+    {'baseline':'601','variation': '1.23'},
+    {'baseline':'601','variation': '1.24'},
+    {'baseline':'601','variation': '1.25'},
+    {'baseline':'601','variation': '1.26'},
+    {'baseline':'601','variation': '1.27'},
+    {'baseline':'601','variation': '1.28'}
     ]
 
 for baseline_dic in baseline_dics:
@@ -30,8 +58,8 @@ for baseline_dic in baseline_dics:
     
     assert os.path.exists(baseline_path), 'run doesnt exist'
     
-    p_baseline = parameters(n=7,s=2)
-    p_baseline.load_data(baseline_path)
+    p_baseline = parameters()
+    p_baseline.load_run(baseline_path)
 
     if baseline_dic['variation'] == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
@@ -58,7 +86,7 @@ for baseline_dic in baseline_dics:
                             plot_convergence=False,
                             plot_cobweb=False,
                             safe_convergence=0.001,
-                            disp_summary=True,
+                            disp_summary=False,
                             damping = 10,
                             max_count = 3e3,
                             accel_memory = 50, 

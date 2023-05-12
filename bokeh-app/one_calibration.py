@@ -16,24 +16,22 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '501'
+baseline_number = '601'
 if new_run:
     p = parameters()
-    # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_data()
-    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
-    p.load_data('data/data_7_countries_2005/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.20/')
+    # p_back_up = p.copy()
+    # p.load_data('data/data_7_countries_2011/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
-    m.load_data('data/data_7_countries_2005/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.20/')
+    # m_back_up = m.copy()
+    # m.load_data('data/data_7_countries_2011/')
     
-    m_back_up = m.copy()
-    p_back_up = p.copy()
-
 # p.update_khi_and_r_hjort(0.16)
 
 # m.weights_dict['GROWTH'] = 3
@@ -181,13 +179,25 @@ m.compute_moments(sol_c,p_sol)
 m.compute_moments_deviations()
 m.plot_moments(m.list_of_moments)
 
+#%%
+
+# for mom in m.list_of_moments:
+#     print(mom,(getattr(m,mom+'_target')/getattr(m_back_up,mom+'_target')).max(),(getattr(m,mom+'_target')/getattr(m_back_up,mom+'_target')).min())
+for par in p.get_list_of_params():
+    try:
+        print(par,
+              (getattr(p,par)[getattr(p,par) != 0]/getattr(p_back_up,par)[getattr(p,par) != 0]).max(),
+              (getattr(p,par)[getattr(p,par) != 0]/getattr(p_back_up,par)[getattr(p,par) != 0]).min())
+    except:
+        pass
+
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '501'
+# baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 3.0
+run_number = 1.21
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
@@ -198,7 +208,6 @@ if new_baseline:
     
 try:
     os.mkdir(path)
-    
 except:
     pass
 

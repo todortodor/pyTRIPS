@@ -185,13 +185,13 @@ def compute_rough_jacobian(p, m, qty_to_change, idx_to_change, context = 'calibr
     
     
 def load(path, data_path=None, context = 'calibration'):
-    p = parameters(n=7,s=2,data_path=data_path)
-    p.load_data(path)
+    p = parameters()
+    p.load_run(path)
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
     sol.scale_P(p)
     sol.compute_non_solver_quantities(p)
     m = moments()
-    m.load_data(data_path)
+    # m.load_data(data_path)
     m.load_run(path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
@@ -365,8 +365,9 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
     run_list.sort(key=float)
     
     for run in run_list:
-        p = parameters(n=7,s=2)
-        p.load_data(country_path+run+'/')
+        # print(run)
+        p = parameters()
+        p.load_run(country_path+run+'/')
         
         sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
         sol_c.scale_P(p)

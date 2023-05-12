@@ -9,8 +9,8 @@ Created on Sun Nov 13 21:57:06 2022
 from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 
-p = parameters(n=7,s=2)
-p.load_data('calibration_results_matched_economy/baseline_404_variations/1.0/')
+p = parameters()
+p.load_run('calibration_results_matched_economy/baseline_601_variations/1.20/')
 # m = moments()
 # m.load_data()
 # m.load_run('calibration_results_matched_economy/baseline_312_variations/2.0/')
