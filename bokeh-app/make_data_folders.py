@@ -97,13 +97,6 @@ for config_dic in config_dics:
                                keep_default_na=False,
                                na_values=na_values,
                                skiprows=4).set_index('Country Code')
-    
-    final_pat_fees_year = final_pat_fees.copy()
-    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
-    if write:
-        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
-        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
-        #%%
 
     WDI_data = pd.read_csv(WDI_data_path+'WDI_10032023_data.csv',
                            keep_default_na=False,
@@ -135,7 +128,6 @@ for config_dic in config_dics:
 
     rnd_gdp['rnd_gdp'] = rnd_gdp['rnd_gdp']/100
     rnd_gdp['rnd'] = rnd_gdp['gdp']*rnd_gdp['rnd_gdp']
-    # rnd_gdp = rnd_gdp.dropna(subset=['rnd'])
 
     rnd_gdp = pd.merge(rnd_gdp.reset_index().set_index('Country Code').rename_axis('country'),
                        crosswalk_countries,
@@ -182,6 +174,12 @@ for config_dic in config_dics:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         moments_descriptions.to_csv(
             dropbox_path+'moments_descriptions.csv', sep=';')
+    
+    final_pat_fees_year = final_pat_fees.copy()
+    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
+    if write:
+        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
+        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
 
     iot_OECD = pd.read_csv(
         f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
@@ -229,7 +227,7 @@ for config_dic in config_dics:
         trade_OECD_reduced['col_country'], nbr_of_countries)
 
     trade_OECD_reduced = trade_OECD_reduced.groupby(
-        ['row_country', 'row_sector', 'col_country'])['value'].sum()
+        ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
     trade_OECD_reduced = trade_OECD_reduced.reorder_levels(
         ['row_country', 'col_country', 'row_sector'])
     trade_OECD_reduced.sort_index(inplace=True)
@@ -372,7 +370,7 @@ for config_dic in config_dics:
         country_qty.to_csv(path+'country_moments.csv')
         country_qty.to_csv(dropbox_path+'country_moments.csv')
 
-    #%% get patent flows
+    # get patent flows
 
     pflows = pd.read_csv(
         pflows_path+f'{nbr_of_countries}_countries/flows_{nbr_of_countries}_countries_{year}.csv', index_col=[0, 1]
