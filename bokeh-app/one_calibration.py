@@ -20,14 +20,16 @@ baseline_number = '501'
 if new_run:
     p = parameters()
     # p.load_data('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_data()
+    # p.load_data()
     p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    p.load_data('data/data_7_countries_2005/')
     start_time = time.perf_counter()
 
     m = moments()
-    m.load_data()
+    # m.load_data()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    m.load_data('data/data_7_countries_2005/')
     
     m_back_up = m.copy()
     p_back_up = p.copy()

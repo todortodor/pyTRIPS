@@ -97,6 +97,13 @@ for config_dic in config_dics:
                                keep_default_na=False,
                                na_values=na_values,
                                skiprows=4).set_index('Country Code')
+    
+    final_pat_fees_year = final_pat_fees.copy()
+    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
+    if write:
+        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
+        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
+        #%%
 
     WDI_data = pd.read_csv(WDI_data_path+'WDI_10032023_data.csv',
                            keep_default_na=False,
