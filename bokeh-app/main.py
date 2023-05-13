@@ -15,18 +15,19 @@ import time
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
-def load(path, data_path=None, context = 'calibration'):
+def load(path, data_path=None, 
+         dir_path = None, context = 'calibration'):
     # p = parameters(data_path=data_path)
     p = parameters()
     # p.load_data(path)
-    p.load_run(path)
+    p.load_run(path,dir_path=dir_path)
     sol = var.var_from_vector(p.guess, p, compute=True, context = context)
     sol.scale_P(p)
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
     m = moments()
     # m.load_data(data_path)
-    m.load_run(path)
+    m.load_run(path,dir_path=dir_path)
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
     return p,m,sol
@@ -183,8 +184,9 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
     return dic_df_param, dic_df_mom, dic_df_sol
 
 #%% path
-
+dir_path = dirname(__file__)+'/'
 data_path = join(dirname(__file__), 'data/')
+# dir_path = './'
 # data_path = 'data/'
 # results_path = 'calibration_results_matched_economy/'
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
@@ -544,9 +546,9 @@ comments_dic['404'] = {
 comments_dic['501'] = {
     "baseline":"baseline",
     '1.0':'1.0: Higher growth weight',
-    '2.0':'2.0: Hjort correction on real GDP',
-    '3.0':'3.0: Not dropping RD in the South',
-    '4.0':'4.0: First calibration with new data',
+    '2.0':'2.0: Hjort correc real GDP',
+    '3.0':'3.0: No drop RD South',
+    '4.0':'4.0: New data',
     }
 
 comments_dic['502'] = {
@@ -594,7 +596,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['404','405','501','601']    
+baseline_list = ['501','601']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -602,7 +604,9 @@ def section(s):
 for baseline_nbr in baseline_list:
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
-    p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path)
+    p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path,
+                                              dir_path=dir_path)
+    # print(baseline_nbr)
     baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr], baselines_dic_sol_qty[baseline_nbr]\
         = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments)
     try:
@@ -614,7 +618,9 @@ for baseline_nbr in baseline_list:
     
         for run in run_list:
             if run not in ['2.1.9','99']:
-                p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',data_path = data_path)
+                p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',
+                                                    data_path = data_path,
+                                                    dir_path=dir_path)
                 a, b, c  = append_dic_of_dataframes_with_variation(baselines_dic_param[baseline_nbr], 
                                                                 baselines_dic_mom[baseline_nbr], 
                                                                 baselines_dic_sol_qty[baseline_nbr],
@@ -780,12 +786,14 @@ def update_x_axis_target(attrname, old, new):
         path_x_axis = results_path+'baseline_'+baseline_mom+'_variations/'+new+'/'
     if mom != 'scalars':
         m_temp = moments()
-        m_temp.load_run(path_x_axis)
+        m_temp.load_run(path_x_axis,
+        dir_path=dir_path)
         df_temp['target'] = getattr(m_temp,mom+'_target').ravel()
         # df_temp['target'] = pd.read_csv(path_x_axis+mom)['target']
     else:
         m_temp = moments()
-        m_temp.load_run(path_x_axis)
+        m_temp.load_run(path_x_axis,
+        dir_path=dir_path)
         for i,x in enumerate(df_temp['x']):
             if x != 'objective':
                 df_temp['target'][i] = float(getattr(m_temp,x+'_target'))
@@ -1198,7 +1206,7 @@ baseline_dyn = '501'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['404','405','501'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','601'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
 files_in_dir = next(os.walk(baseline_dyn_path))[1]
@@ -1319,7 +1327,8 @@ def compute_dyn(event):
         path = results_path+baseline_dyn_select.value+'/'
     else:
         path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
+    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+                                 dir_path=dir_path)
     p_dyn_cf = p_dyn.copy()
     if country_dyn_select.value != 'World':
         p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
@@ -1343,7 +1352,8 @@ if variation_dyn_select.value == 'baseline':
     path = results_path+baseline_dyn_select.value+'/'
 else:
     path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path)
+p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+                             dir_path=dir_path)
 p_dyn_cf = p_dyn.copy()
 if country_dyn_select.value != 'World':
     p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
@@ -1679,7 +1689,8 @@ def get_data_nash_coop(baseline_nash_number):
     return welf_pop_weighted, welf_negishi, welf_nash
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
-                                   options=['404','405','501','601'])
+                                   # options=['404','405','501','601'])
+                                   options=['501','601'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1872,9 +1883,9 @@ def section_end(s):
 cf_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -2138,11 +2149,11 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '501'
+baseline_jac = '601'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['404','405','501'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','601'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
@@ -2163,7 +2174,8 @@ if variation_jac_select.value == 'baseline':
 else:
     path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
     
-p_jac, m_jac, sol_jac = load(path, data_path=data_path)
+p_jac, m_jac, sol_jac = load(path, data_path=data_path,
+                             dir_path=dir_path)
 
 qty_jac_select = Select(value='delta', title='Parameter', options=p_jac.calib_parameters)
 country_jac_select = Select(value='USA', title='Country', options=p_jac.countries)
@@ -2200,7 +2212,8 @@ def update_jac(event):
         path = results_path+baseline_jac_select.value+'/'
     else:
         path = results_path+'baseline_'+baseline_jac_select.value+'_variations/'+variation_jac_select.value+'/'
-    par_jac, m_jac, sol_jac = load(path, data_path=data_path)
+    par_jac, m_jac, sol_jac = load(path, data_path=data_path,
+                                   dir_path=dir_path)
     if qty_jac_select.value in ['eta','T','delta','nu']:
         idx_to_change_jac = par_jac.countries.index(country_jac_select.value),par_jac.sectors.index(sector_jac_select.value)
     if qty_jac_select.value in ['fe','zeta','nu', 'fo']:

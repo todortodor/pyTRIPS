@@ -5,7 +5,7 @@ Created on Sun Nov 13 21:27:06 2022
 
 @author: simonl
 """
-# from os.path import dirname
+from os.path import dirname, join
 import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -75,11 +75,15 @@ class parameters:
         self.data_path = None
         self.unit = 1e6
     
-    def load_data(self,data_path=None,keep_already_calib_params=False):
+    def load_data(self,data_path=None,keep_already_calib_params=False,dir_path=None):
+        if dir_path is None:
+            dir_path = './'
         if data_path is None:
             data_path = 'data/data_leg/'
         
         self.data_path = data_path
+        
+        data_path = dir_path+data_path
         
         self.data = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
         N = len(self.data.index)
@@ -173,8 +177,8 @@ class parameters:
                     'khi':None,
                     'alpha':None,
                     'beta':None,
-                      'T':None,
-                      'r_hjort':None,
+                     'T':None,
+                     'r_hjort':None,
                      'eta':[np.s_[::S]]}
         
         self.mask = {}
@@ -191,7 +195,9 @@ class parameters:
                 self.mask[par_name] = np.ones_like(par,bool)
         
     
-    def load_run(self,path,list_of_params = None):
+    def load_run(self,path,list_of_params = None,dir_path=None):
+        if dir_path is None:
+            dir_path = './'
         try:
             df = pd.read_csv(path+'calib_parameters.csv',header=None)
             setattr(self,'calib_parameters',df[0].to_list())
@@ -220,7 +226,7 @@ class parameters:
             setattr(self,'S',2)
             setattr(self,'data_path','data/data_leg/')
         
-        self.load_data(self.data_path)
+        self.load_data(self.data_path,dir_path=dir_path)
         
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
@@ -1810,12 +1816,16 @@ class moments:
         frame = deepcopy(self)
         return frame
     
-    def load_data(self,data_path = None):
+    def load_data(self,data_path = None,dir_path=None):
         
+        if dir_path is None:
+            dir_path = './'
         if data_path is None:
             data_path = 'data/data_leg/'
         
         self.data_path = data_path
+        
+        data_path = dir_path+data_path
         
         self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
         self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
@@ -1979,7 +1989,9 @@ class moments:
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
                        }
     
-    def load_run(self,path):
+    def load_run(self,path,dir_path=None):
+        if dir_path is None:
+            dir_path = './'
         try:
             df = pd.read_csv(path+'data_path.csv',header=None)
             setattr(self,'N',df.loc['nbr_of_countries','run'])
@@ -1990,7 +2002,7 @@ class moments:
             setattr(self,'S',2)
             setattr(self,'data_path','data/data_leg/')
         
-        self.load_data(self.data_path)
+        self.load_data(self.data_path,dir_path=dir_path)
             
         df = pd.read_csv(path+'list_of_moments.csv')
         self.list_of_moments = df['moments'].tolist()

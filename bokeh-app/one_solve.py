@@ -10,7 +10,8 @@ from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver
 
 p = parameters()
-p.load_run('calibration_results_matched_economy/baseline_601_variations/1.20/')
+# p.load_run('calibration_results_matched_economy/baseline_601_variations/1.20/')
+p.load_run('calibration_results_matched_economy/405/')
 # m = moments()
 # m.load_data()
 # m.load_run('calibration_results_matched_economy/baseline_312_variations/2.0/')
