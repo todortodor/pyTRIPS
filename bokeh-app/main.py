@@ -1024,7 +1024,7 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 
 #%% Time series
 
-baseline_time = '601'
+baseline_time = '603'
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 
@@ -1272,7 +1272,7 @@ baseline_dyn = '501'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','601'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','601','602','603'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
 files_in_dir = next(os.walk(baseline_dyn_path))[1]
@@ -1756,7 +1756,7 @@ def get_data_nash_coop(baseline_nash_number):
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                    # options=['404','405','501','601'])
-                                   options=['501','601'])
+                                   options=['501','601','602','603'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1949,7 +1949,11 @@ def section_end(s):
 cf_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+            if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
