@@ -66,6 +66,8 @@ class parameters:
         self.guess = None
         self.dyn_guess = None
         
+        self.correct_eur_patent_cost = False
+        
         self.g_0 = 0.01
         self.kappa = 0.5
         self.gamma = 0.5 
@@ -118,6 +120,13 @@ class parameters:
         self.r_hjort = ((self.data.gdp.iloc[0]*np.array(self.data.labor)*self.data.price_level
                         /(self.data.labor.iloc[0]*self.data.price_level.iloc[0]*np.array(self.data.gdp))
                         )**(1-self.khi)).values
+        
+        if self.correct_eur_patent_cost:
+            # self.r_hjort[1] = self.r_hjort[1]*pd.read_csv(
+            #     data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
+            #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
+            self.r_hjort[1] = self.r_hjort[1]*43730.23/0.71388/pd.read_csv(
+                    data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
         
         if not keep_already_calib_params:
             self.eta = np.ones((N, S))*0.02
@@ -217,7 +226,9 @@ class parameters:
             pass
         
         try:
-            df = pd.read_csv(path+'data_path.csv',header=None)
+            # df = pd.read_csv(path+'data_path.csv',header=None)
+            df = pd.read_csv(path+'data_path.csv',index_col=0)
+            # print(df)
             setattr(self,'N',df.loc['nbr_of_countries','run'])
             setattr(self,'S',df.loc['nbr_of_sectors','run'])
             setattr(self,'data_path',df.loc['data_path','run'])
@@ -1993,7 +2004,8 @@ class moments:
         if dir_path is None:
             dir_path = './'
         try:
-            df = pd.read_csv(path+'data_path.csv',header=None)
+            # df = pd.read_csv(path+'data_path.csv',header=None)
+            df = pd.read_csv(path+'data_path.csv',index_col=0)
             setattr(self,'N',df.loc['nbr_of_countries','run'])
             setattr(self,'S',df.loc['nbr_of_sectors','run'])
             setattr(self,'data_path',df.loc['data_path','run'])
@@ -2170,14 +2182,24 @@ class moments:
         self.RD_RUS = self.RD/self.RD_US
     
     def compute_KM(self,var,p):
+        # bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
+        # self.KM = p.k/(p.k-1)*np.einsum('s,s,ns,ns,ns->',
+        #     p.eta[0,1:],
+        #     var.l_R[0,1:]**(1-p.kappa),
+        #     var.psi_m_star[:,0,1:]**(1-p.k),
+        #     var.profit[:,0,1:],
+        #     bracket,
+        #     )/(var.l_R[0,1:].sum()+var.l_Ao[0,1:].sum()+(var.w[:,None]*var.l_Ae[0,:,1:]/var.w[0]).sum())
         bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
-        self.KM = p.k/(p.k-1)*np.einsum('s,s,ns,ns,ns->',
-            p.eta[0,1:],
-            var.l_R[0,1:]**(1-p.kappa),
-            var.psi_m_star[:,0,1:]**(1-p.k),
-            var.profit[:,0,1:],
+        KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->ni',
+            p.eta[:,1:],
+            var.l_R[:,1:]**(1-p.kappa),
+            var.psi_m_star[:,:,1:]**(1-p.k),
+            var.profit[:,:,1:],
             bracket,
-            )/(var.l_R[0,1:].sum()+var.l_Ao[0,1:].sum()+(var.w[:,None]*var.l_Ae[0,:,1:]/var.w[0]).sum())
+            1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+            )
+        self.KM = KM[0,0]
         self.KM_GDP = self.KM*self.RD_US
         
     def compute_SRDUS(self,var,p):
@@ -2285,14 +2307,14 @@ class moments:
                             (p.sigma/(p.sigma-1))**(1-p.sigma)
                             )
 
-        denom_C_b = var.PSI_MNP*eps(delt*p.nu)[None,None,:]
-        denom_C_c = var.PSI_MPND*(eps(p.delta*delt)
-                                    *eps(p.nu*delt)[None,:])[:,None,:]
+        # denom_C_b = var.PSI_MNP*eps(delt*p.nu)[None,None,:]
+        # denom_C_c = var.PSI_MPND*(eps(p.delta*delt)
+        #                             *eps(p.nu*delt)[None,:])[:,None,:]
         
-        denom_C = np.einsum('nis,nis->nis',
-                            denom_C_b + denom_C_c,
-                            var.phi**(p.sigma-1)[None,None,:]
-                            )
+        # denom_C = np.einsum('nis,nis->nis',
+        #                     denom_C_b + denom_C_c,
+        #                     var.phi**(p.sigma-1)[None,None,:]
+        #                     )
         
         denom_D_sum = np.einsum('nis,njs->nis',
                                 num_brack,
@@ -2308,8 +2330,11 @@ class moments:
                         denom_D_sum
                         )
         
+        # denom = np.einsum('nis->ns',
+        #                   denom_A + denom_B + denom_C + denom_D
+        #                   )
         denom = np.einsum('nis->ns',
-                          denom_A + denom_B + denom_C + denom_D
+                          denom_A + denom_B + denom_D
                           )
         
         self.turnover = num/denom
