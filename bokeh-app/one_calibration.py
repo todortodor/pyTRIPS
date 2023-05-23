@@ -9,34 +9,33 @@ Created on Sun Nov 13 22:00:03 2022
 from scipy import optimize
 import time
 from classes import moments, parameters,  var, history
-from solver_funcs import calibration_func, fixed_point_solver, compute_deriv_welfare_to_patent_protec_US
+from solver_funcs import calibration_func, fixed_point_solver
 from data_funcs import write_calibration_results
 import os
 import numpy as np
-from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '604'
+baseline_number = '606'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
+    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
     # p_back_up = p.copy()
-    # p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
+    p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_data()
-    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
+    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
     # m_back_up = m.copy()
-    # m.load_data('data/data_7_countries_2005/')
+    m.load_data('data/data_7_countries_2005/')
     
 # p.update_khi_and_r_hjort(0.16)
 
 # m.weights_dict['RP'] = 4
-# m.weights_dict['SRGDP'] = 6
+m.weights_dict['SRGDP'] = 6
 # m.weights_dict['GROWTH'] = 4
 # m.weights_dict['TE'] = 5
 
@@ -189,11 +188,11 @@ commentary = ''
 # baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 605
+run_number = 3.0
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

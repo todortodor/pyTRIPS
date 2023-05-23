@@ -686,6 +686,41 @@ comments_dic['604'] = {
     "1.27" : "1.27 : 2017",
     "1.28" : "1.28 : 2018",
 }
+comments_dic['606'] = {
+    "baseline":"baseline:SRGDP weight < RP weight",
+    # "1.0" : "1.0 : 1990",
+    # "1.1" : "1.1 : 1991",
+    # "1.2" : "1.2 : 1992",
+    # "1.3" : "1.3 : 1993",
+    # "1.4" : "1.4 : 1994",
+    # "1.5" : "1.5 : 1995",
+    # "1.6" : "1.6 : 1996",
+    # "1.7" : "1.7 : 1997",
+    # "1.8" : "1.8 : 1998",
+    # "1.9" : "1.9 : 1999",
+    # "1.10" : "1.10 : 2000",
+    # "1.11" : "1.11 : 2001",
+    # "1.12" : "1.12 : 2002",
+    # "1.13" : "1.13 : 2003",
+    # "1.14" : "1.14 : 2004",
+    # "1.15" : "1.15 : 2005",
+    # "1.16" : "1.16 : 2006",
+    # "1.17" : "1.17 : 2007",
+    # "1.18" : "1.18 : 2008",
+    # "1.19" : "1.19 : 2009",
+    # "1.20" : "1.20 : 2010",
+    # "1.21" : "1.21 : 2011",
+    # "1.22" : "1.22 : 2012",
+    # "1.23" : "1.23 : 2013",
+    # "1.24" : "1.24 : 2014",
+    # "1.25" : "1.25 : 2015",
+    # "1.26" : "1.26 : 2016",
+    # "1.27" : "1.27 : 2017",
+    # "1.28" : "1.28 : 2018",
+    "2.0" : "2.0:SRGDP weight = RP weight",
+    "3.0" : "3.0:SRGDP weight > RP weight",
+}
+
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -694,7 +729,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['501','604']    
+baseline_list = ['501','604','606']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -756,7 +791,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '604'
+baseline_mom = '606'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -787,28 +822,28 @@ p_mom.add_layout(labels)
 p_mom.add_tools(hover_tool_mom)
 slope1 = Slope(gradient=1, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=1)
-slope2 = Slope(gradient=1.4876, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=0.25)
-slope3 = Slope(gradient=0.5124, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=0.25)
-slope4 = Slope(gradient=0.756198, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=0.25)
+# slope2 = Slope(gradient=1.4876, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=0.25)
+# slope3 = Slope(gradient=0.5124, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=0.25)
+# slope4 = Slope(gradient=0.756198, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=0.25)
 # slope5 = Slope(gradient=1.546, y_intercept=0,
 #               line_color='black', line_dash='dashed', line_width=0.25)
 # slope6 = Slope(gradient=2.20, y_intercept=0,
 #               line_color='black', line_dash='dashed', line_width=0.25)
 
-for slope in [slope1,slope2,slope3,slope4]:
+for slope in [slope1]:
 # for slope in [slope1,slope2,slope3,slope4,slope5,slope6]:
     p_mom.add_layout(slope)
     
-slope2.visible = False
-slope3.visible = False
-slope4.visible = False
+# slope2.visible = False
+# slope3.visible = False
+# slope4.visible = False
 # slope5.visible = False
 # slope6.visible = False
 
-colors_mom = itertools.cycle(Category10[10])
+colors_mom = itertools.cycle(Category10[9])
 
 lines_mom = {}
 # for i,col in enumerate(ds_mom.data.keys()):
@@ -864,14 +899,14 @@ def update_baseline_mom(attrname, old, new):
 def update_mom(attrname, old, new):
     baseline_mom = baseline_mom_select.value
     ds_mom.data = baselines_dic_mom[baseline_mom][new]
-    if new == 'scalars':
-        slope2.visible = True
-        slope3.visible = True
-        slope4.visible = True
-    else:
-        slope2.visible = False
-        slope3.visible = False
-        slope4.visible = False
+    # if new == 'scalars':
+    #     slope2.visible = True
+    #     slope3.visible = True
+    #     slope4.visible = True
+    # else:
+    #     slope2.visible = False
+    #     slope3.visible = False
+    #     slope4.visible = False
     x_mom_select.value = 'baseline'
         
 def update_x_axis_target(attrname, old, new):
@@ -905,7 +940,7 @@ baseline_mom_select.on_change('value', update_x_axis_mom_matching_options)
 mom_select.on_change('value', update_mom)
 x_mom_select.on_change('value', update_x_axis_target)
 
-baseline_par = '604'
+baseline_par = '606'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -925,7 +960,7 @@ hover_tool_par.tooltips = [
     ]
 
 p_par.add_tools(hover_tool_par)
-colors_par = itertools.cycle(Category10[10])
+colors_par = itertools.cycle(Category10[9])
 lines_par = {}
 
 for col in baselines_dic_param[baseline_par][par].columns:
@@ -977,7 +1012,7 @@ controls_par = row(baseline_par_select, par_select)
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
-baseline_sol_qty = '604'
+baseline_sol_qty = '606'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -997,7 +1032,7 @@ hover_tool_sol_qty.tooltips = [
     ]
 
 p_sol_qty.add_tools(hover_tool_sol_qty)
-colors_sol_qty = itertools.cycle(Category10[10])
+colors_sol_qty = itertools.cycle(Category10[9])
 lines_sol_qty = {}
 
 for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:

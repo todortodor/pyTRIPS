@@ -98,7 +98,7 @@ m = moments()
 m.load_data()
 
 # config_dics = [
-#     {'year': 2018, 'N': 7},
+#     {'year': 2005, 'N': 7},
 # ]
 
 config_dics = [{
@@ -131,87 +131,87 @@ for config_dic in config_dics:
     ].dropna().set_index('countrycode').rename_axis('country').rename(columns={f'ccode{nbr_of_countries}': 'country_code'})
     crosswalk_countries['country_code'] = np.minimum(crosswalk_countries['country_code'],nbr_of_countries)
 
-    gdp_deflator = pd.read_csv(WDI_data_path+'WDI_gdp_deflator.csv',
-                                keep_default_na=False,
-                                na_values=na_values,
-                                skiprows=4).set_index('Country Code')
+    # gdp_deflator = pd.read_csv(WDI_data_path+'WDI_gdp_deflator.csv',
+    #                             keep_default_na=False,
+    #                             na_values=na_values,
+    #                             skiprows=4).set_index('Country Code')
 
-    WDI_data = pd.read_csv(WDI_data_path+'WDI_10032023_data.csv',
-                            keep_default_na=False,
-                            na_values=na_values)
-    gdp_WLD = WDI_data.loc[(WDI_data['Series Code'] == 'NY.GDP.MKTP.CD') & (
-        WDI_data['Country Code'] == 'WLD')]
-    gdp = WDI_data.loc[WDI_data['Series Code'] == 'NY.GDP.MKTP.CD']
-    labor_WLD = WDI_data.loc[(WDI_data['Series Code'] == 'SP.POP.1564.TO') & (
-        WDI_data['Country Code'] == 'WLD')]
-    labor = WDI_data.loc[WDI_data['Series Code'] == 'SP.POP.1564.TO']
+    # WDI_data = pd.read_csv(WDI_data_path+'WDI_10032023_data.csv',
+    #                         keep_default_na=False,
+    #                         na_values=na_values)
+    # gdp_WLD = WDI_data.loc[(WDI_data['Series Code'] == 'NY.GDP.MKTP.CD') & (
+    #     WDI_data['Country Code'] == 'WLD')]
+    # gdp = WDI_data.loc[WDI_data['Series Code'] == 'NY.GDP.MKTP.CD']
+    # labor_WLD = WDI_data.loc[(WDI_data['Series Code'] == 'SP.POP.1564.TO') & (
+    #     WDI_data['Country Code'] == 'WLD')]
+    # labor = WDI_data.loc[WDI_data['Series Code'] == 'SP.POP.1564.TO']
 
-    rnd_gdp = WDI_data.loc[WDI_data['Series Code'].isin(
-        ['GB.XPD.RSDV.GD.ZS', 'NY.GDP.MKTP.CD'])]
-    rnd_gdp = rnd_gdp.melt(
-        id_vars=['Country Name', 'Country Code', 'Series Name', 'Series Code'],
-        var_name='year',
-    )
-    rnd_gdp['year'] = rnd_gdp['year'].str[:5].astype(int)
-    rnd_gdp['Series Code'] = rnd_gdp['Series Code'].str.replace(
-        'GB.XPD.RSDV.GD.ZS', 'rnd_gdp'
-    ).str.replace(
-        'NY.GDP.MKTP.CD', 'gdp'
-    )
-    rnd_gdp = rnd_gdp[['Country Code', 'Series Code', 'year', 'value']].pivot(
-        columns='Series Code',
-        index=['Country Code', 'year'],
-        values='value'
-    )
+    # rnd_gdp = WDI_data.loc[WDI_data['Series Code'].isin(
+    #     ['GB.XPD.RSDV.GD.ZS', 'NY.GDP.MKTP.CD'])]
+    # rnd_gdp = rnd_gdp.melt(
+    #     id_vars=['Country Name', 'Country Code', 'Series Name', 'Series Code'],
+    #     var_name='year',
+    # )
+    # rnd_gdp['year'] = rnd_gdp['year'].str[:5].astype(int)
+    # rnd_gdp['Series Code'] = rnd_gdp['Series Code'].str.replace(
+    #     'GB.XPD.RSDV.GD.ZS', 'rnd_gdp'
+    # ).str.replace(
+    #     'NY.GDP.MKTP.CD', 'gdp'
+    # )
+    # rnd_gdp = rnd_gdp[['Country Code', 'Series Code', 'year', 'value']].pivot(
+    #     columns='Series Code',
+    #     index=['Country Code', 'year'],
+    #     values='value'
+    # )
 
-    rnd_gdp['rnd_gdp'] = rnd_gdp['rnd_gdp']/100
-    rnd_gdp['rnd'] = rnd_gdp['gdp']*rnd_gdp['rnd_gdp']
+    # rnd_gdp['rnd_gdp'] = rnd_gdp['rnd_gdp']/100
+    # rnd_gdp['rnd'] = rnd_gdp['gdp']*rnd_gdp['rnd_gdp']
 
-    rnd_gdp = pd.merge(rnd_gdp.reset_index().set_index('Country Code').rename_axis('country'),
-                        crosswalk_countries,
-                        left_index=True,
-                        right_index=True,
-                        how='left'
-                        ).reset_index().set_index(['country', 'year'])
+    # rnd_gdp = pd.merge(rnd_gdp.reset_index().set_index('Country Code').rename_axis('country'),
+    #                     crosswalk_countries,
+    #                     left_index=True,
+    #                     right_index=True,
+    #                     how='left'
+    #                     ).reset_index().set_index(['country', 'year'])
     
-    price_levels = WDI_data.loc[WDI_data['Series Code'].isin(
-        ['PA.NUS.PPPC.RF', 'NY.GDP.MKTP.CD'])]
-    price_levels = price_levels.melt(
-        id_vars=['Country Name', 'Country Code', 'Series Name', 'Series Code'],
-        var_name='year',
-    )
-    price_levels['year'] = price_levels['year'].str[:5].astype(int)
-    price_levels['Series Code'] = price_levels['Series Code'].str.replace(
-        'PA.NUS.PPPC.RF', 'price_level'
-    ).str.replace(
-        'NY.GDP.MKTP.CD', 'gdp'
-    )
-    price_levels = price_levels[['Country Code', 'Series Code', 'year', 'value']].pivot(
-        columns='Series Code',
-        index=['Country Code', 'year'],
-        values='value'
-    )
-    price_levels = pd.merge(price_levels.reset_index().set_index('Country Code').rename_axis('country'),
-                        crosswalk_countries,
-                        left_index=True,
-                        right_index=True,
-                        how='left'
-                        ).reset_index().set_index(['country', 'year'])
+    # price_levels = WDI_data.loc[WDI_data['Series Code'].isin(
+    #     ['PA.NUS.PPPC.RF', 'NY.GDP.MKTP.CD'])]
+    # price_levels = price_levels.melt(
+    #     id_vars=['Country Name', 'Country Code', 'Series Name', 'Series Code'],
+    #     var_name='year',
+    # )
+    # price_levels['year'] = price_levels['year'].str[:5].astype(int)
+    # price_levels['Series Code'] = price_levels['Series Code'].str.replace(
+    #     'PA.NUS.PPPC.RF', 'price_level'
+    # ).str.replace(
+    #     'NY.GDP.MKTP.CD', 'gdp'
+    # )
+    # price_levels = price_levels[['Country Code', 'Series Code', 'year', 'value']].pivot(
+    #     columns='Series Code',
+    #     index=['Country Code', 'year'],
+    #     values='value'
+    # )
+    # price_levels = pd.merge(price_levels.reset_index().set_index('Country Code').rename_axis('country'),
+    #                     crosswalk_countries,
+    #                     left_index=True,
+    #                     right_index=True,
+    #                     how='left'
+    #                     ).reset_index().set_index(['country', 'year'])
     
-    if write:
-        try:
-            os.mkdir(path)
-        except:
-            pass
-        try:
-            os.mkdir(dropbox_path)
-        except:
-            pass
+    # if write:
+    #     try:
+    #         os.mkdir(path)
+    #     except:
+    #         pass
+    #     try:
+    #         os.mkdir(dropbox_path)
+    #     except:
+    #         pass
 
-    if write:
-        moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
-        moments_descriptions.to_csv(
-            dropbox_path+'moments_descriptions.csv', sep=';')
+    # if write:
+    #     moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
+    #     moments_descriptions.to_csv(
+    #         dropbox_path+'moments_descriptions.csv', sep=';')
 
     iot_OECD = pd.read_csv(
         f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
@@ -269,20 +269,49 @@ for config_dic in config_dics:
     trade_OECD_reduced.rename_axis(
         ['origin_code', 'destination_code', 'sector'], inplace=True)
 
-    if write:
-        trade_OECD_reduced.to_csv(path+'country_country_sector_moments.csv')
-        trade_OECD_reduced.to_csv(
-            dropbox_path+'country_country_sector_moments.csv')
+    # if write:
+    #     trade_OECD_reduced.to_csv(path+'country_country_sector_moments.csv')
+    #     trade_OECD_reduced.to_csv(
+    #         dropbox_path+'country_country_sector_moments.csv')
 
     beta_s = trade_OECD_reduced.groupby(
         'sector').sum()/trade_OECD_reduced.sum()
-    alpha_s = va_OECD.groupby('sector')['value'].sum()/va_OECD['value'].sum()
+    alpha_s = va_OECD.groupby('sector')['value'].sum()/trade_OECD_reduced.groupby(
+        'sector')['trade'].sum()
     sector_moments = pd.DataFrame(index=[0, 1])
     sector_moments['beta'] = beta_s
     sector_moments['alpha'] = alpha_s
     if write:
         sector_moments.to_csv(path+'sector_moments.csv')
         sector_moments.to_csv(dropbox_path+'sector_moments.csv')
+    
+    #%%
+    
+    final_pat_fees_year = final_pat_fees.copy()
+    #!!! changing EUR patenting fee
+    # final_pat_fees_year.loc[2,'fee'] = 30530*gdp_year.loc[2]/exchange_rates[year]/gdp.loc[
+    #     gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','ESP','DEU'])
+    #     ][f'{year} [YR{year}]'].sum()
+    EUR_2003_gdp = pd.merge(gdp[
+        ['Country Code', '2003 [YR2003]']
+    ].rename(
+        columns={'2003 [YR2003]': 'gdp'}
+    ).set_index(
+        'Country Code'
+    ).rename_axis(
+        'country'
+    ),
+        crosswalk_countries,
+        left_index=True,
+        right_index=True
+    ).groupby('country_code').sum().loc[2,'gdp']
+    final_pat_fees_year.loc[2,'fee'] = 30530*EUR_2003_gdp*exchange_rates[2003]/gdp.loc[
+        gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','ESP','DEU'])
+        ]['2003 [YR2003]'].sum()*gdp_deflator.loc['USA', '2005']/gdp_deflator.loc['USA', '2003']
+    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
+    if write:
+        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
+        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
 
     output = trade_OECD_reduced.groupby(
         'origin_code').sum().rename_axis('country')
@@ -323,16 +352,6 @@ for config_dic in config_dics:
         float).iloc[0] - gdp_year.loc[1:nbr_of_countries-1].sum()
     
     country_qty['gdp'] = gdp_year
-    
-    final_pat_fees_year = final_pat_fees.copy()
-    #!!! changing EUR patenting fee
-    final_pat_fees_year.loc[2,'fee'] = 30530*gdp_year.loc[2]/exchange_rates[year]/gdp.loc[
-        gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','CHE','ESP','DEU'])
-        ][f'{year} [YR{year}]'].sum()
-    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
-    if write:
-        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
-        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
 
     labor_year = pd.merge(labor[
         ['Country Code', f'{year} [YR{year}]']
