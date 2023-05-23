@@ -66,7 +66,7 @@ class parameters:
         self.guess = None
         self.dyn_guess = None
         
-        self.correct_eur_patent_cost = False
+        self.correct_eur_patent_cost = True
         
         self.g_0 = 0.01
         self.kappa = 0.5
@@ -122,11 +122,11 @@ class parameters:
                         )**(1-self.khi)).values
         
         if self.correct_eur_patent_cost:
-            # self.r_hjort[1] = self.r_hjort[1]*pd.read_csv(
-            #     data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
-            #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
-            self.r_hjort[1] = self.r_hjort[1]*43730.23/0.71388/pd.read_csv(
+            self.r_hjort[1] = self.r_hjort[1]*pd.read_csv(
+                data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
                     data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
+            # self.r_hjort[1] = self.r_hjort[1]*43730.23/0.71388/pd.read_csv(
+            #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
         
         if not keep_already_calib_params:
             self.eta = np.ones((N, S))*0.02

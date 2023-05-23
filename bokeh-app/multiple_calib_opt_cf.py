@@ -16,50 +16,50 @@ import os
 import numpy as np
 import pandas as pd
 
-# runs_params = [
-#     {"number":0.0,"TO_target":0.01},
-#     {"number":0.1,"TO_target":0.0105},
-#     {"number":0.2,"TO_target":0.011},
-#     {"number":0.3,"TO_target":0.0115},
-#     {"number":0.4,"TO_target":0.012},
-#     {"number":0.5,"TO_target":0.0125},
-#     {"number":0.6,"TO_target":0.013},
-#     {"number":0.7,"TO_target":0.0135},
-#     {"number":0.8,"TO_target":0.014},
-#     {"number":0.9,"TO_target":0.0145},
-#     {"number":0.10,"TO_target":0.015},
-#     {"number":0.11,"TO_target":0.0155},
-#     {"number":0.12,"TO_target":0.016},
-#     {"number":0.13,"TO_target":0.0165},
-#     {"number":0.14,"TO_target":0.017},
-#     {"number":0.15,"TO_target":0.0175},
-#     {"number":0.16,"TO_target":0.018},
-#     {"number":0.17,"TO_target":0.0185},
-#     {"number":0.18,"TO_target":0.019},
-#     {"number":0.19,"TO_target":0.0195},
-#     {"number":0.20,"TO_target":0.02},
-#     # {"number":21,"TO_target":0.0205},
-#     # {"number":22,"TO_target":0.021},
-#     # {"number":23,"TO_target":0.0215},
-#     # {"number":24,"TO_target":0.022},
-#     # {"number":25,"TO_target":0.0225},
-#     # {"number":26,"TO_target":0.023},
-#     # {"number":27,"TO_target":0.0235},
-#     # {"number":28,"TO_target":0.024},
-#     # {"number":29,"TO_target":0.0245},
-#     # {"number":30,"TO_target":0.025},
-#     # {"number":31,"TO_target":0.0255},
-#     # {"number":32,"TO_target":0.026},
-#     # {"number":33,"TO_target":0.0265},
-#     # {"number":34,"TO_target":0.027},
-#     # {"number":35,"TO_target":0.0275},
-#     # {"number":36,"TO_target":0.028},
-#     # {"number":37,"TO_target":0.0285},
-#     # {"number":38,"TO_target":0.029},
-#     # {"number":39,"TO_target":0.0295},
-#     # {"number":40,"TO_target":0.03}
-#     ]
 runs_params = [
+    {"number":0,"TO_target":0.01},
+    {"number":1,"TO_target":0.0105},
+    {"number":2,"TO_target":0.011},
+    {"number":3,"TO_target":0.0115},
+    {"number":4,"TO_target":0.012},
+    {"number":5,"TO_target":0.0125},
+    {"number":6,"TO_target":0.013},
+    {"number":7,"TO_target":0.0135},
+    {"number":8,"TO_target":0.014},
+    {"number":9,"TO_target":0.0145},
+    {"number":10,"TO_target":0.015},
+    {"number":11,"TO_target":0.0155},
+    {"number":12,"TO_target":0.016},
+    {"number":13,"TO_target":0.0165},
+    {"number":14,"TO_target":0.017},
+    {"number":15,"TO_target":0.0175},
+    {"number":16,"TO_target":0.018},
+    {"number":17,"TO_target":0.0185},
+    {"number":18,"TO_target":0.019},
+    {"number":19,"TO_target":0.0195},
+    {"number":20,"TO_target":0.02},
+    {"number":21,"TO_target":0.0205},
+    {"number":22,"TO_target":0.021},
+    {"number":23,"TO_target":0.0215},
+    {"number":24,"TO_target":0.022},
+    {"number":25,"TO_target":0.0225},
+    {"number":26,"TO_target":0.023},
+    {"number":27,"TO_target":0.0235},
+    {"number":28,"TO_target":0.024},
+    {"number":29,"TO_target":0.0245},
+    {"number":30,"TO_target":0.025},
+    {"number":31,"TO_target":0.0255},
+    {"number":32,"TO_target":0.026},
+    {"number":33,"TO_target":0.0265},
+    {"number":34,"TO_target":0.027},
+    {"number":35,"TO_target":0.0275},
+    {"number":36,"TO_target":0.028},
+    {"number":37,"TO_target":0.0285},
+    {"number":38,"TO_target":0.029},
+    {"number":39,"TO_target":0.0295},
+    {"number":40,"TO_target":0.03}
+    ]
+# runs_params = [
 # {'number': 0, 'year': 1990},
 # {'number': 1, 'year': 1991},
 # {'number': 2, 'year': 1992},
@@ -82,14 +82,14 @@ runs_params = [
 # {'number': 19, 'year': 2009},
 # {'number': 20, 'year': 2010},
 # {'number': 21, 'year': 2011},
-{'number': 22, 'year': 2012},
-{'number': 23, 'year': 2013},
-{'number': 24, 'year': 2014},
-{'number': 25, 'year': 2015},
-{'number': 26, 'year': 2016},
-{'number': 27, 'year': 2017},
-{'number': 28, 'year': 2018}
-]
+# {'number': 22, 'year': 2012},
+# {'number': 23, 'year': 2013},
+# {'number': 24, 'year': 2014},
+# {'number': 25, 'year': 2015},
+# {'number': 26, 'year': 2016},
+# {'number': 27, 'year': 2017},
+# {'number': 28, 'year': 2018}
+# ]
 
 # for drop_SRDUS in [False,True]:
 #     for patenting_cost_moment in ['UUPCOST','PCOSTNOAGG']:
@@ -154,7 +154,7 @@ runs_params = [
 
 write = True
 
-baseline_number = '601'
+baseline_number = '604'
 
 for variation_number in [1]:
     
@@ -311,102 +311,102 @@ for variation_number in [1]:
         sol_baseline.scale_P(p_baseline)
         sol_baseline.compute_non_solver_quantities(p_baseline)
         
-        # ##%% Nash eq
-        # method = 'fixed_point'
-        # p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
-        #                  plot_convergence = True,solver_options=None,tol=1e-4)
+        ##%% Nash eq
+        method = 'fixed_point'
+        p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
+                          plot_convergence = True,solver_options=None,tol=1e-4)
         
-        # if write:
-        #     if not os.path.exists('nash_eq_recaps/deltas.csv'):
-        #         deltas_df = pd.DataFrame(columns = ['baseline',
-        #                                         'variation',
-        #                                         'method'] + p_baseline.countries)
-        #         deltas_df.to_csv('nash_eq_recaps/deltas.csv')
-        #     deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
-        #     run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                     baseline_dic['variation'],
-        #                     method]+p_nash.delta[:,1].tolist(), 
-        #                     index = deltas_df.columns).T
-        #     deltas_df = pd.concat([deltas_df, run],ignore_index=True)
-        #     deltas_df.to_csv('nash_eq_recaps/deltas.csv')
+        if write:
+            if not os.path.exists('nash_eq_recaps/deltas.csv'):
+                deltas_df = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'method'] + p_baseline.countries)
+                deltas_df.to_csv('nash_eq_recaps/deltas.csv')
+            deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            method]+p_nash.delta[:,1].tolist(), 
+                            index = deltas_df.columns).T
+            deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+            deltas_df.to_csv('nash_eq_recaps/deltas.csv')
             
-        #     if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
-        #         cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-        #                                         'variation',
-        #                                         'method'] + p_baseline.countries + ['Equal','Negishi'])
-        #         cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
-        #     cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
-        #     run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                     baseline_dic['variation'],
-        #                     method]+sol_nash.cons_eq_welfare.tolist()+[sol_nash.cons_eq_pop_average_welfare_change,
-        #                                                        sol_nash.cons_eq_negishi_welfare_change], 
-        #                     index = cons_eq_welfares.columns).T
-        #     cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
-        #     cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
+            if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
+                cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'method'] + p_baseline.countries + ['Equal','Negishi'])
+                cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
+            cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            method]+sol_nash.cons_eq_welfare.tolist()+[sol_nash.cons_eq_pop_average_welfare_change,
+                                                                sol_nash.cons_eq_negishi_welfare_change], 
+                            index = cons_eq_welfares.columns).T
+            cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+            cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
         
-        # ##%% Coop eq
-        # for aggregation_method in ['pop_weighted','negishi']:
-        #     p_opti, sol_opti = find_coop_eq(p_baseline,aggregation_method,
-        #                      lb_delta=0.01,ub_delta=12,dynamics=False,
-        #                      solver_options=None,tol=1e-15,
-        #                      static_eq_deltas = None,custom_weights=None)
+        ##%% Coop eq
+        for aggregation_method in ['pop_weighted','negishi']:
+            p_opti, sol_opti = find_coop_eq(p_baseline,aggregation_method,
+                              lb_delta=0.01,ub_delta=12,dynamics=False,
+                              solver_options=None,tol=1e-15,
+                              static_eq_deltas = None,custom_weights=None)
             
-        #     if write:
-        #         if not os.path.exists('coop_eq_recaps/deltas.csv'):
-        #             deltas_df = pd.DataFrame(columns = ['baseline',
-        #                                             'variation',
-        #                                             'aggregation_method'] + p_baseline.countries)
-        #             deltas_df.to_csv('coop_eq_recaps/deltas.csv')
-        #         deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
-        #         run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                         baseline_dic['variation'],
-        #                         aggregation_method]+p_opti.delta[...,1].tolist(), 
-        #                         index = deltas_df.columns).T
-        #         deltas_df = pd.concat([deltas_df, run],ignore_index=True)
-        #         deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+            if write:
+                if not os.path.exists('coop_eq_recaps/deltas.csv'):
+                    deltas_df = pd.DataFrame(columns = ['baseline',
+                                                    'variation',
+                                                    'aggregation_method'] + p_baseline.countries)
+                    deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+                deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
+                run = pd.DataFrame(data = [baseline_dic['baseline'],
+                                baseline_dic['variation'],
+                                aggregation_method]+p_opti.delta[...,1].tolist(), 
+                                index = deltas_df.columns).T
+                deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+                deltas_df.to_csv('coop_eq_recaps/deltas.csv')
                 
-        #         if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
-        #             cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-        #                                             'variation',
-        #                                             'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
-        #             cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
-        #         cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
-        #         run = pd.DataFrame(data = [baseline_dic['baseline'],
-        #                         baseline_dic['variation'],
-        #                         aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
-        #                                                            sol_opti.cons_eq_negishi_welfare_change], 
-        #                         index = cons_eq_welfares.columns).T
-        #         cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
-        #         cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+                if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
+                    cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                                    'variation',
+                                                    'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
+                    cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+                cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
+                run = pd.DataFrame(data = [baseline_dic['baseline'],
+                                baseline_dic['variation'],
+                                aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
+                                                                    sol_opti.cons_eq_negishi_welfare_change], 
+                                index = cons_eq_welfares.columns).T
+                cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+                cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
         
-        # ##%% counterfactuals 
-        # if baseline_dic['variation'] == 'baseline':
-        #     local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
-        # else:
-        #     local_path = \
-        #         f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
+        ##%% counterfactuals 
+        if baseline_dic['variation'] == 'baseline':
+            local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
+        else:
+            local_path = \
+                f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
         
-        # try:
-        #     os.mkdir(local_path)
-        # except:
-        #     pass
+        try:
+            os.mkdir(local_path)
+        except:
+            pass
         
-        # recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
+        recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
         
-        # if baseline_dic['variation'] == 'baseline':
-        #     recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
-        # else:
-        #     recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
+        if baseline_dic['variation'] == 'baseline':
+            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
+        else:
+            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
 
-        # for c in p_baseline.countries:
-        #     make_counterfactual(p_baseline,c,local_path,dynamics=False)
-        #     make_counterfactual_recap(p_baseline, sol_baseline, c,
-        #                                   local_path,recap_path)
+        for c in p_baseline.countries:
+            make_counterfactual(p_baseline,c,local_path,dynamics=False)
+            make_counterfactual_recap(p_baseline, sol_baseline, c,
+                                          local_path,recap_path)
         
-        # make_counterfactual(p_baseline,'World',local_path,dynamics=False)
-        # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-        #                               local_path,recap_path)
+        make_counterfactual(p_baseline,'World',local_path,dynamics=False)
+        make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+                                      local_path,recap_path)
         
-        # make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
-        # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
-        #                               local_path,recap_path)
+        make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
+        make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+                                      local_path,recap_path)

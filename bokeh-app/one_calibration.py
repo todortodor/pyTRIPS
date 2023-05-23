@@ -16,20 +16,20 @@ import numpy as np
 from solver_funcs import find_nash_eq, minus_welfare_of_delta
 
 new_run = True
-baseline_number = '601'
+baseline_number = '604'
 if new_run:
     p = parameters()
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.20/')
+    p.correct_eur_patent_cost = True
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
     # p_back_up = p.copy()
-    # p.correct_eur_patent_cost = True
     # p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_data()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.20/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
     # m_back_up = m.copy()
     # m.load_data('data/data_7_countries_2005/')
     
@@ -189,7 +189,7 @@ commentary = ''
 # baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 603
+run_number = 605
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

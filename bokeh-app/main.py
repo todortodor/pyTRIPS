@@ -654,6 +654,38 @@ comments_dic['603'] = {
     "1.27" : "1.27 : 2017",
     "1.28" : "1.28 : 2018",
 }
+comments_dic['604'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -662,7 +694,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['501','601','602','603']    
+baseline_list = ['501','604']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -724,7 +756,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '601'
+baseline_mom = '604'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -873,7 +905,7 @@ baseline_mom_select.on_change('value', update_x_axis_mom_matching_options)
 mom_select.on_change('value', update_mom)
 x_mom_select.on_change('value', update_x_axis_target)
 
-baseline_par = '601'
+baseline_par = '604'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -945,7 +977,7 @@ controls_par = row(baseline_par_select, par_select)
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
-baseline_sol_qty = '601'
+baseline_sol_qty = '604'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -1024,7 +1056,7 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 
 #%% Time series
 
-baseline_time = '603'
+baseline_time = '604'
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 
@@ -1272,7 +1304,7 @@ baseline_dyn = '501'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','601','602','603'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','604'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
 files_in_dir = next(os.walk(baseline_dyn_path))[1]
@@ -1723,7 +1755,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '601'
+baseline_nash_coop = '604'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1756,7 +1788,7 @@ def get_data_nash_coop(baseline_nash_number):
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                    # options=['404','405','501','601'])
-                                   options=['501','601','602','603'])
+                                   options=['501','604'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1941,19 +1973,21 @@ third_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '601_1.15'
+baseline_cf = '604_1.15'
 country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
+            if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -2219,11 +2253,11 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '601'
+baseline_jac = '604'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','601'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','604'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]

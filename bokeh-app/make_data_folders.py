@@ -25,6 +25,43 @@ scalar_moments = pd.read_csv(
 final_pat_fees = pd.read_csv(
     legacy_data_path+'final_pat_fees.csv', index_col=0)
 
+exchange_rates = {
+    1990: 1.066116,
+    1991: 1.066116,
+    1992: 1.066116,
+    1993: 1.066116,
+    1994: 1.066116,
+    1995: 1.066116,
+    1996: 1.066116,
+    1997: 1.066116,
+    1998: 1.066116,
+    1999: 1.066116,
+    2000: 0.923498,
+    2001: 0.895969,
+    2002: 0.942468,
+    2003: 1.134134,
+    2004: 1.244143,
+    2005: 1.246376,
+    2006: 1.256316,
+    2007: 1.370412,
+    2008: 1.471366,
+    2009: 1.39448,
+    2010: 1.327386,
+    2011: 1.392705,
+    2012: 1.285697,
+    2013: 1.328464,
+    2014: 1.329165,
+    2015: 1.109729,
+    2016: 1.10656,
+    2017: 1.130051,
+    2018: 1.181011,
+    2019: 1.120129,
+    2020: 1.142203,
+    2021: 1.18318,
+    2022: 1.053783,
+    2023: 1.081941
+}
+
 na_values = ["",
              "#N/A",
              "#N/A N/A",
@@ -61,7 +98,7 @@ m = moments()
 m.load_data()
 
 # config_dics = [
-#     {'year': 2018, 'N': 13},
+#     {'year': 2018, 'N': 7},
 # ]
 
 config_dics = [{
@@ -71,9 +108,10 @@ config_dics = [{
     for N in [7,13]
     ]
 
-write = False
+write = True
 
 for config_dic in config_dics:
+    print(config_dic)
     year = config_dic['year']
     year_OECD = np.maximum(config_dic['year'], 1995)
     year_rnd_gdp = np.maximum(config_dic['year'], 1996)
@@ -174,12 +212,6 @@ for config_dic in config_dics:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         moments_descriptions.to_csv(
             dropbox_path+'moments_descriptions.csv', sep=';')
-    
-    final_pat_fees_year = final_pat_fees.copy()
-    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
-    if write:
-        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
-        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
 
     iot_OECD = pd.read_csv(
         f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
@@ -289,8 +321,18 @@ for config_dic in config_dics:
     )['gdp'].sum()
     gdp_year.loc[nbr_of_countries] = gdp_WLD[f'{year} [YR{year}]'].astype(
         float).iloc[0] - gdp_year.loc[1:nbr_of_countries-1].sum()
-
+    
     country_qty['gdp'] = gdp_year
+    
+    final_pat_fees_year = final_pat_fees.copy()
+    #!!! changing EUR patenting fee
+    final_pat_fees_year.loc[2,'fee'] = 30530*gdp_year.loc[2]/exchange_rates[year]/gdp.loc[
+        gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','CHE','ESP','DEU'])
+        ][f'{year} [YR{year}]'].sum()
+    final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
+    if write:
+        final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
+        final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
 
     labor_year = pd.merge(labor[
         ['Country Code', f'{year} [YR{year}]']
