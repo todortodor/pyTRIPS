@@ -128,11 +128,10 @@ for k, v in dic_runs.items():
         print(v)
         print(target)
         m = moments()
-        m.load_data()
         m.load_run(baseline_path)
         m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters(n=7,s=2)
-        p.load_data(baseline_path)
+        p = parameters()
+        p.load_run(baseline_path)
         # if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
         #     m.list_of_moments.append('ERDUS')
         #     if 'kappa' not in p.calib_parameters:
@@ -245,11 +244,10 @@ for k, v in dic_runs.items():
         print(v)
         print(par)
         m = moments()
-        m.load_data()
         m.load_run(baseline_path)
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters(n=7,s=2)
-        p.load_data(baseline_path)
+        p = parameters()
+        p.load_run(baseline_path)
         if par_to_change == 'zeta':
             if 'zeta' in p.calib_parameters:
                 p.calib_parameters.remove('zeta')
@@ -358,11 +356,10 @@ for k, v in dic_runs.items():
         print(v)
         print(weight)
         m = moments()
-        m.load_data()
         m.load_run(baseline_path)
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters(n=7,s=2)
-        p.load_data(baseline_path)
+        p = parameters()
+        p.load_run(baseline_path)
         m.weights_dict[mom_weight_to_change] = weight
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()

@@ -25,8 +25,8 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'501',
-                      'variation':'3.0'}
+    {'baseline':'607',
+                      'variation':'baseline'}
     ]
 
 lb_delta = 0.01
@@ -42,8 +42,8 @@ for baseline_dic in baseline_dics:
     assert os.path.exists(baseline_path), 'run doesnt exist'
     
     print(baseline_path)
-    p_baseline = parameters(n=7,s=2)
-    p_baseline.load_data(baseline_path)
+    p_baseline = parameters()
+    p_baseline.load_run(baseline_path)
     
     for aggregation_method in ['negishi','pop_weighted']:
         print(aggregation_method)

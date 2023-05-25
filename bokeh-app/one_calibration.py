@@ -15,27 +15,27 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '606'
+baseline_number = '607'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
+    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     # p_back_up = p.copy()
-    p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
+    # p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_data()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/1.25/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
     # m_back_up = m.copy()
-    m.load_data('data/data_7_countries_2005/')
+    # m.load_data('data/data_7_countries_2005/')
     
 # p.update_khi_and_r_hjort(0.16)
 
 # m.weights_dict['RP'] = 4
-m.weights_dict['SRGDP'] = 6
+m.weights_dict['SRGDP'] = 3
 # m.weights_dict['GROWTH'] = 4
 # m.weights_dict['TE'] = 5
 
@@ -188,11 +188,11 @@ commentary = ''
 # baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 3.0
+run_number = 611
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = False
+new_baseline = True
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

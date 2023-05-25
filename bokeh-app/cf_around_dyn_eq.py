@@ -22,7 +22,7 @@ plt.rcParams.update({'font.size': 25})
 plt.rcParams['text.usetex'] = False
 
 baseline_dics = [
-    {'baseline':'501','variation': '3.0'}
+    {'baseline':'607','variation':'baseline'}
     ]
 
 nash_deltas = pd.read_csv('nash_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(['baseline','variation'],keep='last')
@@ -46,8 +46,8 @@ for baseline_dic in baseline_dics:
         baseline_path = \
             f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
     print(baseline_path)
-    p_baseline = parameters(n=7,s=2)
-    p_baseline.load_data(baseline_path)
+    p_baseline = parameters()
+    p_baseline.load_run(baseline_path)
     
     for equilibrium in ['nash_eq','coop_negishi_eq','coop_equal_eq']:
         if baseline_dic['variation'] == 'baseline':
@@ -58,7 +58,7 @@ for baseline_dic in baseline_dics:
                 f'counterfactual_results/around_dyn_{equilibrium}/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
         
         recaps_path = f'counterfactual_recaps/around_dyn_{equilibrium}/'
-        if baseline_dic['variation'] is None:
+        if baseline_dic['variation'] == 'baseline':
             recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
         else:
             recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'        
@@ -110,13 +110,52 @@ for baseline_dic in baseline_dics:
         sol_baseline.scale_P(p_baseline)
         sol_baseline.compute_non_solver_quantities(p_baseline)    
         
+        p_baseline.delta[...,1] = deltas_of_equilibrium
+        
         delta_factor_array = np.logspace(np.log(lb_delta)/np.log(10),np.log(ub_delta)/np.log(10),31)
         
         for c in p_baseline.countries:
             make_counterfactual(p_baseline,c,local_path,
-                                    delta_factor_array=delta_factor_array,dynamics=True,
+                                    delta_factor_array=delta_factor_array/p_baseline.delta[p_baseline.countries.index(c),1],
+                                    dynamics=True,
                                     sol_baseline=sol_baseline,
                                     Nt=25,t_inf=500)
             make_counterfactual_recap(p_baseline, sol_baseline, c,
                                           local_path,recap_path,
                                           dynamics=True,Nt=25,t_inf=500)
+        
+        recap_dyn = pd.DataFrame(columns = [col for country in p_baseline.countries
+                                for col in [country+'_delta',country+'_welfare',country+'_world_negishi',country+'_world_equal'] 
+                                ])
+        for c in p_baseline.countries:
+        # for c in ['USA']:
+            print(c)
+            idx_country = p_baseline.countries.index(c)
+            country_path = local_path+c+'/'
+            files_in_dir = next(os.walk(country_path))[1]
+            run_list = [f for f in files_in_dir if f[0].isnumeric()]
+            run_list.sort(key=float)
+            for run in run_list:
+                print(run)
+                
+                p = parameters()
+                p.load_run(country_path+run+'/')
+                print(p.delta[idx_country,1])
+                if p.guess is not None:
+                    sol_c = var.var_from_vector(p.guess, p, compute=True, 
+                                                context = 'counterfactual')
+                    sol_c.compute_solver_quantities(p)
+                    sol_c.scale_P(p)
+                    sol_c.compute_non_solver_quantities(p)
+                    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+                if p.dyn_guess is not None:
+                    dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+                                                            Nt=25,t_inf=500,
+                                                            sol_init = sol_baseline,
+                                                            sol_fin = sol_c)
+                    dyn_sol_c.compute_non_solver_quantities(p)
+                    recap_dyn.loc[run, c+'_delta'] = p.delta[idx_country,1]
+                    recap_dyn.loc[run, c+'_welfare'] = dyn_sol_c.cons_eq_welfare[idx_country]
+                    recap_dyn.loc[run, c+'_world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
+                    recap_dyn.loc[run, c+'_world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
+        recap_dyn.to_csv(recap_path+'all_countries.csv', index=False)

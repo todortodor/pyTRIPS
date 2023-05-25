@@ -16,6 +16,10 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
+    # {'baseline':'607','variation': 'baseline'},
+    # {'baseline':'608','variation': 'baseline'},
+    # {'baseline':'609','variation': 'baseline'},
+    {'baseline':'610','variation': 'baseline'},
     # {'baseline':'601','variation': 'baseline'},
     # {'baseline':'601','variation': '1.0'},
     # {'baseline':'601','variation': '1.1'},
@@ -38,14 +42,14 @@ baseline_dics = [
     # {'baseline':'601','variation': '1.18'},
     # {'baseline':'601','variation': '1.19'},
     # {'baseline':'601','variation': '1.20'},
-    {'baseline':'601','variation': '1.21'},
-    {'baseline':'601','variation': '1.22'},
-    {'baseline':'601','variation': '1.23'},
-    {'baseline':'601','variation': '1.24'},
-    {'baseline':'601','variation': '1.25'},
-    {'baseline':'601','variation': '1.26'},
-    {'baseline':'601','variation': '1.27'},
-    {'baseline':'601','variation': '1.28'}
+    # {'baseline':'601','variation': '1.21'},
+    # {'baseline':'601','variation': '1.22'},
+    # {'baseline':'601','variation': '1.23'},
+    # {'baseline':'601','variation': '1.24'},
+    # {'baseline':'601','variation': '1.25'},
+    # {'baseline':'601','variation': '1.26'},
+    # {'baseline':'601','variation': '1.27'},
+    # {'baseline':'601','variation': '1.28'}
     ]
 
 for baseline_dic in baseline_dics:

@@ -19,8 +19,8 @@ from tqdm import tqdm
 import matplotlib.pylab as pylab
 
 baseline_dics = [
-    {'baseline':'501',
-                      'variation':'3.0'},
+    {'baseline':'607',
+                      'variation':'baseline'}
     ]
 
 for baseline_dic in baseline_dics:
@@ -34,10 +34,10 @@ for baseline_dic in baseline_dics:
     
     method = 'fixed_point'
     
-    p_baseline = parameters(n=7,s=2)
-    p_baseline.load_data(baseline_path)
+    p_baseline = parameters()
+    p_baseline.load_run(baseline_path)
     
-    p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=1,method=method,
+    p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method=method,
                      plot_convergence = True,solver_options=None,tol=5e-3,plot_history=False,
                      dynamics=True)
     

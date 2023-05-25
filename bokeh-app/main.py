@@ -720,7 +720,178 @@ comments_dic['606'] = {
     "2.0" : "2.0:SRGDP weight = RP weight",
     "3.0" : "3.0:SRGDP weight > RP weight",
 }
+comments_dic['607'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
+comments_dic['608'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
+comments_dic['609'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
+comments_dic['610'] = {
+    "baseline":"baseline : 2005",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
 
+comments_dic['611'] = {'baseline':'bsln:TO:0.0183',
+    '1.0':'1.0: TO: 0.01',
+'1.1':'1.1: TO: 0.0105',
+'1.2':'1.2: TO: 0.011',
+'1.3':'1.3: TO: 0.0115',
+'1.4':'1.4: TO: 0.012',
+'1.5':'1.5: TO: 0.0125',
+'1.6':'1.6: TO: 0.013',
+'1.7':'1.7: TO: 0.0135',
+'1.8':'1.8: TO: 0.014',
+'1.9':'1.9: TO: 0.0145',
+'1.10':'1.10: TO: 0.015',
+'1.11':'1.11: TO: 0.0155',
+'1.12':'1.12: TO: 0.016',
+'1.13':'1.13: TO: 0.0165',
+'1.14':'1.14: TO: 0.017',
+'1.15':'1.15: TO: 0.0175',
+'1.16':'1.16: TO: 0.018',
+'1.17':'1.17: TO: 0.0185',
+'1.18':'1.18: TO: 0.019',
+'1.19':'1.19: TO: 0.0195',
+'1.20':'1.20: TO: 0.02',
+'1.21':'1.21: TO: 0.0205',
+'1.22':'1.22: TO: 0.021',
+'1.23':'1.23: TO: 0.0215',
+'1.24':'1.24: TO: 0.022',
+'1.25':'1.25: TO: 0.0225',
+'1.26':'1.26: TO: 0.023',
+'1.27':'1.27: TO: 0.0235',
+'1.28':'1.28: TO: 0.024',
+'1.29':'1.29: TO: 0.0245',
+'1.30':'1.30: TO: 0.025',
+'1.31':'1.31: TO: 0.0255',
+'1.32':'1.32: TO: 0.026',
+'1.33':'1.33: TO: 0.0265',
+'1.34':'1.34: TO: 0.027',
+'1.35':'1.35: TO: 0.0275',
+'1.36':'1.36: TO: 0.028',
+'1.37':'1.37: TO: 0.0285',
+'1.38':'1.38: TO: 0.029',
+'1.39':'1.39: TO: 0.0295',
+'1.40':'1.40: TO: 0.03'
+    }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
@@ -729,12 +900,13 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['501','604','606']    
+baseline_list = ['501','604','606','607','608','609','610','611']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
  
 for baseline_nbr in baseline_list:
+    print(baseline_nbr)
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path,
@@ -791,7 +963,7 @@ countries = p_baseline.countries
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
-baseline_mom = '606'
+baseline_mom = '610'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -940,7 +1112,7 @@ baseline_mom_select.on_change('value', update_x_axis_mom_matching_options)
 mom_select.on_change('value', update_mom)
 x_mom_select.on_change('value', update_x_axis_target)
 
-baseline_par = '606'
+baseline_par = '610'
 par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
@@ -1012,7 +1184,7 @@ controls_par = row(baseline_par_select, par_select)
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
-baseline_sol_qty = '606'
+baseline_sol_qty = '610'
 sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
@@ -1091,14 +1263,17 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 
 #%% Time series
 
-baseline_time = '604'
+baseline_time = '610'
+baseline_time_list = ['607','608','609','610']    
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
+baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
+
 
 years_time = [y for y in range(1990,2019)]
 runs_time = ['1.'+str(i) for i in range(29)]
 
-def build_time_series(par_time):
+def build_time_series(baseline_time,par_time):
     # df = baselines_dic_param[baseline_time][par_time].T.reindex(
     #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
     #     )
@@ -1113,9 +1288,9 @@ def build_time_series(par_time):
     df.index.name = 'year'
     return df
 
-df_par_time = build_time_series(par_time)
+df_par_time = build_time_series(baseline_time,par_time)
 ds_par_time = ColumnDataSource(df_par_time)
-p_par_time = figure(title=f"Time series for baseline {baseline_time}", 
+p_par_time = figure(title="Time series", 
                width = 1500,
                height = 850,
            y_axis_label='Parameter',
@@ -1147,7 +1322,18 @@ legend_par_time = Legend(items=legend_items_par_time, click_policy="hide",
 p_par_time.add_layout(legend_par_time , 'right')
     
 def update_par_time(attrname, old, new):
-    df_par_time = build_time_series(new)
+    df_par_time = build_time_series(baseline_time_select.value,new)
+    ds_par_time.data = df_par_time
+    if new!='scalars':
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in countries]
+    else:
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+    legend_par_time.items = legend_items_par_time
+    
+def update_baseline_time(attrname, old, new):
+    df_par_time = build_time_series(new,par_time_select.value)
     ds_par_time.data = df_par_time
     if new!='scalars':
         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
@@ -1157,23 +1343,43 @@ def update_par_time(attrname, old, new):
                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
     legend_par_time.items = legend_items_par_time
 
-controls_par_time = row(par_time_select)
+controls_par_time = row(baseline_time_select,par_time_select)
 
 par_time_select.on_change('value', update_par_time)
+baseline_time_select.on_change('value', update_baseline_time)
 
 par_time_report = column(controls_par_time, p_par_time)    
 
-first_panel_bis = row(par_time_report)
+explication_calib_params = Div(text=
+                         "607 variations : <br> \
+                             calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
+                               targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
+                                   TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
+                         608 variations : <br> \
+                             calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
+                               targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+                                   SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+                         609 variations :<br> \
+                             calibrated parameters : eta,T,delta <br> \
+                               targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+                                   SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+                         610 variations :<br> \
+                             calibrated parameters : eta,T,delta <br> \
+                               targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
+                                   SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+                          ")
+
+first_panel_bis = row(par_time_report, explication_calib_params)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '501_1.0'
+baseline_dyn_cf = '607'
 country_dyn_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
-dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+# dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(dyn_cf_path) 
@@ -1181,7 +1387,7 @@ dyn_cf_list = sorted([s for s in os.listdir(cf_path)
     # sorted([s for s in os.listdir(dyn_cf_path) 
     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['501_1.0','501_2.0'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['607','501_1.0','501_2.0'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             options=countries+['World','Harmonizing'])
@@ -1335,11 +1541,12 @@ counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
 #%% dynamic solver
 
-baseline_dyn = '501'
+baseline_dyn = '610'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','604'])
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', options=['501','604','607',
+                                                                            '608','609','610'])
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
 files_in_dir = next(os.walk(baseline_dyn_path))[1]
@@ -1610,14 +1817,20 @@ second_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  d
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '501'
-variation_dyn_nash_coop = '1.0'
+baseline_dyn_nash_coop = '607'
+variation_dyn_nash_coop = 'baseline'
 equilibrium_type ='Nash'
 
-baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=['501'])
+baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
+    '607','501'
+    ])
+dic_of_possible_variations_dyn_nash_coop = {
+    '607':['baseline'],
+    '501':['1.0','2.0']
+    }
 variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
                             title='Variation', 
-                            options=['1.0','2.0'])
+                            options=['baseline'])
 equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
 
 def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
@@ -1754,6 +1967,8 @@ p_dyn_eq_dev.add_layout(labels_dyn_eq_dev)
 
 
 def update_baseline_dyn_nash(attrname, old, new):
+    variation_dyn_nash_coop_select.value = dic_of_possible_variations_dyn_nash_coop[new][0]
+    variation_dyn_nash_coop_select.options = dic_of_possible_variations_dyn_nash_coop[new]
     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(new,
                                                 variation_dyn_nash_coop_select.value,
                                                 equilibrium_type_select.value)
@@ -1790,7 +2005,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '604'
+baseline_nash_coop = '610'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1823,7 +2038,7 @@ def get_data_nash_coop(baseline_nash_number):
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                    # options=['404','405','501','601'])
-                                   options=['501','604'])
+                                   options=['501','604','607','608','609','610','611'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2008,13 +2223,23 @@ third_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '604_1.15'
+baseline_cf = '607'
 country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_list = sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('606') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('607') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('610') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -2102,14 +2327,14 @@ counterfactuals_report = column(controls_cf,p_cf)
 #%% counterfactuals 405 TO target
 
 country_to_cf = 'USA'
-to_target = 0.0185
+to_target = 0.0155
 
 list_of_to_targets = np.linspace(0.01,0.03,41)
 
 def section_end(s):
      return [int(_) for _ in s.split("_")[-1].split(".")]
 cf_to_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('405') and s.startswith('baseline')], key=section_end)
+            if s[9:].startswith('611') and s.startswith('baseline')], key=section_end)
 
 def get_data_to_cf(to_target,country):
     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
@@ -2141,7 +2366,7 @@ ds_to_cf_max = ColumnDataSource(df_to_cf_max)
 colors_to_cf = itertools.cycle(Category10[10])
 colors_to_cf_max = itertools.cycle(Category10[10])
 
-p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 405", 
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 611", 
                 width = 1200,
                 height = 850,
                 x_axis_label='Change in delta',
@@ -2288,11 +2513,11 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '604'
+baseline_jac = '610'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','604'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','604','607','608','609','610'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
