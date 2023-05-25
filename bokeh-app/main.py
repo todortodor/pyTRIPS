@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import Button,Range1d, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import Button, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 from bokeh.plotting import figure
 from bokeh.events import ButtonClick
 from classes import parameters, moments, var
@@ -14,6 +14,8 @@ from bokeh.palettes import Category10
 import time
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
+
+start = time.perf_counter()
 
 def load(path, data_path=None, 
          dir_path = None, context = 'calibration'):
@@ -211,231 +213,6 @@ list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 
 comments_dic = {}
 
-comments_dic['311'] = {"baseline":"baseline",
-                "1.0":"1.0: kappa:0.5,TO:0.05,KM:0.06",
-                "1.1":"1.1: kappa:0.5,TO:0.05,KM:0.09277",
-                "1.2":"1.2: kappa:0.5,TO:0.05,KM:0.1322",
-                "1.3":"1.3: kappa:0.5,TO:0.036,KM:0.06",
-                "1.4":"1.4: kappa:0.5,TO:0.036,KM:0.09277",
-                "1.5":"1.5: kappa:0.5,TO:0.036,KM:0.1322",
-                "1.6":"1.6: kappa:0.5,TO:0.0124,KM:0.06",
-                "1.7":"1.7: kappa:0.5,TO:0.0124,KM:0.09277",
-                "1.8":"1.8: kappa:0.5,TO:0.0124,KM:0.1322",
-                "1.9":"1.9: kappa:0.5,TO:0.0242,KM:0.06",
-                "1.10":"1.10: kappa:0.5,TO:0.0242,KM:0.09277",
-                "1.11":"1.11: kappa:0.5,TO:0.0242,KM:0.1322",
-                "2.0":"2.0: Added SINNOVPATEU moment",
-                "2.1":"2.1: 2.0 stronger weights DOMPATEU/US SINNOVPATEU/US",
-                "2.1.0":"2.1.0: kappa:0.5,TO:0.05,KM:0.06",
-                "2.1.1":"2.1.1: kappa:0.5,TO:0.05,KM:0.09277",
-                "2.1.2":"2.1.2: kappa:0.5,TO:0.05,KM:0.1322",
-                "2.1.3":"2.1.3: kappa:0.5,TO:0.036,KM:0.06",
-                "2.1.4":"2.1.4: kappa:0.5,TO:0.036,KM:0.09277",
-                "2.1.5":"2.1.5: kappa:0.5,TO:0.036,KM:0.1322",
-                "2.1.6":"2.1.6: kappa:0.5,TO:0.0242,KM:0.06",
-                "2.1.7":"2.1.7: kappa:0.5,TO:0.0242,KM:0.09277",
-                "2.1.8":"2.1.8: kappa:0.5,TO:0.0242,KM:0.1322",
-                "2.1.9":"2.1.9: kappa:0.5,TO:0.0124,KM:0.06",
-                "2.1.9.2":"2.1.9.2: re-converging 2.1.9",
-                "2.1.10":"2.1.10: kappa:0.5,TO:0.0124,KM:0.09277",
-                "2.1.11":"2.1.11: kappa:0.5,TO:0.0124,KM:0.1322",
-                "2.2":"2.2: 2.0 with ratio loss",
-                "2.3":"2.3: 2.2 higher SPFLOW weight",
-                "3.0":"3.0: Not calibrated ! only eta_US/2",
-                "4.0":"4.0: drop SRDUS moment",
-                "5.0":"5.0: no Hjort factors",
-                "6.1":"6.1: JUPCOST instead of UUPCOST",
-                "6.2":"6.2: both JUPCOST and UUPCOST",
-                "6.3":"6.3: none of JUPCOST or UUPCOST",
-                "7.0":"7.0: calibrated elasticities",
-                "8.0":"8.0: ratio loss function for SPFLOW",
-                # "8.1":"8.1: squared diff loss function for SPFLOW",            
-                # "1.9":"1.9: kappa:0.7474,TO:0.05,KM:0.06",
-                # "1.10":"1.10: kappa:0.7474,TO:0.05,KM:0.09277",
-                # "1.11":"1.11: kappa:0.7474,TO:0.05,KM:0.1322",
-                # "1.12":"1.12: kappa:0.7474,TO:0.036,KM:0.06",
-                # "1.13":"1.13: kappa:0.7474,TO:0.036,KM:0.09277",
-                # "1.14":"1.14: kappa:0.7474,TO:0.036,KM:0.1322",
-                # "1.15":"1.15: kappa:0.7474,TO:0.0124,KM:0.06",
-                # "1.16":"1.16: kappa:0.7474,TO:0.0124,KM:0.09277",
-                # "1.17":"1.17: kappa:0.7474,TO:0.0124,KM:0.1322",
-                }
-
-comments_dic['312'] = {"baseline":"baseline",
-                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
-                "1.1":"1.1: TO: 0.036",
-                "1.2":"1.2: TO: 0.0124",
-                "1.3":"1.3: TO: 0.00972",
-                "2.0":"2.0: with SINNOVPATEU",
-                "2.1":"2.1: TO: 0.036",
-                "2.2":"2.2: TO: 0.0124",
-                "2.3":"2.3: TO: 0.00972",
-                "3.0":"3.0: with DOMPATINUS/EU",
-                "3.1":"3.1: TO: 0.036",
-                "3.2":"3.2: TO: 0.0124",
-                "3.3":"3.3: TO: 0.00972",
-                "4.0":"4.0: with SINNOVPATEU and DOMPATINUS/EU",
-                "4.1":"4.1: TO: 0.036",
-                "4.2":"4.2: TO: 0.0124",
-                "4.3":"4.3: TO: 0.00972",
-                "4.4":"4.4: 4.0 new solver version",
-                # "4.5":"4.5: 4.4 targeting SDOMTFLOW",
-                "5.0":"5.0: drop SRDUS",
-                "5.1":"5.1: TO: 0.036",
-                "5.2":"5.2: TO: 0.0124",
-                "5.3":"5.3: TO: 0.00972",
-                "6.0":"6.0: drop SRDUS with SINNOVPATEU",
-                "6.1":"6.1: TO: 0.036",
-                "6.2":"6.2: TO: 0.0124",
-                "6.3":"6.3: TO: 0.00972",
-                "7.0":"7.0: drop SRDUS with DOMPATINUS/EU",
-                "7.1":"7.1: TO: 0.036",
-                "7.2":"7.2: TO: 0.0124",
-                "7.3":"7.3: TO: 0.00972",
-                "8.0":"8.0: drop SRDUS with SINNOVPATEU and DOMPATINUS/EU",
-                "8.1":"8.1: TO: 0.036",
-                "8.2":"8.2: TO: 0.0124",
-                "8.3":"8.3: TO: 0.00972",
-                "9.0":"9.0: drop UUPCOST",
-                "9.1":"9.1: TO: 0.036",
-                "9.2":"9.2: TO: 0.0124",
-                "9.3":"9.3: TO: 0.00972",
-                "10.0":"10.0: drop UUPCOST with SINNOVPATEU and DOMPATINUS/EU",
-                "10.1":"10.1: TO: 0.036",
-                "10.2":"10.2: TO: 0.0124",
-                "10.3":"10.3: TO: 0.00972",
-                "11.0":"11.0:drop SRDUS & UUPCOST with SINNOVPATEU & DOMPATIN",  
-                "11.1":"11.1: TO: 0.036",
-                "11.2":"11.2: TO: 0.0124",
-                "11.3":"11.3: TO: 0.00972",
-                }
-
-comments_dic['401'] = {"baseline":"baseline",
-                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
-                "1.1":"1.1: TO: 0.036",
-                "1.2":"1.2: TO: 0.0183",
-                "1.3":"1.3: TO: 0.0124",
-                "2.0":"2.0: with SINNOVPATEU",
-                "2.1":"2.1: TO: 0.036",
-                "2.2":"2.2: TO: 0.0183",
-                "2.3":"2.3: TO: 0.0124",
-                "3.0":"3.0: with DOMPATINUS/EU",
-                "3.1":"3.1: TO: 0.036",
-                "3.2":"3.2: TO: 0.0183",
-                "3.3":"3.3: TO: 0.0124",
-                "4.0":"4.0: with SINNOVPATEU and DOMPATINUS/EU",
-                "4.1":"4.1: TO: 0.036",
-                "4.2":"4.2: TO: 0.0183",
-                "4.3":"4.3: TO: 0.0124",
-                "5.0":"5.0: drop SRDUS",
-                "5.1":"5.1: TO: 0.036",
-                "5.2":"5.2: TO: 0.0183",
-                "5.3":"5.3: TO: 0.0124",
-                "6.0":"6.0: drop SRDUS with SINNOVPATEU",
-                "6.1":"6.1: TO: 0.036",
-                "6.2":"6.2: TO: 0.0183",
-                "6.3":"6.3: TO: 0.0124",
-                "7.0":"7.0: drop SRDUS with DOMPATINUS/EU",
-                "7.1":"7.1: TO: 0.036",
-                "7.2":"7.2: TO: 0.0183",
-                "7.3":"7.3: TO: 0.0124",
-                "8.0":"8.0: drop SRDUS with SINNOVPATEU and DOMPATINUS/EU",
-                "8.1":"8.1: TO: 0.036",
-                "8.2":"8.2: TO: 0.0183",
-                "8.3":"8.3: TO: 0.0124",
-                "9.0":"9.0: drop UUPCOST",
-                "9.1":"9.1: TO: 0.036",
-                "9.2":"9.2: TO: 0.0183",
-                "9.3":"9.3: TO: 0.0124",
-                "10.0":"10.0: drop UUPCOST with SINNOVPATEU and DOMPATINUS/EU",
-                "10.1":"10.1: TO: 0.036",
-                "10.2":"10.2: TO: 0.0183",
-                "10.3":"10.3: TO: 0.0124",
-                "11.0":"11.0:drop SRDUS & UUPCOST with SINNOVPATEU & DOMPATIN",  
-                "11.1":"11.1: TO: 0.036",
-                "11.2":"11.2: TO: 0.0183",
-                "11.3":"11.3: TO: 0.0124",
-                }
-
-comments_dic['402'] = {"baseline":"baseline, SRDUS, UUPCOST, DOMPATOUT",
-                "1.0":"1.0: identical baseline, TO: 0.0242, KM:0.09277",
-                "1.1":"1.1: TO: 0.0183",
-                "1.1.1":"1.1.1: calibrated elasticities",
-                "1.2":"1.2: TO: 0.0124",
-                "2.0":"2.0: SRDUS, UUPCOST, DOMPATIN",
-                "2.1":"2.1: TO: 0.0183",
-                "2.1.1":"2.1.1: calibrated elasticities",
-                "2.1.2":"2.1.2: calibrated sigma",
-                "2.1.3":"2.1.3: calibrated theta",
-                "2.2":"2.2: TO: 0.0124",
-                "3.0":"3.0: SRDUS, UUPCOST, no DOMPAT",
-                "3.1":"3.1: TO: 0.0183",
-                "3.1.1":"3.1.1: calibrated elasticities",
-                "3.2":"3.2: TO: 0.0124",
-                "4.0":"4.0: SRDUS, PCOST, DOMPATOUT",
-                "4.1":"4.1: TO: 0.0183",
-                "4.1.1":"4.1.1: calibrated elasticities",
-                "4.2":"4.2: TO: 0.0124",
-                "5.0":"5.0: SRDUS, PCOST, DOMPATIN",
-                "5.1":"5.1: TO: 0.0183",
-                "5.1.1":"5.1.1: calibrated elasticities",
-                "5.2":"5.2: TO: 0.0124",
-                "6.0":"6.0: SRDUS, PCOSTINTER, no DOMPAT",
-                "6.1":"6.1: TO: 0.0183",
-                "6.1.1":"6.1.1: calibrated elasticities",
-                "6.2":"6.2: TO: 0.0124",
-                "7.0":"7.0: SRDUS, PCOSTNOAGG, DOMPATOUT",
-                "7.1":"7.1: TO: 0.0183",
-                "7.1.1":"7.1.1: calibrated elasticities",
-                "7.2":"7.2: TO: 0.0124",
-                "8.0":"8.0: SRDUS, PCOSTNOAGG, DOMPATIN",
-                "8.1":"8.1: TO: 0.0183",
-                "8.1.1":"8.1.1: calibrated elasticities",
-                "8.2":"8.2: TO: 0.0124",
-                "9.0":"9.0: SRDUS, PCOSTINTERNOAGG, no DOMPAT",
-                "9.1":"9.1: TO: 0.0183",
-                "9.1.1":"9.1.1: calibrated elasticities",
-                "9.2":"9.2: TO: 0.0124",
-                "10.0":"10.0: no SRDUS, UUPCOST, DOMPATOUT",
-                "10.1":"10.1: TO: 0.0183",
-                "10.1.1":"10.1.1: calibrated elasticities",
-                "10.2":"10.2: TO: 0.0124",
-                "11.0":"11.0: no SRDUS, UUPCOST, DOMPATIN",
-                "11.1":"11.1: TO: 0.0183",
-                "11.1.1":"11.1.1: calibrated elasticities",
-                "11.2":"11.2: TO: 0.0124",
-                "12.0":"12.0: no SRDUS, UUPCOST, no DOMPAT",
-                "12.1":"12.1: TO: 0.0183",
-                "12.1.1":"12.1.1: calibrated elasticities",
-                "12.2":"12.2: TO: 0.0124",
-                "13.0":"13.0: no SRDUS, PCOST, DOMPATOUT",
-                "13.1":"13.1: TO: 0.0183",
-                "13.1.1":"13.1.1: calibrated elasticities",
-                "13.2":"13.2: TO: 0.0124",
-                "14.0":"14.0: no SRDUS, PCOST, DOMPATIN",
-                "14.1":"14.1: TO: 0.0183",
-                "14.1.1":"14.1.1: calibrated elasticities",
-                "14.2":"14.2: TO: 0.0124",
-                "15.0":"15.0: no SRDUS, PCOSTINTER, no DOMPAT",
-                "15.1":"15.1: TO: 0.0183",
-                "15.1.1":"15.1.1: calibrated elasticities",
-                "15.2":"15.2: TO: 0.0124",
-                "16.0":"16.0: no SRDUS, PCOSTNOAGG, DOMPATOUT",
-                "16.1":"16.1: TO: 0.0183",
-                "16.1.1":"16.1.1: calibrated elasticities",
-                "16.2":"16.2: TO: 0.0124",
-                "17.0":"17.0: no SRDUS, PCOSTNOAGG, DOMPATIN",
-                "17.1":"17.1: TO: 0.0183",
-                "17.1.1":"17.1.1: calibrated elasticities",
-                "17.1.2":"17.1.2: calibrated sigma",
-                "17.1.3":"17.1.3: calibrated theta",
-                "17.2":"17.2: TO: 0.0124",
-                "18.0":"18.0: no SRDUS, PCOSTINTERNOAGG, no DOMPAT",
-                "18.1":"18.1: TO: 0.0183",
-                "18.1.1":"18.1.1: calibrated elasticities",
-                "18.2":"18.2: TO: 0.0124",
-                }
-
 comments_dic['403'] = {'baseline':'bsln:TO:0.0183',
     '1.0':'1.0: TO: 0.01',
 '1.1':'1.1: TO: 0.0105',
@@ -552,11 +329,6 @@ comments_dic['501'] = {
     '5.0':'5.0: New data v2',
     }
 
-comments_dic['502'] = {
-    "baseline":"baseline 2005",
-    "1.0":"baseline 1995"
-    }
-
 comments_dic['601'] = {
     "baseline":"baseline : 2005",
     "1.0" : "1.0 : 1990",
@@ -654,38 +426,7 @@ comments_dic['603'] = {
     "1.27" : "1.27 : 2017",
     "1.28" : "1.28 : 2018",
 }
-comments_dic['604'] = {
-    "baseline":"baseline : 2005",
-    "1.0" : "1.0 : 1990",
-    "1.1" : "1.1 : 1991",
-    "1.2" : "1.2 : 1992",
-    "1.3" : "1.3 : 1993",
-    "1.4" : "1.4 : 1994",
-    "1.5" : "1.5 : 1995",
-    "1.6" : "1.6 : 1996",
-    "1.7" : "1.7 : 1997",
-    "1.8" : "1.8 : 1998",
-    "1.9" : "1.9 : 1999",
-    "1.10" : "1.10 : 2000",
-    "1.11" : "1.11 : 2001",
-    "1.12" : "1.12 : 2002",
-    "1.13" : "1.13 : 2003",
-    "1.14" : "1.14 : 2004",
-    "1.15" : "1.15 : 2005",
-    "1.16" : "1.16 : 2006",
-    "1.17" : "1.17 : 2007",
-    "1.18" : "1.18 : 2008",
-    "1.19" : "1.19 : 2009",
-    "1.20" : "1.20 : 2010",
-    "1.21" : "1.21 : 2011",
-    "1.22" : "1.22 : 2012",
-    "1.23" : "1.23 : 2013",
-    "1.24" : "1.24 : 2014",
-    "1.25" : "1.25 : 2015",
-    "1.26" : "1.26 : 2016",
-    "1.27" : "1.27 : 2017",
-    "1.28" : "1.28 : 2018",
-}
+
 comments_dic['606'] = {
     "baseline":"baseline:SRGDP weight < RP weight",
     # "1.0" : "1.0 : 1990",
@@ -900,13 +641,14 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['311','312','401','402','403']    
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
-baseline_list = ['501','604','606','607','608','609','610','611']    
+baseline_list = ['501','607','608','609','610']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
  
 for baseline_nbr in baseline_list:
     print(baseline_nbr)
+    print(time.perf_counter() - start)
     baseline_path = results_path+baseline_nbr+'/'
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path,
@@ -1184,83 +926,84 @@ controls_par = row(baseline_par_select, par_select)
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
-baseline_sol_qty = '610'
-sol_qty = 'psi_o_star'
+# baseline_sol_qty = '610'
+# sol_qty = 'psi_o_star'
 
-baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
-sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baselines_dic_sol_qty[baseline_sol_qty].keys()))
-x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
-ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
-p_sol_qty = figure(title="Solution quantities", 
-               width = 1200,
-               height = 850,
-           x_range = x_range,
-           y_axis_label='Model implied',
-           tools = TOOLS)
-hover_tool_sol_qty = HoverTool()
-hover_tool_sol_qty.tooltips = [
-    ("index", "@x"),
-    ("value", "$y")
-    ]
+# baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
+# sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baselines_dic_sol_qty[baseline_sol_qty].keys()))
+# x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
+# ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
+# p_sol_qty = figure(title="Solution quantities", 
+#                width = 1200,
+#                height = 850,
+#            x_range = x_range,
+#            y_axis_label='Model implied',
+#            tools = TOOLS)
+# hover_tool_sol_qty = HoverTool()
+# hover_tool_sol_qty.tooltips = [
+#     ("index", "@x"),
+#     ("value", "$y")
+#     ]
 
-p_sol_qty.add_tools(hover_tool_sol_qty)
-colors_sol_qty = itertools.cycle(Category10[9])
-lines_sol_qty = {}
+# p_sol_qty.add_tools(hover_tool_sol_qty)
+# colors_sol_qty = itertools.cycle(Category10[9])
+# lines_sol_qty = {}
 
-for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
-    lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, 
-                                        color=next(colors_sol_qty),
-                                line_width = 2)
-    if col != 'baseline':
-        lines_sol_qty[col].visible = False
+# for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
+#     lines_sol_qty[col] = p_sol_qty.line(x='x', y=col, source = ds_sol_qty, 
+#                                         color=next(colors_sol_qty),
+#                                 line_width = 2)
+#     if col != 'baseline':
+#         lines_sol_qty[col].visible = False
 
-legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
-                        for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
+# legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
+#                         for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
 
-legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0, 
-                    )
-legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0
-                    )
-p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
-p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
+# legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0, 
+#                     )
+# legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0
+#                     )
+# p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
+# p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
 
 
-columns_sol_qty = [
-        TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in list(comments_dic[baseline_sol_qty].keys())]
+# columns_sol_qty = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in list(comments_dic[baseline_sol_qty].keys())]
 
-data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1200, height=400)
+# data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, width=1200, height=400)
 
-def update_baseline_sol_qty(attrname, old, new):
-    sol_qty = sol_qty_select.value
-    ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
-    legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
-                            for col in ds_sol_qty.data  if col in comments_dic[new]]
-    legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
-    legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
-    data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
+# def update_baseline_sol_qty(attrname, old, new):
+#     sol_qty = sol_qty_select.value
+#     ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
+#     legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
+#                             for col in ds_sol_qty.data  if col in comments_dic[new]]
+#     legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
+#     legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
+#     data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
-def update_sol_qty(attrname, old, new):
-    baseline_sol_qty = baseline_sol_qty_select.value
-    p_sol_qty.x_range.factors = baselines_dic_sol_qty[baseline_sol_qty][new].index.to_list()
-    ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new]
+# def update_sol_qty(attrname, old, new):
+#     baseline_sol_qty = baseline_sol_qty_select.value
+#     p_sol_qty.x_range.factors = baselines_dic_sol_qty[baseline_sol_qty][new].index.to_list()
+#     ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new]
 
-controls_sol_qty = row(baseline_sol_qty_select, sol_qty_select)
+# controls_sol_qty = row(baseline_sol_qty_select, sol_qty_select)
 
-baseline_sol_qty_select.on_change('value', update_baseline_sol_qty)
-sol_qty_select.on_change('value', update_sol_qty)
+# baseline_sol_qty_select.on_change('value', update_baseline_sol_qty)
+# sol_qty_select.on_change('value', update_sol_qty)
 
 moment_report = column(controls_mom,p_mom,data_table_mom)
 param_report = column(controls_par, p_par, data_table_par)
-sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
+# sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 
 #!!! first panel
-first_panel = row(moment_report,param_report,sol_qty_report)
-
+# first_panel = row(moment_report,param_report,sol_qty_report)
+first_panel = row(moment_report,param_report)
+print(time.perf_counter() - start)
 #%% Time series
 
 baseline_time = '610'
@@ -2038,7 +1781,7 @@ def get_data_nash_coop(baseline_nash_number):
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                    # options=['404','405','501','601'])
-                                   options=['501','604','607','608','609','610','611'])
+                                   options=['501','607','608','609','610','611'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2228,9 +1971,9 @@ country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_list = sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-            if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
-    sorted([s for s in os.listdir(cf_path) 
                 if s[9:].startswith('606') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
                 if s[9:].startswith('607') and s.startswith('baseline')], key=section_end)+\
@@ -2396,7 +2139,7 @@ def update_country_to_cf(attrname, old, new):
     ds_to_cf.data = df_to_cf
     ds_to_cf_max.data = build_max(df_to_cf)
     
-slider_to_cf = Slider(start=1, end=3, value=1.85, step=0.05, title="Turnover target in %")    
+slider_to_cf = Slider(start=1, end=3, value=1.55, step=0.05, title="Turnover target in %")    
     
 controls_to_cf = row(slider_to_cf, country_to_cf_select)
 country_to_cf_select.on_change('value', update_country_to_cf)
@@ -2407,109 +2150,109 @@ counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 #!!! fourth_panel
 fourth_panel = row(counterfactuals_report, counterfactuals_to_report)
 
-#%% sensitivities
+# #%% sensitivities
 
-baselines_dic_sensi = {}
+# baselines_dic_sensi = {}
 
-for baseline_nbr in ['403']:
-    baselines_dic_sensi[baseline_nbr] = {} 
-    baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
-    files_in_dir = os.listdir(baseline_sensi_path)
-    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-    for f in files_in_dir:
-        baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
+# for baseline_nbr in ['403']:
+#     baselines_dic_sensi[baseline_nbr] = {} 
+#     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
+#     files_in_dir = os.listdir(baseline_sensi_path)
+#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+#     for f in files_in_dir:
+#         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-baseline_sensi = '403'
-qty_sensi = 'objective'
+# baseline_sensi = '403'
+# qty_sensi = 'objective'
 
-baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
-qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
+# baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
+# qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
 
-ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
-p_sensi = figure(title="Sensitivity", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in moment or parameter',
-                y_axis_label='Value',
-                tools = TOOLS)
+# ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
+# p_sensi = figure(title="Sensitivity", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in moment or parameter',
+#                 y_axis_label='Value',
+#                 tools = TOOLS)
 
-colors_sensi = itertools.cycle(Category10[10])
+# colors_sensi = itertools.cycle(Category10[10])
 
-for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
-    if col!='zeta':
-        p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+# for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
+#     if col!='zeta':
+#         p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
 
-p_sensi.legend.click_policy="hide"
-p_sensi.legend.label_text_font_size = '8pt'
-p_sensi.add_layout(p_sensi.legend[0], 'right')
+# p_sensi.legend.click_policy="hide"
+# p_sensi.legend.label_text_font_size = '8pt'
+# p_sensi.add_layout(p_sensi.legend[0], 'right')
 
-def update_baseline_sensi(attrname, old, new):
-    qty_sensi = qty_sensi_select.value
-    ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
+# def update_baseline_sensi(attrname, old, new):
+#     qty_sensi = qty_sensi_select.value
+#     ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
     
-def update_qty_sensi(attrname, old, new):
-    baseline_sensi = baseline_sensi_select.value
-    ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
+# def update_qty_sensi(attrname, old, new):
+#     baseline_sensi = baseline_sensi_select.value
+#     ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
 
-controls_sensi = row(baseline_sensi_select, qty_sensi_select)
+# controls_sensi = row(baseline_sensi_select, qty_sensi_select)
 
-baseline_sensi_select.on_change('value', update_baseline_sensi)
-qty_sensi_select.on_change('value', update_qty_sensi)
+# baseline_sensi_select.on_change('value', update_baseline_sensi)
+# qty_sensi_select.on_change('value', update_qty_sensi)
 
-sensitivity_report = column(controls_sensi,p_sensi)
+# sensitivity_report = column(controls_sensi,p_sensi)
 
-#%% weights sensitivities
+# #%% weights sensitivities
 
-baselines_dic_sensi_weights = {}
+# baselines_dic_sensi_weights = {}
 
-# for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['404']:
-    baselines_dic_sensi_weights[baseline_nbr] = {}
-    baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
-    files_in_dir = os.listdir(baseline_sensi_weights_path)
-    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-    for f in files_in_dir:
-        baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
+# # for baseline_nbr in ['101','102','104']:
+# for baseline_nbr in ['404']:
+#     baselines_dic_sensi_weights[baseline_nbr] = {}
+#     baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
+#     files_in_dir = os.listdir(baseline_sensi_weights_path)
+#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+#     for f in files_in_dir:
+#         baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
     
-baseline_sensi_weights = '404'
-qty_sensi_weights = 'objective'
+# baseline_sensi_weights = '404'
+# qty_sensi_weights = 'objective'
 
-baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
-qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
+# baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
+# qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
 
-ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
-p_sensi_weights = figure(title="Sensitivity to the weights", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in weight',
-                y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
-                y_axis_type="log",
-                tools = TOOLS)
+# ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
+# p_sensi_weights = figure(title="Sensitivity to the weights", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in weight',
+#                 y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
+#                 y_axis_type="log",
+#                 tools = TOOLS)
 
-colors_sensi_weights = itertools.cycle(Category10[10])
+# colors_sensi_weights = itertools.cycle(Category10[10])
 
-for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
-    if col!='zeta':
-        p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, legend_label=col)
+# for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
+#     if col!='zeta':
+#         p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, legend_label=col)
 
-p_sensi_weights.legend.click_policy="hide"
-p_sensi_weights.legend.label_text_font_size = '8pt'
-p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
+# p_sensi_weights.legend.click_policy="hide"
+# p_sensi_weights.legend.label_text_font_size = '8pt'
+# p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
 
-def update_baseline_sensi_weights(attrname, old, new):
-    qty_sensi_weights = qty_sensi_weights_select.value
-    ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
+# def update_baseline_sensi_weights(attrname, old, new):
+#     qty_sensi_weights = qty_sensi_weights_select.value
+#     ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
     
-def update_qty_sensi_weights(attrname, old, new):
-    baseline_sensi_weights = baseline_sensi_weights_select.value
-    ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
+# def update_qty_sensi_weights(attrname, old, new):
+#     baseline_sensi_weights = baseline_sensi_weights_select.value
+#     ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
 
-controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
+# controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
 
-baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
-qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
+# baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
+# qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
 
-sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
+# sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
@@ -2602,229 +2345,234 @@ baseline_jac_select.on_change('value', update_list_of_runs_jac)
 jac_report = column(controls_jac,p_jac)
 
 #!!! fifth panel
-fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
+# fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
+fifth_panel = row(jac_report)
 
-#%% Kogan paper
+# #%% Kogan paper
 
-colors_kog = itertools.cycle(Category10[10])
+# colors_kog = itertools.cycle(Category10[10])
 
-df_kog = pd.read_csv(data_path+'koga_updated.csv')
-ds_kog = ColumnDataSource(df_kog)
+# df_kog = pd.read_csv(data_path+'koga_updated.csv')
+# ds_kog = ColumnDataSource(df_kog)
 
-p_kog = figure(title="Kogan moment updated / extrapolated", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Issue Date',
-                y_axis_type="log",
-                tools = TOOLS) 
+# p_kog = figure(title="Kogan moment updated / extrapolated", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Issue Date',
+#                 y_axis_type="log",
+#                 tools = TOOLS) 
 
-l_kog = {}
+# l_kog = {}
 
-for i,col in enumerate(df_kog.columns):
-    if col not in ['issue_date']:
-        l_kog[i] = p_kog.line(x='issue_date', y=col, 
-                  source = ds_kog, 
-                  line_width = 2, legend_label=col, color=next(colors_kog),
-                  name = col)
+# for i,col in enumerate(df_kog.columns):
+#     if col not in ['issue_date']:
+#         l_kog[i] = p_kog.line(x='issue_date', y=col, 
+#                   source = ds_kog, 
+#                   line_width = 2, legend_label=col, color=next(colors_kog),
+#                   name = col)
 
-hover_tool_kog = HoverTool(
-    tooltips = [
-        ("Issue date", "$x"),
-        ('ValuePerPatent', '@ValuePerPatent'),
-        ('CostPerPatent', '@CostPerPatent'),
-        ('KM_article', '@KM_article'),
-        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
-        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
-        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
-        ],
-    mode='vline',
-    renderers = [l_kog[4]]
-)
-p_kog.add_tools(hover_tool_kog)
+# hover_tool_kog = HoverTool(
+#     tooltips = [
+#         ("Issue date", "$x"),
+#         ('ValuePerPatent', '@ValuePerPatent'),
+#         ('CostPerPatent', '@CostPerPatent'),
+#         ('KM_article', '@KM_article'),
+#         ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+#         ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+#         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
+#         ],
+#     mode='vline',
+#     renderers = [l_kog[4]]
+# )
+# p_kog.add_tools(hover_tool_kog)
 
-p_kog.legend.click_policy="hide"
-p_kog.legend.label_text_font_size = '8pt'
-p_kog.add_layout(p_kog.legend[0], 'right')
+# p_kog.legend.click_policy="hide"
+# p_kog.legend.label_text_font_size = '8pt'
+# p_kog.add_layout(p_kog.legend[0], 'right')
 
 
-colors_kog2 = itertools.cycle(Category10[10])
+# colors_kog2 = itertools.cycle(Category10[10])
 
-df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
-ds_kog2 = ColumnDataSource(df_kog2)
+# df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
+# ds_kog2 = ColumnDataSource(df_kog2)
 
-p_kog2 = figure(title="Kogan moment", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Market Prior',
-                tools = TOOLS) 
+# p_kog2 = figure(title="Kogan moment", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Market Prior',
+#                 tools = TOOLS) 
 
-l_kog2 = {}
+# l_kog2 = {}
 
-for i,col in enumerate(df_kog2.columns):
-    if col not in ['market prior']:
-        l_kog2[i] = p_kog2.line(x='market prior', y=col, 
-                  source = ds_kog2, 
-                  line_width = 2, legend_label=col, color=next(colors_kog2))
+# for i,col in enumerate(df_kog2.columns):
+#     if col not in ['market prior']:
+#         l_kog2[i] = p_kog2.line(x='market prior', y=col, 
+#                   source = ds_kog2, 
+#                   line_width = 2, legend_label=col, color=next(colors_kog2))
 
-hover_tool_kog2 = HoverTool(
-    tooltips = [
-        ("market prior", "$x"),
-        ('1950 to 2007', '@from1950to2007'),
-        ('1980 to 2007', '@from1980to2007'),
-        ('1995 to 2007', '@from1995to2007'),
-        ('2002 to 2007', '@from2002to2007'),
-        ('1950 to 2020', '@from1950to2020'),
-        ('1980 to 2020', '@from1980to2020'),
-        ('1995 to 2020', '@from1995to2020'),
-        ('2002 to 2020', '@from2002to2020'),
-        ],
-    mode='vline',
-    renderers = [l_kog2[4]]
-)
+# hover_tool_kog2 = HoverTool(
+#     tooltips = [
+#         ("market prior", "$x"),
+#         ('1950 to 2007', '@from1950to2007'),
+#         ('1980 to 2007', '@from1980to2007'),
+#         ('1995 to 2007', '@from1995to2007'),
+#         ('2002 to 2007', '@from2002to2007'),
+#         ('1950 to 2020', '@from1950to2020'),
+#         ('1980 to 2020', '@from1980to2020'),
+#         ('1995 to 2020', '@from1995to2020'),
+#         ('2002 to 2020', '@from2002to2020'),
+#         ],
+#     mode='vline',
+#     renderers = [l_kog2[4]]
+# )
 
-p_kog2.legend.click_policy="hide"
-p_kog2.legend.label_text_font_size = '8pt'
-p_kog2.add_layout(p_kog2.legend[0], 'right')
-p_kog2.add_tools(hover_tool_kog2)
+# p_kog2.legend.click_policy="hide"
+# p_kog2.legend.label_text_font_size = '8pt'
+# p_kog2.add_layout(p_kog2.legend[0], 'right')
+# p_kog2.add_tools(hover_tool_kog2)
 
-#!!! sixth_panel
-sixth_panel = row(p_kog,p_kog2)
+# #!!! sixth_panel
+# sixth_panel = row(p_kog,p_kog2)
 
-#%% 7 countries comparison of patent flows data
+# #%% 7 countries comparison of patent flows data
 
-labels_leg_patstat = {
-    'baseline':'pre IN treatment',
-    'calibration data':'calibration data',
-    'WIPO data':'WIPO data',
-    'alternative 1':'alt 1 : no sector filtering',
-    'alternative 2':'alt 2 : first applicant only',
-    'alternative 3':'alt 3 : diff origin weight',
-    'alternative 4':'alt 4 : no domestic allocation',
-    'alternative 5':'alt 5 : only granted patents',
-    'alternative 6':'alt 6 : no ML predi for EPO',
-    'alternative 7':'alt 7 : with ML predi for WIPO',
-    'after IN treatment':'baseline',
-    'julian latest code':'julian latest code',
-    }
-tot = pd.read_csv(join(dirname(__file__),'patstat_compar.csv')).set_index(
-    ['destination_code','origin_code']
-    ).sort_index(
-    ).round()
+# labels_leg_patstat = {
+#     'baseline':'pre IN treatment',
+#     'calibration data':'calibration data',
+#     'WIPO data':'WIPO data',
+#     'alternative 1':'alt 1 : no sector filtering',
+#     'alternative 2':'alt 2 : first applicant only',
+#     'alternative 3':'alt 3 : diff origin weight',
+#     'alternative 4':'alt 4 : no domestic allocation',
+#     'alternative 5':'alt 5 : only granted patents',
+#     'alternative 6':'alt 6 : no ML predi for EPO',
+#     'alternative 7':'alt 7 : with ML predi for WIPO',
+#     'after IN treatment':'baseline',
+#     'julian latest code':'julian latest code',
+#     }
+# tot = pd.read_csv(join(dirname(__file__),'patstat_compar.csv')).set_index(
+#     ['destination_code','origin_code']
+#     ).sort_index(
+#     ).round()
 
-ds_patstat = ColumnDataSource(tot)
-# TOOLS="pan,wheel_zoom,box_zoom,reset,save"
-p_patstat = figure(title="Patent flows", 
-                width = 1200,
-                height = 850,
-                x_axis_type="log",
-                y_axis_type="log",
-                x_axis_label='Baseline', 
-                # y_axis_label='Model implied',
-                tools = TOOLS)
-hover_tool = HoverTool()
-hover_tool.tooltips = [
-    ("index", "@x"),
-    ("(baseline,alternative)", "($x,$y)"),
-    ]
-# labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
-labels_patstat = LabelSet(y='WIPO data', x='after IN treatment', text='x',
-              x_offset=2, y_offset=2, source=ds_patstat, text_font_size="7pt")
-p_patstat.add_layout(labels_patstat)
-p_patstat.add_tools(hover_tool)
+# ds_patstat = ColumnDataSource(tot)
+# # TOOLS="pan,wheel_zoom,box_zoom,reset,save"
+# p_patstat = figure(title="Patent flows", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_type="log",
+#                 y_axis_type="log",
+#                 x_axis_label='Baseline', 
+#                 # y_axis_label='Model implied',
+#                 tools = TOOLS)
+# hover_tool = HoverTool()
+# hover_tool.tooltips = [
+#     ("index", "@x"),
+#     ("(baseline,alternative)", "($x,$y)"),
+#     ]
+# # labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+# labels_patstat = LabelSet(y='WIPO data', x='after IN treatment', text='x',
+#               x_offset=2, y_offset=2, source=ds_patstat, text_font_size="7pt")
+# p_patstat.add_layout(labels_patstat)
+# p_patstat.add_tools(hover_tool)
 
-slope_patstat = Slope(gradient=1, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=1)
-p_patstat.add_layout(slope_patstat)
-lines_patstat = {}
-colors_patstat = itertools.cycle(Category10[10])
-for i,col in enumerate(tot.columns):
-    if col not in ['x','after IN treatment']:
-        # lines_patstat[col] = p_patstat.circle('calibration data', col, 
-        lines_patstat[col] = p_patstat.circle('after IN treatment', col, 
-                source = ds_patstat, 
-                size=5, color=next(colors_patstat))
-        if col != 'WIPO data':
-            lines_patstat[col].visible = False
+# slope_patstat = Slope(gradient=1, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=1)
+# p_patstat.add_layout(slope_patstat)
+# lines_patstat = {}
+# colors_patstat = itertools.cycle(Category10[10])
+# for i,col in enumerate(tot.columns):
+#     if col not in ['x','after IN treatment']:
+#         # lines_patstat[col] = p_patstat.circle('calibration data', col, 
+#         lines_patstat[col] = p_patstat.circle('after IN treatment', col, 
+#                 source = ds_patstat, 
+#                 size=5, color=next(colors_patstat))
+#         if col != 'WIPO data':
+#             lines_patstat[col].visible = False
             
-legend_items = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
-                    for col, lin_par in lines_patstat.items() if col not in 
-                    # ['x','calibration data']]
-                    ['x','after IN treatment']]
+# legend_items = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
+#                     for col, lin_par in lines_patstat.items() if col not in 
+#                     # ['x','calibration data']]
+#                     ['x','after IN treatment']]
 
-legend = Legend(items=legend_items, click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0, 
-                    )
-p_patstat.add_layout(legend, 'right')
+# legend = Legend(items=legend_items, click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0, 
+#                     )
+# p_patstat.add_layout(legend, 'right')
 
-columns_patstat = [
-        TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in tot.columns]
-data_table_patstat = DataTable(source=ds_patstat, columns = columns_patstat, width=1200, height=400)
+# columns_patstat = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in tot.columns]
+# data_table_patstat = DataTable(source=ds_patstat, columns = columns_patstat, width=1200, height=400)
 
-#%% 13 countries comparison of patent flows data
+# #%% 13 countries comparison of patent flows data
 
-tot_13 = pd.read_csv(join(dirname(__file__),'patstat_compar_13.csv')).set_index(
-    ['destination_code','origin_code']
-    ).sort_index(
-    ).round()
+# tot_13 = pd.read_csv(join(dirname(__file__),'patstat_compar_13.csv')).set_index(
+#     ['destination_code','origin_code']
+#     ).sort_index(
+#     ).round()
 
-ds_patstat_13 = ColumnDataSource(tot_13)
-# TOOLS="pan,wheel_zoom,box_zoom,reset,save"
-p_patstat_13 = figure(title="Patent flows", 
-                width = 1200,
-                height = 850,
-                x_axis_type="log",
-                y_axis_type="log",
-                x_axis_label='Baseline', 
-                # y_axis_label='Model implied',
-                tools = TOOLS)
-hover_tool = HoverTool()
-hover_tool.tooltips = [
-    ("index", "@x"),
-    ("(baseline,alternative)", "($x,$y)"),
-    ]
-# labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
-labels_patstat_13 = LabelSet(y='WIPO data', x='baseline', text='x',
-              x_offset=2, y_offset=2, source=ds_patstat_13, text_font_size="7pt")
-p_patstat_13.add_layout(labels_patstat_13)
-p_patstat_13.add_tools(hover_tool)
+# ds_patstat_13 = ColumnDataSource(tot_13)
+# # TOOLS="pan,wheel_zoom,box_zoom,reset,save"
+# p_patstat_13 = figure(title="Patent flows", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_type="log",
+#                 y_axis_type="log",
+#                 x_axis_label='Baseline', 
+#                 # y_axis_label='Model implied',
+#                 tools = TOOLS)
+# hover_tool = HoverTool()
+# hover_tool.tooltips = [
+#     ("index", "@x"),
+#     ("(baseline,alternative)", "($x,$y)"),
+#     ]
+# # labels_patstat = LabelSet(x='calibration data', y='baseline', text='x',
+# labels_patstat_13 = LabelSet(y='WIPO data', x='baseline', text='x',
+#               x_offset=2, y_offset=2, source=ds_patstat_13, text_font_size="7pt")
+# p_patstat_13.add_layout(labels_patstat_13)
+# p_patstat_13.add_tools(hover_tool)
 
-slope_patstat_13 = Slope(gradient=1, y_intercept=0,
-              line_color='black', line_dash='dashed', line_width=1)
-p_patstat_13.add_layout(slope_patstat_13)
-lines_patstat_13 = {}
-colors_patstat_13 = itertools.cycle(Category10[10])
-for i,col in enumerate(tot_13.columns):
-    if col not in ['x','baseline']:
-        # lines_patstat[col] = p_patstat.circle('calibration data', col, 
-        lines_patstat_13[col] = p_patstat_13.circle('baseline', col, 
-                source = ds_patstat_13, 
-                size=5, color=next(colors_patstat_13))
-legend_items_13 = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
-                    for col, lin_par in lines_patstat_13.items() if col not in 
-                    # ['x','calibration data']]
-                    ['x','baseline']]
+# slope_patstat_13 = Slope(gradient=1, y_intercept=0,
+#               line_color='black', line_dash='dashed', line_width=1)
+# p_patstat_13.add_layout(slope_patstat_13)
+# lines_patstat_13 = {}
+# colors_patstat_13 = itertools.cycle(Category10[10])
+# for i,col in enumerate(tot_13.columns):
+#     if col not in ['x','baseline']:
+#         # lines_patstat[col] = p_patstat.circle('calibration data', col, 
+#         lines_patstat_13[col] = p_patstat_13.circle('baseline', col, 
+#                 source = ds_patstat_13, 
+#                 size=5, color=next(colors_patstat_13))
+# legend_items_13 = [LegendItem(label=labels_leg_patstat[col], renderers=[lin_par])
+#                     for col, lin_par in lines_patstat_13.items() if col not in 
+#                     # ['x','calibration data']]
+#                     ['x','baseline']]
 
-legend_13 = Legend(items=legend_items_13, click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0, 
-                    )
-p_patstat_13.add_layout(legend_13, 'right')
+# legend_13 = Legend(items=legend_items_13, click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0, 
+#                     )
+# p_patstat_13.add_layout(legend_13, 'right')
 
-columns_patstat_13 = [
-        TableColumn(field="x"),
-    ]+[TableColumn(field=col) for col in tot_13.columns]
-data_table_patstat_13 = DataTable(source=ds_patstat_13, columns = columns_patstat_13, width=1200, height=400)
+# columns_patstat_13 = [
+#         TableColumn(field="x"),
+#     ]+[TableColumn(field=col) for col in tot_13.columns]
+# data_table_patstat_13 = DataTable(source=ds_patstat_13, columns = columns_patstat_13, width=1200, height=400)
 
 
 
-seventh_panel = row(column(p_patstat,data_table_patstat),
-                    column(p_patstat_13,data_table_patstat_13))
+# seventh_panel = row(column(p_patstat,data_table_patstat),
+#                     column(p_patstat_13,data_table_patstat_13))
 
 #%% build curdoc
-
+print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, first_panel_bis, second_panel, 
                          third_panel, 
-                         fourth_panel, fifth_panel, sixth_panel,
-                         seventh_panel))
+                         fourth_panel, 
+                         fifth_panel, 
+                         # sixth_panel,
+                         # seventh_panel
+                         )
+                  )
