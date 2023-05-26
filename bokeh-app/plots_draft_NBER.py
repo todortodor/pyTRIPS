@@ -71,8 +71,8 @@ except:
 
 #%% Choose a run, load parameters, moments, solution
 
-baseline = '501'
-variation = '2.0'
+baseline = '607'
+variation = 'baseline'
 
 output_path = 'output/'
 output_name = 'draft_NBER'
@@ -89,11 +89,12 @@ if variation == 'baseline':
 else:
     run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation}/'
 
-p_baseline = parameters(n=7,s=2)
-p_baseline.load_data(run_path)
+p_baseline = parameters()
+# p_baseline.load_data(run_path)
+p_baseline.load_run(run_path)
 
 m_baseline = moments()
-m_baseline.load_data()
+# m_baseline.load_data()
 m_baseline.load_run(run_path)
 
 sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True, context = 'counterfactual')
@@ -524,8 +525,9 @@ for c in p_baseline.countries+['World']:
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
     for run in run_list:
-        p = parameters(n=7,s=2)
-        p.load_data(country_path+run+'/')
+        p = parameters()
+        # p.load_data(country_path+run+'/')
+        p.load_run(country_path+run+'/')
         if p.guess is not None:
             sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
             sol_c.scale_P(p)
@@ -874,8 +876,9 @@ for c in p_baseline.countries+['World']:
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
     for run in run_list:
-        p = parameters(n=7,s=2)
-        p.load_data(country_path+run+'/')
+        # p = parameters(n=7,s=2)
+        p = parameters()
+        p.load_run(country_path+run+'/')
         if p.guess is not None:
             sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
             sol_c.scale_P(p)
