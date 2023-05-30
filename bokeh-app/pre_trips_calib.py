@@ -54,144 +54,144 @@ TP_target_baseline = m_baseline.TP.copy()
 TP_data_baseline = m_baseline.TP_data.copy()
 
 runs_params = [
-    {
-     'number': 1.0,
-     'calib_params':p_baseline.calib_parameters,
-     'list_of_moments':m_baseline.list_of_moments,
-     'year':2005
-     },
-    {
-     'number': 1.1,
-     'calib_params':p_baseline.calib_parameters,
-     'list_of_moments':m_baseline.list_of_moments,
-     'year':1992
-     },
-    {
-      'number': 2.0,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':2005
-      },
-    {
-      'number': 2.1,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':1992
-      },
-    {
-      'number': 3.0,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':2005
-      },
-    {
-      'number': 3.1,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':1992
-      },
-    {
-      'number': 4.0,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':2005
-      },
-    {
-      'number': 4.1,
-      'calib_params':['eta','T','delta','fe','fo'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
-        'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-      'year':1992
-      },
-    {
-     'number': 5.0,
-     'calib_params':['eta','T','delta',],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
-    {
-     'number': 5.1,
-     'calib_params':['eta','T','delta',],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':1992
-     },
-    {
-     'number': 6.0,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
-    {
-     'number': 6.1,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':1992
-     },
-    {
-     'number': 7.0,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
-    {
-     'number': 7.1,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':1992
-     },
-    {
-     'number': 8.0,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-       'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
+    # {
+    #  'number': 1.0,
+    #  'calib_params':p_baseline.calib_parameters,
+    #  'list_of_moments':m_baseline.list_of_moments,
+    #  'year':2005
+    #  },
+    # {
+    #  'number': 1.1,
+    #  'calib_params':p_baseline.calib_parameters,
+    #  'list_of_moments':m_baseline.list_of_moments,
+    #  'year':1992
+    #  },
+    # {
+    #   'number': 2.0,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 2.1,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 3.0,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 3.1,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 4.0,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 4.1,
+    #   'calib_params':['eta','T','delta','fe','fo'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #     'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #  'number': 5.0,
+    #  'calib_params':['eta','T','delta',],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
+    # {
+    #  'number': 5.1,
+    #  'calib_params':['eta','T','delta',],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':1992
+    #  },
+    # {
+    #  'number': 6.0,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
+    # {
+    #  'number': 6.1,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':1992
+    #  },
+    # {
+    #  'number': 7.0,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
+    # {
+    #  'number': 7.1,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #    'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':1992
+    #  },
+    # {
+    #  'number': 8.0,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
+    #    'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
     {
      'number': 8.1,
      'calib_params':['eta','T','delta'],
      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+       'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
      'year':1992
      },
-    {
-     'number': 9.0,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-       'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
+    # {
+    #  'number': 9.0,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
+    #    'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
     {
      'number': 9.1,
      'calib_params':['eta','T','delta'],
      'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','TP',
-       'UUPCOST','SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':1992
-     },
-    {
-     'number': 10.0,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
-       'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
-     'year':2005
-     },
-    {
-     'number': 10.1,
-     'calib_params':['eta','T','delta'],
-     'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
        'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
      'year':1992
      },
+    # {
+    #  'number': 10.0,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #    'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':2005
+    #  },
+    # {
+    #  'number': 10.1,
+    #  'calib_params':['eta','T','delta'],
+    #  'list_of_moments':['OUT','RD','RP','SRGDP','SINNOVPATUS','SPFLOW','inter_TP',
+    #    'SRDUS','SINNOVPATEU','DOMPATINUS','DOMPATINEU'],
+    #  'year':1992
+    #  },
     ]
 
 
@@ -464,7 +464,7 @@ for i in [1,5,6,7,8,9,10]:
     recap.loc[i,'delta 2005'] = p.delta[...,1]
     recap.loc[i,'delta 2005/baseline'] = p.delta[...,1]/p_baseline.delta[...,1]
     recap.loc[i,'delta 1992'] = p_pre.delta[...,1]
-    recap.loc[i,'(std/mean)(1992)/(std/mean)(2005)'] = (p_pre.delta[...,1].std()/p_pre.delta[...,1].mean())/(p_baseline.delta[...,1].std()/p_baseline.delta[...,1].mean())
+    # recap.loc[i,'(std/mean)(1992)/(std/mean)(2005)'] = (p_pre.delta[...,1].std()/p_pre.delta[...,1].mean())/(p_baseline.delta[...,1].std()/p_baseline.delta[...,1].mean())
     recap.loc[i,'static welfare change'] = sol_pre_cf.cons_eq_welfare
     recap.loc[i,'dynamic welfare change'] = dyn_sol_pre_cf.cons_eq_welfare
     
