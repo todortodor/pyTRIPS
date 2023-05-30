@@ -378,6 +378,8 @@ comments_dic['614'] = comments_dic['601']
 comments_dic['615'] = comments_dic['601']
 comments_dic['616'] = comments_dic['601']
 comments_dic['617'] = comments_dic['601']
+comments_dic['620'] = comments_dic['601']
+comments_dic['619'] = comments_dic['601']
 
 comments_dic['611'] = {'baseline':'bsln:TO:0.0183',
     '1.0':'1.0: TO: 0.01',
@@ -455,7 +457,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
-baseline_list = ['501','618','619']    
+baseline_list = ['501','618','619','620']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -834,7 +836,7 @@ print(time.perf_counter() - start)
 
 baseline_time = '619'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
-baseline_time_list = ['619']    
+baseline_time_list = ['619','620']    
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
