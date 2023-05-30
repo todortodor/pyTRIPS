@@ -97,9 +97,9 @@ p = parameters()
 m = moments()
 m.load_data()
 
-# config_dics = [
-#     {'year': 2005, 'N': 7},
-# ]
+config_dics = [
+    {'year': 2005, 'N': 7},
+]
 
 config_dics = [{
     'year': y,
@@ -108,7 +108,7 @@ config_dics = [{
     for N in [7,13]
     ]
 
-write = True
+write = False
 
 for config_dic in config_dics:
     print(config_dic)
@@ -118,7 +118,24 @@ for config_dic in config_dics:
     nbr_of_countries = config_dic['N']
     path = f'data/data_{nbr_of_countries}_countries_{year}/'
     dropbox_path = f'/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
+    
+    if write:
+        try:
+            os.mkdir(path)
+        except:
+            pass
+        try:
+            os.mkdir(dropbox_path)
+        except:
+            pass
 
+    if write:
+        moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
+        moments_descriptions.to_csv(
+            dropbox_path+'moments_descriptions.csv', sep=';')
+    
+    
+    
     crosswalk_countries = pd.read_csv(
         '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/countries_wdi.csv')
     crosswalk_sectors = pd.read_csv(
@@ -197,21 +214,6 @@ for config_dic in config_dics:
                         right_index=True,
                         how='left'
                         ).reset_index().set_index(['country', 'year'])
-    
-    if write:
-        try:
-            os.mkdir(path)
-        except:
-            pass
-        try:
-            os.mkdir(dropbox_path)
-        except:
-            pass
-
-    if write:
-        moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
-        moments_descriptions.to_csv(
-            dropbox_path+'moments_descriptions.csv', sep=';')
 
     iot_OECD = pd.read_csv(
         f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
@@ -285,7 +287,7 @@ for config_dic in config_dics:
         sector_moments.to_csv(path+'sector_moments.csv')
         sector_moments.to_csv(dropbox_path+'sector_moments.csv')
     
-    #%%
+    
     
     final_pat_fees_year = final_pat_fees.copy()
     #!!! changing EUR patenting fee

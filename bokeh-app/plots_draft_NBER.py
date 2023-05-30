@@ -659,32 +659,65 @@ sol_nash.compute_non_solver_quantities(p_nash)
 sol_nash.compute_consumption_equivalent_welfare(p_nash,sol_baseline)
 sol_nash.compute_world_welfare_changes(p_nash,sol_baseline)
 
+sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_baseline,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_baseline)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_baseline)
+
 m_nash = m_baseline.copy()
 m_nash.compute_moments(sol_nash,p_nash)
 m_nash.compute_moments_deviations()
-
+    
 df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change','Growth rate']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only','Growth rate']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_nash.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = sol_nash.cons_eq_negishi_welfare_change
-
-df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = sol_nash.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to Negishi weights',
-       'Growth rate'] = sol_nash.g
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Growth rate'] = sol_nash.g
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+        'Growth rate'] = sol_nash.g
+
+df.loc['World aggregate according to population weights',
+        'Growth rate'] = sol_nash.g
 
 for col in df.columns:
     df[col] = df[col].astype(float)
@@ -740,32 +773,68 @@ sol_coop_equal.compute_non_solver_quantities(p_coop_equal)
 sol_coop_equal.compute_consumption_equivalent_welfare(p_coop_equal,sol_baseline)
 sol_coop_equal.compute_world_welfare_changes(p_coop_equal,sol_baseline)
 
+sol, dyn_sol_coop_equal = dyn_fixed_point_solver(p_coop_equal, sol_init=sol_baseline,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_equal.compute_non_solver_quantities(p_coop_equal)
+dyn_sol_coop_equal.sol_fin.compute_consumption_equivalent_welfare(p_coop_equal,sol_baseline)
+dyn_sol_coop_equal.sol_fin.compute_world_welfare_changes(p_coop_equal,sol_baseline)
+
 m_coop_equal = m_baseline.copy()
 m_coop_equal.compute_moments(sol_coop_equal,p_coop_equal)
 m_coop_equal.compute_moments_deviations()
-
+    
 df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change','Growth rate']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only','Growth rate']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_coop_equal.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = sol_coop_equal.cons_eq_negishi_welfare_change
-
-df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = sol_coop_equal.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to Negishi weights',
-       'Growth rate'] = sol_coop_equal.g
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Growth rate'] = sol_coop_equal.g
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+        'Growth rate'] = sol_coop_equal.g
+
+df.loc['World aggregate according to population weights',
+        'Growth rate'] = sol_coop_equal.g
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
 
 caption = 'Cooperative equilibrium with population weights'
 
@@ -818,33 +887,69 @@ sol_coop_negishi.compute_non_solver_quantities(p_coop_negishi)
 sol_coop_negishi.compute_consumption_equivalent_welfare(p_coop_negishi,sol_baseline)
 sol_coop_negishi.compute_world_welfare_changes(p_coop_negishi,sol_baseline)
 
+sol, dyn_sol_coop_negishi = dyn_fixed_point_solver(p_coop_negishi, sol_init=sol_baseline,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_negishi.compute_non_solver_quantities(p_coop_negishi)
+dyn_sol_coop_negishi.sol_fin.compute_consumption_equivalent_welfare(p_coop_negishi,sol_baseline)
+dyn_sol_coop_negishi.sol_fin.compute_world_welfare_changes(p_coop_negishi,sol_baseline)
+
 m_coop_negishi = m_baseline.copy()
 m_coop_negishi.compute_moments(sol_coop_negishi,p_coop_negishi)
 m_coop_negishi.compute_moments_deviations()
-
+    
 df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change','Growth rate']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only','Growth rate']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_coop_negishi.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = sol_coop_negishi.cons_eq_negishi_welfare_change
-
-df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = sol_coop_negishi.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to Negishi weights',
-       'Growth rate'] = sol_coop_negishi.g
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Growth rate'] = sol_coop_negishi.g
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_pop_average_welfare_change
 
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+        'Growth rate'] = sol_coop_negishi.g
+
+df.loc['World aggregate according to population weights',
+        'Growth rate'] = sol_coop_negishi.g
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+    
 caption = 'Cooperative equilibrium with Negishi weights'
 
 df.style.format(precision=5).to_latex(save_path+'Coop_negishi_weights_table.tex',
@@ -963,6 +1068,8 @@ sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_baseline,Nt=25,
                         damping_post_acceleration=10
                         )
 dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_baseline)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_baseline)
 
 m_nash = m_baseline.copy()
 m_nash.compute_moments(dyn_sol_nash.sol_fin,p_nash)
@@ -972,18 +1079,26 @@ df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.count
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_nash.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
 
 for col in df.columns:
     df[col] = df[col].astype(float)
@@ -1035,6 +1150,8 @@ sol, dyn_sol_coop_equal = dyn_fixed_point_solver(p_coop_equal, sol_init=sol_base
                         damping_post_acceleration=10
                         )
 dyn_sol_coop_equal.compute_non_solver_quantities(p_coop_equal)
+dyn_sol_coop_equal.sol_fin.compute_consumption_equivalent_welfare(p_coop_equal,sol_baseline)
+dyn_sol_coop_equal.sol_fin.compute_world_welfare_changes(p_coop_equal,sol_baseline)
 
 m_coop_equal = m_baseline.copy()
 m_coop_equal.compute_moments(dyn_sol_coop_equal.sol_fin,p_coop_equal)
@@ -1044,18 +1161,26 @@ df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.count
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_coop_equal.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = dyn_sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = dyn_sol_coop_equal.cons_eq_negishi_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = dyn_sol_coop_equal.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_pop_average_welfare_change
 
 for col in df.columns:
     df[col] = df[col].astype(float)
@@ -1107,27 +1232,37 @@ sol, dyn_sol_coop_negishi = dyn_fixed_point_solver(p_coop_negishi, sol_init=sol_
                         damping_post_acceleration=10
                         )
 dyn_sol_coop_negishi.compute_non_solver_quantities(p_coop_negishi)
+dyn_sol_coop_negishi.sol_fin.compute_consumption_equivalent_welfare(p_coop_negishi,sol_baseline)
+dyn_sol_coop_negishi.sol_fin.compute_world_welfare_changes(p_coop_negishi,sol_baseline)
 
 m_coop_negishi = m_baseline.copy()
 m_coop_negishi.compute_moments(dyn_sol_coop_negishi.sol_fin,p_coop_negishi)
 m_coop_negishi.compute_moments_deviations()
-
+    
 df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
                                    +['World aggregate according to Negishi weights',
                                      'World aggregate according to population weights'],
                                    name = 'Countries'),
-                  columns = [r'$\delta$','Consumption equivalent welfare change']
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
                   )
     
 for i,c in enumerate(p_baseline.countries):
     df.loc[countries_names[c],r'$\delta$'] = p_coop_negishi.delta[i,1]
-    df.loc[countries_names[c],'Consumption equivalent welfare change'] = dyn_sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_welfare[i]
 
 df.loc['World aggregate according to Negishi weights',
-       'Consumption equivalent welfare change'] = dyn_sol_coop_negishi.cons_eq_negishi_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_negishi_welfare_change
 
 df.loc['World aggregate according to population weights',
-       'Consumption equivalent welfare change'] = dyn_sol_coop_negishi.cons_eq_pop_average_welfare_change
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_pop_average_welfare_change
 
 for col in df.columns:
     df[col] = df[col].astype(float)

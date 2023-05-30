@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '607'
+baseline_number = '618'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
@@ -28,14 +28,23 @@ if new_run:
     m = moments()
     # m.load_data()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.1/')
     # m_back_up = m.copy()
     # m.load_data('data/data_7_countries_2005/')
-    
+
+# sol = var.var_from_vector(p.guess,p,context='calibration')
+# sol.scale_P(p)
+# sol.compute_non_solver_quantities(p)
+# m.compute_moments(sol,p)
+# m.inter_TP_target = m.inter_TP
+# m.list_of_moments.append('inter_TP')
+
+# p.calib_parameters = ['eta','T','delta','fe','fo']
+
 # p.update_khi_and_r_hjort(0.16)
 
 # m.weights_dict['RP'] = 4
-m.weights_dict['SRGDP'] = 3
+# m.weights_dict['SRGDP'] = 3
 # m.weights_dict['GROWTH'] = 4
 # m.weights_dict['TE'] = 5
 
@@ -188,7 +197,7 @@ commentary = ''
 # baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 613
+run_number = 619
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

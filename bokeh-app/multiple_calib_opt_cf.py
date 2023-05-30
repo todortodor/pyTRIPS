@@ -154,7 +154,7 @@ runs_params = [
 
 write = True
 
-baseline_number = '612'
+baseline_number = '620'
 
 for variation_number in [1]:
     
@@ -169,14 +169,23 @@ for variation_number in [1]:
         p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
         # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
-        p.load_data(f'data_smooth_3_years/data_7_countries_{year}/',keep_already_calib_params=True)
-        p.calib_parameters = ['eta','fe','fo','T','delta']
+        # p.load_data(f'data_smooth_3_years/data_7_countries_{year}/',keep_already_calib_params=True)
+        p.load_data(f'data/data_7_countries_{year}/',keep_already_calib_params=True)
+        p.calib_parameters = ['eta','T','delta']
+        
+        sol = var.var_from_vector(p.guess,p,context='calibration')
+        sol.scale_P(p)
+        sol.compute_non_solver_quantities(p) 
 
         m = moments()
         # m.load_data()
         m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+        m.compute_moments(sol,p)
+        number_of_int_patents_model_baseline = m.inter_TP.copy()
+        number_of_int_patents_data_baseline = m.inter_TP_data.copy()
         # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
-        m.load_data(f'data_smooth_3_years/data_7_countries_{year}/')
+        # m.load_data(f'data_smooth_3_years/data_7_countries_{year}/')
+        m.load_data(f'data/data_7_countries_{year}/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:
         #     p.calib_parameters.append('theta')
@@ -186,13 +195,17 @@ for variation_number in [1]:
         # p.update_sigma_with_SRDUS_target(m)
         # if 'TE' not in m.list_of_moments:
         #     m.list_of_moments.append('TE')
+        m.inter_TP_target = number_of_int_patents_model_baseline*m.inter_TP_data/number_of_int_patents_data_baseline
+        m.weights_dict['inter_TP'] = 3
         m.list_of_moments = ['OUT',
           'RD',
           'RP',
           'SRGDP',
+          'inter_TP',
           'SINNOVPATUS',
           'SPFLOW',
           'UUPCOST',
+          'SRDUS',
           'SINNOVPATEU',
           'DOMPATINUS',
           'DOMPATINEU']
@@ -297,6 +310,8 @@ for variation_number in [1]:
             pass
         p_sol.write_params(local_path+str(run_number)+'/')
         m.write_moments(local_path+str(run_number)+'/')
+        
+        #%%
         
         p_baseline = p_sol.copy()
         sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,

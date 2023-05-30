@@ -27,6 +27,7 @@ PCOSTINTERNOAGG;Patenting cost of all international patent flows excluding ones 
 PCOSTNOAGG;Patenting cost of all international patent flows excluding ones to EU and ROW plus domestic patent flows of the US
 JUPCOSTRD;Ratio of patenting cost in Japan for the US to RD in the US
 TP;Total number of patents in the world
+inter_TP;Total number of international patents in the world
 Z;country expenditure
 SDOMTFLOW;Sector specific domestic trade flows as shares of total economy
 STFLOWSDOM;Trade flows as ratio to the domestic trade flow

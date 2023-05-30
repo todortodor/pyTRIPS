@@ -1768,6 +1768,7 @@ class moments:
                              'PCOSTINTER':1,
                              'JUPCOSTRD':1,
                               'TP':1,
+                              'inter_TP':3,
                               'Z':1,
                               'STFLOWSDOM':1,
                              'SINNOVPATEU':1,
@@ -1815,7 +1816,7 @@ class moments:
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','PCOST','PCOSTINTER',
-                'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z', 
+                'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS']
     
@@ -1907,6 +1908,7 @@ class moments:
         self.UUPCOST_target = self.moments.loc['UUPCOST'].value
         self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
+        self.inter_TP_target = np.array(0.00117416)
         self.TP_data = self.cc_moments['patent flows'].sum()
         self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
         self.DOMPATUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=1)['patent flows'].sum()
@@ -1971,6 +1973,7 @@ class moments:
                     'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector']),
                     'TP':pd.Index(['scalar']),
+                    'inter_TP':pd.Index(['scalar']),
                     'Z':pd.Index(self.countries, name='country'),
                     'DOMPATRATUSEU':pd.Index(self.countries, name='country'),
                     'SPATORIG':pd.Index(self.countries, name='country'),
