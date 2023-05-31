@@ -32,6 +32,10 @@ if new_run:
     # m_back_up = m.copy()
     # m.load_data('data/data_7_countries_2005/')
 
+p.calib_parameters.remove('nu')
+p.nu[1] = 0.1
+m.list_of_moments.remove('TO') 
+
 # sol = var.var_from_vector(p.guess,p,context='calibration')
 # sol.scale_P(p)
 # sol.compute_non_solver_quantities(p)
@@ -197,11 +201,11 @@ commentary = ''
 # baseline_number = '501'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 620
+run_number = 15.0
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

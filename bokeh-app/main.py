@@ -447,6 +447,7 @@ comments_dic['618'] = {
     '9.1':'9.1:fixed f, drop UUPCOST, target TP, 1992',
     '10.0':'10.0:fixed f, drop UUPCOST,target inter_TP, 2005',
     '10.1':'10.1:fixed f, drop UUPCOST,target inter_TP, 1992',
+    '15.0':'15.0:nu=0.1, drop TO',
     }
 
 baselines_dic_param = {}
@@ -1611,7 +1612,7 @@ def get_data_nash_coop(baseline_nash_number):
 
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                    # options=['404','405','501','601'])
-                                   options=['501','607','619'])
+                                   options=['501','607','618','619'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1812,7 +1813,7 @@ cf_list = sorted([s for s in os.listdir(cf_path)
     sorted([s for s in os.listdir(cf_path) 
                 if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('610') and s.startswith('baseline')], key=section_end)+\
+                if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
