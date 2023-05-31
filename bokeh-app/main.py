@@ -447,6 +447,11 @@ comments_dic['618'] = {
     '9.1':'9.1:fixed f, drop UUPCOST, target TP, 1992',
     '10.0':'10.0:fixed f, drop UUPCOST,target inter_TP, 2005',
     '10.1':'10.1:fixed f, drop UUPCOST,target inter_TP, 1992',
+    '11.0':'11.0:fixed f, target UUPCOST, drop SINNOV, 2005',
+    '11.1':'11.1:fixed f, target UUPCOST, drop SINNOV, 1992',
+    '12.0':'12.0:fixed f, target UUPCOST, inter_TP, drop SINNOV, 2005',
+    '12.1':'12.1:fixed f, target UUPCOST, inter_TP, drop SINNOV, 1992',
+    '13.0':'13.0:full calibration without SINNOV, 2005',
     '15.0':'15.0:nu=0.1, drop TO',
     }
 
