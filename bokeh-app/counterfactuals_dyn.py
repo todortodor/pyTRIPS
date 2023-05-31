@@ -18,48 +18,49 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'611','variation': 'baseline'},
-    {'baseline':'611','variation': '1.0'},
-    {'baseline':'611','variation': '1.1'},
-    {'baseline':'611','variation': '1.2'},
-    {'baseline':'611','variation': '1.3'},
-    {'baseline':'611','variation': '1.4'},
-    {'baseline':'611','variation': '1.5'},
-    {'baseline':'611','variation': '1.6'},
-    {'baseline':'611','variation': '1.7'},
-    {'baseline':'611','variation': '1.8'},
-    {'baseline':'611','variation': '1.9'},
-    {'baseline':'611','variation': '1.10'},
-    {'baseline':'611','variation': '1.11'},
-    {'baseline':'611','variation': '1.12'},
-    {'baseline':'611','variation': '1.13'},
-    {'baseline':'611','variation': '1.14'},
-    {'baseline':'611','variation': '1.15'},
-    {'baseline':'611','variation': '1.16'},
-    {'baseline':'611','variation': '1.17'},
-    {'baseline':'611','variation': '1.18'},
-    {'baseline':'611','variation': '1.19'},
-    {'baseline':'611','variation': '1.20'},
-    {'baseline':'611','variation': '1.21'},
-    {'baseline':'611','variation': '1.22'},
-    {'baseline':'611','variation': '1.23'},
-    {'baseline':'611','variation': '1.24'},
-    {'baseline':'611','variation': '1.25'},
-    {'baseline':'611','variation': '1.26'},
-    {'baseline':'611','variation': '1.27'},
-    {'baseline':'611','variation': '1.28'},
-    {'baseline':'611','variation': '1.29'},
-    {'baseline':'611','variation': '1.30'},
-    {'baseline':'611','variation': '1.31'},
-    {'baseline':'611','variation': '1.32'},
-    {'baseline':'611','variation': '1.33'},
-    {'baseline':'611','variation': '1.34'},
-    {'baseline':'611','variation': '1.35'},
-    {'baseline':'611','variation': '1.36'},
-    {'baseline':'611','variation': '1.37'},
-    {'baseline':'611','variation': '1.38'},
-    {'baseline':'611','variation': '1.39'},
-    {'baseline':'611','variation': '1.40'},
+    {'baseline':'607','variation': 'baseline'},
+    # {'baseline':'611','variation': 'baseline'},
+    # {'baseline':'611','variation': '1.0'},
+    # {'baseline':'611','variation': '1.1'},
+    # {'baseline':'611','variation': '1.2'},
+    # {'baseline':'611','variation': '1.3'},
+    # {'baseline':'611','variation': '1.4'},
+    # {'baseline':'611','variation': '1.5'},
+    # {'baseline':'611','variation': '1.6'},
+    # {'baseline':'611','variation': '1.7'},
+    # {'baseline':'611','variation': '1.8'},
+    # {'baseline':'611','variation': '1.9'},
+    # {'baseline':'611','variation': '1.10'},
+    # {'baseline':'611','variation': '1.11'},
+    # {'baseline':'611','variation': '1.12'},
+    # {'baseline':'611','variation': '1.13'},
+    # {'baseline':'611','variation': '1.14'},
+    # {'baseline':'611','variation': '1.15'},
+    # {'baseline':'611','variation': '1.16'},
+    # {'baseline':'611','variation': '1.17'},
+    # {'baseline':'611','variation': '1.18'},
+    # {'baseline':'611','variation': '1.19'},
+    # {'baseline':'611','variation': '1.20'},
+    # {'baseline':'611','variation': '1.21'},
+    # {'baseline':'611','variation': '1.22'},
+    # {'baseline':'611','variation': '1.23'},
+    # {'baseline':'611','variation': '1.24'},
+    # {'baseline':'611','variation': '1.25'},
+    # {'baseline':'611','variation': '1.26'},
+    # {'baseline':'611','variation': '1.27'},
+    # {'baseline':'611','variation': '1.28'},
+    # {'baseline':'611','variation': '1.29'},
+    # {'baseline':'611','variation': '1.30'},
+    # {'baseline':'611','variation': '1.31'},
+    # {'baseline':'611','variation': '1.32'},
+    # {'baseline':'611','variation': '1.33'},
+    # {'baseline':'611','variation': '1.34'},
+    # {'baseline':'611','variation': '1.35'},
+    # {'baseline':'611','variation': '1.36'},
+    # {'baseline':'611','variation': '1.37'},
+    # {'baseline':'611','variation': '1.38'},
+    # {'baseline':'611','variation': '1.39'},
+    # {'baseline':'611','variation': '1.40'},
     ]
 
 for baseline_dic in baseline_dics:
@@ -117,29 +118,35 @@ for baseline_dic in baseline_dics:
     lb_delta=0.01
     ub_delta=12
     
-    delta_factor_array = np.logspace(-1,1,31)
+    # delta_factor_array = np.logspace(-1,1,31)
     
-    for c in p_baseline.countries:
-        make_counterfactual(p_baseline,c,local_path,
-                            sol_baseline=sol_baseline,
-                            delta_factor_array=delta_factor_array,
-                            dynamics=True)
-        make_counterfactual_recap(p_baseline, sol_baseline, c,
-                                      local_path,recap_path,
-                                      dynamics=True,Nt=25,t_inf=500)
+    # for c in p_baseline.countries:
+    #     make_counterfactual(p_baseline,c,local_path,
+    #                         sol_baseline=sol_baseline,
+    #                         # delta_factor_array=delta_factor_array,
+    #                         dynamics=True)
+    #     make_counterfactual_recap(p_baseline, sol_baseline, c,
+    #                                   local_path,recap_path,
+    #                                   dynamics=True,Nt=25,t_inf=500)
     
-    make_counterfactual(p_baseline,'World',local_path,
-                        delta_factor_array=delta_factor_array,
+    # make_counterfactual(p_baseline,'World',local_path,
+    #                     # delta_factor_array=delta_factor_array,
+    #                     sol_baseline=sol_baseline,dynamics=True)
+    # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+    #                               local_path,recap_path,
+    #                               dynamics=True,Nt=25,t_inf=500)
+    
+    # # delta_factor_array = np.linspace(0,1,31)
+    # make_counterfactual(p_baseline,'Harmonizing',local_path,
+    #                     # delta_factor_array=delta_factor_array,
+    #                     sol_baseline=sol_baseline,dynamics=True)
+    # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+    #                               local_path,recap_path,
+    #                               dynamics=True,Nt=25,t_inf=500)
+    
+    make_counterfactual(p_baseline,'Uniform_delta',local_path,
                         sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-    delta_factor_array = np.linspace(0,1,31)
-    make_counterfactual(p_baseline,'Harmonizing',local_path,
-                        delta_factor_array=delta_factor_array,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
                                   local_path,recap_path,
                                   dynamics=True,Nt=25,t_inf=500)
     

@@ -1328,6 +1328,8 @@ def make_counterfactual(p_baseline,country,local_path,
         delta_factor_array = np.logspace(-1,1,111)
         if country == 'Harmonizing':
             delta_factor_array = np.linspace(0,1,101)
+        if country == 'Uniform_delta':
+            delta_factor_array = np.logspace(-2,0,101)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
         
@@ -1341,6 +1343,8 @@ def make_counterfactual(p_baseline,country,local_path,
             p.delta[:,1] = p_baseline.delta[:,1]**(1-delt) * p_baseline.delta[
                 p_baseline.countries.index(harmonizing_country),1
                 ]**delt
+        if country == 'Uniform_delta':
+            p.delta[:,1] = delt
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,

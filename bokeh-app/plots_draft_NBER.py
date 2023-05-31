@@ -509,8 +509,8 @@ df.to_csv(save_path+parameter+'_patenting.csv',float_format='%.6f')
 
 recap_growth_rate = pd.DataFrame(columns = ['delta_change']+p_baseline.countries+['World'])
 
-for c in p_baseline.countries+['World']:
-# for c in ['World']:
+# for c in p_baseline.countries+['World','Uniform_delta']:
+for c in ['Uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','growth','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -538,6 +538,8 @@ for c in p_baseline.countries+['World']:
                 recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
             if c == 'World':
                 recap.loc[run, 'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
+            if c == 'Uniform_delta':
+                recap.loc[run, 'delta_change'] = p.delta[0,1]
             recap.loc[run, 'growth'] = sol_c.g
             recap.loc[run, 'world_negishi'] = sol_c.cons_eq_negishi_welfare_change
             recap.loc[run, 'world_equal'] = sol_c.cons_eq_pop_average_welfare_change
@@ -548,12 +550,22 @@ for c in p_baseline.countries+['World']:
 
     fig,ax = plt.subplots()
     # ax2 = ax.twinx()
-    
+    plt.xscale('log')
     ax.set_ylabel('Welfare change')
     if c in p_baseline.countries:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
         ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
+    if c == 'Uniform_delta':
+        ax.set_xlabel(r'Harmonized $\delta$')
+        plt.axvline(x=p_baseline.delta[0,1], lw = 1, color = 'k')
+        xt = ax.get_xticks() 
+        # xt = np.linspace(0.01,0.1,10).round(2).tolist()+np.linspace(0.1,1,10).round(2).tolist()[1:]
+        xt=np.append(xt,p_baseline.delta[0,1])
+        xtl=xt.tolist()
+        xtl[-1]=r'$\delta_{US}$'
+        ax.set_xticks(xt)
+        ax.set_xticklabels(xtl,rotation=45)
     # ax2.set_ylabel('Growth rate change')
 
     for i,country in enumerate(p_baseline.countries):
@@ -569,7 +581,7 @@ for c in p_baseline.countries+['World']:
     # ax2.legend()
     ax.legend()
     # plt.title('Response to unilateral patent protection change')
-    plt.xscale('log')
+    
     # plt.yscale('log')
     for save_format in save_formats:
         plt.savefig(save_path+c+'_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
@@ -579,12 +591,23 @@ for c in p_baseline.countries+['World']:
         caption = 'Consumption equivalent welfares in the unilateral patent protection counterfactual of '+countries_names[c]
     if c == 'World':
         caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
-    
+    if c == 'Uniform_delta':
+        caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
+        
     recap.style.to_latex(save_path+c+'_unilateral_patent_protection_counterfactual.tex',
                       caption=caption,
                       **save_to_tex_options
                       )
     recap.to_csv(save_path+c+'_unilateral_patent_protection_counterfactual.csv')
+    
+    if c == 'Uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(save_path+c+'_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(save_path+c+'_US_values.csv')
 
 #%% Counterfactual growth rates
 
@@ -966,7 +989,8 @@ write_calibration_results(save_path+'Coop_negishi_weights',p_coop_negishi,m_coop
 
 #%% Unilateral patent protections counterfactuals with dynamics
 
-for c in p_baseline.countries+['World']:
+for c in p_baseline.countries+['World','Uniform_delta']:
+# for c in ['Uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -999,17 +1023,30 @@ for c in p_baseline.countries+['World']:
             recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
         if c == 'World':
             recap.loc[run, 'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
+        if c == 'Uniform_delta':
+            recap.loc[run, 'delta_change'] = p.delta[0,1]
         recap.loc[run, 'world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
         recap.loc[run, 'world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
         recap.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
 
     fig,ax = plt.subplots()
     
+    plt.xscale('log')
+    
     ax.set_ylabel('Welfare change')
     if c in p_baseline.countries:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
         ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
+    if c == 'Uniform_delta':
+        ax.set_xlabel(r'Harmonized $\delta$')
+        plt.axvline(x=p_baseline.delta[0,1], lw = 1, color = 'k')
+        xt = ax.get_xticks() 
+        xt=np.append(xt,p_baseline.delta[0,1])
+        xtl=xt.tolist()
+        xtl[-1]=r'$\delta_{US}$'
+        ax.set_xticks(xt)
+        ax.set_xticklabels(xtl)
 
     for i,country in enumerate(p_baseline.countries):
         ax.plot(recap.delta_change,recap[country],color=sns.color_palette()[i],label=countries_names[country])
@@ -1019,8 +1056,6 @@ for c in p_baseline.countries+['World']:
 
     ax.legend()
 
-    plt.xscale('log')
-
     for save_format in save_formats:
         plt.savefig(save_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
     plt.show()
@@ -1029,12 +1064,23 @@ for c in p_baseline.countries+['World']:
         caption = 'Consumption equivalent welfares in the unilateral patent protection counterfactual of '+countries_names[c]
     if c == 'World':
         caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
+    if c == 'Uniform_delta':
+        caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
     
     recap.style.to_latex(save_path+c+'_dyn_unilateral_patent_protection_counterfactual.tex',
                       caption=caption,
                       **save_to_tex_options
                       )
     recap.to_csv(save_path+c+'_dyn_unilateral_patent_protection_counterfactual.csv')
+    
+    if c == 'Uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(save_path+c+'_dyn_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(save_path+c+'_dyn_US_values.csv')
 
 #%% Nash table with transitional dynamics
 

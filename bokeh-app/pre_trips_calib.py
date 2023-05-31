@@ -392,7 +392,7 @@ for i in [1,5,6,7,8,9,10]:
     m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
     m_pre.compute_moments(sol_pre,p_pre)
     
-    p_pre_cf = p.copy()
+    p_pre_cf = p_baseline.copy()
     p_pre_cf.delta[...,1] = p_pre.delta[...,1]
     
     _, sol_pre_cf = fixed_point_solver(p_pre_cf,context = 'counterfactual',x0=p_pre_cf.guess,
@@ -441,6 +441,56 @@ for i in [1,5,6,7,8,9,10]:
                             )
     dyn_sol_pre_cf.compute_non_solver_quantities(p_pre_cf)
     
+    p_pre_cf_fix_north = p_baseline.copy()
+    p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
+    p_pre_cf_fix_north.delta[0:3,1] = p_baseline.delta[0:3,1]
+    
+    _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
+                            cobweb_anim=False,tol =1e-15,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            )
+    sol_pre_cf_fix_north.scale_P(p_pre_cf_fix_north)
+    sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+    sol_pre_cf_fix_north.compute_consumption_equivalent_welfare(p_pre_cf_fix_north,sol_baseline)
+    
+    _, dyn_sol_pre_cf_fix_north = dyn_fixed_point_solver(p_pre_cf_fix_north, sol_baseline,sol_fin=sol_pre_cf_fix_north,
+                            Nt=25,t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 50,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            )
+    dyn_sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+    
     if 'fe' in p.calib_parameters:
         recap.loc[i,'fixed fe / fo'] = 'N'
     else:
@@ -467,4 +517,21 @@ for i in [1,5,6,7,8,9,10]:
     # recap.loc[i,'(std/mean)(1992)/(std/mean)(2005)'] = (p_pre.delta[...,1].std()/p_pre.delta[...,1].mean())/(p_baseline.delta[...,1].std()/p_baseline.delta[...,1].mean())
     recap.loc[i,'static welfare change'] = sol_pre_cf.cons_eq_welfare
     recap.loc[i,'dynamic welfare change'] = dyn_sol_pre_cf.cons_eq_welfare
-    
+    recap.loc[i,'static welfare change, fixed delta north'] = sol_pre_cf_fix_north.cons_eq_welfare
+    recap.loc[i,'dynamic welfare change, fixed delta north'] = dyn_sol_pre_cf_fix_north.cons_eq_welfare
+
+# recap.round(4).to_csv('pre_trips_calib_and_cf.csv')    
+
+#%% 
+import matplotlib.pyplot as plt
+
+reduc = recap.loc[7]
+fig,ax = plt.subplots(2,1,figsize = (10,8))
+reduc[['static welfare change','static welfare change, fixed delta north']] = \
+    100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
+reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
+                             ax=ax[0])
+reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']] = \
+    100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
+reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
+                             ax=ax[1])

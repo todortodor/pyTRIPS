@@ -390,6 +390,9 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
                 )/np.log(
                     p_baseline.delta[idx_country,1]/p_baseline.delta[1,1]
                     )
+        if country == 'Uniform_delta':
+            recap.loc[run, 'delt'] = p.delta[0,1]
+            recap_dyn.loc[run, 'delt'] = p.delta[0,1]
         recap.loc[run, 'growth'] = sol_c.g
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         
