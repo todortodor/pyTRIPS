@@ -453,6 +453,14 @@ comments_dic['618'] = {
     '12.1':'12.1:fixed f, target UUPCOST, inter_TP, drop SINNOV, 1992',
     '13.0':'13.0:full calibration without SINNOV, 2005',
     '15.0':'15.0:nu=0.1, drop TO',
+    '16.0':'16.0:fixed f, target UUPCOST and KM, drop SINNOV, 2005',
+    '16.1':'16.1:fixed f, target UUPCOST and KM, drop SINNOV, 1992',
+    '17.0':'17.0:fixed f, target UUPCOST and KM and inter_TP, drop SINNOV, 2005',
+    '17.1':'17.1:fixed f, target UUPCOST and KM and inter_TP, drop SINNOV, 1992',
+    '18.0':'18.0:fixed f, target UUPCOST and KM, 2005',
+    '18.1':'18.1:fixed f, target UUPCOST and KM, 1992',
+    '19.0':'19.0:fixed f, target UUPCOST and KM and inter_TP, 2005',
+    '19.1':'19.1:fixed f, target UUPCOST and KM and inter_TP, 1992',
     }
 
 baselines_dic_param = {}

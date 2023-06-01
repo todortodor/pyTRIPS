@@ -224,16 +224,72 @@ runs_params = [
     #   'number': 13.0,
     #   'calib_params':p_baseline.calib_parameters,
     #   'list_of_moments':['GPDIFF','GROWTH','KM','OUT',
-    #    'RD','RP','SRDUS','SRGDP','TO','SPFLOW','UUPCOST','DOMPATINUS',
-    #    'DOMPATINEU','TE'],
+    #     'RD','RP','SRDUS','SRGDP','TO','SPFLOW','UUPCOST','DOMPATINUS',
+    #     'DOMPATINEU','TE'],
     #   'year':2005
     #   },
+    # {
+    #   'number': 13.1,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':['GPDIFF','GROWTH','KM','OUT',
+    #    'RD','RP','SRDUS','SRGDP','TO','SPFLOW','UUPCOST','DOMPATINUS',
+    #    'DOMPATINEU','TE'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 16.0,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 16.1,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 17.0,
+    #   'calib_params':['eta','T','delta'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 17.1,
+    #   'calib_params':['eta','T','delta'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
     {
-      'number': 13.1,
-      'calib_params':p_baseline.calib_parameters,
-      'list_of_moments':['GPDIFF','GROWTH','KM','OUT',
-       'RD','RP','SRDUS','SRGDP','TO','SPFLOW','UUPCOST','DOMPATINUS',
-       'DOMPATINEU','TE'],
+      'number': 18.0,
+      'calib_params':['eta','T','delta',],
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
+        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+      'year':2005
+      },
+    {
+      'number': 18.1,
+      'calib_params':['eta','T','delta',],
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
+        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+      'year':1992
+      },
+    {
+      'number': 19.0,
+      'calib_params':['eta','T','delta'],
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
+        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+      'year':2005
+      },
+    {
+      'number': 19.1,
+      'calib_params':['eta','T','delta'],
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
+        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
       'year':1992
       },
     ]
@@ -581,7 +637,7 @@ for i in runs:
 #%% 
 import matplotlib.pyplot as plt
 
-reduc = recap.loc[11]
+reduc = recap.loc[12]
 fig,ax = plt.subplots(2,1,figsize = (10,8))
 reduc[['static welfare change','static welfare change, fixed delta north']] = \
     100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
