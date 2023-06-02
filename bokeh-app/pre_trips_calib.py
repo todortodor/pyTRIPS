@@ -292,15 +292,29 @@ runs_params = [
     #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 20.0,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 20.1,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 21.0,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
     {
-      'number': 20.0,
-      'calib_params':['eta','T','delta',],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
-        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
-      'year':2005
-      },
-    {
-      'number': 20.1,
+      'number': 21.1,
       'calib_params':['eta','T','delta',],
       'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
         'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
@@ -327,6 +341,9 @@ for run_params in runs_params:
     m.inter_TP_target = m_baseline.inter_TP*m.inter_TP_data/m_baseline.inter_TP_data
     m.list_of_moments = run_params['list_of_moments']
     # m.weights_dict['UUPCOST'] = 3
+    if run_params['year'] == 1992:
+        m.KM_target = np.float64(0.054382)
+        # m.KM_target = np.float64(0.07)
     
     hist = history(*tuple(m.list_of_moments+['objective']))
     bounds = p.make_parameters_bounds()

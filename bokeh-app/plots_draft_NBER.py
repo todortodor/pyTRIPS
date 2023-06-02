@@ -74,6 +74,10 @@ except:
 baseline = '607'
 variation = 'baseline'
 
+baseline_pre_trips_variation = '618'
+pre_trips_cf = True
+pre_trips_variation = '5.1'
+
 output_path = 'output/'
 output_name = 'draft_NBER'
 
@@ -1323,3 +1327,196 @@ df.style.format(precision=5).to_latex(save_path+'dyn_Coop_negishi_weights_table.
 df.to_csv(save_path+'dyn_Coop_negishi_weights_table.csv',float_format='%.5f')
 
 write_calibration_results(save_path+'dyn_Coop_negishi_weights',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
+#%% pre-TRIPS calibration and counterfactual
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{pre_trips_variation}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'calibration',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-15,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+p_pre_cf = p_baseline.copy()
+p_pre_cf.delta[...,1] = p_pre.delta[...,1]
+
+_, sol_pre_cf = fixed_point_solver(p_pre_cf,context = 'counterfactual',x0=p_pre_cf.guess,
+                        cobweb_anim=False,tol =1e-15,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre_cf.scale_P(p_pre_cf)
+sol_pre_cf.compute_non_solver_quantities(p_pre_cf)
+sol_pre_cf.compute_consumption_equivalent_welfare(p_pre_cf,sol_baseline)
+sol_pre_cf.compute_world_welfare_changes(p_pre_cf,sol_baseline)
+
+_, dyn_sol_pre_cf = dyn_fixed_point_solver(p_pre_cf, sol_baseline,sol_fin=sol_pre_cf,
+                        Nt=25,t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 50,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_pre_cf.compute_non_solver_quantities(p_pre_cf)
+
+p_pre_cf_fix_north = p_baseline.copy()
+p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
+p_pre_cf_fix_north.delta[0:3,1] = p_baseline.delta[0:3,1]
+
+_, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
+                        cobweb_anim=False,tol =1e-15,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre_cf_fix_north.scale_P(p_pre_cf_fix_north)
+sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+sol_pre_cf_fix_north.compute_consumption_equivalent_welfare(p_pre_cf_fix_north,sol_baseline)
+sol_pre_cf_fix_north.compute_world_welfare_changes(p_pre_cf,sol_baseline)
+
+_, dyn_sol_pre_cf_fix_north = dyn_fixed_point_solver(p_pre_cf_fix_north, sol_baseline,sol_fin=sol_pre_cf_fix_north,
+                        Nt=25,t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 50,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+
+pre_trips_path = save_path+'pre-trips/'
+try:
+    os.mkdir(pre_trips_path)
+except:
+    pass
+#%%
+modified_countries_names = {'USA': 'USA',
+ 'EUR': 'Europe',
+ 'JAP': 'Japan',
+ 'CHN': 'China',
+ 'BRA': 'Brazil',
+ 'IND': 'India',
+ 'ROW': 'Rest of\nthe world'}
+df = pd.DataFrame(
+    index = pd.Index([modified_countries_names[c] for c in p_baseline.countries]+['World\nNegishi','World\nEqual'],
+                                       name = 'country')
+    )
+
+df['delta_baseline'] = p_baseline.delta[...,1].tolist()+[np.nan,np.nan]
+df['delta_1992'] = p_pre.delta[...,1].tolist()+[np.nan,np.nan]
+df['static_welfare_change'] = sol_pre_cf.cons_eq_welfare.tolist()+[
+    sol_pre_cf.cons_eq_negishi_welfare_change,sol_pre_cf.cons_eq_pop_average_welfare_change
+    ]
+df['dynamic_welfare_change'] = dyn_sol_pre_cf.cons_eq_welfare.tolist()+[
+    dyn_sol_pre_cf.cons_eq_negishi_welfare_change,dyn_sol_pre_cf.cons_eq_pop_average_welfare_change
+    ]
+df['static_welfare_change_fixed_delta_north'] = sol_pre_cf_fix_north.cons_eq_welfare.tolist()+[
+    sol_pre_cf_fix_north.cons_eq_negishi_welfare_change,sol_pre_cf_fix_north.cons_eq_pop_average_welfare_change
+    ]
+df['dynamic_welfare change_fixed_delta_north'] = dyn_sol_pre_cf_fix_north.cons_eq_welfare.tolist()+[
+    dyn_sol_pre_cf_fix_north.cons_eq_negishi_welfare_change,dyn_sol_pre_cf_fix_north.cons_eq_pop_average_welfare_change
+    ]
+grey_rgb = (105/256,105/256,105/256)
+# grey_rgb = (0,0,0)
+
+for col in ['static_welfare_change','dynamic_welfare_change',
+            'static_welfare_change_fixed_delta_north','dynamic_welfare change_fixed_delta_north']:
+
+    fig,ax = plt.subplots()
+    # ax.bar(df.index, df['static welfare change']*100-100)
+    ax.barh(df.index, df[col]*100-100, 
+            color = sns.color_palette()[:len(p_baseline.countries)]+[grey_rgb,grey_rgb],
+           # color = sns.color_palette()[:len(p_baseline.countries)+2],
+           # hatch = ['']*len(p_baseline.countries)+['/','x']
+           )
+    ax.invert_yaxis()
+    ax.set_xlabel('Welfare change (%)')
+    
+    for save_format in save_formats:
+        plt.savefig(pre_trips_path+col+'.'+save_format,format=save_format)
+    
+    plt.show()
+
+df.loc['growth_rate','delta_baseline'] = sol_baseline.g
+df.loc['growth_rate','static_welfare_change'] = sol_pre_cf.g
+df.loc['growth_rate','static_welfare_change_fixed_delta_north'] = sol_pre_cf_fix_north.g
+
+caption = 'Pre TRIPS calibration and counterfacual'
+
+df.style.format(precision=5).to_latex(pre_trips_path+'pre_trips.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(pre_trips_path+'pre_trips.csv',float_format='%.5f')

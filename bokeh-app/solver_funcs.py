@@ -411,7 +411,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                             plot_cobweb=False,
                             safe_convergence=0.1,
                             disp_summary=False,
-                            damping = 2,
+                            damping =2,
                             max_count = 1000,
                             accel_memory = 50, 
                             accel_type1=True, 

@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '618'
+baseline_number = '607'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
