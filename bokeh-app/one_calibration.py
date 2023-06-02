@@ -32,9 +32,9 @@ if new_run:
     # m_back_up = m.copy()
     # m.load_data('data/data_7_countries_2005/')
 
-p.calib_parameters.remove('nu')
-p.nu[1] = 0.1
-m.list_of_moments.remove('TO') 
+# p.calib_parameters.remove('nu')
+# p.nu[1] = 0.1
+# m.list_of_moments.remove('TO') 
 
 # sol = var.var_from_vector(p.guess,p,context='calibration')
 # sol.scale_P(p)

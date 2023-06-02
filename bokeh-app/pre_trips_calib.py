@@ -264,31 +264,45 @@ runs_params = [
     #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 18.0,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 18.1,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 19.0,
+    #   'calib_params':['eta','T','delta'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 19.1,
+    #   'calib_params':['eta','T','delta'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
+    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
     {
-      'number': 18.0,
+      'number': 20.0,
       'calib_params':['eta','T','delta',],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
         'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
       'year':2005
       },
     {
-      'number': 18.1,
+      'number': 20.1,
       'calib_params':['eta','T','delta',],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU','SINNOVPATUS',
-        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
-      'year':1992
-      },
-    {
-      'number': 19.0,
-      'calib_params':['eta','T','delta'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
-        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
-      'year':2005
-      },
-    {
-      'number': 19.1,
-      'calib_params':['eta','T','delta'],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','inter_TP','KM','SINNOVPATEU','SINNOVPATUS',
+      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
         'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
       'year':1992
       },
@@ -431,7 +445,7 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 
 import pandas as pd
 
-runs = [5,7,11,12]
+runs = [5,6,7,8,9,10,11,12,16,17,18,19]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],
@@ -632,18 +646,22 @@ for i in runs:
         dyn_sol_pre_cf_fix_north.cons_eq_negishi_welfare_change,dyn_sol_pre_cf_fix_north.cons_eq_pop_average_welfare_change
         ]
 
-# recap.round(4).to_csv('pre_trips_calib_and_cf_new.csv')    
+recap.round(4).to_csv('../misc/pre_trips_cf/pre_trips_cf.csv')    
 
 #%% 
+# recap.round(4).to_csv('../misc/pre_trips_cf/pre_trips_cf.csv')    
 import matplotlib.pyplot as plt
 
-reduc = recap.loc[12]
-fig,ax = plt.subplots(2,1,figsize = (10,8))
-reduc[['static welfare change','static welfare change, fixed delta north']] = \
-    100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
-reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
-                             ax=ax[0])
-reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']] = \
-    100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
-reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
-                             ax=ax[1])
+for i in runs:
+    reduc = recap.loc[i]
+    fig,ax = plt.subplots(2,1,figsize = (10,8))
+    reduc[['static welfare change','static welfare change, fixed delta north']] = \
+        100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
+    reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
+                                 ax=ax[0])
+    reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']] = \
+        100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
+    reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
+                                 ax=ax[1])
+    plt.savefig(f'../misc/pre_trips_cf/pre_trips_cf_{i}.png')
+    plt.show()

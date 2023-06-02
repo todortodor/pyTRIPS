@@ -461,6 +461,8 @@ comments_dic['618'] = {
     '18.1':'18.1:fixed f, target UUPCOST and KM, 1992',
     '19.0':'19.0:fixed f, target UUPCOST and KM and inter_TP, 2005',
     '19.1':'19.1:fixed f, target UUPCOST and KM and inter_TP, 1992',
+    '20.0':'20.0:fixed f, target UUPCOST and KM, drop SINNOVUS, 2005',
+    '20.1':'20.1:fixed f, target UUPCOST and KM, drop SINNOVUS, 1992',
     }
 
 baselines_dic_param = {}
@@ -471,7 +473,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
-baseline_list = ['501','618','619','620']    
+baseline_list = ['501','618','619']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -850,7 +852,7 @@ print(time.perf_counter() - start)
 
 baseline_time = '619'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
-baseline_time_list = ['619','620']    
+baseline_time_list = ['619']    
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
@@ -2192,91 +2194,91 @@ jac_report = column(controls_jac,p_jac)
 fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 # fifth_panel = row(jac_report)
 
-# #%% Kogan paper
+#%% Kogan paper
 
-# colors_kog = itertools.cycle(Category10[10])
+colors_kog = itertools.cycle(Category10[10])
 
-# df_kog = pd.read_csv(data_path+'koga_updated.csv')
-# ds_kog = ColumnDataSource(df_kog)
+df_kog = pd.read_csv(data_path+'koga_updated.csv')
+ds_kog = ColumnDataSource(df_kog)
 
-# p_kog = figure(title="Kogan moment updated / extrapolated", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Issue Date',
-#                 y_axis_type="log",
-#                 tools = TOOLS) 
+p_kog = figure(title="Kogan moment updated / extrapolated", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Issue Date',
+                y_axis_type="log",
+                tools = TOOLS) 
 
-# l_kog = {}
+l_kog = {}
 
-# for i,col in enumerate(df_kog.columns):
-#     if col not in ['issue_date']:
-#         l_kog[i] = p_kog.line(x='issue_date', y=col, 
-#                   source = ds_kog, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog),
-#                   name = col)
+for i,col in enumerate(df_kog.columns):
+    if col not in ['issue_date']:
+        l_kog[i] = p_kog.line(x='issue_date', y=col, 
+                  source = ds_kog, 
+                  line_width = 2, legend_label=col, color=next(colors_kog),
+                  name = col)
 
-# hover_tool_kog = HoverTool(
-#     tooltips = [
-#         ("Issue date", "$x"),
-#         ('ValuePerPatent', '@ValuePerPatent'),
-#         ('CostPerPatent', '@CostPerPatent'),
-#         ('KM_article', '@KM_article'),
-#         ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
-#         ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
-#         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
-#         ],
-#     mode='vline',
-#     renderers = [l_kog[4]]
-# )
-# p_kog.add_tools(hover_tool_kog)
+hover_tool_kog = HoverTool(
+    tooltips = [
+        ("Issue date", "$x"),
+        ('ValuePerPatent', '@ValuePerPatent'),
+        ('CostPerPatent', '@CostPerPatent'),
+        ('KM_article', '@KM_article'),
+        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
+        ],
+    mode='vline',
+    renderers = [l_kog[4]]
+)
+p_kog.add_tools(hover_tool_kog)
 
-# p_kog.legend.click_policy="hide"
-# p_kog.legend.label_text_font_size = '8pt'
-# p_kog.add_layout(p_kog.legend[0], 'right')
+p_kog.legend.click_policy="hide"
+p_kog.legend.label_text_font_size = '8pt'
+p_kog.add_layout(p_kog.legend[0], 'right')
 
 
-# colors_kog2 = itertools.cycle(Category10[10])
+colors_kog2 = itertools.cycle(Category10[10])
 
-# df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
-# ds_kog2 = ColumnDataSource(df_kog2)
+df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
+ds_kog2 = ColumnDataSource(df_kog2)
 
-# p_kog2 = figure(title="Kogan moment", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Market Prior',
-#                 tools = TOOLS) 
+p_kog2 = figure(title="Kogan moment", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Market Prior',
+                tools = TOOLS) 
 
-# l_kog2 = {}
+l_kog2 = {}
 
-# for i,col in enumerate(df_kog2.columns):
-#     if col not in ['market prior']:
-#         l_kog2[i] = p_kog2.line(x='market prior', y=col, 
-#                   source = ds_kog2, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog2))
+for i,col in enumerate(df_kog2.columns):
+    if col not in ['market prior']:
+        l_kog2[i] = p_kog2.line(x='market prior', y=col, 
+                  source = ds_kog2, 
+                  line_width = 2, legend_label=col, color=next(colors_kog2))
 
-# hover_tool_kog2 = HoverTool(
-#     tooltips = [
-#         ("market prior", "$x"),
-#         ('1950 to 2007', '@from1950to2007'),
-#         ('1980 to 2007', '@from1980to2007'),
-#         ('1995 to 2007', '@from1995to2007'),
-#         ('2002 to 2007', '@from2002to2007'),
-#         ('1950 to 2020', '@from1950to2020'),
-#         ('1980 to 2020', '@from1980to2020'),
-#         ('1995 to 2020', '@from1995to2020'),
-#         ('2002 to 2020', '@from2002to2020'),
-#         ],
-#     mode='vline',
-#     renderers = [l_kog2[4]]
-# )
+hover_tool_kog2 = HoverTool(
+    tooltips = [
+        ("market prior", "$x"),
+        ('1950 to 2007', '@from1950to2007'),
+        ('1980 to 2007', '@from1980to2007'),
+        ('1995 to 2007', '@from1995to2007'),
+        ('2002 to 2007', '@from2002to2007'),
+        ('1950 to 2020', '@from1950to2020'),
+        ('1980 to 2020', '@from1980to2020'),
+        ('1995 to 2020', '@from1995to2020'),
+        ('2002 to 2020', '@from2002to2020'),
+        ],
+    mode='vline',
+    renderers = [l_kog2[4]]
+)
 
-# p_kog2.legend.click_policy="hide"
-# p_kog2.legend.label_text_font_size = '8pt'
-# p_kog2.add_layout(p_kog2.legend[0], 'right')
-# p_kog2.add_tools(hover_tool_kog2)
+p_kog2.legend.click_policy="hide"
+p_kog2.legend.label_text_font_size = '8pt'
+p_kog2.add_layout(p_kog2.legend[0], 'right')
+p_kog2.add_tools(hover_tool_kog2)
 
-# #!!! sixth_panel
-# sixth_panel = row(p_kog,p_kog2)
+#!!! sixth_panel
+sixth_panel = row(p_kog,p_kog2)
 
 # #%% 7 countries comparison of patent flows data
 
@@ -2416,7 +2418,7 @@ curdoc().add_root(column(first_panel, first_panel_bis, second_panel,
                          third_panel, 
                          fourth_panel, 
                          fifth_panel, 
-                         # sixth_panel,
+                          sixth_panel,
                          # seventh_panel
                          )
                   )

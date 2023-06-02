@@ -13,8 +13,8 @@ import numpy as np
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
-p_init = parameters(n=7,s=2)
-p_init.load_data('calibration_results_matched_economy/baseline_501_variations/2.0/')
+p_init = parameters()
+p_init.load_run('calibration_results_matched_economy/618/')
 
 sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                                 context = 'counterfactual',
@@ -40,11 +40,11 @@ sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
 p = p_init.copy()
-p.delta[:,1] = 12
-p.delta[0,1] = 1e-2
+p.delta[:,1] = 0.1
+# p.delta[0,1] = 1e-2
 
 
-sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
+sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=21,
                                       t_inf=500,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
