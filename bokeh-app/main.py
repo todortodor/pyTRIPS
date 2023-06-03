@@ -463,6 +463,8 @@ comments_dic['618'] = {
     '19.1':'19.1:fixed f, target UUPCOST and KM and inter_TP, 1992',
     '20.0':'20.0:fixed f, target UUPCOST and KM, drop SINNOVUS, 2005',
     '20.1':'20.1:fixed f, target UUPCOST and KM, drop SINNOVUS, 1992',
+    '21.0':'21.0:fixed f, drop SINNOV, KM, UUPCOST, keep delta_north fixed 2005',
+    '21.1':'21.1:fixed f, drop SINNOV, KM, UUPCOST, keep delta_north fixed 1992',
     }
 
 baselines_dic_param = {}
