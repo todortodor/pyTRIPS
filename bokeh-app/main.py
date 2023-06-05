@@ -490,6 +490,30 @@ comments_dic['701'] = {
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATIN,OUT,RD,RP,SRGDP,KM], deltaUS fixed, KM weight=10',
     }
 
+comments_dic['702'] = {
+    'baseline':'baseline: same as 607/618 without SINNOVPATEU, DOMPATINEU',
+    '1.0':'1.0:full calibration 2005',
+    '1.1':'1.1:full calibration 1992',
+    '2.0':'2.0:[delta], [SPFLOW], deltaUS fixed',
+    '2.1':'2.1:[delta], [SPFLOW], deltaUS fixed',
+    '3.0':'3.0:[delta], [SPFLOW,DOMPATINUS], deltaUS fixed',
+    '3.1':'3.1:[delta], [SPFLOW,DOMPATINUS], deltaUS fixed',
+    '4.0':'4.0:[delta], [SPFLOW,DOMPATINUS], deltaUS fixed',
+    '4.1':'4.1:[delta], [SPFLOW,DOMPATINUS], deltaUS_1995 = 1.17647 deltaUS_2005',
+    '5.0':'5.0:[delta,T], [SPFLOW,DOMPATINUS,OUT], deltaUS fixed',
+    '5.1':'5.1:[delta,T], [SPFLOW,DOMPATINUS,OUT], deltaUS fixed',
+    '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], deltaUS fixed',
+    '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], deltaUS fixed',
+    '7.0':'7.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta,etaUS fixed',
+    '7.1':'7.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta,etaUS fixed',
+    '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM], deltaUS fixed',
+    '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM], deltaUS fixed',
+    '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM], deltaUS fixed, KM weight=10',
+    '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM], deltaUS fixed, KM weight=10',
+    '10.0':'10.0:[delta,eta], [SPFLOW,DOMPATINUS], deltaUS fixed',
+    '10.1':'10.1:[delta,eta], [SPFLOW,DOMPATINUS], deltaUS fixed',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -498,7 +522,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['402','403','404']    
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
-baseline_list = ['618','701']    
+baseline_list = ['618','701','702']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
