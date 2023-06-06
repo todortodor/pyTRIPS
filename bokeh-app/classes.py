@@ -42,7 +42,7 @@ class parameters:
                          'r_hjort':co,
                          'd':0.5}
         self.ub_dict = {'sigma':5,
-                        'theta':30,
+                        'theta':12,
                         'rho':0.5,
                         'gamma':cou,
                         'zeta':1,
@@ -52,7 +52,7 @@ class parameters:
                         'k':2,
                         'fe':cou,
                         'fo':cou,
-                        'delta':cou,
+                        'delta':10,
                         'g_0':cou,
                         'alpha':1,
                          'beta':1,
@@ -100,6 +100,9 @@ class parameters:
         if N==13:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+        if N==12:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
             
         self.data_sectors = pd.read_csv(data_path+'sector_moments.csv',index_col=[0])
         self.alpha = self.data_sectors['alpha'].values
@@ -131,7 +134,7 @@ class parameters:
         if not keep_already_calib_params:
             self.eta = np.ones((N, S))*0.02
             self.eta[:, 0] = 0
-            self.sigma = np.ones(S)*3
+            self.sigma = np.ones(S)*2.7
             self.theta = np.ones(S)*5
             self.zeta = np.ones(S)*0.01
             self.T = np.ones((N, S))*1.5
@@ -908,10 +911,17 @@ class dynamic_var:
         self.t_real = (self.t_cheby+1)*self.t_inf/2
         self.sol_init = sol_init
         self.sol_fin = sol_fin
-        self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+        if N == 7:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+        if N==13:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+        if N==12:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
         self.map_parameter = 32
         
-    def elements(self):
+    def elements(self): 
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
             
@@ -1854,6 +1864,10 @@ class moments:
         if N==13:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+        if N==12:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+        self.N = N
         self.sectors = ['Non patent', 'Patent']
         
         self.unit = 1e6
@@ -1888,9 +1902,14 @@ class moments:
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.TE_target = self.moments.loc['TE'].value 
         self.TO_target = self.moments.loc['TO'].value 
-        self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
-            "destination_code != origin_code"
-            )['patent flows'].groupby('destination_code').sum().values).sum()/1e12
+        try:
+            self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
+                "destination_code != origin_code"
+                )['patent flows'].groupby('destination_code').sum().values).sum()/1e12
+        except:
+            self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
+                "destination_code != origin_code"
+                )['patent flows'].groupby('destination_code').sum().values[:self.pat_fees['fee'].values.shape[0]]).sum()/1e12
         self.PCOST_target = self.PCOSTINTER_target+\
             self.pat_fees.loc[1,'fee']*self.cc_moments.loc[(1,1),'patent flows']/1e12+\
             self.pat_fees.loc[2,'fee']*self.cc_moments.loc[(2,2),'patent flows']/1e12
@@ -2476,12 +2495,24 @@ class moments:
                 #         /np.log(getattr(self,mom+'_target')+1)
                 #         )
                     # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
+        
         if self.drop_CHN_IND_BRA_ROW_from_RD:
-            self.RD_deviation = self.RD_deviation[:3]
-            try:
-                self.RD_RUS_deviation = self.RD_RUS_deviation[:3]   
-            except:
-                pass
+            # if self.N == 7:
+            if self.N == 7 or self.N ==12:
+                self.RD_deviation = self.RD_deviation[:3]
+                try:
+                    self.RD_RUS_deviation = self.RD_RUS_deviation[:3]   
+                except:
+                    pass
+            # if self.N == 12:
+            #     # self.RD_deviation = np.array(self.RD_deviation[:3].tolist()+self.RD_deviation[7:-1].tolist())
+            #     self.RD_deviation = np.concatenate([self.RD_deviation[:3],self.RD_deviation[6:-1]],axis=0)
+                
+            #     try:
+            #         self.RD_RUS_deviation = np.array(self.RD_RUS_deviation[:3].tolist()+self.RD_RUS_deviation[6:-1].tolist())
+            #     except:
+            #         pass
+                
             
         if self.add_domestic_EU_to_SPFLOW or self.add_domestic_US_to_SPFLOW:
             current_inter_PFLOW = self.SPFLOW.ravel()*self.inter_TP

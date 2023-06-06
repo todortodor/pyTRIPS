@@ -101,14 +101,22 @@ config_dics = [
     {'year': 2005, 'N': 7},
 ]
 
+# config_dics = [{
+#     'year': y,
+#     'N': N}
+#     for y in range(1990,2019)
+#     for N in [7,13]
+#     ]
 config_dics = [{
     'year': y,
     'N': N}
     for y in range(1990,2019)
-    for N in [7,13]
+    # for y in range(2005,2006)
+    # for N in [7,13]
+    for N in [12]
     ]
 
-write = False
+write = True
 
 for config_dic in config_dics:
     print(config_dic)
@@ -294,27 +302,28 @@ for config_dic in config_dics:
     # final_pat_fees_year.loc[2,'fee'] = 30530*gdp_year.loc[2]/exchange_rates[year]/gdp.loc[
     #     gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','ESP','DEU'])
     #     ][f'{year} [YR{year}]'].sum()
-    EUR_2003_gdp = pd.merge(gdp[
-        ['Country Code', '2003 [YR2003]']
-    ].rename(
-        columns={'2003 [YR2003]': 'gdp'}
-    ).set_index(
-        'Country Code'
-    ).rename_axis(
-        'country'
-    ),
-        crosswalk_countries,
-        left_index=True,
-        right_index=True
-    ).groupby('country_code').sum().loc[2,'gdp']
-    final_pat_fees_year.loc[2,'fee'] = 30530*EUR_2003_gdp*exchange_rates[2003]/gdp.loc[
-        gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','ESP','DEU'])
-        ]['2003 [YR2003]'].sum()*gdp_deflator.loc['USA', '2005']/gdp_deflator.loc['USA', '2003']
+    # EUR_2003_gdp = pd.merge(gdp[
+    #     ['Country Code', '2003 [YR2003]']
+    # ].rename(
+    #     columns={'2003 [YR2003]': 'gdp'}
+    # ).set_index(
+    #     'Country Code'
+    # ).rename_axis(
+    #     'country'
+    # ),
+    #     crosswalk_countries,
+    #     left_index=True,
+    #     right_index=True
+    # ).groupby('country_code').sum().loc[2,'gdp']
+    # final_pat_fees_year.loc[2,'fee'] = 30530*EUR_2003_gdp*exchange_rates[2003]/gdp.loc[
+    #     gdp['Country Code'].isin(['GBR','FRA','ITA','NLD','ESP','DEU'])
+    #     ]['2003 [YR2003]'].sum()*gdp_deflator.loc['USA', '2005']/gdp_deflator.loc['USA', '2003']
+    final_pat_fees_year.loc[2,'fee'] = 32130.875144801288
     final_pat_fees_year['fee'] = final_pat_fees_year['fee']*gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']
     if write:
         final_pat_fees_year.to_csv(path+'final_pat_fees.csv')
         final_pat_fees_year.to_csv(dropbox_path+'final_pat_fees.csv')
-
+    
     output = trade_OECD_reduced.groupby(
         'origin_code').sum().rename_axis('country')
     expenditure = trade_OECD_reduced.groupby(

@@ -25,12 +25,15 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'607','variation': 'baseline'},
+    {'baseline':'802','variation': 'baseline'},
+    {'baseline':'802','variation': '1.0'},
+    {'baseline':'802','variation': '2.0'},
+    {'baseline':'802','variation': '3.0'},
     # {'baseline':'608','variation': 'baseline'},
     # {'baseline':'609','variation': 'baseline'},
     # {'baseline':'610','variation': 'baseline'},
-    {'baseline':'618','variation': 'baseline'},
-    {'baseline':'618','variation': '15.0'},
+    # {'baseline':'618','variation': 'baseline'},
+    # {'baseline':'618','variation': '15.0'},
     # {'baseline':'601','variation': 'baseline'},
     # {'baseline':'601','variation': '1.0'},
     # {'baseline':'601','variation': '1.1'},
@@ -98,7 +101,9 @@ for baseline_dic in baseline_dics:
             run = pd.DataFrame(data = [baseline_dic['baseline'],
                             baseline_dic['variation'],
                             aggregation_method]+p_opti.delta[...,1].tolist(), 
-                            index = deltas_df.columns).T
+                            index = ['baseline',
+                                     'variation',
+                                     'aggregation_method'] + p_baseline.countries).T
             deltas_df = pd.concat([deltas_df, run],ignore_index=True)
             deltas_df.to_csv('coop_eq_recaps/deltas.csv')
             
@@ -112,6 +117,8 @@ for baseline_dic in baseline_dics:
                             baseline_dic['variation'],
                             aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
                                                                sol_opti.cons_eq_negishi_welfare_change], 
-                            index = cons_eq_welfares.columns).T
+                            index = ['baseline',
+                                     'variation',
+                                     'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
