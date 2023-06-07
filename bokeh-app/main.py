@@ -759,8 +759,25 @@ par = 'delta'
 
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
 par_select = Select(value=par, title='Quantity', options=sorted(baselines_dic_param[baseline_par].keys()))
+
+country_sort = {
+    'USA':	1,
+    'JAP':	2,
+    'CAN':	3,
+    'AUS':	4,
+    'EUR':	5,
+    'KOR':	6,
+    'MEX':	7,
+    'RUS':	8,
+    'BRA':	9,
+    'ROW':	10,
+    'CHN':	11,
+    'IND':	12,
+    }
+
 x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
-ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par])
+x_range = sorted(x_range, key = country_sort.get)
+ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par].loc[x_range])
 p_par = figure(title="Parameters", 
                width = 1200,
                height = 875,
@@ -820,11 +837,14 @@ def update_baseline_par(attrname, old, new):
     data_table_par.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in list(comments_dic[new].keys())]
-    
+
 def update_par(attrname, old, new):
     baseline_par = baseline_par_select.value
-    p_par.x_range.factors = baselines_dic_param[baseline_par][new].index.to_list()
-    ds_par.data = baselines_dic_param[baseline_par][new]
+    x_range_factors = baselines_dic_param[baseline_par][new].index.to_list()
+    if new != 'scalars':
+        x_range_factors = sorted(x_range_factors, key = country_sort.get)
+    p_par.x_range.factors = x_range_factors
+    ds_par.data = baselines_dic_param[baseline_par][new].loc[x_range_factors]
 
 controls_par = row(baseline_par_select, par_select)
 
@@ -836,8 +856,9 @@ sol_qty = 'psi_o_star'
 
 baseline_sol_qty_select = Select(value=baseline_sol_qty, title='Baseline', options=sorted(baselines_dic_sol_qty.keys()))
 sol_qty_select = Select(value=sol_qty, title='Quantity', options=sorted(baselines_dic_sol_qty[baseline_sol_qty].keys()))
-x_range = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
-ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty])
+x_range_par = baselines_dic_sol_qty[baseline_sol_qty][sol_qty_select.value].index.to_list()
+x_range_par = sorted(x_range_par, key = country_sort.get)
+ds_sol_qty = ColumnDataSource(baselines_dic_sol_qty[baseline_sol_qty][sol_qty].loc[x_range_par])
 p_sol_qty = figure(title="Solution quantities", 
                 width = 1200,
                 height = 875,
@@ -900,8 +921,8 @@ def update_baseline_sol_qty(attrname, old, new):
     
 def update_sol_qty(attrname, old, new):
     baseline_sol_qty = baseline_sol_qty_select.value
-    p_sol_qty.x_range.factors = baselines_dic_sol_qty[baseline_sol_qty][new].index.to_list()
-    ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new]
+    # p_sol_qty.x_range.factors = baselines_dic_sol_qty[baseline_sol_qty][new].index.to_list()
+    ds_sol_qty.data = baselines_dic_sol_qty[baseline_sol_qty][new].loc[x_range_par]
 
 controls_sol_qty = row(baseline_sol_qty_select, sol_qty_select)
 
