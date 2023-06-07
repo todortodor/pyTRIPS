@@ -615,7 +615,7 @@ mom = 'SPFLOW'
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
 mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mom[baseline_mom].keys()))
 x_mom_select = Select(value='baseline', title='x-axis target', options=list(comments_dic[baseline_mom].keys()))
-labels_mom_toggle = Toggle(label="Labels On/Off")
+labels_mom_toggle = Toggle(label="Labels On/Off",align='end')
 
 def update_x_axis_mom_matching_options(attr, old, new):
     x_mom_select.options = list(comments_dic[new].keys())
