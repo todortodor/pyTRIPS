@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import Button, Slider, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
+from bokeh.models import Button, Slider, Toggle, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 from bokeh.plotting import figure
 from bokeh.events import ButtonClick
 from classes import parameters, moments, var
@@ -529,6 +529,10 @@ comments_dic['802'] = {
     '1.0':'1.0: 1992',
     '2.0':'2.0: 2005 no Hjort correc',
     '3.0':'3.0: target RD US/EU/JP/CA/KR/RU/AU/MX',
+    '4.0':'4.0: target RD US/EU/JP/CA/KR/AU',
+    '4.1':'4.1: drop SRDUS',
+    '4.2':'4.2: drop SRDUS, higher weight on RD',
+    '4.3':'4.3: drop SRDUS, higher weight on SPFLOW',
     }
 
 baselines_dic_param = {}
@@ -610,8 +614,8 @@ mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
 mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mom[baseline_mom].keys()))
-
 x_mom_select = Select(value='baseline', title='x-axis target', options=list(comments_dic[baseline_mom].keys()))
+labels_mom_toggle = Toggle(label="Labels On/Off")
 
 def update_x_axis_mom_matching_options(attr, old, new):
     x_mom_select.options = list(comments_dic[new].keys())
@@ -630,9 +634,9 @@ hover_tool_mom.tooltips = [
     ("index", "@x"),
     ("(target,value)", "($x,$y)"),
     ]
-labels = LabelSet(x='target', y='baseline', text='x',
+labels_mom = LabelSet(x='target', y='baseline', text='x',
               x_offset=2, y_offset=2, source=ds_mom, text_font_size="7pt")
-p_mom.add_layout(labels)
+p_mom.add_layout(labels_mom)
 p_mom.add_tools(hover_tool_mom)
 slope1 = Slope(gradient=1, y_intercept=0,
               line_color='black', line_dash='dashed', line_width=1)
@@ -745,11 +749,15 @@ def update_x_axis_target(attrname, old, new):
             if x != 'objective':
                 df_temp['target'][i] = float(getattr(m_temp,x+'_target'))
     ds_mom.data = df_temp
-
-controls_mom = row(baseline_mom_select, mom_select, x_mom_select)
+    
+def toggle_labels(event):
+    labels_mom.visible = not labels_mom.visible
+    
+controls_mom = row(baseline_mom_select, mom_select, x_mom_select, labels_mom_toggle)
 
 baseline_mom_select.on_change('value', update_baseline_mom)
 baseline_mom_select.on_change('value', update_x_axis_mom_matching_options)
+labels_mom_toggle.on_click(toggle_labels)
 
 mom_select.on_change('value', update_mom)
 x_mom_select.on_change('value', update_x_axis_target)
