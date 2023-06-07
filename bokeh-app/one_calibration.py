@@ -15,120 +15,29 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '607'
+baseline_number = '802'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/2.0/')
+    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/4.0/')
     # p_back_up = p.copy()
     # p.load_data('data/data_7_countries_2005/',keep_already_calib_params=True)
+    # p.load_data('data/data_12_countries_1992/',
+    #             # data_path = 'data/data_12_countries_1992/',
+    #             keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_data()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/10.1/')
+    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/4.0/')
     # m_back_up = m.copy()
-    # m.load_data('data/data_7_countries_2005/')
+    # m.load_data('data/data_12_countries_1992/')
 
-# p.calib_parameters.remove('nu')
-# p.nu[1] = 0.1
-# m.list_of_moments.remove('TO') 
-
-# sol = var.var_from_vector(p.guess,p,context='calibration')
-# sol.scale_P(p)
-# sol.compute_non_solver_quantities(p)
-# m.compute_moments(sol,p)
-# m.inter_TP_target = m.inter_TP
-# m.list_of_moments.append('inter_TP')
-
-# p.calib_parameters = ['eta','T','delta','fe','fo']
-
-# p.update_khi_and_r_hjort(0.16)
-
-# m.weights_dict['RP'] = 4
-# m.weights_dict['SRGDP'] = 3
-# m.weights_dict['GROWTH'] = 4
-# m.weights_dict['TE'] = 5
-
-# m.TO_target = np.float64(0.015629)
-
-# p.sigma = np.array([2.7,2.7])
-
-# if 'theta' in p.calib_parameters:
-#     p.update_sigma_with_SRDUS_target(m)
-
-# if 'fo' not in p.calib_parameters:
-#     p.calib_parameters.append('fo')
-# if 'd' in p.calib_parameters:
-#     p.calib_parameters.remove('d')
-# # if 'r_hjort' not in p.calib_parameters:
-# #     p.calib_parameters.append('r_hjort')
-# # if 'khi' not in p.calib_parameters:
-# #     p.calib_parameters.append('khi')
-# if 'DOMPATEU' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATEU')
-# if 'DOMPATUS' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATUS')
-# if 'DOMPATINEU' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINEU')
-# if 'DOMPATINUS' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINUS')
-# if 'SINNOVPATEU' not in m.list_of_moments:
-#     m.list_of_moments.append('SINNOVPATEU')
-# if 'SRDUS' not in m.list_of_moments:
-#     m.list_of_moments.append('SRDUS')
-# if 'SRDUS' in m.list_of_moments:
-#     m.list_of_moments.remove('SRDUS')
-# if 'SINNOVPATEU' in m.list_of_moments:
-#     m.list_of_moments.remove('SINNOVPATEU')
-# if 'DOMPATINEU' in m.list_of_moments:
-#     m.list_of_moments.remove('DOMPATINEU')
-# if 'DOMPATINUS' in m.list_of_moments:
-#     m.list_of_moments.remove('DOMPATINUS')
-
-# if 'DOMPATEU' in m.list_of_moments:
-#     m.list_of_moments.remove('DOMPATEU')
-# if 'DOMPATUS' in m.list_of_moments:
-#     m.list_of_moments.remove('DOMPATUS')
-# if 'DOMPATINUS' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINUS')
-# if 'DOMPATINEU' not in m.list_of_moments:
-#     m.list_of_moments.append('DOMPATINEU')
-
-# # replacing UUPCOST with PCOST(INTER)
-# if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-#     if 'UUPCOST' in m.list_of_moments:
-#         m.list_of_moments.remove('UUPCOST')
-#     if 'PCOST' in m.list_of_moments:
-#         m.list_of_moments.remove('PCOST')
-#     if 'PCOSTINTER' not in m.list_of_moments:
-#         m.list_of_moments.append('PCOSTINTER')
-# elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-#     if 'UUPCOST' in m.list_of_moments:
-#         m.list_of_moments.remove('UUPCOST')
-#     if 'PCOSTINTER' in m.list_of_moments:
-#         m.list_of_moments.remove('PCOSTINTER')
-#     if 'PCOST' not in m.list_of_moments:
-#         m.list_of_moments.append('PCOST')
-        
-# # replacing UUPCOST with PCOST(INTER)NOAGG
-# if not any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-#     if 'UUPCOST' in m.list_of_moments:
-#         m.list_of_moments.remove('UUPCOST')
-#     if 'PCOSTNOAGG' in m.list_of_moments:
-#         m.list_of_moments.remove('PCOSTNOAGG')
-#     if 'PCOSTINTERNOAGG' not in m.list_of_moments:
-#         m.list_of_moments.append('PCOSTINTERNOAGG')
-# elif any(mom in m.list_of_moments for mom in ['DOMPATEU','DOMPATUS','DOMPATINEU','DOMPATINEU']):
-#     if 'UUPCOST' in m.list_of_moments:
-#         m.list_of_moments.remove('UUPCOST')
-#     if 'PCOSTINTERNOAGG' in m.list_of_moments:
-#         m.list_of_moments.remove('PCOSTINTERNOAGG')
-#     if 'PCOSTNOAGG' not in m.list_of_moments:
-#         m.list_of_moments.append('PCOSTNOAGG')
-
+m.loss = 'ratio'
+# m.list_of_moments.remove('SRDUS') 
+# m.weights_dict['SPFLOW'] = 6
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -137,7 +46,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 4
+max_iter = 6
 
 while cond:
     if iterations < max_iter - 2:
@@ -198,10 +107,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-# baseline_number = '501'
+baseline_number = '802'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 15.0
+run_number = 5.2
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

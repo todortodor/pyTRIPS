@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 
-baseline_number = '618'
+baseline_number = '702'
 
 p_baseline = parameters()
 p_baseline.correct_eur_patent_cost = True
@@ -54,18 +54,18 @@ TP_target_baseline = m_baseline.TP.copy()
 TP_data_baseline = m_baseline.TP_data.copy()
 
 runs_params = [
-    # {
-    #   'number': 1.0,
-    #   'calib_params':p_baseline.calib_parameters,
-    #   'list_of_moments':m_baseline.list_of_moments,
-    #   'year':2005
-    #   },
-    # {
-    #   'number': 1.1,
-    #   'calib_params':p_baseline.calib_parameters,
-    #   'list_of_moments':m_baseline.list_of_moments,
-    #   'year':1992
-    #   },
+    {
+      'number': 1.0,
+      'calib_params':p_baseline.calib_parameters,
+      'list_of_moments':m_baseline.list_of_moments,
+      'year':2005
+      },
+    {
+      'number': 1.1,
+      'calib_params':p_baseline.calib_parameters,
+      'list_of_moments':m_baseline.list_of_moments,
+      'year':1992
+      },
     # {
     #   'number': 2.0,
     #   'calib_params':['eta','T','delta','fe','fo'],
@@ -309,20 +309,155 @@ runs_params = [
     # {
     #   'number': 21.0,
     #   'calib_params':['eta','T','delta',],
-    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
-    #     'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW',
+    #     'SRDUS','DOMPATINUS','DOMPATINEU'],
     #   'year':2005
     #   },
-    {
-      'number': 21.1,
-      'calib_params':['eta','T','delta',],
-      'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','KM','SINNOVPATEU',
-        'UUPCOST','SRDUS','DOMPATINUS','DOMPATINEU'],
-      'year':1992
-      },
+    # {
+    #   'number': 21.1,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW',
+    #     'SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 22.0,
+    #   'calib_params':['eta','T','delta',],
+    #   'list_of_moments':['OUT','RD','RP','SRGDP','SPFLOW','SINNOVPATEU','SINNOVPATUS','UUPCOST',
+    #     'SRDUS','DOMPATINUS','DOMPATINEU'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 22.1,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':1992
+    #   },
     ]
 
 
+runs_params = [
+    # {
+    #   'number': 1.0,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 1.1,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 2.0,
+    #   'calib_params':['delta'],
+    #   'list_of_moments':['SPFLOW'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 2.1,
+    #   'calib_params':['delta'],
+    #   'list_of_moments':['SPFLOW'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 3.0,
+    #   'calib_params':['delta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 3.1,
+    #   'calib_params':['delta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS'],
+    #   'year':1992
+    #   },
+    {
+      'number': 4.0,
+      'calib_params':['delta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS'],
+      'year':2005
+      },
+    {
+      'number': 4.1,
+      'calib_params':['delta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS'],
+      'year':1992
+      },
+    # {
+    #   'number': 5.0,
+    #   'calib_params':['delta','T'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 5.1,
+    #   'calib_params':['delta','T'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 6.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP',],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 6.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP',],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 7.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP',],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 7.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP',],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 8.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','KM'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 8.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','KM'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 9.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','KM'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 9.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','KM'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 10.0,
+    #   'calib_params':['delta','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD'],
+    #   'year':2005
+    #   },
+    # {
+    #   'number': 10.1,
+    #   'calib_params':['delta','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD'],
+    #   'year':1992
+    #   },
+    ]
 
 for run_params in runs_params:
     print(run_params)
@@ -337,13 +472,21 @@ for run_params in runs_params:
     
     m = m_baseline.copy()
     m.load_data(f'data/data_7_countries_{run_params["year"]}/')
+    print(m.data_path)
     m.TP_target = m_baseline.TP*m.TP_data/m_baseline.TP_data
     m.inter_TP_target = m_baseline.inter_TP*m.inter_TP_data/m_baseline.inter_TP_data
     m.list_of_moments = run_params['list_of_moments']
-    # m.weights_dict['UUPCOST'] = 3
+    # m.weights_dict['KM'] = 10
     if run_params['year'] == 1992:
-        m.KM_target = np.float64(0.054382)
+        p.delta[0,1] = 20*p.delta[0,1]/17
+    #     m.KM_target = np.float64(0.054382)
         # m.KM_target = np.float64(0.07)
+    p.mask['delta'][0,1] = False
+    # p.mask['eta'][0,1] = False
+    # p.mask['delta'][1,1] = False
+    # p.mask['delta'][2,1] = False
+    # m.UUPCOST_target = m.UUPCOST_target*m_baseline.cc_moments.loc[(1,1),'patent flows']/m.cc_moments.loc[(1,1),'patent flows']
+    # m.UUPCOST_target = m_baseline.UUPCOST_target
     
     hist = history(*tuple(m.list_of_moments+['objective']))
     bounds = p.make_parameters_bounds()
@@ -428,7 +571,7 @@ for run_params in runs_params:
     m.write_moments(local_path+str(run_number)+'/')
     
 #%%
-baseline_number = '618'
+baseline_number = '701'
 
 p_baseline = parameters()
 p_baseline.correct_eur_patent_cost = True
@@ -462,7 +605,8 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 
 import pandas as pd
 
-runs = [5,6,7,8,9,10,11,12,16,17,18,19]
+# runs = [5,6,7,8,9,10,11,12,16,17,18,19]
+runs = [3,4]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],
@@ -497,6 +641,8 @@ for i in runs:
     m = moments()
     m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.0/')
     m.compute_moments(sol,p)
+    
+    sol_baseline = sol.copy()
     
     p_pre = parameters()
     p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
@@ -663,7 +809,7 @@ for i in runs:
         dyn_sol_pre_cf_fix_north.cons_eq_negishi_welfare_change,dyn_sol_pre_cf_fix_north.cons_eq_pop_average_welfare_change
         ]
 
-recap.round(4).to_csv('../misc/pre_trips_cf/pre_trips_cf.csv')    
+# recap.round(4).to_csv('../misc/pre_trips_cf/pre_trips_cf.csv')    
 
 #%% 
 # recap.round(4).to_csv('../misc/pre_trips_cf/pre_trips_cf.csv')    
@@ -680,5 +826,5 @@ for i in runs:
         100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
     reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
                                  ax=ax[1])
-    plt.savefig(f'../misc/pre_trips_cf/pre_trips_cf_{i}.png')
+    # plt.savefig(f'../misc/pre_trips_cf/pre_trips_cf_{i}.png')
     plt.show()

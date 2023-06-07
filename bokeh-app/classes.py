@@ -909,6 +909,7 @@ class dynamic_var:
         self.D,self.t_cheby = cheb(self.Nt-1)
         self.D_neuman,self.t_cheby = cheb_neuman_right(self.Nt-1)
         self.t_real = (self.t_cheby+1)*self.t_inf/2
+        # print(self.t_real)
         self.sol_init = sol_init
         self.sol_fin = sol_fin
         if N == 7:
@@ -1815,7 +1816,8 @@ class moments:
             # else:
             if mom == 'RD' or mom =='RD_RDUS':
                 if self.drop_CHN_IND_BRA_ROW_from_RD:
-                    l.extend([mom+' '+str(x) for x in list(self.idx[mom])[:3]])
+                    # l.extend([mom+' '+str(x) for x in list(self.idx[mom])[:3]])
+                    l.extend([mom+' '+str(x) for x in [list(self.idx[mom])[i] for i in [0,1,2,6,7,9]]])
             else:        
                 l.extend([mom+' '+str(x) for x in list(self.idx[mom])])
         return l
@@ -2440,9 +2442,9 @@ class moments:
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
-                
-                if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
-                # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'SPFLOW':
+                distort_for_large_pflows_fac = 10
+                # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
+                if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
                     # setattr(self,
                     #         mom+'_deviation',
                     #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
@@ -2478,6 +2480,41 @@ class moments:
                                     self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))/getattr(self,mom+'_target')
                                     /getattr(self,mom+'_target').size
                                     )
+                
+                
+                elif mom == 'SPFLOW':
+                    if self.loss == 'log':
+                        if self.dim_weight == 'lin':
+                            setattr(self,
+                                    mom+'_deviation',
+                                    self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
+                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    /getattr(self,mom+'_target').size**(1/2)
+                                    )
+                        if self.dim_weight == 'sqr':
+                            setattr(self,
+                                    mom+'_deviation',
+                                    self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
+                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    /getattr(self,mom+'_target')
+                                    )
+                    if self.loss == 'ratio':
+                        if self.dim_weight == 'lin':
+                            setattr(self,
+                                    mom+'_deviation',
+                                    self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))
+                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    /getattr(self,mom+'_target')
+                                    /getattr(self,mom+'_target').size**(1/2)
+                                    )
+                        if self.dim_weight == 'sqr':
+                            setattr(self,
+                                    mom+'_deviation',
+                                    self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))
+                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    /getattr(self,mom+'_target')
+                                    /getattr(self,mom+'_target').size
+                                    )
                             
                 else:
                     mo = getattr(self,mom)
@@ -2497,14 +2534,15 @@ class moments:
                     # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
         
         if self.drop_CHN_IND_BRA_ROW_from_RD:
-            # if self.N == 7:
-            if self.N == 7 or self.N ==12:
+            if self.N == 7:
+            # if self.N == 7 or self.N ==12:
                 self.RD_deviation = self.RD_deviation[:3]
                 try:
                     self.RD_RUS_deviation = self.RD_RUS_deviation[:3]   
                 except:
                     pass
-            # if self.N == 12:
+            if self.N == 12:
+                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
             #     # self.RD_deviation = np.array(self.RD_deviation[:3].tolist()+self.RD_deviation[7:-1].tolist())
             #     self.RD_deviation = np.concatenate([self.RD_deviation[:3],self.RD_deviation[6:-1]],axis=0)
                 

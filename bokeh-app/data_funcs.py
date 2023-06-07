@@ -280,7 +280,8 @@ def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, 
         sol_fin.scale_P(p)
         sol_fin.compute_non_solver_quantities(p) 
     
-    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin)
+    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin,N=p.N)
+    # print(dyn_var.t_inf)
     dyn_var.initiate_state_variables_0(sol_init)
     
     psis_guess = guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin)
