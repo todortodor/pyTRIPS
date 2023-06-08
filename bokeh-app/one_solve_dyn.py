@@ -10,11 +10,12 @@ from solver_funcs import fixed_point_solver, dyn_fixed_point_solver
 from classes import moments, parameters, var, dynamic_var
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 p_init = parameters()
-p_init.load_run('calibration_results_matched_economy/618/')
+p_init.load_run('calibration_results_matched_economy/802/')
 
 sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                                 context = 'counterfactual',
@@ -66,3 +67,11 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=21,
                         damping_post_acceleration=10
                         )
 dyn_sol.compute_non_solver_quantities(p)
+def make_time_evolution_df(dyn_sol):
+    qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
+    df = pd.DataFrame(index = qties, columns = ['Initial jump','Typical time of evolution'])
+    for qty in qties:
+        df.loc[qty,'Initial jump'] = dyn_sol.get_jump(qty)
+        df.loc[qty,'Typical time of evolution'] = dyn_sol.get_typical_time_evolution(qty)
+    return df
+print(make_time_evolution_df(dyn_sol))

@@ -333,7 +333,7 @@ for k, v in dic_runs.items():
 dic_runs = dict([(mom, np.linspace(m_baseline.weights_dict[mom]*0.1,m_baseline.weights_dict[mom]*1.9,19))
                  for mom in weights_to_change])
 
-for k, v in dic_runs.items():
+for k, v in dic_runs.items(): 
     print(k)
     print(v)
     mom_weight_to_change = k
@@ -635,10 +635,10 @@ for mom_weight_to_change in m_baseline.list_of_moments:
     for run in run_list:
         print(run)
         run_path = result_path+run+'/'
-        p = parameters(n=7,s=2)
-        p.load_data(run_path)
+        p = parameters()
+        p.load_run(run_path)
         m = moments()
-        m.load_data()
+        # m.load_data()
         m.load_run(run_path)
         sol, sol_c = fixed_point_solver(p,
                                         context = 'calibration',

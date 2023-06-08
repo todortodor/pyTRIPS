@@ -15,6 +15,8 @@ Category18 = Category10[10]+Dark2[8]
 import time
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
+# warnings.simplefilter('ignore', np.RuntimeWarning)
+warnings.filterwarnings('ignore')
 
 start = time.perf_counter()
 
@@ -950,7 +952,7 @@ sol_qty_report = column(controls_sol_qty, p_sol_qty, data_table_sol_qty)
 first_panel = row(moment_report,param_report,sol_qty_report)
 # first_panel = row(moment_report,param_report)
 print(time.perf_counter() - start)
-# #%% Time series
+#%% Time series
 
 # # baseline_time = '619'
 # # # baseline_time_list = ['607','608','609','610','614','615','616','617']    
@@ -1062,7 +1064,7 @@ print(time.perf_counter() - start)
 # # # first_panel_bis = row(par_time_report, explication_calib_params)
 # # first_panel_bis = row(par_time_report)
 
-# #%% dynamic counterfactuals
+#%% dynamic counterfactuals
 
 # baseline_dyn_cf = '607'
 # country_dyn_cf = 'USA'
@@ -1143,7 +1145,7 @@ print(time.perf_counter() - start)
 
 # counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
-# #%% counterfactuals 405 TO target with dynamics
+#%% counterfactuals 405 TO target with dynamics
 
 # country_to_cf_dyn = 'USA'
 # to_target_dyn = 0.0185
@@ -1261,6 +1263,20 @@ country_dyn_select = Select(value='USA', title='Country delta to change', option
 slider_dyn = Slider(start=-1, end=0.5, value=0, step=0.01, title="Log change of delta")    
 
 state_computation = Div(text="Done")
+
+def make_time_evolution_df(dyn_sol):
+    qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
+    df = pd.DataFrame(index = pd.Index(qties,name='Quantity'), 
+                      columns = ['Initial jump mean','Initial jump median',
+                                 'Typical time of evolution\nmean','Typical time of evolution\nmedian'])
+    for qty in qties:
+        a =  dyn_sol.get_jump(qty)
+        df.loc[qty,'Initial jump mean'] = a[0].round(2)
+        df.loc[qty,'Initial jump median'] = a[1].round(2)
+        b = dyn_sol.get_typical_time_evolution(qty)
+        df.loc[qty,'Typical time of evolution\nmean'] = b[0].round(2)
+        df.loc[qty,'Typical time of evolution\nmedian'] = b[1].round(2)
+    return df
 
 def fit_and_eval(vec,dyn_sol):
     fit = np.polyval(np.polyfit(dyn_sol.t_real,
@@ -1382,6 +1398,7 @@ def compute_dyn(event):
     ds_dyn.data = temp[0]
     ds_dyn_init.data = temp[1]
     ds_dyn_fin.data = temp[2]
+    source_table_time_evol.data = make_time_evolution_df(dyn_sol)
     
 if variation_dyn_select.value == 'baseline':
     path = results_path+baseline_dyn_select.value+'/'
@@ -1396,6 +1413,12 @@ else:
     p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
 dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
                                       t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+
+source_table_time_evol = ColumnDataSource(make_time_evolution_df(dyn_sol))
+columns_time_evol = [TableColumn(field=col) for col in 
+                     ['Quantity','Initial jump mean','Initial jump median',
+                                'Typical time of evolution\nmean','Typical time of evolution\nmedian']]
+table_widget_time_evol = DataTable(source=source_table_time_evol, columns=columns_time_evol, width=600, height=750)
 
 button_compute_dyn = Button(label="Compute",align='end')
 button_compute_dyn.on_event(ButtonClick, compute_dyn)
@@ -1507,13 +1530,13 @@ controls_display_dyn = row(qty_dyn_display_select,
 
 baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
 
-dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
+dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure,table_widget_time_evol)
 
 #!!! second panel
 # second_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
-second_panel = row(dyn_report)
+second_panel = row(dyn_report,table_widget_time_evol)
 
-# #%% Dynamic Nash / coop equilibrium and deviations from it
+#%% Dynamic Nash / coop equilibrium and deviations from it
 
 # baseline_dyn_nash_coop = '607'
 # variation_dyn_nash_coop = 'baseline'
@@ -2026,7 +2049,7 @@ country_cf_select.on_change('value', update_country_cf)
 counterfactuals_report = column(controls_cf,p_cf)
 
 
-# #%% counterfactuals 405 TO target
+#%% counterfactuals 405 TO target
 
 # country_to_cf = 'USA'
 # to_target = 0.0155
@@ -2161,58 +2184,60 @@ qty_sensi_select.on_change('value', update_qty_sensi)
 
 sensitivity_report = column(controls_sensi,p_sensi)
 
-# #%% weights sensitivities
+#%% weights sensitivities
 
-# baselines_dic_sensi_weights = {}
+baselines_dic_sensi_weights = {}
 
-# # for baseline_nbr in ['101','102','104']:
-# for baseline_nbr in ['404']:
-#     baselines_dic_sensi_weights[baseline_nbr] = {}
-#     baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
-#     files_in_dir = os.listdir(baseline_sensi_weights_path)
-#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-#     for f in files_in_dir:
-#         baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['802']:
+    baselines_dic_sensi_weights[baseline_nbr] = {}
+    baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
+    files_in_dir = os.listdir(baseline_sensi_weights_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        # if f not in ['GPDIFF.csv','GROWTH.csv']:
+            baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
     
-# baseline_sensi_weights = '404'
-# qty_sensi_weights = 'objective'
+baseline_sensi_weights = '802'
+qty_sensi_weights = 'objective'
 
-# baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
-# qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
+baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
+qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
 
-# ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
-# p_sensi_weights = figure(title="Sensitivity to the weights", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in weight',
-#                 y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
-#                 y_axis_type="log",
-#                 tools = TOOLS)
+ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
+p_sensi_weights = figure(title="Sensitivity to the weights", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in weight',
+                y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
+                y_axis_type="log",
+                tools = TOOLS)
 
-# colors_sensi_weights = itertools.cycle(Category18)
+colors_sensi_weights = itertools.cycle(Category18)
 
-# for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
-#     if col!='zeta':
-#         p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, legend_label=col)
+for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
+    # if col not in ['zeta','GPDIFF_weight','GROWTH_weight']:
+        p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, 
+                             legend_label=col)
 
-# p_sensi_weights.legend.click_policy="hide"
-# p_sensi_weights.legend.label_text_font_size = '8pt'
-# p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
+p_sensi_weights.legend.click_policy="hide"
+p_sensi_weights.legend.label_text_font_size = '8pt'
+p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
 
-# def update_baseline_sensi_weights(attrname, old, new):
-#     qty_sensi_weights = qty_sensi_weights_select.value
-#     ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
+def update_baseline_sensi_weights(attrname, old, new):
+    qty_sensi_weights = qty_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
     
-# def update_qty_sensi_weights(attrname, old, new):
-#     baseline_sensi_weights = baseline_sensi_weights_select.value
-#     ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
+def update_qty_sensi_weights(attrname, old, new):
+    baseline_sensi_weights = baseline_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
 
-# controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
+controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
 
-# baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
-# qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
+baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
+qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
 
-# sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
+sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
@@ -2313,10 +2338,10 @@ baseline_jac_select.on_change('value', update_list_of_runs_jac)
 jac_report = column(controls_jac,p_jac_fig)
 
 #!!! fifth panel
-# fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
-fifth_panel = row(sensitivity_report,jac_report)
+fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
+# fifth_panel = row(sensitivity_report,jac_report)
 
-# #%% Kogan paper
+#%% Kogan paper
 
 # colors_kog = itertools.cycle(Category18)
 
@@ -2402,7 +2427,7 @@ fifth_panel = row(sensitivity_report,jac_report)
 # #!!! sixth_panel
 # sixth_panel = row(p_kog,p_kog2)
 
-# # #%% 7 countries comparison of patent flows data
+#%% 7 countries comparison of patent flows data
 
 # # labels_leg_patstat = {
 # #     'baseline':'pre IN treatment',

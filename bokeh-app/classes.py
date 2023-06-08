@@ -1730,7 +1730,36 @@ class dynamic_var:
             plt.suptitle(title)
         
         plt.show()
-        
+    
+    def get_jump(self,qty):
+        if qty == 'profit':
+            jump = (getattr(self,qty)[...,-1]-np.einsum('nis,i->nis',
+                                  self.sol_init.profit,
+                                  self.sol_init.w)
+                    )/(np.einsum('nis,i->nis',
+                                self.sol_fin.profit,
+                                self.sol_fin.w)
+                        -
+                        np.einsum('nis,i->nis',
+                                self.sol_init.profit,
+                                self.sol_init.w)
+                        )
+            return np.nanmean(jump)*100,np.nanmedian(jump)*100
+        jump = (getattr(self,qty)[...,-1]-getattr(self.sol_init,qty)
+                )/(getattr(self.sol_fin,qty)-getattr(self.sol_init,qty))
+        return np.nanmean(jump)*100,np.nanmedian(jump)*100
+    
+    def get_typical_time_evolution(self,qty):
+        #!!! to improve for dimensions
+        try:
+            origin_deriv = (2*np.einsum('tu,...u->...t',
+                                    self.D_neuman,
+                                    getattr(self,qty)
+                                    )/self.t_inf)[...,-1]
+        except:
+            pass
+        time_evol = np.abs(getattr(self,qty)[...,-1]-getattr(self,qty)[...,0])/np.abs(origin_deriv)
+        return np.nanmean(time_evol),np.nanmedian(time_evol)
     
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)
@@ -2442,7 +2471,7 @@ class moments:
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
-                distort_for_large_pflows_fac = 10
+                distort_for_large_pflows_fac = 0
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
                     # setattr(self,
