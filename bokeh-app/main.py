@@ -852,7 +852,7 @@ data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, hei
 
 def update_baseline_par(attrname, old, new):
     par = par_select.value
-    x_range_factors = baselines_dic_param[baseline_par][new].index.to_list()
+    x_range_factors = baselines_dic_param[new][par].index.to_list()
     if new != 'scalars':
         x_range_factors = sorted(x_range_factors, key = country_sort.get)
     ds_par.data = baselines_dic_param[new][par].loc[x_range_factors]
