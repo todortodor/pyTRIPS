@@ -852,7 +852,10 @@ data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, hei
 
 def update_baseline_par(attrname, old, new):
     par = par_select.value
-    ds_par.data = baselines_dic_param[new][par]
+    x_range_factors = baselines_dic_param[baseline_par][new].index.to_list()
+    if new != 'scalars':
+        x_range_factors = sorted(x_range_factors, key = country_sort.get)
+    ds_par.data = baselines_dic_param[new][par].loc[x_range_factors]
     legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
                         for col in ds_par.data if col in comments_dic[new]]
     legend_par.items = legend_items_par
@@ -2251,12 +2254,12 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-baseline_jac = '802'
+baseline_jac = '803'
 country_jac = 'USA'
 sector_jac = 'Patent'
 
 # baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','604','607','608','609','610'])
-baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['802'])
+baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['802','803'])
 
 baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 files_in_dir = next(os.walk(baseline_jac_path))[1]
