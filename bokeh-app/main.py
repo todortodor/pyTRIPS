@@ -542,6 +542,16 @@ comments_dic['802'] = {
     '7.0':'7.0: higher weight on large pflows log loss',
     }
 
+comments_dic['803'] = {
+    'baseline':'baseline: 802_7.0 with improved weights',
+    '1.0':'1.0: calibrated theta',
+    '1.1':'1.1: drop SRDUS',
+    '1.2':'1.2: drop SINNOVPATEU',
+    '1.3':'1.3: drop DOMPATINEU',
+    '1.4':'1.4: drop SINNOVPATEU and DOMPATINEU',
+    '1.5':'1.5: drop SRDUS, SINNOVPATEU and DOMPATINEU',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -551,7 +561,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
-baseline_list = ['802']    
+baseline_list = ['802','803']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -616,7 +626,7 @@ TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
 # baseline_mom = '618'
-baseline_mom = '802'
+baseline_mom = '803'
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))

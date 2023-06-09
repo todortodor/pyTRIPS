@@ -2471,7 +2471,7 @@ class moments:
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
-                distort_for_large_pflows_fac = 0
+                distort_for_large_pflows_fac = 10.16
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
                     # setattr(self,
