@@ -25,8 +25,13 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'607',
-                      'variation':'baseline'}
+   {'baseline':'803','variation': 'baseline'},
+   {'baseline':'803','variation': '1.0'},
+   {'baseline':'803','variation': '1.1'},
+   {'baseline':'803','variation': '1.2'},
+   {'baseline':'803','variation': '1.3'},
+   {'baseline':'803','variation': '1.4'},
+   {'baseline':'803','variation': '1.5'},
     ]
 
 lb_delta = 0.01
@@ -87,3 +92,5 @@ for baseline_dic in baseline_dics:
                             index = cons_eq_welfares.columns).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('coop_eq_recaps/dyn_cons_eq_welfares.csv')
+
+#%%

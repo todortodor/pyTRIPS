@@ -550,6 +550,10 @@ comments_dic['803'] = {
     '1.3':'1.3: drop DOMPATINEU',
     '1.4':'1.4: drop SINNOVPATEU and DOMPATINEU',
     '1.5':'1.5: drop SRDUS, SINNOVPATEU and DOMPATINEU',
+    '1.6':'1.6: drop SINNOVPATUS',
+    '1.7':'1.7: drop DOMPATINUS',
+    '1.8':'1.8: drop SINNOVPATUS and DOMPATINUS',
+    '1.9':'1.9: drop SRDUS, SINNOVPATUS and DOMPATINUS',
     }
 
 baselines_dic_param = {}
@@ -1079,84 +1083,84 @@ print(time.perf_counter() - start)
 
 #%% dynamic counterfactuals
 
-# baseline_dyn_cf = '607'
-# country_dyn_cf = 'USA'
+baseline_dyn_cf = '803'
+country_dyn_cf = 'USA'
 
-# def section_end(s):
-#       return [int(_) for _ in s.split("_")[-1].split(".")]
-# # dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
-# #             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-#     # sorted([s for s in os.listdir(cf_path) 
-#     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-#     # sorted([s for s in os.listdir(dyn_cf_path) 
-#     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-#     # sorted([s for s in os.listdir(dyn_cf_path) 
-#     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+def section_end(s):
+      return [int(_) for _ in s.split("_")[-1].split(".")]
+# dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(dyn_cf_path) 
+    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(dyn_cf_path) 
+    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['607','501_1.0','501_2.0'])
-# country_dyn_cf_select = Select(value=country_dyn_cf, 
-#                             title='Country', 
-#                             options=countries+['World','Harmonizing'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['803'])
+country_dyn_cf_select = Select(value=country_dyn_cf, 
+                            title='Country', 
+                            options=countries+['World','Harmonizing','Uniform_delta'])
 
-# def get_data_dyn_cf(baseline,country):
-#     df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
-#     df_dyn_cf.set_index('delt',inplace=True)
-#     return df_dyn_cf
+def get_data_dyn_cf(baseline,country):
+    df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
+    df_dyn_cf.set_index('delt',inplace=True)
+    return df_dyn_cf
 
-# def build_max(df_dyn_cf):
-#     df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
-#     df_max.index.name = 'label'
-#     df_max.columns = ['xmax','max'] 
-#     df_max = df_max.loc[countries]
-#     df_max['colors'] = Category18[:len(df_max)]
-#     return df_max
+def build_max(df_dyn_cf):
+    df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category18[:len(df_max)]
+    return df_max
 
-# df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
-# ds_dyn_cf = ColumnDataSource(df_dyn_cf)
-# df_dyn_cf_max = build_max(df_dyn_cf)
-# ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
+df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
+ds_dyn_cf = ColumnDataSource(df_dyn_cf)
+df_dyn_cf_max = build_max(df_dyn_cf)
+ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
 
-# colors_dyn_cf = itertools.cycle(Category18)
-# colors_dyn_cf_max = itertools.cycle(Category18)
+colors_dyn_cf = itertools.cycle(Category18)
+colors_dyn_cf_max = itertools.cycle(Category18)
 
-# p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in delta',
-#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                 x_axis_type="log",
-#                 tools = TOOLS) 
+p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
+                tools = TOOLS) 
 
-# for col in df_dyn_cf.columns:
-#     if col not in [0,'delt']:
-#         p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
-#                       color=next(colors_dyn_cf),line_width = 2, legend_label=col)
+for col in df_dyn_cf.columns:
+    if col not in [0,'delt']:
+        p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
+                      color=next(colors_dyn_cf),line_width = 2, legend_label=col)
 
-# p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
+p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
      
-# p_dyn_cf.legend.click_policy="hide"
-# p_dyn_cf.legend.label_text_font_size = '8pt'
-# p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
+p_dyn_cf.legend.click_policy="hide"
+p_dyn_cf.legend.label_text_font_size = '8pt'
+p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
 
-# def update_baseline_dyn_cf(attrname, old, new):
-#     country_dyn_cf = country_dyn_cf_select.value
-#     ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
-#     df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
-#     ds_dyn_cf.data = df_dyn_cf
-#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
+def update_baseline_dyn_cf(attrname, old, new):
+    country_dyn_cf = country_dyn_cf_select.value
+    ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
+    df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
+    ds_dyn_cf.data = df_dyn_cf
+    ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-# def update_country_dyn_cf(attrname, old, new):
-#     baseline_dyn_cf = baseline_dyn_cf_select.value
-#     df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
-#     ds_dyn_cf.data = df_dyn_cf
-#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
+def update_country_dyn_cf(attrname, old, new):
+    baseline_dyn_cf = baseline_dyn_cf_select.value
+    df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
+    ds_dyn_cf.data = df_dyn_cf
+    ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-# controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
+controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
 
-# baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
-# country_dyn_cf_select.on_change('value', update_country_dyn_cf)
+baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
+country_dyn_cf_select.on_change('value', update_country_dyn_cf)
 
-# counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
+counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
 #%% counterfactuals 405 TO target with dynamics
 
@@ -1543,11 +1547,11 @@ controls_display_dyn = row(qty_dyn_display_select,
 
 baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
 
-dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure,table_widget_time_evol)
+dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 #!!! second panel
 # second_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
-second_panel = row(dyn_report,table_widget_time_evol)
+second_panel = row(counterfactuals_dyn_report,dyn_report,table_widget_time_evol)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
@@ -1739,7 +1743,7 @@ second_panel = row(dyn_report,table_widget_time_evol)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '802'
+baseline_nash_coop = '803'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1773,7 +1777,7 @@ def get_data_nash_coop(baseline_nash_number):
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
-                                    options=['802'])
+                                    options=['802','803'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1961,7 +1965,7 @@ third_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '802'
+baseline_cf = '803'
 country_cf = 'USA'
 
 def section_end(s):
@@ -1969,9 +1973,9 @@ def section_end(s):
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('802') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('607') and s.startswith('baseline')], key=section_end)+\
+                if s[9:].startswith('802') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
