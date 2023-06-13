@@ -357,7 +357,28 @@ class parameters:
             lb.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.lb_dict[par])
             ub.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.ub_dict[par])
         return (np.concatenate(lb),np.concatenate(ub))
-
+    
+    def make_one_country_parameters(self,country):
+        country_i = self.countries.index(country)
+        one_country_p = self.copy()
+        one_country_p.N = 1
+        one_country_p.eta = one_country_p.eta[country_i:country_i+1,:]
+        one_country_p.T = one_country_p.T[country_i:country_i+1,:]
+        one_country_p.delta = one_country_p.delta[country_i:country_i+1,:]
+        one_country_p.tau = one_country_p.tau[country_i:country_i+1,country_i:country_i+1,:]
+        one_country_p.trade_flows = one_country_p.trade_flows[country_i:country_i+1,country_i:country_i+1,:]
+        one_country_p.trade_shares = one_country_p.trade_flows/one_country_p.trade_flows.sum()
+        one_country_p.r_hjort = one_country_p.r_hjort[country_i:country_i+1]
+        one_country_p.countries = one_country_p.countries[country_i:country_i+1]
+        one_country_p.labor = one_country_p.labor[country_i:country_i+1]
+        one_country_p.labor_raw = one_country_p.labor_raw[country_i:country_i+1]
+        one_country_p.data = one_country_p.data.iloc[country_i:country_i+1]
+        one_country_p.deficit_raw = 0
+        one_country_p.deficit_share_world_output = 0
+        one_country_p.guess = None
+        one_country_p.dyn_guess = None
+        return one_country_p
+        
 class cobweb:
     def __init__(self, name):
         self.cob_x = []
@@ -874,6 +895,11 @@ class var:
         numerator = (weights**one_ov_gamma*self.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-baseline.g*(1-one_ov_gamma))
         denominator = (weights**one_ov_gamma*baseline.cons**((p.gamma-1)*one_ov_gamma)).sum()*(p.rho-self.g*(1-one_ov_gamma))
         self.cons_eq_custom_weights_welfare_change = (numerator/denominator)**(p.gamma/(p.gamma-1))
+        
+    def compute_one_country_welfare_change(self,p,baseline_cons_country,baseline_g):
+        self.cons_eq_welfare = self.cons*\
+            ((p.rho-baseline_g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
+                /baseline_cons_country
 
 def alt(n):
     alt = []
