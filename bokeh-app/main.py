@@ -563,6 +563,63 @@ comments_dic['803'] = {
     '1.9':'1.9: drop SRDUS, SINNOVPATUS and DOMPATINUS',
     }
 
+comments_dic['804'] = {'baseline':'bsln:2005',
+    '1.0':'1.0: TO: 0.01',
+'1.1':'1.1: TO: 0.0105',
+'1.2':'1.2: TO: 0.011',
+'1.3':'1.3: TO: 0.0115',
+'1.4':'1.4: TO: 0.012',
+'1.5':'1.5: TO: 0.0125',
+'1.6':'1.6: TO: 0.013',
+'1.7':'1.7: TO: 0.0135',
+'1.8':'1.8: TO: 0.014',
+'1.9':'1.9: TO: 0.0145',
+'1.10':'1.10: TO: 0.015',
+'1.11':'1.11: TO: 0.0155',
+'1.12':'1.12: TO: 0.016',
+'1.13':'1.13: TO: 0.0165',
+'1.14':'1.14: TO: 0.017',
+'1.15':'1.15: TO: 0.0175',
+'1.16':'1.16: TO: 0.018',
+'1.17':'1.17: TO: 0.0185',
+'1.18':'1.18: TO: 0.019',
+'1.19':'1.19: TO: 0.0195',
+'1.20':'1.20: TO: 0.02',
+'1.40':'1.40: TO: 0.014603',
+'1.41':'1.41: TO: TO = 0.019661',
+    }
+
+comments_dic['805'] = {'baseline':'bsln:2015',
+    '1.0':'1.0: TO: 0.01',
+'1.1':'1.1: TO: 0.0105',
+'1.2':'1.2: TO: 0.011',
+'1.3':'1.3: TO: 0.0115',
+'1.4':'1.4: TO: 0.012',
+'1.5':'1.5: TO: 0.0125',
+'1.6':'1.6: TO: 0.013',
+'1.7':'1.7: TO: 0.0135',
+'1.8':'1.8: TO: 0.014',
+'1.9':'1.9: TO: 0.0145',
+'1.10':'1.10: TO: 0.015',
+'1.11':'1.11: TO: 0.0155',
+'1.12':'1.12: TO: 0.016',
+'1.13':'1.13: TO: 0.0165',
+'1.14':'1.14: TO: 0.017',
+'1.15':'1.15: TO: 0.0175',
+'1.16':'1.16: TO: 0.018',
+'1.17':'1.17: TO: 0.0185',
+'1.18':'1.18: TO: 0.019',
+'1.19':'1.19: TO: 0.0195',
+'1.20':'1.20: TO: 0.02',
+'1.23':'1.23: TO: TO = 0.022',
+'1.24':'1.24: TO: TO = 0.024',
+'1.25':'1.25: TO: TO = 0.026',
+'1.26':'1.26: TO: TO = 0.028',
+'1.27':'1.27: TO: TO = 0.03',
+'1.40':'1.40: TO: 0.014603',
+'1.41':'1.41: TO: TO = 0.019661',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -572,7 +629,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
-baseline_list = ['802','803']    
+baseline_list = ['803','804','805']    
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1172,7 +1229,7 @@ counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 #%% counterfactuals 405 TO target with dynamics
 
 # country_to_cf_dyn = 'USA'
-# to_target_dyn = 0.0185
+# to_target_dyn = 0.016
 
 # list_of_to_targets_dyn = np.linspace(0.01,0.03,41)
 
@@ -1784,7 +1841,7 @@ def get_data_nash_coop(baseline_nash_number):
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
-                                    options=['802','803'])
+                                    options=['802','803','804','805'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -1982,7 +2039,11 @@ def section_end(s):
 cf_list = sorted([s for s in os.listdir(cf_path) 
                 if s[9:].startswith('802') and s.startswith('baseline')], key=section_end)+\
     sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)#+\
+                    if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                    if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
+    sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -2073,89 +2134,107 @@ country_cf_select.on_change('value', update_country_cf)
 counterfactuals_report = column(controls_cf,p_cf)
 
 
-#%% counterfactuals 405 TO target
+#%% counterfactuals 805 TO target
 
-# country_to_cf = 'USA'
-# to_target = 0.0155
+country_to_cf = 'USA'
+to_target = 0.0155
+baseline_to_cf = '804'
 
 # list_of_to_targets = np.linspace(0.01,0.03,41)
+list_of_to_targets = np.array(np.linspace(0.01,0.02,21).tolist()
+                              +[0.022,0.024,0.026,0.028,0.03])
 
-# def section_end(s):
-#      return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('611') and s.startswith('baseline')], key=section_end)
+def section_end(s):
+      return [int(_) for _ in s.split("_")[-1].split(".")]
+cf_to_list = {'804':sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('804') and s.startswith('baseline')], key=section_end),
+              '805':sorted([s for s in os.listdir(cf_path) 
+            if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)}
 
-# def get_data_to_cf(to_target,country):
-#     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
-#     df_to_cf = pd.read_csv(cf_path+cf_to_list[min(idx_to_cf,len(cf_to_list)-1)]+'/'+country+'.csv')
-#     if country != 'Harmonizing':
-#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
-#     if country == 'Harmonizing':
-#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
-#     df_to_cf.set_index('delt',inplace=True)
-#     return df_to_cf
+def get_data_to_cf(to_target,country,baseline_to_cf):
+    idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
+    df_to_cf = pd.read_csv(cf_path+cf_to_list[baseline_to_cf][min(idx_to_cf,len(cf_to_list[baseline_to_cf])-1)]+'/'+country+'.csv')
+    if country == 'Harmonizing':
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
+    elif country == 'Uniform_delta':
+        df_to_cf['Growth rate'] = np.nan
+    else:
+        df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
+    df_to_cf.set_index('delt',inplace=True)
+    return df_to_cf
 
-# def build_max(df_to_cf):
-#     df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
-#     df_max.index.name = 'label'
-#     df_max.columns = ['xmax','max'] 
-#     df_max = df_max.loc[countries]
-#     df_max['colors'] = Category18[:len(df_max)]
-#     return df_max
+def build_max(df_to_cf):
+    df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category18[:len(df_max)]
+    return df_max
 
-# country_to_cf_select = Select(value=country_to_cf, 
-#                             title='Country', 
-#                             options=countries+['World','Harmonizing'])
+baseline_to_cf_select = Select(value=baseline_to_cf, title='Baseline', options=['804','805'])
+country_to_cf_select = Select(value=country_to_cf, 
+                            title='Country', 
+                            options=countries+['World','Harmonizing','Uniform_delta'])
 
-# df_to_cf = get_data_to_cf(to_target,country_to_cf)
-# ds_to_cf = ColumnDataSource(df_to_cf)
-# df_to_cf_max = build_max(df_to_cf)
-# ds_to_cf_max = ColumnDataSource(df_to_cf_max)
+df_to_cf = get_data_to_cf(to_target,country_to_cf,baseline_to_cf)
+ds_to_cf = ColumnDataSource(df_to_cf)
+df_to_cf_max = build_max(df_to_cf)
+ds_to_cf_max = ColumnDataSource(df_to_cf_max)
 
-# colors_to_cf = itertools.cycle(Category18)
-# colors_to_cf_max = itertools.cycle(Category18)
+colors_to_cf = itertools.cycle(Category18)
+colors_to_cf_max = itertools.cycle(Category18)
 
-# p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 611", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in delta',
-#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                 x_axis_type="log",
-#                 tools = TOOLS) 
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 805 (2015)", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
+                tools = TOOLS) 
 
-# for col in df_to_cf.columns:
-#     if col not in [0,'delt','growth']:
-#         p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
+for col in df_to_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
 
-# p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
+p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
      
-# p_to_cf.legend.click_policy="hide"
-# p_to_cf.legend.label_text_font_size = '8pt'
-# p_to_cf.add_layout(p_to_cf.legend[0], 'right')
+p_to_cf.legend.click_policy="hide"
+p_to_cf.legend.label_text_font_size = '8pt'
+p_to_cf.add_layout(p_to_cf.legend[0], 'right')
 
-# def update_baseline_to_cf(attrname, old, new):
-#     country_to_cf = country_to_cf_select.value
-#     df_to_cf = get_data_to_cf(new/100,country_to_cf)
-#     ds_to_cf.data = df_to_cf
-#     ds_to_cf_max.data = build_max(df_to_cf)
+def update_target_to_cf(attrname, old, new):
+    country_to_cf = country_to_cf_select.value
+    baseline_to_cf = baseline_to_cf_select.value
+    df_to_cf = get_data_to_cf(new/100,country_to_cf,baseline_to_cf)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
     
-# def update_country_to_cf(attrname, old, new):
-#     to_target = slider_to_cf.value/100
-#     df_to_cf = get_data_to_cf(to_target,new)
-#     ds_to_cf.data = df_to_cf
-#     ds_to_cf_max.data = build_max(df_to_cf)
+def update_baseline_to_cf(attrname, old, new):
+    country_to_cf = country_to_cf_select.value
+    to_target = slider_to_cf.value/100
+    df_to_cf = get_data_to_cf(to_target,country_to_cf,new)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
     
-# slider_to_cf = Slider(start=1, end=3, value=1.55, step=0.05, title="Turnover target in %")    
+def update_country_to_cf(attrname, old, new):
+    to_target = slider_to_cf.value/100
+    baseline_to_cf = baseline_to_cf_select.value
+    df_to_cf = get_data_to_cf(to_target,new,baseline_to_cf)
+    ds_to_cf.data = df_to_cf
+    ds_to_cf_max.data = build_max(df_to_cf)
     
-# controls_to_cf = row(slider_to_cf, country_to_cf_select)
-# country_to_cf_select.on_change('value', update_country_to_cf)
-# slider_to_cf.on_change('value', update_baseline_to_cf)
+slider_to_cf = Slider(start=1, end=3, value=1.55, step=0.05, title="Turnover target in %")    
+    
+controls_to_cf = row(baseline_to_cf_select, slider_to_cf, country_to_cf_select)
+country_to_cf_select.on_change('value', update_country_to_cf)
+slider_to_cf.on_change('value', update_target_to_cf)
+baseline_to_cf_select.on_change('value', update_baseline_to_cf)
 
-# counterfactuals_to_report = column(controls_to_cf,p_to_cf)
+counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 
 #!!! fourth_panel
-# fourth_panel = row(counterfactuals_report, counterfactuals_to_report)
-fourth_panel = row(counterfactuals_report)
+fourth_panel = row(counterfactuals_report, counterfactuals_to_report)
+# fourth_panel = row(counterfactuals_report)
 
 #%% sensitivities
 

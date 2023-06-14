@@ -16,41 +16,48 @@ import os
 import numpy as np
 import pandas as pd
 
-# runs_params = [
-#     {"number":0,"TO_target":0.01},
-#     {"number":1,"TO_target":0.0105},
-#     {"number":2,"TO_target":0.011},
-#     {"number":3,"TO_target":0.0115},
-#     {"number":4,"TO_target":0.012},
-#     {"number":5,"TO_target":0.0125},
-#     {"number":6,"TO_target":0.013},
-#     {"number":7,"TO_target":0.0135},
-#     {"number":8,"TO_target":0.014},
-#     {"number":9,"TO_target":0.0145},
-#     {"number":10,"TO_target":0.015},
-#     {"number":11,"TO_target":0.0155},
-#     {"number":12,"TO_target":0.016},
-#     {"number":13,"TO_target":0.0165},
-#     {"number":14,"TO_target":0.017},
-#     {"number":15,"TO_target":0.0175},
-#     {"number":16,"TO_target":0.018},
-#     {"number":17,"TO_target":0.0185},
-#     {"number":18,"TO_target":0.019},
-#     {"number":19,"TO_target":0.0195},
-#     {"number":20,"TO_target":0.02},
+runs_params = [
+    # {"number":0,"TO_target":0.01},
+    # {"number":1,"TO_target":0.0105},
+    # {"number":2,"TO_target":0.011},
+    # {"number":3,"TO_target":0.0115},
+    # {"number":4,"TO_target":0.012},
+    # {"number":5,"TO_target":0.0125},
+    # {"number":6,"TO_target":0.013},
+    # {"number":7,"TO_target":0.0135},
+    # {"number":8,"TO_target":0.014},
+    # {"number":9,"TO_target":0.0145},
+    # {"number":10,"TO_target":0.015},
+    # {"number":11,"TO_target":0.0155},
+    # {"number":12,"TO_target":0.016},
+    # {"number":13,"TO_target":0.0165},
+    # {"number":14,"TO_target":0.017},
+    # {"number":15,"TO_target":0.0175},
+    # {"number":16,"TO_target":0.018},
+    # {"number":17,"TO_target":0.0185},
+    # {"number":18,"TO_target":0.019},
+    # {"number":19,"TO_target":0.0195},
+    # {"number":20,"TO_target":0.02},
+    # {"number":21,"TO_target":0.014603},
+    # {"number":22,"TO_target":0.019661},
 #     {"number":21,"TO_target":0.0205},
 #     {"number":22,"TO_target":0.021},
-#     {"number":23,"TO_target":0.0215},
-#     {"number":24,"TO_target":0.022},
-#     {"number":25,"TO_target":0.0225},
-#     {"number":26,"TO_target":0.023},
-#     {"number":27,"TO_target":0.0235},
-#     {"number":28,"TO_target":0.024},
-#     {"number":29,"TO_target":0.0245},
-#     {"number":30,"TO_target":0.025},
-#     {"number":31,"TO_target":0.0255},
-#     {"number":32,"TO_target":0.026},
-#     {"number":33,"TO_target":0.0265},
+    {"number":23,"TO_target":0.022},
+    {"number":24,"TO_target":0.024},
+    {"number":25,"TO_target":0.026},
+    {"number":26,"TO_target":0.028},
+    {"number":27,"TO_target":0.03},
+    # {"number":23,"TO_target":0.0215},
+    # {"number":24,"TO_target":0.022},
+    # {"number":25,"TO_target":0.0225},
+    # {"number":26,"TO_target":0.023},
+    # {"number":27,"TO_target":0.0235},
+    # {"number":28,"TO_target":0.024},
+    # {"number":29,"TO_target":0.0245},
+    # {"number":30,"TO_target":0.025},
+    # {"number":31,"TO_target":0.0255},
+    # {"number":32,"TO_target":0.026},
+    # {"number":33,"TO_target":0.0265},
 #     {"number":34,"TO_target":0.027},
 #     {"number":35,"TO_target":0.0275},
 #     {"number":36,"TO_target":0.028},
@@ -58,38 +65,38 @@ import pandas as pd
 #     {"number":38,"TO_target":0.029},
 #     {"number":39,"TO_target":0.0295},
 #     {"number":40,"TO_target":0.03}
-#     ]
-runs_params = [
-{'number': 0, 'year': 1990},
-{'number': 1, 'year': 1991},
-{'number': 2, 'year': 1992},
-{'number': 3, 'year': 1993},
-{'number': 4, 'year': 1994},
-{'number': 5, 'year': 1995},
-{'number': 6, 'year': 1996},
-{'number': 7, 'year': 1997},
-{'number': 8, 'year': 1998},
-{'number': 9, 'year': 1999},
-{'number': 10, 'year': 2000},
-{'number': 11, 'year': 2001},
-{'number': 12, 'year': 2002},
-{'number': 13, 'year': 2003},
-{'number': 14, 'year': 2004},
-{'number': 15, 'year': 2005},
-{'number': 16, 'year': 2006},
-{'number': 17, 'year': 2007},
-{'number': 18, 'year': 2008},
-{'number': 19, 'year': 2009},
-{'number': 20, 'year': 2010},
-{'number': 21, 'year': 2011},
-{'number': 22, 'year': 2012},
-{'number': 23, 'year': 2013},
-{'number': 24, 'year': 2014},
-{'number': 25, 'year': 2015},
-{'number': 26, 'year': 2016},
-{'number': 27, 'year': 2017},
-{'number': 28, 'year': 2018}
-]
+    ]
+# runs_params = [
+# {'number': 0, 'year': 1990},
+# {'number': 1, 'year': 1991},
+# {'number': 2, 'year': 1992},
+# {'number': 3, 'year': 1993},
+# {'number': 4, 'year': 1994},
+# {'number': 5, 'year': 1995},
+# {'number': 6, 'year': 1996},
+# {'number': 7, 'year': 1997},
+# {'number': 8, 'year': 1998},
+# {'number': 9, 'year': 1999},
+# {'number': 10, 'year': 2000},
+# {'number': 11, 'year': 2001},
+# {'number': 12, 'year': 2002},
+# {'number': 13, 'year': 2003},
+# {'number': 14, 'year': 2004},
+# {'number': 15, 'year': 2005},
+# {'number': 16, 'year': 2006},
+# {'number': 17, 'year': 2007},
+# {'number': 18, 'year': 2008},
+# {'number': 19, 'year': 2009},
+# {'number': 20, 'year': 2010},
+# {'number': 21, 'year': 2011},
+# {'number': 22, 'year': 2012},
+# {'number': 23, 'year': 2013},
+# {'number': 24, 'year': 2014},
+# {'number': 25, 'year': 2015},
+# {'number': 26, 'year': 2016},
+# {'number': 27, 'year': 2017},
+# {'number': 28, 'year': 2018}
+# ]
 
 # for drop_SRDUS in [False,True]:
 #     for patenting_cost_moment in ['UUPCOST','PCOSTNOAGG']:
@@ -154,7 +161,7 @@ runs_params = [
 
 write = True
 
-baseline_number = '620'
+baseline_number = '804'
 
 for variation_number in [1]:
     
@@ -164,14 +171,14 @@ for variation_number in [1]:
                         'variation':str(variation_number)+'.'+str(run_params['number'])}
         # baseline_dic = {'baseline':baseline_number,
         #                 'variation':'1.'+str(run_params['number'])}
-        year = run_params['year']
+        # year = run_params['year']
         p = parameters()
         p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
         # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # p.load_data(f'data_smooth_3_years/data_7_countries_{year}/',keep_already_calib_params=True)
-        p.load_data(f'data/data_7_countries_{year}/',keep_already_calib_params=True)
-        p.calib_parameters = ['eta','T','delta']
+        # p.load_data(f'data/data_7_countries_{year}/',keep_already_calib_params=True)
+        # p.calib_parameters = ['eta','T','delta']
         
         sol = var.var_from_vector(p.guess,p,context='calibration')
         sol.scale_P(p)
@@ -180,12 +187,12 @@ for variation_number in [1]:
         m = moments()
         # m.load_data()
         m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-        m.compute_moments(sol,p)
-        number_of_int_patents_model_baseline = m.inter_TP.copy()
-        number_of_int_patents_data_baseline = m.inter_TP_data.copy()
+        # m.compute_moments(sol,p)
+        # number_of_int_patents_model_baseline = m.inter_TP.copy()
+        # number_of_int_patents_data_baseline = m.inter_TP_data.copy()
         # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # m.load_data(f'data_smooth_3_years/data_7_countries_{year}/')
-        m.load_data(f'data/data_7_countries_{year}/')
+        # m.load_data(f'data/data_7_countries_{year}/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:
         #     p.calib_parameters.append('theta')
@@ -195,24 +202,24 @@ for variation_number in [1]:
         # p.update_sigma_with_SRDUS_target(m)
         # if 'TE' not in m.list_of_moments:
         #     m.list_of_moments.append('TE')
-        m.inter_TP_target = number_of_int_patents_model_baseline*m.inter_TP_data/number_of_int_patents_data_baseline
-        m.weights_dict['inter_TP'] = 3
-        m.list_of_moments = ['OUT',
-          'RD',
-          'RP',
-          'SRGDP',
-          'inter_TP',
-          'SINNOVPATUS',
-          'SPFLOW',
-          'UUPCOST',
-          'SRDUS',
-          'SINNOVPATEU',
-          'DOMPATINUS',
-          'DOMPATINEU']
+        # m.inter_TP_target = number_of_int_patents_model_baseline*m.inter_TP_data/number_of_int_patents_data_baseline
+        # m.weights_dict['inter_TP'] = 3
+        # m.list_of_moments = ['OUT',
+        #   'RD',
+        #   'RP',
+        #   'SRGDP',
+        #   'inter_TP',
+        #   'SINNOVPATUS',
+        #   'SPFLOW',
+        #   'UUPCOST',
+        #   'SRDUS',
+        #   'SINNOVPATEU',
+        #   'DOMPATINUS',
+        #   'DOMPATINEU']
         
-        m.drop_CHN_IND_BRA_ROW_from_RD = True
+        # m.drop_CHN_IND_BRA_ROW_from_RD = True
         
-        # m.TO_target = np.float64(run_params['TO_target'])
+        m.TO_target = np.float64(run_params['TO_target'])
         
         # if run_params['drop_SRDUS']:
         #     if 'SRDUS' in m.list_of_moments:
@@ -342,33 +349,36 @@ for variation_number in [1]:
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
                           plot_convergence = True,solver_options=None,tol=1e-4)
         
-        if write:
-            if not os.path.exists('nash_eq_recaps/deltas.csv'):
-                deltas_df = pd.DataFrame(columns = ['baseline',
-                                                'variation',
-                                                'method'] + p_baseline.countries)
-                deltas_df.to_csv('nash_eq_recaps/deltas.csv')
-            deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
-            run = pd.DataFrame(data = [baseline_dic['baseline'],
-                            baseline_dic['variation'],
-                            method]+p_nash.delta[:,1].tolist(), 
-                            index = deltas_df.columns).T
-            deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+        if not os.path.exists('nash_eq_recaps/deltas.csv'):
+            deltas_df = pd.DataFrame(columns = ['baseline',
+                                            'variation',
+                                            'method'] + p_baseline.countries)
             deltas_df.to_csv('nash_eq_recaps/deltas.csv')
-            
-            if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
-                cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-                                                'variation',
-                                                'method'] + p_baseline.countries + ['Equal','Negishi'])
-                cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
-            cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
-            run = pd.DataFrame(data = [baseline_dic['baseline'],
-                            baseline_dic['variation'],
-                            method]+sol_nash.cons_eq_welfare.tolist()+[sol_nash.cons_eq_pop_average_welfare_change,
-                                                                sol_nash.cons_eq_negishi_welfare_change], 
-                            index = cons_eq_welfares.columns).T
-            cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+        deltas_df = pd.read_csv('nash_eq_recaps/deltas.csv',index_col=0)
+        run = pd.DataFrame(data = [baseline_dic['baseline'],
+                        baseline_dic['variation'],
+                        method]+p_nash.delta[:,1].tolist(), 
+                        index = ['baseline',
+                                 'variation',
+                                 'aggregation_method'] + p_baseline.countries).T
+        deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+        deltas_df.to_csv('nash_eq_recaps/deltas.csv')
+        
+        if not os.path.exists('nash_eq_recaps/cons_eq_welfares.csv'):
+            cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                            'variation',
+                                            'method'] + p_baseline.countries + ['Equal','Negishi'])
             cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
+        cons_eq_welfares = pd.read_csv('nash_eq_recaps/cons_eq_welfares.csv',index_col=0)
+        run = pd.DataFrame(data = [baseline_dic['baseline'],
+                        baseline_dic['variation'],
+                        method]+sol_nash.cons_eq_welfare.tolist()+[sol_nash.cons_eq_pop_average_welfare_change,
+                                                           sol_nash.cons_eq_negishi_welfare_change], 
+                        index = ['baseline',
+                                 'variation',
+                                 'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
+        cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+        cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
         
         ##%% Coop eq
         for aggregation_method in ['pop_weighted','negishi']:
@@ -377,33 +387,37 @@ for variation_number in [1]:
                               solver_options=None,tol=1e-15,
                               static_eq_deltas = None,custom_weights=None)
             
-            if write:
-                if not os.path.exists('coop_eq_recaps/deltas.csv'):
-                    deltas_df = pd.DataFrame(columns = ['baseline',
-                                                    'variation',
-                                                    'aggregation_method'] + p_baseline.countries)
-                    deltas_df.to_csv('coop_eq_recaps/deltas.csv')
-                deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
-                run = pd.DataFrame(data = [baseline_dic['baseline'],
-                                baseline_dic['variation'],
-                                aggregation_method]+p_opti.delta[...,1].tolist(), 
-                                index = deltas_df.columns).T
-                deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+            if not os.path.exists('coop_eq_recaps/deltas.csv'):
+                deltas_df = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'aggregation_method'] + p_baseline.countries)
                 deltas_df.to_csv('coop_eq_recaps/deltas.csv')
-                
-                if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
-                    cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-                                                    'variation',
-                                                    'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
-                    cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
-                cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
-                run = pd.DataFrame(data = [baseline_dic['baseline'],
-                                baseline_dic['variation'],
-                                aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
-                                                                    sol_opti.cons_eq_negishi_welfare_change], 
-                                index = cons_eq_welfares.columns).T
-                cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+            deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            aggregation_method]+p_opti.delta[...,1].tolist(), 
+                            index = ['baseline',
+                                     'variation',
+                                     'aggregation_method'] + p_baseline.countries).T
+            deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+            deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+            
+            if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
+                cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                                'variation',
+                                                'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+            cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
+            run = pd.DataFrame(data = [baseline_dic['baseline'],
+                            baseline_dic['variation'],
+                            aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
+                                                               sol_opti.cons_eq_negishi_welfare_change], 
+                            index = ['baseline',
+                                     'variation',
+                                     'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
+            cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
+            cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+
         
         ##%% counterfactuals 
         if baseline_dic['variation'] == 'baseline':
@@ -435,4 +449,8 @@ for variation_number in [1]:
         
         make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
         make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+                                      local_path,recap_path)
+        
+        make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
+        make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
                                       local_path,recap_path)
