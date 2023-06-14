@@ -585,6 +585,11 @@ comments_dic['804'] = {'baseline':'bsln:2005',
 '1.18':'1.18: TO: 0.019',
 '1.19':'1.19: TO: 0.0195',
 '1.20':'1.20: TO: 0.02',
+'1.23':'1.23: TO: TO = 0.022',
+'1.24':'1.24: TO: TO = 0.024',
+'1.25':'1.25: TO: TO = 0.026',
+'1.26':'1.26: TO: TO = 0.028',
+'1.27':'1.27: TO: TO = 0.03',
 '1.40':'1.40: TO: 0.014603',
 '1.41':'1.41: TO: TO = 0.019661',
     }
@@ -2184,7 +2189,7 @@ ds_to_cf_max = ColumnDataSource(df_to_cf_max)
 colors_to_cf = itertools.cycle(Category18)
 colors_to_cf_max = itertools.cycle(Category18)
 
-p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baseline 805 (2015)", 
+p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baselines 804(2005) and 805 (2015)", 
                 width = 1200,
                 height = 850,
                 x_axis_label='Change in delta',
