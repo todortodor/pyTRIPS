@@ -125,9 +125,11 @@ class parameters:
                         )**(1-self.khi)).values
         
         if self.correct_eur_patent_cost:
-            self.r_hjort[1] = self.r_hjort[1]*pd.read_csv(
-                data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
-                    data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
+            # self.r_hjort[1] = self.r_hjort[1]*pd.read_csv(
+            #     data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
+            #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
+            # self.r_hjort[1] = self.r_hjort[1]*3.6/1.8
+            self.r_hjort[1] = self.r_hjort[1]*3.6
             # self.r_hjort[1] = self.r_hjort[1]*43730.23/0.71388/pd.read_csv(
             #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
         

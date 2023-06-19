@@ -384,6 +384,7 @@ comments_dic['617'] = comments_dic['601']
 comments_dic['620'] = comments_dic['601']
 comments_dic['619'] = comments_dic['601']
 
+
 comments_dic['611'] = {'baseline':'bsln:TO:0.0183',
     '1.0':'1.0: TO: 0.01',
 '1.1':'1.1: TO: 0.0105',
@@ -625,6 +626,70 @@ comments_dic['805'] = {'baseline':'bsln:2015',
 '1.41':'1.41: TO: TO = 0.019661',
     }
 
+comments_dic['806'] = {
+    "baseline":"baseline : 2015",
+    "1.0" : "1.0 : 1990",
+    "1.1" : "1.1 : 1991",
+    "1.2" : "1.2 : 1992",
+    "1.3" : "1.3 : 1993",
+    "1.4" : "1.4 : 1994",
+    "1.5" : "1.5 : 1995",
+    "1.6" : "1.6 : 1996",
+    "1.7" : "1.7 : 1997",
+    "1.8" : "1.8 : 1998",
+    "1.9" : "1.9 : 1999",
+    "1.10" : "1.10 : 2000",
+    "1.11" : "1.11 : 2001",
+    "1.12" : "1.12 : 2002",
+    "1.13" : "1.13 : 2003",
+    "1.14" : "1.14 : 2004",
+    "1.15" : "1.15 : 2005",
+    "1.16" : "1.16 : 2006",
+    "1.17" : "1.17 : 2007",
+    "1.18" : "1.18 : 2008",
+    "1.19" : "1.19 : 2009",
+    "1.20" : "1.20 : 2010",
+    "1.21" : "1.21 : 2011",
+    "1.22" : "1.22 : 2012",
+    "1.23" : "1.23 : 2013",
+    "1.24" : "1.24 : 2014",
+    "1.25" : "1.25 : 2015",
+    "1.26" : "1.26 : 2016",
+    "1.27" : "1.27 : 2017",
+    "1.28" : "1.28 : 2018",
+}
+
+comments_dic['807'] = {
+    "baseline":"baseline : 2015",
+    "0.1" : "0.1 : dont drop RD in South",
+    "1.0" : "1.0 : ratio loss",
+    "1.1" : "1.1 : ratio loss and dont drop RD in South",
+    "2.0" : "2.0 : no weight on large flows",
+    "3.0" : "3.0 : ratio loss and no weight on large flows",
+}
+
+comments_dic['808'] = {
+    'baseline':'baseline',
+    '1.0':'1.0:full calibration 2015',
+    '1.1':'1.1:full calibration 1992',
+    '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
+    '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
+    '3.0':'3.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta_US fixed',
+    '3.1':'3.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta_US fixed',
+    '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,RD,RP,SRGDP], delta_US fixed',
+    '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,RD,RP,SRGDP], delta_US fixed',
+    '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM]',
+    '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM]',
+    '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,SINNOVPATUS]',
+    '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,SINNOVPATUS]',
+    '7.0':'7.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,GROWTH]',
+    '7.1':'7.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,GROWTH]',
+    '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
+    '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -634,7 +699,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['403','404','405']    
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
-baseline_list = ['803','804','805']    
+baseline_list = ['803','806','808']    
+baseline_mom = '808'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -699,7 +765,7 @@ TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 
 # baseline_mom = '101'
 # baseline_mom = '618'
-baseline_mom = '803'
+
 mom = 'SPFLOW'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
@@ -1040,115 +1106,115 @@ first_panel = row(moment_report,param_report,sol_qty_report)
 print(time.perf_counter() - start)
 #%% Time series
 
-# # baseline_time = '619'
-# # # baseline_time_list = ['607','608','609','610','614','615','616','617']    
-# # baseline_time_list = ['619']    
-# # par_time = 'delta'
-# # par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
-# # baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
+# baseline_time = '806'
+# # baseline_time_list = ['607','608','609','610','614','615','616','617']    
+# baseline_time_list = ['806']    
+# par_time = 'delta'
+# par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
+# baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
 
 
-# # years_time = [y for y in range(1990,2019)]
-# # runs_time = ['1.'+str(i) for i in range(29)]
+# years_time = [y for y in range(1990,2019)]
+# runs_time = ['1.'+str(i) for i in range(29)]
 
-# # def build_time_series(baseline_time,par_time):
-# #     # df = baselines_dic_param[baseline_time][par_time].T.reindex(
-# #     #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-# #     #     )
-# #     df = baselines_dic_param[baseline_time][par_time].copy()
-# #     df = df[runs_time]
-# #     # print(df)
-# #     df.columns = years_time
-# #     df = df.T
-# #     df = df.reindex(
-# #         columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-# #         )
-# #     df.index.name = 'year'
-# #     return df
+# def build_time_series(baseline_time,par_time):
+#     # df = baselines_dic_param[baseline_time][par_time].T.reindex(
+#     #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+#     #     )
+#     df = baselines_dic_param[baseline_time][par_time].copy()
+#     df = df[runs_time]
+#     # print(df)
+#     df.columns = years_time
+#     df = df.T
+#     df = df.reindex(
+#         columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+#         )
+#     df.index.name = 'year'
+#     return df
 
-# # df_par_time = build_time_series(baseline_time,par_time)
-# # ds_par_time = ColumnDataSource(df_par_time)
-# # p_par_time = figure(title="Time series", 
-# #                width = 1500,
-# #                height = 850,
-# #            y_axis_label='Parameter',
-# #            tools = TOOLS)
-# # hover_tool_par_time = HoverTool()
-# # hover_tool_par_time.tooltips = [
-# #     ("Year", "@year"),
-# #     ("value", "$y")
-# #     ]
+# df_par_time = build_time_series(baseline_time,par_time)
+# ds_par_time = ColumnDataSource(df_par_time)
+# p_par_time = figure(title="Time series", 
+#                 width = 1500,
+#                 height = 850,
+#             y_axis_label='Parameter',
+#             tools = TOOLS)
+# hover_tool_par_time = HoverTool()
+# hover_tool_par_time.tooltips = [
+#     ("Year", "@year"),
+#     ("value", "$y")
+#     ]
 
-# # p_par_time.add_tools(hover_tool_par_time)
-# # colors_par_time = itertools.cycle(Category18)
-# # lines_par_time = {}
+# p_par_time.add_tools(hover_tool_par_time)
+# colors_par_time = itertools.cycle(Category18)
+# lines_par_time = {}
 
-# # for col in df_par_time.columns:
-# #     if col != 'kappa':
-# #         lines_par_time[col] = p_par_time.line(x='year', y=col, 
-# #                                         source = ds_par_time, 
-# #                                         color=next(colors_par_time),
-# #                                         line_width = 2,
-# #                                         # legend_label=col
-# #                                         )
+# for col in df_par_time.columns:
+#     if col != 'kappa':
+#         lines_par_time[col] = p_par_time.line(x='year', y=col, 
+#                                         source = ds_par_time, 
+#                                         color=next(colors_par_time),
+#                                         line_width = 2,
+#                                         # legend_label=col
+#                                         )
 
-# # legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-# #                         for col in countries]
-# # legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
-# #                     label_text_font_size="10pt",
-# #                     )
-# # p_par_time.add_layout(legend_par_time , 'right')
+# legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                         for col in countries]
+# legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
+#                     label_text_font_size="10pt",
+#                     )
+# p_par_time.add_layout(legend_par_time , 'right')
     
-# # def update_par_time(attrname, old, new):
-# #     df_par_time = build_time_series(baseline_time_select.value,new)
-# #     ds_par_time.data = df_par_time
-# #     if new!='scalars':
-# #         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-# #                                 for col in countries]
-# #     else:
-# #         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-# #                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-# #     legend_par_time.items = legend_items_par_time
+# def update_par_time(attrname, old, new):
+#     df_par_time = build_time_series(baseline_time_select.value,new)
+#     ds_par_time.data = df_par_time
+#     if new!='scalars':
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in countries]
+#     else:
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+#     legend_par_time.items = legend_items_par_time
     
-# # def update_baseline_time(attrname, old, new):
-# #     df_par_time = build_time_series(new,par_time_select.value)
-# #     ds_par_time.data = df_par_time
-# #     if new!='scalars':
-# #         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-# #                                 for col in countries]
-# #     else:
-# #         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-# #                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-# #     legend_par_time.items = legend_items_par_time
+# def update_baseline_time(attrname, old, new):
+#     df_par_time = build_time_series(new,par_time_select.value)
+#     ds_par_time.data = df_par_time
+#     if new!='scalars':
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in countries]
+#     else:
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+#     legend_par_time.items = legend_items_par_time
 
-# # controls_par_time = row(baseline_time_select,par_time_select)
+# controls_par_time = row(baseline_time_select,par_time_select)
 
-# # par_time_select.on_change('value', update_par_time)
-# # baseline_time_select.on_change('value', update_baseline_time)
+# par_time_select.on_change('value', update_par_time)
+# baseline_time_select.on_change('value', update_baseline_time)
 
-# # par_time_report = column(controls_par_time, p_par_time)    
+# par_time_report = column(controls_par_time, p_par_time)    
 
 # # explication_calib_params = Div(text=
-# #                          "607 variations : <br> \
-# #                              calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
-# #                                targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
-# #                                    TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
-# #                          608 variations : <br> \
-# #                              calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
-# #                                targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-# #                                    SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-# #                          609 variations :<br> \
-# #                              calibrated parameters : eta,T,delta <br> \
-# #                                targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-# #                                    SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-# #                          610 variations :<br> \
-# #                              calibrated parameters : eta,T,delta <br> \
-# #                                targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
-# #                                    SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           "607 variations : <br> \
+# #                               calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
+# #                                 targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
+# #                                     TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
+# #                           608 variations : <br> \
+# #                               calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
+# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           609 variations :<br> \
+# #                               calibrated parameters : eta,T,delta <br> \
+# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           610 variations :<br> \
+# #                               calibrated parameters : eta,T,delta <br> \
+# #                                 targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
 # #                           ")
 
-# # # first_panel_bis = row(par_time_report, explication_calib_params)
-# # first_panel_bis = row(par_time_report)
+# # first_panel_bis = row(par_time_report, explication_calib_params)
+# first_panel_bis = row(par_time_report)
 
 #%% dynamic counterfactuals
 
@@ -1812,7 +1878,7 @@ second_panel = row(counterfactuals_dyn_report,dyn_report,table_widget_time_evol)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '803'
+baseline_nash_coop = '806'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1846,7 +1912,7 @@ def get_data_nash_coop(baseline_nash_number):
 baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
-                                    options=['802','803','804','805'])
+                                    options=['802','803','804','805','806'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2670,7 +2736,7 @@ fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
 #%% build curdoc
 print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
-                         # first_panel_bis, 
+                          # first_panel_bis, 
                           second_panel, 
                           third_panel, 
                           fourth_panel, 
