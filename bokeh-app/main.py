@@ -676,8 +676,8 @@ comments_dic['808'] = {
     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
     '3.0':'3.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta_US fixed',
     '3.1':'3.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta_US fixed',
-    '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,RD,RP,SRGDP], delta_US fixed',
-    '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,RD,RP,SRGDP], delta_US fixed',
+    '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta,eta_US fixed',
+    '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP], delta,eta_US fixed',
     '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM]',
     '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,KM]',
     '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,SINNOVPATUS]',
@@ -688,6 +688,12 @@ comments_dic['808'] = {
     '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
+    '17.0':'17.0:[delta,T,eta,g_0], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,GROWTH]',
+    '17.1':'17.1:[delta,T,eta,g_0], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,GROWTH]',
+    '18.0':'18.0:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '18.1':'18.1:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '19.0':'19.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
+    '19.1':'19.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO]',
     }
 
 baselines_dic_param = {}

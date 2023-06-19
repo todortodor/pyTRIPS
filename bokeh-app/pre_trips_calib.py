@@ -91,18 +91,18 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
-    # {
-    #   'number': 4.0,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP'],
-    #   'year':2015
-    #   },
-    # {
-    #   'number': 4.1,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP'],
-    #   'year':1992
-    #   },
+    {
+      'number': 4.0,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'year':2015
+      },
+    {
+      'number': 4.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'year':1992
+      },
     # {
     #   'number': 5.0,
     #   'calib_params':['delta','T','eta'],
@@ -127,54 +127,102 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','KM'],
     #   'year':1992
     #   },
-    {
-      'number': 6.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
-      'year':2015
-      },
-    {
-      'number': 6.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
-      'year':1992
-      },
-    {
-      'number': 7.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
-      'year':2015
-      },
-    {
-      'number': 7.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
-      'year':1992
-      },
-    {
-      'number': 8.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
-      'year':2015
-      },
-    {
-      'number': 8.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
-      'year':1992
-      },
-    {
-      'number': 9.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
-      'year':2015
-      },
-    {
-      'number': 9.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
-      'year':1992
-      },
+    # {
+    #   'number': 6.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 6.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 7.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 7.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 8.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 8.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 9.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 9.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 16.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 16.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','SINNOVPATUS'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 17.0,
+    #   'calib_params':['delta','T','eta','g_0'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 17.1,
+    #   'calib_params':['delta','T','eta','g_0'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','GROWTH'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 18.0,
+    #   'calib_params':['delta','T','eta','fe','fo'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 18.1,
+    #   'calib_params':['delta','T','eta','fe','fo'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 19.0,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 19.1,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','RD','RP','SRGDP','OUT','TO'],
+    #   'year':1992
+    #   },
     ]
 
 for run_params in runs_params:
@@ -199,8 +247,8 @@ for run_params in runs_params:
     #     p.delta[0,1] = 20*p.delta[0,1]/17
     #     m.KM_target = np.float64(0.054382)
         # m.KM_target = np.float64(0.07)
-    # p.mask['delta'][0,1] = False
-    # p.mask['eta'][0,1] = False
+    p.mask['delta'][0,1] = False
+    p.mask['eta'][0,1] = False
     # p.mask['delta'][1,1] = False
     # p.mask['delta'][2,1] = False
     # m.UUPCOST_target = m.UUPCOST_target*m_baseline.cc_moments.loc[(1,1),'patent flows']/m.cc_moments.loc[(1,1),'patent flows']
