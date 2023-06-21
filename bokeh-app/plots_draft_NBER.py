@@ -1460,7 +1460,7 @@ try:
     os.mkdir(pre_trips_path)
 except:
     pass
-#%%
+
 modified_countries_names = {'USA': 'USA',
  'EUR': 'Europe',
  'JAP': 'Japan',

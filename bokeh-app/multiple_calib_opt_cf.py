@@ -161,9 +161,9 @@ runs_params = [
 
 write = True
 
-baseline_number = '806'
+baseline_number = '902'
 
-for variation_number in [1]:
+for variation_number in [2]:
     
     for run_params in runs_params:
         print(run_params)
@@ -176,10 +176,10 @@ for variation_number in [1]:
         p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
         # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
-        # p.load_data(f'data_smooth_3_years/data_7_countries_{year}/',keep_already_calib_params=True)
-        p.load_data(f'data/data_12_countries_{year}/',keep_already_calib_params=True)
-        p.update_khi_and_r_hjort(0.16)
-        p.r_hjort[1] = p.r_hjort[1]*3.6
+        p.load_data(f'data_smooth_3_years/data_13_countries_{year}/',keep_already_calib_params=True)
+        # p.load_data(f'data/data_13_countries_{year}/',keep_already_calib_params=True)
+        # p.update_khi_and_r_hjort(0.16)
+        # p.r_hjort[1] = p.r_hjort[1]*3.6
         # p.calib_parameters = ['eta','T','delta']
         
         sol = var.var_from_vector(p.guess,p,context='calibration')
@@ -193,8 +193,8 @@ for variation_number in [1]:
         # number_of_int_patents_model_baseline = m.inter_TP.copy()
         # number_of_int_patents_data_baseline = m.inter_TP_data.copy()
         # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
-        # m.load_data(f'data_smooth_3_years/data_7_countries_{year}/')
-        m.load_data(f'data/data_12_countries_{year}/')
+        m.load_data(f'data_smooth_3_years/data_13_countries_{year}/')
+        # m.load_data(f'data/data_13_countries_{year}/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:
         #     p.calib_parameters.append('theta')
@@ -218,6 +218,7 @@ for variation_number in [1]:
         #   'SINNOVPATEU',
         #   'DOMPATINUS',
         #   'DOMPATINEU']
+        m.TO_target = np.float64(0.01463)
         
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
         

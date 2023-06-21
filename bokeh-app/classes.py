@@ -2499,7 +2499,7 @@ class moments:
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
-                distort_for_large_pflows_fac = 10.16
+                distort_for_large_pflows_fac = 20
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
                     # setattr(self,
@@ -2522,7 +2522,7 @@ class moments:
                             setattr(self,
                                     mom+'_deviation',
                                     self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
-                                    /getattr(self,mom+'_target')
+                                    /getattr(self,mom+'_target').size
                                     )
                     if self.loss == 'ratio':
                         if self.dim_weight == 'lin':
@@ -2590,6 +2590,8 @@ class moments:
                 #         )
                     # print(mo,tar,self.weights_dict[mom]*np.abs(mo-tar)/tar)
         
+        # self.SPFLOW_deviation[0,0] = self.SPFLOW_deviation[0,0]*10
+        
         if self.drop_CHN_IND_BRA_ROW_from_RD:
             if self.N == 7:
             # if self.N == 7 or self.N ==12:
@@ -2600,6 +2602,10 @@ class moments:
                     pass
             if self.N == 12:
                     self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
+            if self.N == 13:
+                    self.RD_deviation = np.array(
+                        [self.RD_deviation[i] for i in [0,1,2,6,7,9]]
+                                                 )
             #     # self.RD_deviation = np.array(self.RD_deviation[:3].tolist()+self.RD_deviation[7:-1].tolist())
             #     self.RD_deviation = np.concatenate([self.RD_deviation[:3],self.RD_deviation[6:-1]],axis=0)
                 
