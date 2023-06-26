@@ -797,8 +797,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['902','903']    
-baseline_mom = '902'
+baseline_list = ['607','806','903']    
+baseline_mom = '903'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1206,9 +1206,9 @@ print(time.perf_counter() - start)
 
 #%% Time series
 
-baseline_time = '902'
+baseline_time = '903'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
-baseline_time_list = ['902','903']    
+baseline_time_list = ['607','806','903']
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
@@ -2836,7 +2836,7 @@ first_panel_bis = row(par_time_report)
 #%% build curdoc
 print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
-                           first_panel_bis, 
+                            first_panel_bis, 
                           # second_panel, 
                           # third_panel, 
                           # fourth_panel, 

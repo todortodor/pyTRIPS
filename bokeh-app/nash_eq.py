@@ -29,43 +29,12 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'607','variation': 'baseline'},
-    # {'baseline':'608','variation': 'baseline'},
-    # {'baseline':'609','variation': 'baseline'},
-    {'baseline':'802','variation': 'baseline'},
-    {'baseline':'802','variation': '1.0'},
-    {'baseline':'802','variation': '2.0'},
-    {'baseline':'802','variation': '3.0'},
-    # {'baseline':'601','variation': 'baseline'},
-    # {'baseline':'601','variation': '1.0'},
-    # {'baseline':'601','variation': '1.1'},
-    # {'baseline':'601','variation': '1.2'},
-    # {'baseline':'601','variation': '1.3'},
-    # {'baseline':'601','variation': '1.4'},
-    # {'baseline':'601','variation': '1.5'},
-    # {'baseline':'601','variation': '1.6'},
-    # {'baseline':'601','variation': '1.7'},
-    # {'baseline':'601','variation': '1.8'},
-    # {'baseline':'601','variation': '1.9'},
-    # {'baseline':'601','variation': '1.10'},
-    # {'baseline':'601','variation': '1.11'},
-    # {'baseline':'601','variation': '1.12'},
-    # {'baseline':'601','variation': '1.13'},
-    # {'baseline':'601','variation': '1.14'},
-    # {'baseline':'601','variation': '1.15'},
-    # {'baseline':'601','variation': '1.16'},
-    # {'baseline':'601','variation': '1.17'},
-    # {'baseline':'601','variation': '1.18'},
-    # {'baseline':'601','variation': '1.19'},
-    # {'baseline':'601','variation': '1.20'},
-    # {'baseline':'601','variation': '1.21'},
-    # {'baseline':'601','variation': '1.22'},
-    # {'baseline':'601','variation': '1.23'},
-    # {'baseline':'601','variation': '1.24'},
-    # {'baseline':'601','variation': '1.25'},
-    # {'baseline':'601','variation': '1.26'},
-    # {'baseline':'601','variation': '1.27'},
-    # {'baseline':'601','variation': '1.28'}
+    {'baseline':'807','variation': 'baseline'},
+    {'baseline':'807','variation': '0.1'},
+    {'baseline':'807','variation': '1.0'},
+    # {'baseline':'807','variation': '1.1'},
+    # {'baseline':'807','variation': '2.0'},
+    # {'baseline':'807','variation': '3.0'},
     ]
 
 for baseline_dic in baseline_dics:    
@@ -84,7 +53,9 @@ for baseline_dic in baseline_dics:
     
     
     p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
-                     plot_convergence = True,solver_options=None,tol=1e-5)
+                     plot_convergence = True,solver_options=None,tol=1e-4,
+                       delta_init=np.array([ 0.01,12,12,12,12,12,12,12,12,12,12,12])
+                     )
     
     write = True
     if write:

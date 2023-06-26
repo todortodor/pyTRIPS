@@ -190,7 +190,8 @@ def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=Non
         sol_fin.scale_P(p)
         sol_fin.compute_non_solver_quantities(p) 
     
-    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin)
+    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin,
+                          N=p.N)
     dyn_var.initiate_state_variables_0(sol_init)
     
     psis_guess = guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin)
@@ -825,7 +826,7 @@ def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_
 
 def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dynamics=False,
                  plot_convergence = False,solver_options=None,tol=5e-5,
-                 damping = 1,plot_history = False):
+                 damping = 1,plot_history = False,delta_init=None):
     
     if solver_options is None:
         solver_options = dict(cobweb_anim=False,tol =1e-14,
@@ -861,7 +862,11 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
     sol_it_baseline = sol_baseline.copy()
 
     it = 0
-    x_old = p_baseline.delta[...,1]
+    if delta_init is None:
+        x_old = p_baseline.delta[...,1]
+    else:
+        x_old = delta_init
+        p_it_baseline.delta[...,1] = x_old
     convergence = []
     new_deltas = None
     
@@ -898,29 +903,6 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
                                 accel_max_weight_norm=1e6,
                                 damping_post_acceleration=5
                                 )
-        # if sol.status != 'successful':
-        #     sol, sol_it_baseline = fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
-        #                             context = 'counterfactual',
-        #                             cobweb_anim=False,tol =1e-14,
-        #                             accelerate=False,
-        #                             accelerate_when_stable=False,
-        #                             cobweb_qty='phi',
-        #                             plot_convergence=True,
-        #                             plot_cobweb=True,
-        #                             safe_convergence=0.001,
-        #                             disp_summary=False,
-        #                             damping = 10,
-        #                             max_count = 1e4,
-        #                             accel_memory = 50, 
-        #                             accel_type1=True, 
-        #                             accel_regularization=1e-10,
-        #                             accel_relaxation=0.5, 
-        #                             accel_safeguard_factor=1, 
-        #                             accel_max_weight_norm=1e6,
-        #                             damping_post_acceleration=5
-        #                             )
-        #     if sol.status != 'successful':
-        #         print(p_it_baseline.delta,'failed2')
 
         sol_it_baseline.scale_P(p_it_baseline)
         sol_it_baseline.compute_non_solver_quantities(p_it_baseline)
@@ -929,7 +911,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
         new_deltas = compute_new_deltas_fixed_point(p_it_baseline, sol_baseline, lb_delta, 
                                                     ub_delta, hist_nash = hist_nash,
                                                     dynamics=dynamics)
-        
+        new_deltas[new_deltas>11.9] = 12
         p_it_baseline.delta[...,1] = new_deltas
         sol, sol_it= fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
                                                   context = 'counterfactual',

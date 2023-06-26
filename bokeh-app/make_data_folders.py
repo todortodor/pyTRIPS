@@ -117,7 +117,7 @@ config_dics = [{
     for N in [13]
     ]
 
-write = True
+write = False
 
 for config_dic in config_dics:
     print(config_dic)
