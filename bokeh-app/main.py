@@ -787,6 +787,10 @@ comments_dic['903'] = {
     "1.28" : "1.28 : 2018 smooth 3y",
 }
 
+comments_dic['1001'] = {
+    "baseline":"baseline : 2015",
+    "1.0":"1.0:same as bsln"
+}
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -797,7 +801,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['607','806','903']    
+baseline_list = ['607','806','903','1001']    
 baseline_mom = '903'
 
 def section(s):

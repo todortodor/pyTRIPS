@@ -14,15 +14,15 @@ from data_funcs import write_calibration_results
 import os
 import numpy as np
 
-new_run = True
-baseline_number = '902'
+new_run = False
+# baseline_number = '902'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/20.0/')
     # p_back_up = p.copy()
-    # p.load_data('data/data_13_countries_2015/',keep_already_calib_params=False)
+    p.load_data('data/data_11_countries_2015/',keep_already_calib_params=False)
     # p.load_data('data/data_12_countries_1992/',
     #             # data_path = 'data/data_12_countries_1992/',
     #             keep_already_calib_params=True)
@@ -30,36 +30,77 @@ if new_run:
 
     m = moments()
     # m.load_data()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/20.0/')
     # m_back_up = m.copy()
-    # m.load_data('data/data_13_countries_2015/')
+    m.load_data('data/data_11_countries_2015/')
 # m.weights_dict['SPFLOW'] = 3
-# m.weights_dict['UUPCOST'] = 3
-# m.weights_dict['TO'] = 5
-# m.weights_dict['TO'] = 5
-# m.weights_dict['GROWTH'] = 6
-# m.weights_dict['TE'] = 5
-# m.weights_dict['RD'] = 6
-# m.weights_dict['OUT'] = 10
-# p.T = p.T/2
-# p.calib_parameters.append('theta')
-# m.list_of_moments.append('TE')
-# m.weights_dict['SPFLOW'] = 3
-# m.weights_dict['RP'] = 4
-# p.fe[1] = 0.05
-# p.fo[1] = 0.05
-# p.sigma[1] = 2.9
-# p.calib_parameters = ['delta']
-# p.update_khi_and_r_hjort(0.16)
-# p.r_hjort[1] = p.r_hjort[1]*3.6
-# m.loss = 'ratio'
-# m.weights_dict['RD'] = 7
-# m.TO_target = np.float64(0.018546283)
-# m.list_of_moments = ['OUT','RD','RP',]
-# m.loss = 'log'
-# p.calib_parameters = ['theta']
-# m.list_of_moments = ['TE']
+
+p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
+
+p.sigma[1] = 2.9
+
+m.list_of_moments = ['GPDIFF',
+ 'GROWTH',
+ 'KM',
+ 'OUT',
+ 'RD',
+ 'RP',
+ 'SRGDP',
+ 'SINNOVPATUS',
+ 'TO',
+ 'SPFLOW',
+ 'UUPCOST',
+ 'DOMPATINUS',
+ 'TE']
+
+m.weights_dict = {'GPDIFF': 1,
+ 'GROWTH': 6,
+ 'KM': 5,
+ 'KM_GDP': 5,
+ 'OUT': 10,
+ 'RD': 6,
+ 'RD_US': 3,
+ 'RD_RUS': 3,
+ 'RP': 4,
+ 'SPFLOW': 3,
+ 'SPFLOW_US': 1,
+ 'SPFLOW_RUS': 1,
+ 'SPFLOWDOM': 1,
+ 'SPFLOWDOM_US': 1,
+ 'SPFLOWDOM_RUS': 1,
+ 'SRDUS': 1,
+ 'SRGDP': 3,
+ 'SRGDP_US': 1,
+ 'SRGDP_RUS': 1,
+ 'STFLOW': 1,
+ 'SDOMTFLOW': 1,
+ 'JUPCOST': 1,
+ 'UUPCOST': 3,
+ 'PCOSTNOAGG': 1,
+ 'PCOSTINTERNOAGG': 1,
+ 'PCOST': 1,
+ 'PCOSTINTER': 1,
+ 'JUPCOSTRD': 1,
+ 'TP': 1,
+ 'inter_TP': 3,
+ 'Z': 1,
+ 'STFLOWSDOM': 1,
+ 'SINNOVPATEU': 1,
+ 'SINNOVPATUS': 1,
+ 'NUR': 1,
+ 'TO': 5,
+ 'TE': 5,
+ 'DOMPATRATUSEU': 2,
+ 'DOMPATUS': 1,
+ 'DOMPATEU': 1,
+ 'DOMPATINUS': 1,
+ 'DOMPATINEU': 1,
+ 'SPATORIG': 2,
+ 'SPATDEST': 2,
+ 'TWSPFLOW': 1,
+ 'TWSPFLOWDOM': 1,
+ 'ERDUS': 3}
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -129,14 +170,14 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '902'
+baseline_number = '1001'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 902
+run_number = 1.0
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

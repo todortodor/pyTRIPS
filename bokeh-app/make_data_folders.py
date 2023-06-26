@@ -114,10 +114,10 @@ config_dics = [{
     # for y in [1990]
     # for y in range(2005,2006)
     # for N in [7,12,13]
-    for N in [13]
+    for N in [11]
     ]
 
-write = False
+write = True
 
 for config_dic in config_dics:
     print(config_dic)

@@ -103,6 +103,9 @@ class parameters:
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+        if N==11:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'MEX', 'ROW']
             
         self.data_sectors = pd.read_csv(data_path+'sector_moments.csv',index_col=[0])
         self.alpha = self.data_sectors['alpha'].values
@@ -1926,6 +1929,9 @@ class moments:
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+        if N==11:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'MEX', 'ROW']
         self.N = N
         self.sectors = ['Non patent', 'Patent']
         
@@ -2601,6 +2607,8 @@ class moments:
                 except:
                     pass
             if self.N == 12:
+                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
+            if self.N == 11:
                     self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
             if self.N == 13:
                     self.RD_deviation = np.array(
