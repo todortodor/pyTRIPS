@@ -1231,7 +1231,10 @@ data_table_sol_qty = DataTable(source=ds_sol_qty, columns = columns_sol_qty, wid
 
 def update_baseline_sol_qty(attrname, old, new):
     sol_qty = sol_qty_select.value
-    ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty]
+    x_range_factors = baselines_dic_sol_qty[new][sol_qty].index.to_list()
+    if new != 'scalars':
+        x_range_factors = sorted(x_range_factors, key = country_sort.get)
+    ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty].loc[x_range_factors]
     legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
                             for col in ds_sol_qty.data  if col in comments_dic[new]]
     legend_sol_qty.items = legend_items_sol_qty
