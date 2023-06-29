@@ -824,10 +824,10 @@ class var:
                       p.fe[1:]+p.fo[1:],
                       p.r_hjort,
                       self.psi_o_star[...,1:]**(-p.k),
-                      1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
+                      1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
                       )
                          
-        B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
+        B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
         
         # A = (
         #     (1-p.kappa)*p.k/(p.kappa*(p.k-1))
@@ -842,7 +842,8 @@ class var:
                          
         # B = p.k*(1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:]))
         
-        self.semi_elast_RD_delta[...,1:] = -A-B
+        # self.semi_elast_RD_delta[...,1:] = -A-B
+        self.semi_elast_RD_delta[...,1:] = -p.delta[...,1:]**2*(-A-B)
 
     def compute_non_solver_aggregate_qualities(self,p): 
         self.PSI_MPND = np.zeros((p.N,p.N,p.S))
