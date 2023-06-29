@@ -161,9 +161,9 @@ runs_params = [
 
 write = True
 
-baseline_number = '902'
+baseline_number = '1002'
 
-for variation_number in [2]:
+for variation_number in [1]:
     
     for run_params in runs_params:
         print(run_params)
@@ -176,7 +176,7 @@ for variation_number in [2]:
         p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
         # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
-        p.load_data(f'data_smooth_3_years/data_13_countries_{year}/',keep_already_calib_params=True)
+        p.load_data(f'data_smooth_3_years/data_11_countries_{year}/',keep_already_calib_params=True)
         # p.load_data(f'data/data_13_countries_{year}/',keep_already_calib_params=True)
         # p.update_khi_and_r_hjort(0.16)
         # p.r_hjort[1] = p.r_hjort[1]*3.6
@@ -193,7 +193,7 @@ for variation_number in [2]:
         # number_of_int_patents_model_baseline = m.inter_TP.copy()
         # number_of_int_patents_data_baseline = m.inter_TP_data.copy()
         # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
-        m.load_data(f'data_smooth_3_years/data_13_countries_{year}/')
+        m.load_data(f'data_smooth_3_years/data_11_countries_{year}/')
         # m.load_data(f'data/data_13_countries_{year}/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:

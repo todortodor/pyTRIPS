@@ -19,13 +19,7 @@ from tqdm import tqdm
 import matplotlib.pylab as pylab
 
 baseline_dics = [
-   {'baseline':'803','variation': 'baseline'},
-   {'baseline':'803','variation': '1.0'},
-   {'baseline':'803','variation': '1.1'},
-   {'baseline':'803','variation': '1.2'},
-   {'baseline':'803','variation': '1.3'},
-   {'baseline':'803','variation': '1.4'},
-   {'baseline':'803','variation': '1.5'},
+    {'baseline':'1003','variation': 'baseline'},
     ]
 
 for baseline_dic in baseline_dics:
@@ -57,7 +51,9 @@ for baseline_dic in baseline_dics:
         run = pd.DataFrame(data = [baseline_dic['baseline'],
                         baseline_dic['variation'],
                         'fixed_point']+p_nash.delta[...,1].tolist(), 
-                        index = deltas_df.columns).T
+                        index = ['baseline',
+                                 'variation',
+                                 'aggregation_method'] + p_baseline.countries).T
         deltas_df = pd.concat([deltas_df, run],ignore_index=True)
         deltas_df.to_csv('nash_eq_recaps/dyn_deltas.csv')
         
@@ -71,7 +67,9 @@ for baseline_dic in baseline_dics:
                         baseline_dic['variation'],
                         method]+sol_nash.cons_eq_welfare.tolist()+[sol_nash.cons_eq_pop_average_welfare_change,
                                                            sol_nash.cons_eq_negishi_welfare_change], 
-                        index = cons_eq_welfares.columns).T
+                        index = ['baseline',
+                                 'variation',
+                                 'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
         cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
         cons_eq_welfares.to_csv('nash_eq_recaps/dyn_cons_eq_welfares.csv')
 

@@ -951,6 +951,9 @@ class dynamic_var:
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+        if N==11:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'MEX', 'ROW']
         self.map_parameter = 32
         
     def elements(self): 
@@ -2505,7 +2508,7 @@ class moments:
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
-                distort_for_large_pflows_fac = 20
+                distort_for_large_pflows_fac = 6
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
                     # setattr(self,
@@ -2609,7 +2612,7 @@ class moments:
             if self.N == 12:
                     self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
             if self.N == 11:
-                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
+                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7]])
             if self.N == 13:
                     self.RD_deviation = np.array(
                         [self.RD_deviation[i] for i in [0,1,2,6,7,9]]
