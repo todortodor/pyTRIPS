@@ -104,7 +104,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                 except:
                     pass
             
-    for sol_qty in ['semi_elast_RD_delta','DT','psi_o_star']:
+    for sol_qty in ['semi_elast_patenting_delta','DT','psi_o_star']:
         df = pd.DataFrame(index = p_baseline.countries, 
                           columns = ['baseline'], 
                           )
@@ -177,7 +177,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     
     for k in dic_df_sol.keys():
-        if k in ['semi_elast_RD_delta','DT','psi_o_star']:
+        if k in ['semi_elast_patenting_delta','DT','psi_o_star']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]
         if k in ['l_R']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]/p.labor

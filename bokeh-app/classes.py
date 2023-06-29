@@ -785,7 +785,7 @@ class var:
         # self.U = self.cons**(exp)/(p.rho-self.g*exp)/exp
         pass
     
-    def compute_semi_elast_RD_delta(self,p):
+    def compute_semi_elast_patenting_delta(self,p):
         self.r_NP = np.zeros(p.S)
         self.r_NP[1:] = self.r + p.zeta[1:] + p.nu[1:] - self.g + self.g_s[1:]
         
@@ -795,7 +795,7 @@ class var:
                             1/(self.r_NP[None,1:]-p.nu[None,1:]+p.delta[:,1:]),
                             1/(self.r_NP[None,1:]+p.delta[:,1:]))
         
-        # self.semi_elast_RD_delta = np.zeros((p.N,p.S))
+        # self.semi_elast_patenting_delta = np.zeros((p.N,p.S))
         
         # numerator_prefact = p.k*np.einsum('is,is,is,is->is',
         #                               p.delta[:,1:]**2,
@@ -812,10 +812,10 @@ class var:
         #                                                               self.DT[:,1:]),
         #                         )
         
-        # self.semi_elast_RD_delta[...,1:] = numerator_prefact*numerator_sum/denominator
+        # self.semi_elast_patenting_delta[...,1:] = numerator_prefact*numerator_sum/denominator
         
         # self.G = self.r+p.zeta-self.g+self.g_s+p.nu
-        self.semi_elast_RD_delta = np.zeros((p.N,p.S))
+        self.semi_elast_patenting_delta = np.zeros((p.N,p.S))
         A = (
             (1-p.kappa)*p.k/(p.kappa*(p.k-1))
               )*np.einsum('is,is,s,i,is,is->is',
@@ -829,21 +829,7 @@ class var:
                          
         B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
         
-        # A = (
-        #     (1-p.kappa)*p.k/(p.kappa*(p.k-1))
-        #      )*np.einsum('is,is,s,i,is,is->is',
-        #               p.eta,
-        #               1/self.l_R**p.kappa,
-        #               p.fe+p.fo,
-        #               p.r_hjort,
-        #               self.psi_o_star**(-p.k),
-        #               1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:])
-        #               )
-                         
-        # B = p.k*(1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:]))
-        
-        # self.semi_elast_RD_delta[...,1:] = -A-B
-        self.semi_elast_RD_delta[...,1:] = -p.delta[...,1:]**2*(-A-B)
+        self.semi_elast_patenting_delta[...,1:] = p.delta[...,1:]**2*(A+B)
 
     def compute_non_solver_aggregate_qualities(self,p): 
         self.PSI_MPND = np.zeros((p.N,p.N,p.S))
@@ -908,7 +894,7 @@ class var:
         self.compute_share_of_innovations_patented(p)
         self.compute_welfare(p)
         self.compute_non_solver_aggregate_qualities(p)
-        self.compute_semi_elast_RD_delta(p)
+        self.compute_semi_elast_patenting_delta(p)
         self.compute_V(p)
         
     def compute_consumption_equivalent_welfare(self,p,baseline):
@@ -2497,7 +2483,7 @@ class moments:
         self.DOMPATINUS = var.pflow[0,0]/var.pflow[0,:].sum()
         
     def compute_ERDUS(self,var,p):
-        self.ERDUS = var.semi_elast_RD_delta[0,1]
+        self.ERDUS = var.semi_elast_patenting_delta[0,1]
         
     def compute_moments(self,var,p):
         self.compute_STFLOW(var, p)
