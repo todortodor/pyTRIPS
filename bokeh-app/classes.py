@@ -815,34 +815,34 @@ class var:
         # self.semi_elast_RD_delta[...,1:] = numerator_prefact*numerator_sum/denominator
         
         # self.G = self.r+p.zeta-self.g+self.g_s+p.nu
+        self.semi_elast_RD_delta = np.zeros((p.N,p.S))
+        A = (
+            (1-p.kappa)*p.k/(p.kappa*(p.k-1))
+              )*np.einsum('is,is,s,i,is,is->is',
+                      p.eta[...,1:],
+                      1/self.l_R[...,1:]**p.kappa,
+                      p.fe[1:]+p.fo[1:],
+                      p.r_hjort,
+                      self.psi_o_star[...,1:]**(-p.k),
+                      1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
+                      )
+                         
+        B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
         
         # A = (
         #     (1-p.kappa)*p.k/(p.kappa*(p.k-1))
         #      )*np.einsum('is,is,s,i,is,is->is',
-        #               p.eta[...,1:],
-        #               1/self.l_R[...,1:]**p.kappa,
-        #               p.fe[1:]+p.fo[1:],
+        #               p.eta,
+        #               1/self.l_R**p.kappa,
+        #               p.fe+p.fo,
         #               p.r_hjort,
-        #               self.psi_o_star[...,1:]**(-p.k),
-        #               1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
+        #               self.psi_o_star**(-p.k),
+        #               1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:])
         #               )
                          
-        # B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])-1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
+        # B = p.k*(1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:]))
         
-        A = (
-            (1-p.kappa)*p.k/(p.kappa*(p.k-1))
-             )*np.einsum('is,is,s,i,is,is->is',
-                      p.eta,
-                      1/self.l_R**p.kappa,
-                      p.fe+p.fo,
-                      p.r_hjort,
-                      self.psi_o_star**(-p.k),
-                      1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:])
-                      )
-                         
-        B = p.k*(1/(self.G[None,:]+p.delta[...,:])-1/(self.G[None,:]+p.delta[...,:]-p.nu[None,:]))
-        
-        self.semi_elast_RD_delta = -A-B
+        self.semi_elast_RD_delta[...,1:] = -A-B
 
     def compute_non_solver_aggregate_qualities(self,p): 
         self.PSI_MPND = np.zeros((p.N,p.N,p.S))
