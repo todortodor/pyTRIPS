@@ -19,14 +19,20 @@ baseline_number = '1003'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/0.4/')
     start_time = time.perf_counter()
 
     m = moments()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/0.4/')
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
-m.weights_dict['RD'] = 10
+# m.weights_dict['RD'] = 10
+# m.weights_dict['GROWTH'] = 5
+# m.weights_dict['TO'] = 5
+# m.weights_dict['TE'] = 5
+m.weights_dict['DOMPATINUS'] = 5
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -97,7 +103,7 @@ commentary = ''
 # baseline_number = '1001'|
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 0.1
+run_number = 0.5
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 

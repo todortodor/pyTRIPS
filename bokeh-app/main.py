@@ -832,6 +832,11 @@ comments_dic['1002'] = {
 
 comments_dic['1003'] = {
     "baseline":"baseline : 2015",
+    # '0.1':'0.1:better RD targeting',
+    # '0.2':'0.2:better RD and GROWTH targeting',
+    # '0.3':'0.3:better RD and GROWTH/TO/TE targeting',
+    '0.4':'0.4:better RD targeting',
+    '0.5':'0.5:0.4 with different UUPCOST/DOMPATINUS  tension',
     '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
     '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
@@ -1371,8 +1376,214 @@ par_time_report = column(controls_par_time, p_par_time)
 #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
 #                           ")
 
-# first_panel_bis = row(par_time_report, explication_calib_params)
-first_panel_bis = row(par_time_report)
+#!!! second_panel
+# second_panel = row(par_time_report, explication_calib_params)
+second_panel = row(par_time_report)
+
+#%% counterfactuals
+
+# baseline_cf = '101'
+baseline_cf = '1003'
+country_cf = 'USA'
+
+def section_end(s):
+      return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_list = sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
+cf_list = sorted([s for s in os.listdir(cf_path) 
+                if s[9:].startswith('1003') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+    # sorted([s for s in os.listdir(cf_path) 
+    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+
+baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
+country_cf_select = Select(value=country_cf, 
+                            title='Country', 
+                            options=countries+['World','Harmonizing','Uniform_delta'])
+
+def get_data_cf(baseline,country):
+    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+    if country != 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+    if country == 'Harmonizing':
+        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+    df_cf.set_index('delt',inplace=True)
+    return df_cf
+
+def build_max(df_cf):
+    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+    df_max.index.name = 'label'
+    df_max.columns = ['xmax','max'] 
+    df_max = df_max.loc[countries]
+    df_max['colors'] = Category18[:len(df_max)]
+    return df_max
+
+df_cf = get_data_cf(baseline_cf,country_cf)
+ds_cf = ColumnDataSource(df_cf)
+df_cf_max = build_max(df_cf)
+ds_cf_max = ColumnDataSource(df_cf_max)
+
+colors_cf = itertools.cycle(Category18)
+colors_cf_max = itertools.cycle(Category18)
+
+p_cf = figure(title="Patent protection counterfactual", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in delta',
+                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                x_axis_type="log",
+                tools = TOOLS) 
+
+for col in df_cf.columns:
+    if col not in [0,'delt','growth']:
+        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+
+p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+     
+p_cf.legend.click_policy="hide"
+p_cf.legend.label_text_font_size = '8pt'
+p_cf.add_layout(p_cf.legend[0], 'right')
+
+def update_baseline_cf(attrname, old, new):
+    country_cf = country_cf_select.value
+    ds_cf.data = get_data_cf(new,country_cf)
+    df_cf = get_data_cf(new,country_cf)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    
+def update_country_cf(attrname, old, new):
+    baseline_cf = baseline_cf_select.value
+    df_cf = get_data_cf(baseline_cf,new)
+    ds_cf.data = df_cf
+    ds_cf_max.data = build_max(df_cf)
+    
+controls_cf = row(baseline_cf_select, country_cf_select)
+
+baseline_cf_select.on_change('value', update_baseline_cf)
+country_cf_select.on_change('value', update_country_cf)
+
+counterfactuals_report = column(controls_cf,p_cf)
+
+#%% counterfactuals 805 TO target
+
+# country_to_cf = 'USA'
+# to_target = 0.0155
+# baseline_to_cf = '804'
+
+# # list_of_to_targets = np.linspace(0.01,0.03,41)
+# list_of_to_targets = np.array(np.linspace(0.01,0.02,21).tolist()
+#                               +[0.022,0.024,0.026,0.028,0.03])
+
+# def section_end(s):
+#       return [int(_) for _ in s.split("_")[-1].split(".")]
+# cf_to_list = {'804':sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('804') and s.startswith('baseline')], key=section_end),
+#               '805':sorted([s for s in os.listdir(cf_path) 
+#             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)}
+
+# def get_data_to_cf(to_target,country,baseline_to_cf):
+#     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
+#     df_to_cf = pd.read_csv(cf_path+cf_to_list[baseline_to_cf][min(idx_to_cf,len(cf_to_list[baseline_to_cf])-1)]+'/'+country+'.csv')
+#     if country == 'Harmonizing':
+#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
+#     elif country == 'Uniform_delta':
+#         df_to_cf['Growth rate'] = np.nan
+#     else:
+#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
+#     df_to_cf.set_index('delt',inplace=True)
+#     return df_to_cf
+
+# def build_max(df_to_cf):
+#     df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category18[:len(df_max)]
+#     return df_max
+
+# baseline_to_cf_select = Select(value=baseline_to_cf, title='Baseline', options=['804','805'])
+# country_to_cf_select = Select(value=country_to_cf, 
+#                             title='Country', 
+#                             options=countries+['World','Harmonizing','Uniform_delta'])
+
+# df_to_cf = get_data_to_cf(to_target,country_to_cf,baseline_to_cf)
+# ds_to_cf = ColumnDataSource(df_to_cf)
+# df_to_cf_max = build_max(df_to_cf)
+# ds_to_cf_max = ColumnDataSource(df_to_cf_max)
+
+# colors_to_cf = itertools.cycle(Category18)
+# colors_to_cf_max = itertools.cycle(Category18)
+
+# p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baselines 804(2005) and 805 (2015)", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
+
+# for col in df_to_cf.columns:
+#     if col not in [0,'delt','growth']:
+#         p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
+
+# p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
+     
+# p_to_cf.legend.click_policy="hide"
+# p_to_cf.legend.label_text_font_size = '8pt'
+# p_to_cf.add_layout(p_to_cf.legend[0], 'right')
+
+# def update_target_to_cf(attrname, old, new):
+#     country_to_cf = country_to_cf_select.value
+#     baseline_to_cf = baseline_to_cf_select.value
+#     df_to_cf = get_data_to_cf(new/100,country_to_cf,baseline_to_cf)
+#     ds_to_cf.data = df_to_cf
+#     ds_to_cf_max.data = build_max(df_to_cf)
+    
+# def update_baseline_to_cf(attrname, old, new):
+#     country_to_cf = country_to_cf_select.value
+#     to_target = slider_to_cf.value/100
+#     df_to_cf = get_data_to_cf(to_target,country_to_cf,new)
+#     ds_to_cf.data = df_to_cf
+#     ds_to_cf_max.data = build_max(df_to_cf)
+    
+# def update_country_to_cf(attrname, old, new):
+#     to_target = slider_to_cf.value/100
+#     baseline_to_cf = baseline_to_cf_select.value
+#     df_to_cf = get_data_to_cf(to_target,new,baseline_to_cf)
+#     ds_to_cf.data = df_to_cf
+#     ds_to_cf_max.data = build_max(df_to_cf)
+    
+# slider_to_cf = Slider(start=1, end=3, value=1.55, step=0.05, title="Turnover target in %")    
+    
+# controls_to_cf = row(baseline_to_cf_select, slider_to_cf, country_to_cf_select)
+# country_to_cf_select.on_change('value', update_country_to_cf)
+# slider_to_cf.on_change('value', update_target_to_cf)
+# baseline_to_cf_select.on_change('value', update_baseline_to_cf)
+
+# counterfactuals_to_report = column(controls_to_cf,p_to_cf)
 
 #%% dynamic counterfactuals
 
@@ -1542,309 +1753,9 @@ counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
 # counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
-#%% dynamic solver
-
-baseline_dyn = '1003'
-country_dyn = 'USA'
-sector_dyn = 'Patent'
-
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
-                              # options=['501','604','607','608','609','610']
-                              options=['1003']
-                              )
-
-baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
-files_in_dir = next(os.walk(baseline_dyn_path))[1]
-run_list = [f for f in files_in_dir if f[0].isnumeric()]
-run_list = sorted(run_list, key=section)
-variation_dyn_select = Select(value='baseline', title='Variation', 
-                              options=['baseline']+run_list)
-
-def update_list_of_runs_dyn(attr, old, new):
-    baseline_dyn_path = results_path+'baseline_'+new+'_variations/'
-    files_in_dir = next(os.walk(baseline_dyn_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list = sorted(run_list, key=section)
-    variation_dyn_select.options = ['baseline']+run_list
-
-country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
-                                                                                    'IND','CAN','KOR','RUS','AUS',
-                                                                                    'MEX', 'ROW','World'])
-slider_dyn = Slider(start=-1, end=0.5, value=0, step=0.01, title="Log change of delta")    
-
-state_computation = Div(text="Done")
-
-def make_time_evolution_df(dyn_sol):
-    qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
-    df = pd.DataFrame(index = pd.Index(qties,name='Quantity'), 
-                      columns = ['Initial jump mean','Initial jump median',
-                                  'Typical time of evolution\nmean','Typical time of evolution\nmedian'])
-    for qty in qties:
-        a =  dyn_sol.get_jump(qty)
-        df.loc[qty,'Initial jump mean'] = a[0].round(2)
-        df.loc[qty,'Initial jump median'] = a[1].round(2)
-        b = dyn_sol.get_typical_time_evolution(qty)
-        df.loc[qty,'Typical time of evolution\nmean'] = b[0].round(2)
-        df.loc[qty,'Typical time of evolution\nmedian'] = b[1].round(2)
-    return df
-
-def fit_and_eval(vec,dyn_sol):
-    fit = np.polyval(np.polyfit(dyn_sol.t_real,
-                vec,
-                dyn_sol.Nt),np.linspace(0,dyn_sol.t_inf,2001))
-    return fit
-
-def create_column_data_source_from_dyn_sol(dyn_sol):
-    data_dyn = {}
-    data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
-    for agg_qty in ['g']:
-        data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
-    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','ratios_of_consumption_levels_change_not_normalized',
-                  'integrand_welfare','second_term_sum_welfare','integral_welfare']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            if c_s_qty in ['PSI_CD']:
-                data_dyn[c_s_qty+c] = fit_and_eval(
-                    (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel(),dyn_sol)
-            else:
-                data_dyn[c_s_qty+c] = fit_and_eval(
-                    getattr(dyn_sol,c_s_qty)[i,1,:].ravel(),dyn_sol)
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
-            temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
-            temp_sum_i = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=1)
-        else:
-            temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
-            temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn['sum_n_'+c_c_s_qty+c] = fit_and_eval(temp_sum_n[i,1,:].ravel(),dyn_sol)
-            data_dyn['sum_i_'+c_c_s_qty+c] = fit_and_eval(temp_sum_i[i,1,:].ravel(),dyn_sol)
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn['real_final_consumption'+c] = fit_and_eval((getattr(dyn_sol,'nominal_final_consumption')[i,:]
-                                                /getattr(dyn_sol,'price_indices')[i,:]).ravel(),dyn_sol)
-    
-    data_dyn_init = {}
-    data_dyn_init['time'] = [0]
-    for agg_qty in ['g']:
-        data_dyn_init[agg_qty] = [getattr(dyn_sol.sol_init,agg_qty)]
-    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init[c_qty+c] = [getattr(dyn_sol.sol_init,c_qty)[i]]
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty == 'profit':
-            temp_sum_n = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=0)[:,1]
-            temp_sum_i = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=1)[:,1]
-        else:
-            temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
-            temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
-            data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
-        data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
-        data_dyn_init['integrand_welfare'+c] = [None]
-        data_dyn_init['integral_welfare'+c] = [None]
-        data_dyn_init['second_term_sum_welfare'+c] = [None]
-        data_dyn_init['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
-        
-    data_dyn_fin = {}
-    data_dyn_fin['time'] = [dyn_sol.t_inf]
-    for agg_qty in ['g']:
-        data_dyn_fin[agg_qty] = [getattr(dyn_sol.sol_fin,agg_qty)]
-    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin[c_qty+c] = [getattr(dyn_sol.sol_fin,c_qty)[i]]
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty == 'profit':
-            temp_sum_n = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=0)[:,1]
-            temp_sum_i = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=1)[:,1]
-        else:
-            temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
-            temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
-            data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
-        data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
-        data_dyn_fin['integrand_welfare'+c] = [None]
-        data_dyn_fin['integral_welfare'+c] = [None]
-        data_dyn_fin['second_term_sum_welfare'+c] = [None]
-        data_dyn_fin['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
-        
-    return data_dyn, data_dyn_init, data_dyn_fin
-
-def compute_dyn(event):
-    if variation_dyn_select.value == 'baseline':
-        path = results_path+baseline_dyn_select.value+'/'
-    else:
-        path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
-                                  dir_path=dir_path)
-    p_dyn_cf = p_dyn.copy()
-    if country_dyn_select.value != 'World':
-        p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
-    else:
-        p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*(10**slider_dyn.value)
-    start = time.perf_counter()
-    dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
-                                          t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
-    end = time.perf_counter()
-    if country_dyn_select.value == 'World':
-        message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
-    else:
-        message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
-    state_computation.text = message
-    temp = create_column_data_source_from_dyn_sol(dyn_sol)
-    ds_dyn.data = temp[0]
-    ds_dyn_init.data = temp[1]
-    ds_dyn_fin.data = temp[2]
-    source_table_time_evol.data = make_time_evolution_df(dyn_sol)
-    
-if variation_dyn_select.value == 'baseline':
-    path = results_path+baseline_dyn_select.value+'/'
-else:
-    path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
-                              dir_path=dir_path)
-p_dyn_cf = p_dyn.copy()
-if country_dyn_select.value != 'World':
-    p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
-else:
-    p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
-dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
-                                      t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
-
-source_table_time_evol = ColumnDataSource(make_time_evolution_df(dyn_sol))
-columns_time_evol = [TableColumn(field=col) for col in 
-                      ['Quantity','Initial jump mean','Initial jump median',
-                                'Typical time of evolution\nmean','Typical time of evolution\nmedian']]
-table_widget_time_evol = DataTable(source=source_table_time_evol, columns=columns_time_evol, width=600, height=750)
-
-button_compute_dyn = Button(label="Compute",align='end')
-button_compute_dyn.on_event(ButtonClick, compute_dyn)
-
-qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
-                                                    'real_final_consumption','ratios_of_consumption_levels_change_not_normalized',
-                                                    'l_R','l_Ao','psi_o_star',
-                                                    'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
-                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
-                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
-country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
-                                                                                    'IND','CAN','KOR','RUS','AUS',
-                                                                                    'MEX', 'ROW'])
-
-temp = create_column_data_source_from_dyn_sol(dyn_sol)
-data_dyn_default = temp[0]
-data_dyn_init_default = temp[1]
-data_dyn_fin_default = temp[2]
-ds_dyn = ColumnDataSource(data_dyn_default)
-ds_dyn_init = ColumnDataSource(data_dyn_init_default)
-ds_dyn_fin = ColumnDataSource(data_dyn_fin_default)
-up_max = max([max(ds_dyn.data['g']), max(ds_dyn_fin.data['g']), max(ds_dyn_init.data['g'])])
-down_min = min([min(ds_dyn.data['g']), min(ds_dyn_fin.data['g']), min(ds_dyn_init.data['g'])])
-delta = up_max-down_min
-if delta == 0:
-    delta = 1
-p_dyn_figure = figure(title="Dynamic solver",
-                width = 1200,
-                height = 750,
-                x_axis_label='Time',
-                y_axis_label='Value',
-                tools = TOOLS,
-                x_range = (-20,dyn_sol.t_inf+20),
-                y_range=(down_min-delta*0.1,up_max+delta*0.1)
-                )
-
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("Time", "$x"),
-    ("value", "$y")
-    ] 
-p_dyn_figure.add_tools(hover_tool_eq)
-
-lines_dyn = {}
-for col in data_dyn_default.keys():
-    if col != time:
-        lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
-        if col != 'g':
-            lines_dyn[col].visible = False
-
-init_dyn = {}
-for col in data_dyn_init_default.keys():
-    if col != time:
-        init_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_init, color='red',size=8)
-        if col != 'g':
-            init_dyn[col].visible = False
-            
-fin_dyn = {}
-for col in data_dyn_fin_default.keys():
-    if col != time:
-        fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
-        if col != 'g':
-            fin_dyn[col].visible = False
-
-def update_graph_dyn(event):
-    if qty_dyn_display_select.value in ['g']:
-        col = qty_dyn_display_select.value
-    elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                          'ratios_of_consumption_levels_change_not_normalized',
-                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
-                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
-                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
-        col = qty_dyn_display_select.value+country_dyn_display_select.value
-    lines_dyn[col].visible = True
-    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
-                                            'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
-        init_dyn[col].visible = True
-        fin_dyn[col].visible = True
-    else:
-        init_dyn[col].visible = False
-        fin_dyn[col].visible = False
-
-    for other_column in lines_dyn:
-        if other_column != col:
-            lines_dyn[other_column].visible = False
-            init_dyn[other_column].visible = False
-            fin_dyn[other_column].visible = False
-    try:
-        up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
-        down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
-    except:
-        up_max = max(ds_dyn.data[col])
-        down_min = min(ds_dyn.data[col])
-    delta = up_max-down_min
-    if delta == 0:
-        delta = 1
-    p_dyn_figure.y_range.start=down_min-delta*0.1
-    p_dyn_figure.y_range.end=up_max+delta*0.1
-    p_dyn_figure.x_range.start=-20
-    p_dyn_figure.x_range.end=dyn_sol.t_inf+20
-        
-button_display_dyn = Button(label="Display",align='end')
-button_display_dyn.on_event(ButtonClick, update_graph_dyn)
-
-controls_dyn = row(baseline_dyn_select, variation_dyn_select, country_dyn_select, slider_dyn, button_compute_dyn, state_computation)
-controls_display_dyn = row(qty_dyn_display_select, 
-                            country_dyn_display_select,
-                            button_display_dyn)
-
-baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
-
-dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
-
-#!!! second panel
-# second_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
-second_panel = row(counterfactuals_dyn_report,dyn_report,table_widget_time_evol)
+#!!! third panel
+# third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
+third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
@@ -2254,219 +2165,314 @@ baseline_nash_coop_select.on_change('value', update_baseline_nash)
 nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
 nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
 
-#!!! third panel
-third_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
-# third_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
+#!!! fourth panel
+fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
+# fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 
-#%% counterfactuals
+#%% dynamic solver
 
-# baseline_cf = '101'
-baseline_cf = '1003'
-country_cf = 'USA'
+baseline_dyn = '1003'
+country_dyn = 'USA'
+sector_dyn = 'Patent'
 
-def section_end(s):
-      return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
-cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1003') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
+                              # options=['501','604','607','608','609','610']
+                              options=['1003']
+                              )
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
-country_cf_select = Select(value=country_cf, 
-                            title='Country', 
-                            options=countries+['World','Harmonizing','Uniform_delta'])
+baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
+files_in_dir = next(os.walk(baseline_dyn_path))[1]
+run_list = [f for f in files_in_dir if f[0].isnumeric()]
+run_list = sorted(run_list, key=section)
+variation_dyn_select = Select(value='baseline', title='Variation', 
+                              options=['baseline']+run_list)
 
-def get_data_cf(baseline,country):
-    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-    df_cf.set_index('delt',inplace=True)
-    return df_cf
+def update_list_of_runs_dyn(attr, old, new):
+    baseline_dyn_path = results_path+'baseline_'+new+'_variations/'
+    files_in_dir = next(os.walk(baseline_dyn_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list = sorted(run_list, key=section)
+    variation_dyn_select.options = ['baseline']+run_list
 
-def build_max(df_cf):
-    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
+                                                                                    'IND','CAN','KOR','RUS','AUS',
+                                                                                    'MEX', 'ROW','World'])
+slider_dyn = Slider(start=-1, end=0.5, value=0, step=0.01, title="Log change of delta")    
 
-df_cf = get_data_cf(baseline_cf,country_cf)
-ds_cf = ColumnDataSource(df_cf)
-df_cf_max = build_max(df_cf)
-ds_cf_max = ColumnDataSource(df_cf_max)
+state_computation = Div(text="Done")
 
-colors_cf = itertools.cycle(Category18)
-colors_cf_max = itertools.cycle(Category18)
+def make_time_evolution_df(dyn_sol):
+    qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
+    df = pd.DataFrame(index = pd.Index(qties,name='Quantity'), 
+                      columns = ['Initial jump mean','Initial jump median',
+                                  'Typical time of evolution\nmean','Typical time of evolution\nmedian'])
+    for qty in qties:
+        a =  dyn_sol.get_jump(qty)
+        df.loc[qty,'Initial jump mean'] = a[0].round(2)
+        df.loc[qty,'Initial jump median'] = a[1].round(2)
+        b = dyn_sol.get_typical_time_evolution(qty)
+        df.loc[qty,'Typical time of evolution\nmean'] = b[0].round(2)
+        df.loc[qty,'Typical time of evolution\nmedian'] = b[1].round(2)
+    return df
 
-p_cf = figure(title="Patent protection counterfactual", 
+def fit_and_eval(vec,dyn_sol):
+    fit = np.polyval(np.polyfit(dyn_sol.t_real,
+                vec,
+                dyn_sol.Nt),np.linspace(0,dyn_sol.t_inf,2001))
+    return fit
+
+def create_column_data_source_from_dyn_sol(dyn_sol):
+    data_dyn = {}
+    data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
+    for agg_qty in ['g']:
+        data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
+    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+                  'integrand_welfare','second_term_sum_welfare','integral_welfare']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            if c_s_qty in ['PSI_CD']:
+                data_dyn[c_s_qty+c] = fit_and_eval(
+                    (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel(),dyn_sol)
+            else:
+                data_dyn[c_s_qty+c] = fit_and_eval(
+                    getattr(dyn_sol,c_s_qty)[i,1,:].ravel(),dyn_sol)
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+        if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
+            temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
+            temp_sum_i = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=1)
+        else:
+            temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
+            temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn['sum_n_'+c_c_s_qty+c] = fit_and_eval(temp_sum_n[i,1,:].ravel(),dyn_sol)
+            data_dyn['sum_i_'+c_c_s_qty+c] = fit_and_eval(temp_sum_i[i,1,:].ravel(),dyn_sol)
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn['real_final_consumption'+c] = fit_and_eval((getattr(dyn_sol,'nominal_final_consumption')[i,:]
+                                                /getattr(dyn_sol,'price_indices')[i,:]).ravel(),dyn_sol)
+    
+    data_dyn_init = {}
+    data_dyn_init['time'] = [0]
+    for agg_qty in ['g']:
+        data_dyn_init[agg_qty] = [getattr(dyn_sol.sol_init,agg_qty)]
+    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init[c_qty+c] = [getattr(dyn_sol.sol_init,c_qty)[i]]
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+        if c_c_s_qty == 'profit':
+            temp_sum_n = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=0)[:,1]
+            temp_sum_i = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=1)[:,1]
+        else:
+            temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
+            temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+            data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
+        data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
+        data_dyn_init['integrand_welfare'+c] = [None]
+        data_dyn_init['integral_welfare'+c] = [None]
+        data_dyn_init['second_term_sum_welfare'+c] = [None]
+        data_dyn_init['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
+        
+    data_dyn_fin = {}
+    data_dyn_fin['time'] = [dyn_sol.t_inf]
+    for agg_qty in ['g']:
+        data_dyn_fin[agg_qty] = [getattr(dyn_sol.sol_fin,agg_qty)]
+    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin[c_qty+c] = [getattr(dyn_sol.sol_fin,c_qty)[i]]
+    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
+    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+        if c_c_s_qty == 'profit':
+            temp_sum_n = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=0)[:,1]
+            temp_sum_i = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=1)[:,1]
+        else:
+            temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
+            temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
+        for i,c in enumerate(dyn_sol.countries):
+            data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+            data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+    for i,c in enumerate(dyn_sol.countries):
+        data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
+        data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
+        data_dyn_fin['integrand_welfare'+c] = [None]
+        data_dyn_fin['integral_welfare'+c] = [None]
+        data_dyn_fin['second_term_sum_welfare'+c] = [None]
+        data_dyn_fin['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
+        
+    return data_dyn, data_dyn_init, data_dyn_fin
+
+def compute_dyn(event):
+    if variation_dyn_select.value == 'baseline':
+        path = results_path+baseline_dyn_select.value+'/'
+    else:
+        path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+                                  dir_path=dir_path)
+    p_dyn_cf = p_dyn.copy()
+    if country_dyn_select.value != 'World':
+        p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
+    else:
+        p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*(10**slider_dyn.value)
+    start = time.perf_counter()
+    dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+                                          t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+    end = time.perf_counter()
+    if country_dyn_select.value == 'World':
+        message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+    else:
+        message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+    state_computation.text = message
+    temp = create_column_data_source_from_dyn_sol(dyn_sol)
+    ds_dyn.data = temp[0]
+    ds_dyn_init.data = temp[1]
+    ds_dyn_fin.data = temp[2]
+    source_table_time_evol.data = make_time_evolution_df(dyn_sol)
+    
+if variation_dyn_select.value == 'baseline':
+    path = results_path+baseline_dyn_select.value+'/'
+else:
+    path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+                              dir_path=dir_path)
+p_dyn_cf = p_dyn.copy()
+if country_dyn_select.value != 'World':
+    p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
+else:
+    p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
+dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+                                      t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+
+source_table_time_evol = ColumnDataSource(make_time_evolution_df(dyn_sol))
+columns_time_evol = [TableColumn(field=col) for col in 
+                      ['Quantity','Initial jump mean','Initial jump median',
+                                'Typical time of evolution\nmean','Typical time of evolution\nmedian']]
+table_widget_time_evol = DataTable(source=source_table_time_evol, columns=columns_time_evol, width=600, height=750)
+
+button_compute_dyn = Button(label="Compute",align='end')
+button_compute_dyn.on_event(ButtonClick, compute_dyn)
+
+qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
+                                                    'real_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+                                                    'l_R','l_Ao','psi_o_star',
+                                                    'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
+                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
+country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
+                                                                                    'IND','CAN','KOR','RUS','AUS',
+                                                                                    'MEX', 'ROW'])
+
+temp = create_column_data_source_from_dyn_sol(dyn_sol)
+data_dyn_default = temp[0]
+data_dyn_init_default = temp[1]
+data_dyn_fin_default = temp[2]
+ds_dyn = ColumnDataSource(data_dyn_default)
+ds_dyn_init = ColumnDataSource(data_dyn_init_default)
+ds_dyn_fin = ColumnDataSource(data_dyn_fin_default)
+up_max = max([max(ds_dyn.data['g']), max(ds_dyn_fin.data['g']), max(ds_dyn_init.data['g'])])
+down_min = min([min(ds_dyn.data['g']), min(ds_dyn_fin.data['g']), min(ds_dyn_init.data['g'])])
+delta = up_max-down_min
+if delta == 0:
+    delta = 1
+p_dyn_figure = figure(title="Dynamic solver",
                 width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
+                height = 750,
+                x_axis_label='Time',
+                y_axis_label='Value',
+                tools = TOOLS,
+                x_range = (-20,dyn_sol.t_inf+20),
+                y_range=(down_min-delta*0.1,up_max+delta*0.1)
+                )
 
-for col in df_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+hover_tool_eq = HoverTool()
+hover_tool_eq.tooltips = [
+    ("Time", "$x"),
+    ("value", "$y")
+    ] 
+p_dyn_figure.add_tools(hover_tool_eq)
 
-p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
-     
-p_cf.legend.click_policy="hide"
-p_cf.legend.label_text_font_size = '8pt'
-p_cf.add_layout(p_cf.legend[0], 'right')
+lines_dyn = {}
+for col in data_dyn_default.keys():
+    if col != time:
+        lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
+        if col != 'g':
+            lines_dyn[col].visible = False
 
-def update_baseline_cf(attrname, old, new):
-    country_cf = country_cf_select.value
-    ds_cf.data = get_data_cf(new,country_cf)
-    df_cf = get_data_cf(new,country_cf)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
-    
-def update_country_cf(attrname, old, new):
-    baseline_cf = baseline_cf_select.value
-    df_cf = get_data_cf(baseline_cf,new)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
-    
-controls_cf = row(baseline_cf_select, country_cf_select)
+init_dyn = {}
+for col in data_dyn_init_default.keys():
+    if col != time:
+        init_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_init, color='red',size=8)
+        if col != 'g':
+            init_dyn[col].visible = False
+            
+fin_dyn = {}
+for col in data_dyn_fin_default.keys():
+    if col != time:
+        fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
+        if col != 'g':
+            fin_dyn[col].visible = False
 
-baseline_cf_select.on_change('value', update_baseline_cf)
-country_cf_select.on_change('value', update_country_cf)
+def update_graph_dyn(event):
+    if qty_dyn_display_select.value in ['g']:
+        col = qty_dyn_display_select.value
+    elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+                                          'ratios_of_consumption_levels_change_not_normalized',
+                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
+                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
+        col = qty_dyn_display_select.value+country_dyn_display_select.value
+    lines_dyn[col].visible = True
+    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
+                                            'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
+        init_dyn[col].visible = True
+        fin_dyn[col].visible = True
+    else:
+        init_dyn[col].visible = False
+        fin_dyn[col].visible = False
 
-counterfactuals_report = column(controls_cf,p_cf)
+    for other_column in lines_dyn:
+        if other_column != col:
+            lines_dyn[other_column].visible = False
+            init_dyn[other_column].visible = False
+            fin_dyn[other_column].visible = False
+    try:
+        up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
+        down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
+    except:
+        up_max = max(ds_dyn.data[col])
+        down_min = min(ds_dyn.data[col])
+    delta = up_max-down_min
+    if delta == 0:
+        delta = 1
+    p_dyn_figure.y_range.start=down_min-delta*0.1
+    p_dyn_figure.y_range.end=up_max+delta*0.1
+    p_dyn_figure.x_range.start=-20
+    p_dyn_figure.x_range.end=dyn_sol.t_inf+20
+        
+button_display_dyn = Button(label="Display",align='end')
+button_display_dyn.on_event(ButtonClick, update_graph_dyn)
+
+controls_dyn = row(baseline_dyn_select, variation_dyn_select, country_dyn_select, slider_dyn, button_compute_dyn, state_computation)
+controls_display_dyn = row(qty_dyn_display_select, 
+                            country_dyn_display_select,
+                            button_display_dyn)
+
+baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
+
+dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 
-#%% counterfactuals 805 TO target
-
-# country_to_cf = 'USA'
-# to_target = 0.0155
-# baseline_to_cf = '804'
-
-# # list_of_to_targets = np.linspace(0.01,0.03,41)
-# list_of_to_targets = np.array(np.linspace(0.01,0.02,21).tolist()
-#                               +[0.022,0.024,0.026,0.028,0.03])
-
-# def section_end(s):
-#       return [int(_) for _ in s.split("_")[-1].split(".")]
-# cf_to_list = {'804':sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('804') and s.startswith('baseline')], key=section_end),
-#               '805':sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)}
-
-# def get_data_to_cf(to_target,country,baseline_to_cf):
-#     idx_to_cf = np.argmin(np.abs(list_of_to_targets-to_target))
-#     df_to_cf = pd.read_csv(cf_path+cf_to_list[baseline_to_cf][min(idx_to_cf,len(cf_to_list[baseline_to_cf])-1)]+'/'+country+'.csv')
-#     if country == 'Harmonizing':
-#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt))].growth
-#     elif country == 'Uniform_delta':
-#         df_to_cf['Growth rate'] = np.nan
-#     else:
-#         df_to_cf['Growth rate'] = df_to_cf['growth']/df_to_cf.loc[np.argmin(np.abs(df_to_cf.delt-1))].growth
-#     df_to_cf.set_index('delt',inplace=True)
-#     return df_to_cf
-
-# def build_max(df_to_cf):
-#     df_max = pd.concat([df_to_cf.idxmax(),df_to_cf.max()],axis=1)
-#     df_max.index.name = 'label'
-#     df_max.columns = ['xmax','max'] 
-#     df_max = df_max.loc[countries]
-#     df_max['colors'] = Category18[:len(df_max)]
-#     return df_max
-
-# baseline_to_cf_select = Select(value=baseline_to_cf, title='Baseline', options=['804','805'])
-# country_to_cf_select = Select(value=country_to_cf, 
-#                             title='Country', 
-#                             options=countries+['World','Harmonizing','Uniform_delta'])
-
-# df_to_cf = get_data_to_cf(to_target,country_to_cf,baseline_to_cf)
-# ds_to_cf = ColumnDataSource(df_to_cf)
-# df_to_cf_max = build_max(df_to_cf)
-# ds_to_cf_max = ColumnDataSource(df_to_cf_max)
-
-# colors_to_cf = itertools.cycle(Category18)
-# colors_to_cf_max = itertools.cycle(Category18)
-
-# p_to_cf = figure(title="Patent protection counterfactual as function of TO target, baselines 804(2005) and 805 (2015)", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in delta',
-#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-#                 x_axis_type="log",
-#                 tools = TOOLS) 
-
-# for col in df_to_cf.columns:
-#     if col not in [0,'delt','growth']:
-#         p_to_cf.line(x='delt', y=col, source = ds_to_cf, color=next(colors_to_cf),line_width = 2, legend_label=col)
-
-# p_to_cf.circle(x = 'xmax', y = 'max', source = ds_to_cf_max, size=4, color='colors')
-     
-# p_to_cf.legend.click_policy="hide"
-# p_to_cf.legend.label_text_font_size = '8pt'
-# p_to_cf.add_layout(p_to_cf.legend[0], 'right')
-
-# def update_target_to_cf(attrname, old, new):
-#     country_to_cf = country_to_cf_select.value
-#     baseline_to_cf = baseline_to_cf_select.value
-#     df_to_cf = get_data_to_cf(new/100,country_to_cf,baseline_to_cf)
-#     ds_to_cf.data = df_to_cf
-#     ds_to_cf_max.data = build_max(df_to_cf)
-    
-# def update_baseline_to_cf(attrname, old, new):
-#     country_to_cf = country_to_cf_select.value
-#     to_target = slider_to_cf.value/100
-#     df_to_cf = get_data_to_cf(to_target,country_to_cf,new)
-#     ds_to_cf.data = df_to_cf
-#     ds_to_cf_max.data = build_max(df_to_cf)
-    
-# def update_country_to_cf(attrname, old, new):
-#     to_target = slider_to_cf.value/100
-#     baseline_to_cf = baseline_to_cf_select.value
-#     df_to_cf = get_data_to_cf(to_target,new,baseline_to_cf)
-#     ds_to_cf.data = df_to_cf
-#     ds_to_cf_max.data = build_max(df_to_cf)
-    
-# slider_to_cf = Slider(start=1, end=3, value=1.55, step=0.05, title="Turnover target in %")    
-    
-# controls_to_cf = row(baseline_to_cf_select, slider_to_cf, country_to_cf_select)
-# country_to_cf_select.on_change('value', update_country_to_cf)
-# slider_to_cf.on_change('value', update_target_to_cf)
-# baseline_to_cf_select.on_change('value', update_baseline_to_cf)
-
-# counterfactuals_to_report = column(controls_to_cf,p_to_cf)
-
-# #!!! fourth_panel
-# fourth_panel = row(counterfactuals_report, counterfactuals_to_report)
-# # fourth_panel = row(counterfactuals_report)
+#!!! fifth_panel
+# fifth_panel = row(counterfactuals_report, counterfactuals_to_report)
+fifth_panel = row(dyn_report,table_widget_time_evol)
 
 #%% sensitivities
 
@@ -2672,9 +2678,9 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 # jac_report = column(controls_jac,p_jac_fig)
 
-# #!!! fifth panel
-# # fifth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
-# fifth_panel = row(jac_report)
+# #!!! sixth panel
+# # sixth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
+# sixth_panel = row(jac_report)
 
 #%% Kogan paper
 
@@ -2759,8 +2765,8 @@ counterfactuals_report = column(controls_cf,p_cf)
 # p_kog2.add_layout(p_kog2.legend[0], 'right')
 # p_kog2.add_tools(hover_tool_kog2)
 
-# #!!! sixth_panel
-# sixth_panel = row(p_kog,p_kog2)
+# #!!! seventh_panel
+# seventh_panel = row(p_kog,p_kog2)
 
 #%% 7 countries comparison of patent flows data
 
@@ -2890,19 +2896,19 @@ counterfactuals_report = column(controls_cf,p_cf)
 # # data_table_patstat_13 = DataTable(source=ds_patstat_13, columns = columns_patstat_13, width=1200, height=400)
 
 
-
-# # seventh_panel = row(column(p_patstat,data_table_patstat),
+#!!! eigth_panel
+# # eigth_panel = row(column(p_patstat,data_table_patstat),
 # #                     column(p_patstat_13,data_table_patstat_13))
 
 #%% build curdoc
 print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
-                            first_panel_bis, 
                            second_panel, 
                            third_panel, 
-                           # fourth_panel, 
-                           # fifth_panel, 
+                            fourth_panel, 
+                            fifth_panel, 
                            # sixth_panel,
-                          # seventh_panel
+                          # seventh_panel,
+                          # eigth_panel
                          )
                   )
