@@ -846,7 +846,7 @@ comments_dic['1003'] = {
     }
 
 comments_dic['1004'] = {
-    "baseline":"baseline : 2015",
+    "baseline":"baseline : 2015, same as 1003_0.4",
     '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
     '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
