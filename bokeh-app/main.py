@@ -865,6 +865,12 @@ comments_dic['1004'] = {
     '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
     '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bartolotti',
     '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bartolotti',
+    '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '10.0':'10.0:full calibration, delta_US fixed',
+    '10.1':'10.1:full calibration, delta_US fixed',
+    '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
+    '11.1':'11.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
     }
 
 baselines_dic_param = {}

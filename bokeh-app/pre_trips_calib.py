@@ -133,16 +133,52 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 8.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 8.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 9.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 9.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 10.0,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 10.1,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':1992
+    #   },
     {
-      'number': 8.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'number': 11.0,
+      'calib_params':['delta','T','eta','nu'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
       'year':2015
       },
     {
-      'number': 8.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'number': 11.1,
+      'calib_params':['delta','T','eta','nu'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
       'year':1992
       },
     ]
@@ -171,9 +207,10 @@ for run_params in runs_params:
         # m.KM_target = np.float64(0.07)
     # for i in [0,1,2,6,7]:
     #     p.mask['delta'][i,1] = False
-    p.mask['delta'][0,1] = False
+    # p.mask['delta'][0,1] = False
     if run_params['year'] == 1992:
-        p.delta[0,1] = p.delta[0,1]/(1-0.05*473/365)
+        m.TO_target = np.float64(0.015492304)
+    #     p.delta[0,1] = p.delta[0,1]/(1-0.05*473/365)
     # p.mask['eta'][0,1] = False
     # p.mask['delta'][1,1] = False
     # p.mask['delta'][2,1] = False
