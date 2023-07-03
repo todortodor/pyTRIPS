@@ -121,14 +121,26 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 7.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 7.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':1992
+    #   },
     {
-      'number': 7.0,
+      'number': 8.0,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
       'year':2015
       },
     {
-      'number': 7.1,
+      'number': 8.1,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
       'year':1992
@@ -157,8 +169,11 @@ for run_params in runs_params:
     #     p.delta[0,1] = 20*p.delta[0,1]/17
     #     m.KM_target = np.float64(0.054382)
         # m.KM_target = np.float64(0.07)
-    for i in [0,1,2,6,7]:
-        p.mask['delta'][i,1] = False
+    # for i in [0,1,2,6,7]:
+    #     p.mask['delta'][i,1] = False
+    p.mask['delta'][0,1] = False
+    if run_params['year'] == 1992:
+        p.delta[0,1] = p.delta[0,1]/(1-0.05*473/365)
     # p.mask['eta'][0,1] = False
     # p.mask['delta'][1,1] = False
     # p.mask['delta'][2,1] = False
