@@ -884,7 +884,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
 baseline_list = ['1002','1003','1004']    
-baseline_mom = '1003'
+baseline_mom = '1004'
 
 def section(s):
      return [int(_) for _ in s.split(".")]

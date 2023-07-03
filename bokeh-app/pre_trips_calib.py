@@ -343,7 +343,7 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 import pandas as pd
 
 # runs = [5,6,7,8,9,10,11,12,16,17,18,19]
-runs = [1,2,3]
+runs = [9,10]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],
@@ -355,7 +355,7 @@ for i in runs:
     p = parameters()
     p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.0/')
     _, sol = fixed_point_solver(p,context = 'calibration',x0=p.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
