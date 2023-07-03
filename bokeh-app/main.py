@@ -1590,18 +1590,7 @@ counterfactuals_report = column(controls_cf,p_cf)
 baseline_dyn_cf = '1003'
 country_dyn_cf = 'USA'
 
-def section_end(s):
-      return [int(_) for _ in s.split("_")[-1].split(".")]
-# dyn_cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(dyn_cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(dyn_cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
-
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1003'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1003','1003_0.4'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             options=countries+['World','Harmonizing','Uniform_delta'])
@@ -1768,13 +1757,13 @@ baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Base
     '1003'
     ])
 dic_of_possible_variations_dyn_nash_coop = {
-    '1003':['baseline'],
+    '1003':['baseline','0.4'],
     # '607':['baseline'],
     # '501':['1.0','2.0']
     }
 variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
                             title='Variation', 
-                            options=['baseline'])
+                            options=dic_of_possible_variations_dyn_nash_coop[baseline_dyn_nash_coop])
 equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
 
 def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):

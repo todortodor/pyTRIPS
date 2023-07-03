@@ -48,5 +48,6 @@ tot = pd.merge(price,
 
 tot['real gdp'] = tot['gdp']/tot['price']
 tot = tot.sort_values('real gdp',ascending=False)
+tot['real gdp share'] = tot['real gdp']/tot['real gdp'].sum()
 
 tot.to_csv('../misc/real_gdp_rank_2015.csv')
