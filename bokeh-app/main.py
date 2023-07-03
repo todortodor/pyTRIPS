@@ -843,6 +843,10 @@ comments_dic['1003'] = {
     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
     '3.0':'3.0:full calibration',
     '3.1':'3.1:full calibration',
+    '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
+    '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
     }
 
 comments_dic['1004'] = {
@@ -853,6 +857,10 @@ comments_dic['1004'] = {
     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
     '3.0':'3.0:full calibration',
     '3.1':'3.1:full calibration',
+    '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
+    '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
     }
 
 baselines_dic_param = {}
