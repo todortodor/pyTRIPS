@@ -19,8 +19,8 @@ from tqdm import tqdm
 import matplotlib.pylab as pylab
 
 baseline_dics = [
-    # {'baseline':'1003','variation': 'baseline'},
-    {'baseline':'1003','variation': '0.4'},
+    {'baseline':'1004','variation': 'baseline'},
+    # {'baseline':'1003','variation': '0.4'},
     ]
 
 for baseline_dic in baseline_dics:

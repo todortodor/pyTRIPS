@@ -29,12 +29,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'1003','variation': 'baseline'},
-    {'baseline':'1003','variation': '0.4'},
-    {'baseline':'1003','variation': '0.5'},
-    # {'baseline':'807','variation': '1.1'},
-    # {'baseline':'807','variation': '2.0'},
-    # {'baseline':'807','variation': '3.0'},
+    {'baseline':'1004','variation': 'baseline'},
     ]
 
 for baseline_dic in baseline_dics:    
@@ -54,7 +49,7 @@ for baseline_dic in baseline_dics:
     
     p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
                      plot_convergence = True,solver_options=None,tol=1e-4,
-                       # delta_init=np.array([ 0.01,12,12,12,12,12,12,12,12,12,12,12])
+                        delta_init=np.array([12]*len(p_baseline.countries))
                      )
     
     write = True

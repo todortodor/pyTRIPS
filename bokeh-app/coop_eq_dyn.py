@@ -25,10 +25,9 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'1003','variation': 'baseline'},
-    {'baseline':'1003','variation': '0.4'},
+    {'baseline':'1004','variation': 'baseline'},
+    # {'baseline':'1003','variation': '0.4'},
     ]
-
 lb_delta = 0.01
 ub_delta = 12
 

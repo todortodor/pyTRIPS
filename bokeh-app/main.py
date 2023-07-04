@@ -871,6 +871,10 @@ comments_dic['1004'] = {
     '10.1':'10.1:full calibration, delta_US fixed',
     '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
     '11.1':'11.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
+    '12.0':'12.0:full calibration except delta_US fixed, KM and TO not targeted',
+    '12.1':'12.1:full calibration except delta_US fixed, KM and TO not targeted',
+    '13.0':'13.0:full calibration except delta_US and nu fixed, KM and TO not targeted',
+    '13.1':'13.1:full calibration except delta_US and nu fixed, KM and TO not targeted',
     }
 
 baselines_dic_param = {}
@@ -2493,109 +2497,109 @@ fifth_panel = row(dyn_report,table_widget_time_evol)
 
 #%% sensitivities
 
-# baselines_dic_sensi = {}
+baselines_dic_sensi = {}
 
-# for baseline_nbr in ['802']:
-#     baselines_dic_sensi[baseline_nbr] = {} 
-#     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
-#     files_in_dir = os.listdir(baseline_sensi_path)
-#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-#     for f in files_in_dir:
-#         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
+for baseline_nbr in ['802']:
+    baselines_dic_sensi[baseline_nbr] = {} 
+    baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
+    files_in_dir = os.listdir(baseline_sensi_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-# baseline_sensi = '802'
-# qty_sensi = 'objective'
+baseline_sensi = '802'
+qty_sensi = 'objective'
 
-# baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
-# qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
+baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
+qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
 
-# ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
-# p_sensi = figure(title="Sensitivity", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in moment or parameter',
-#                 y_axis_label='Value',
-#                 tools = TOOLS)
+ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
+p_sensi = figure(title="Sensitivity", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in moment or parameter',
+                y_axis_label='Value',
+                tools = TOOLS)
 
-# colors_sensi = itertools.cycle(Category18)
+colors_sensi = itertools.cycle(Category18)
 
-# for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
-#     if col!='zeta':
-#         p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
+    if col!='zeta':
+        p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
 
-# p_sensi.legend.click_policy="hide"
-# p_sensi.legend.label_text_font_size = '8pt'
-# p_sensi.add_layout(p_sensi.legend[0], 'right')
+p_sensi.legend.click_policy="hide"
+p_sensi.legend.label_text_font_size = '8pt'
+p_sensi.add_layout(p_sensi.legend[0], 'right')
 
-# def update_baseline_sensi(attrname, old, new):
-#     qty_sensi = qty_sensi_select.value
-#     ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
+def update_baseline_sensi(attrname, old, new):
+    qty_sensi = qty_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
     
-# def update_qty_sensi(attrname, old, new):
-#     baseline_sensi = baseline_sensi_select.value
-#     ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
+def update_qty_sensi(attrname, old, new):
+    baseline_sensi = baseline_sensi_select.value
+    ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
 
-# controls_sensi = row(baseline_sensi_select, qty_sensi_select)
+controls_sensi = row(baseline_sensi_select, qty_sensi_select)
 
-# baseline_sensi_select.on_change('value', update_baseline_sensi)
-# qty_sensi_select.on_change('value', update_qty_sensi)
+baseline_sensi_select.on_change('value', update_baseline_sensi)
+qty_sensi_select.on_change('value', update_qty_sensi)
 
-# sensitivity_report = column(controls_sensi,p_sensi)
+sensitivity_report = column(controls_sensi,p_sensi)
 
-#%% weights sensitivities
+# %% weights sensitivities
 
-# baselines_dic_sensi_weights = {}
+baselines_dic_sensi_weights = {}
 
-# # for baseline_nbr in ['101','102','104']:
-# for baseline_nbr in ['802']:
-#     baselines_dic_sensi_weights[baseline_nbr] = {}
-#     baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
-#     files_in_dir = os.listdir(baseline_sensi_weights_path)
-#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-#     for f in files_in_dir:
-#         # if f not in ['GPDIFF.csv','GROWTH.csv']:
-#             baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
+# for baseline_nbr in ['101','102','104']:
+for baseline_nbr in ['802']:
+    baselines_dic_sensi_weights[baseline_nbr] = {}
+    baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
+    files_in_dir = os.listdir(baseline_sensi_weights_path)
+    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+    for f in files_in_dir:
+        # if f not in ['GPDIFF.csv','GROWTH.csv']:
+            baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
     
-# baseline_sensi_weights = '802'
-# qty_sensi_weights = 'objective'
+baseline_sensi_weights = '802'
+qty_sensi_weights = 'objective'
 
-# baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
-# qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
+baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
+qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
 
-# ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
-# p_sensi_weights = figure(title="Sensitivity to the weights", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Change in weight',
-#                 y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
-#                 y_axis_type="log",
-#                 tools = TOOLS)
+ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
+p_sensi_weights = figure(title="Sensitivity to the weights", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Change in weight',
+                y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
+                y_axis_type="log",
+                tools = TOOLS)
 
-# colors_sensi_weights = itertools.cycle(Category18)
+colors_sensi_weights = itertools.cycle(Category18)
 
-# for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
-#     # if col not in ['zeta','GPDIFF_weight','GROWTH_weight']:
-#         p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, 
-#                              legend_label=col)
+for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
+    # if col not in ['zeta','GPDIFF_weight','GROWTH_weight']:
+        p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, 
+                              legend_label=col)
 
-# p_sensi_weights.legend.click_policy="hide"
-# p_sensi_weights.legend.label_text_font_size = '8pt'
-# p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
+p_sensi_weights.legend.click_policy="hide"
+p_sensi_weights.legend.label_text_font_size = '8pt'
+p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
 
-# def update_baseline_sensi_weights(attrname, old, new):
-#     qty_sensi_weights = qty_sensi_weights_select.value
-#     ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
+def update_baseline_sensi_weights(attrname, old, new):
+    qty_sensi_weights = qty_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
     
-# def update_qty_sensi_weights(attrname, old, new):
-#     baseline_sensi_weights = baseline_sensi_weights_select.value
-#     ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
+def update_qty_sensi_weights(attrname, old, new):
+    baseline_sensi_weights = baseline_sensi_weights_select.value
+    ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
 
-# controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
+controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
 
-# baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
-# qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
+baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
+qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
 
-# sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
+sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
@@ -2695,9 +2699,9 @@ fifth_panel = row(dyn_report,table_widget_time_evol)
 
 # jac_report = column(controls_jac,p_jac_fig)
 
-# #!!! sixth panel
-# # sixth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
-# sixth_panel = row(jac_report)
+#!!! sixth panel
+# sixth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
+sixth_panel = row(sensitivity_report,sensitivity_weights_report)
 
 #%% Kogan paper
 
@@ -2924,7 +2928,7 @@ curdoc().add_root(column(first_panel,
                            third_panel, 
                             fourth_panel, 
                             fifth_panel, 
-                           # sixth_panel,
+                            sixth_panel,
                           # seventh_panel,
                           # eigth_panel
                          )

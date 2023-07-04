@@ -22,7 +22,7 @@ p_baseline = parameters()
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 
 _, sol_baseline = fixed_point_solver(p_baseline,context = 'calibration',x0=p_baseline.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -169,16 +169,88 @@ runs_params = [
     #   'list_of_moments':m_baseline.list_of_moments,
     #   'year':1992
     #   },
+    # {
+    #   'number': 11.0,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 11.1,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 12.0,
+    #   'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+    #                   'nu', 
+    #                   'fo', 'theta'],
+    #   'list_of_moments':['GPDIFF',
+    #    'GROWTH',
+    #    'OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SINNOVPATUS',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS',
+    #    'TE'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 12.1,
+    #   'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+    #                   'nu', 
+    #                   'fo', 'theta'],
+    #   'list_of_moments':['GPDIFF',
+    #    'GROWTH',
+    #    'OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SINNOVPATUS',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS',
+    #    'TE'],
+    #   'year':1992
+    #   },
     {
-      'number': 11.0,
-      'calib_params':['delta','T','eta','nu'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
+      'number': 13.0,
+      'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+                      # 'nu', 
+                      'fo', 'theta'],
+      'list_of_moments':['GPDIFF',
+       'GROWTH',
+       'OUT',
+       'RD',
+       'RP',
+       'SRGDP',
+       'SINNOVPATUS',
+       'SPFLOW',
+       'UUPCOST',
+       'DOMPATINUS',
+       'TE'],
       'year':2015
       },
     {
-      'number': 11.1,
-      'calib_params':['delta','T','eta','nu'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO'],
+      'number': 13.1,
+      'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+                      # 'nu', 
+                      'fo', 'theta'],
+      'list_of_moments':['GPDIFF',
+       'GROWTH',
+       'OUT',
+       'RD',
+       'RP',
+       'SRGDP',
+       'SINNOVPATUS',
+       'SPFLOW',
+       'UUPCOST',
+       'DOMPATINUS',
+       'TE'],
       'year':1992
       },
     ]
@@ -207,9 +279,9 @@ for run_params in runs_params:
         # m.KM_target = np.float64(0.07)
     # for i in [0,1,2,6,7]:
     #     p.mask['delta'][i,1] = False
-    # p.mask['delta'][0,1] = False
-    if run_params['year'] == 1992:
-        m.TO_target = np.float64(0.015492304)
+    p.mask['delta'][0,1] = False
+    # if run_params['year'] == 1992:
+    #     m.TO_target = np.float64(0.015492304)
     #     p.delta[0,1] = p.delta[0,1]/(1-0.05*473/365)
     # p.mask['eta'][0,1] = False
     # p.mask['delta'][1,1] = False
@@ -315,7 +387,7 @@ p_baseline.correct_eur_patent_cost = True
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 
 _, sol_baseline = fixed_point_solver(p_baseline,context = 'calibration',x0=p_baseline.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -343,7 +415,7 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 import pandas as pd
 
 # runs = [5,6,7,8,9,10,11,12,16,17,18,19]
-runs = [9,10]
+runs = [13]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],
@@ -384,7 +456,7 @@ for i in runs:
     p_pre = parameters()
     p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
     _, sol_pre = fixed_point_solver(p_pre,context = 'calibration',x0=p_pre.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -412,7 +484,7 @@ for i in runs:
     p_pre_cf.delta[...,1] = p_pre.delta[...,1]
     
     _, sol_pre_cf = fixed_point_solver(p_pre_cf,context = 'counterfactual',x0=p_pre_cf.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -464,7 +536,7 @@ for i in runs:
         p_pre_cf_fix_north.delta[country_idx,1] = p_baseline.delta[country_idx,1]
     
     _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
-                            cobweb_anim=False,tol =1e-15,
+                            cobweb_anim=False,tol =1e-14,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
@@ -558,11 +630,13 @@ for i in runs:
     fig,ax = plt.subplots(2,1,figsize = (10,8))
     reduc[['static welfare change','static welfare change, fixed delta north']] = \
         100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
-    reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
+    # reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
+    reduc.reset_index().plot.bar(x='country',y=['static welfare change'],
                                  ax=ax[0])
     reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']] = \
         100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
-    reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
+    # reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
+    reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change'],
                                  ax=ax[1])
     # plt.savefig(f'../misc/pre_trips_cf/pre_trips_cf_{i}.png')
     plt.show()
