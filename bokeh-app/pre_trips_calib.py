@@ -217,40 +217,88 @@ runs_params = [
     #    'TE'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 13.0,
+    #   'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+    #                   # 'nu', 
+    #                   'fo', 'theta'],
+    #   'list_of_moments':['GPDIFF',
+    #    'GROWTH',
+    #    'OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SINNOVPATUS',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS',
+    #    'TE'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 13.1,
+    #   'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
+    #                   # 'nu', 
+    #                   'fo', 'theta'],
+    #   'list_of_moments':['GPDIFF',
+    #    'GROWTH',
+    #    'OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SINNOVPATUS',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS',
+    #    'TE'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 14.0,
+    #   'calib_params':['eta','fe','T', 'delta','fo'],
+    #   'list_of_moments':['OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 14.1,
+    #   'calib_params':['eta','fe','T','delta','fo'],
+    #   'list_of_moments':['OUT',
+    #    'RD',
+    #    'RP',
+    #    'SRGDP',
+    #    'SPFLOW',
+    #    'UUPCOST',
+    #    'DOMPATINUS'],
+    #   'year':1992
+    #   },
     {
-      'number': 13.0,
-      'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
-                      # 'nu', 
-                      'fo', 'theta'],
-      'list_of_moments':['GPDIFF',
-       'GROWTH',
-       'OUT',
+      'number': 15.0,
+      'calib_params':['eta','T','delta',],
+      'list_of_moments':['OUT',
        'RD',
        'RP',
        'SRGDP',
-       'SINNOVPATUS',
        'SPFLOW',
        'UUPCOST',
-       'DOMPATINUS',
-       'TE'],
+       'DOMPATINUS'],
       'year':2015
       },
     {
-      'number': 13.1,
-      'calib_params':['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 
-                      # 'nu', 
-                      'fo', 'theta'],
-      'list_of_moments':['GPDIFF',
-       'GROWTH',
-       'OUT',
+      'number': 15.1,
+      'calib_params':['eta','T','delta'],
+      'list_of_moments':['OUT',
        'RD',
        'RP',
        'SRGDP',
-       'SINNOVPATUS',
        'SPFLOW',
        'UUPCOST',
-       'DOMPATINUS',
-       'TE'],
+       'DOMPATINUS'],
       'year':1992
       },
     ]
@@ -415,7 +463,7 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 import pandas as pd
 
 # runs = [5,6,7,8,9,10,11,12,16,17,18,19]
-runs = [13]
+runs = [14]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],

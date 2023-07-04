@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '802'
+baseline = '1004'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters()
 p_baseline.load_run(baseline_path)
@@ -55,8 +55,8 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 
 m_baseline.compute_moments(sol_baseline, p_baseline)
 
-moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH','SRDUS',
-                     'SINNOVPATEU','DOMPATINUS','DOMPATINEU','TE']
+moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
+                     'DOMPATINUS','DOMPATINEU','TE','OUT']
 parameters_to_change = ['kappa','gamma','rho']
 
 weights_to_change = m_baseline.list_of_moments

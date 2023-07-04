@@ -863,8 +863,8 @@ comments_dic['1004'] = {
     '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
     '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
     '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
-    '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bartolotti',
-    '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bartolotti',
+    '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
+    '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '10.0':'10.0:full calibration, delta_US fixed',
@@ -875,6 +875,10 @@ comments_dic['1004'] = {
     '12.1':'12.1:full calibration except delta_US fixed, KM and TO not targeted',
     '13.0':'13.0:full calibration except delta_US and nu fixed, KM and TO not targeted',
     '13.1':'13.1:full calibration except delta_US and nu fixed, KM and TO not targeted',
+    '14.0':'14.0:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    '14.1':'14.1:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    '15.0':'15.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    '15.1':'15.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
     }
 
 baselines_dic_param = {}
