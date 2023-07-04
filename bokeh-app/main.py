@@ -887,7 +887,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1002','1003','1004']    
+baseline_list = ['1002','1004']    
 baseline_mom = '1004'
 
 def section(s):
@@ -1415,7 +1415,7 @@ second_panel = row(par_time_report)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '1003'
+baseline_cf = '1004'
 country_cf = 'USA'
 
 def section_end(s):
@@ -1423,7 +1423,7 @@ def section_end(s):
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1003') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1004') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -1619,10 +1619,10 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1003'
+baseline_dyn_cf = '1004'
 country_dyn_cf = 'USA'
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1003','1003_0.4'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1004'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             options=countries+['World','Harmonizing','Uniform_delta'])
@@ -1970,7 +1970,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1003'
+baseline_nash_coop = '1004'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -2005,7 +2005,7 @@ baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline',
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
                                     # options=['802','803','804','805','806'])
-                                    options=['1003'])
+                                    options=['1004'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2192,13 +2192,13 @@ fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas
 
 #%% dynamic solver
 
-baseline_dyn = '1003'
+baseline_dyn = '1004'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
 baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
                               # options=['501','604','607','608','609','610']
-                              options=['1003']
+                              options=['1004']
                               )
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
