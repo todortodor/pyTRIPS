@@ -57,7 +57,7 @@ m_baseline.compute_moments(sol_baseline, p_baseline)
 
 moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
                      'DOMPATINUS','DOMPATINEU','TE','OUT']
-parameters_to_change = ['kappa','gamma','rho']
+parameters_to_change = ['gamma','rho']
 
 weights_to_change = m_baseline.list_of_moments
 
@@ -177,7 +177,7 @@ for k, v in dic_runs.items():
         p_sol.update_parameters(test_ls.x)
         sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                                         context = 'calibration',
-                                cobweb_anim=False,tol =1e-15,
+                                cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -293,7 +293,7 @@ for k, v in dic_runs.items():
         sol, sol_c = fixed_point_solver(p_sol,
                                         context = 'calibration',
                                         x0=p_sol.guess,
-                                cobweb_anim=False,tol =1e-15,
+                                cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -402,7 +402,7 @@ for k, v in dic_runs.items():
         sol, sol_c = fixed_point_solver(p_sol,
                                         context = 'calibration',
                                         x0=p_sol.guess,
-                                cobweb_anim=False,tol =1e-15,
+                                cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',

@@ -867,6 +867,7 @@ comments_dic['1004'] = {
     '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '9.2':'9.2:1995',
     '10.0':'10.0:full calibration, delta_US fixed',
     '10.1':'10.1:full calibration, delta_US fixed',
     '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
@@ -891,7 +892,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1002','1004']    
+baseline_list = ['1005','1004']    
 baseline_mom = '1004'
 
 def section(s):
@@ -1304,10 +1305,10 @@ print(time.perf_counter() - start)
 
 #%% Time series
 
-baseline_time = '1002'
+baseline_time = '1005'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
 # baseline_time_list = ['607','806','903']
-baseline_time_list = ['1002']
+baseline_time_list = ['1005']
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
@@ -1784,16 +1785,17 @@ third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '1003'
+baseline_dyn_nash_coop = '1004'
 variation_dyn_nash_coop = 'baseline'
 equilibrium_type ='Nash'
 
 baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
     # '607','501'
-    '1003'
+    '1004'
     ])
 dic_of_possible_variations_dyn_nash_coop = {
-    '1003':['baseline','0.4'],
+    # '1003':['baseline','0.4'],
+    '1004':['baseline'],
     # '607':['baseline'],
     # '501':['1.0','2.0']
     }
@@ -2503,7 +2505,7 @@ fifth_panel = row(dyn_report,table_widget_time_evol)
 
 baselines_dic_sensi = {}
 
-for baseline_nbr in ['802']:
+for baseline_nbr in ['1004']:
     baselines_dic_sensi[baseline_nbr] = {} 
     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
     files_in_dir = os.listdir(baseline_sensi_path)
@@ -2511,7 +2513,7 @@ for baseline_nbr in ['802']:
     for f in files_in_dir:
         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-baseline_sensi = '802'
+baseline_sensi = '1004'
 qty_sensi = 'objective'
 
 baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
