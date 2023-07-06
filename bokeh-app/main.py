@@ -2711,45 +2711,45 @@ sixth_panel = row(sensitivity_report,sensitivity_weights_report)
 
 #%% Kogan paper
 
-# colors_kog = itertools.cycle(Category18)
+colors_kog = itertools.cycle(Category18)
 
-# df_kog = pd.read_csv(data_path+'koga_updated.csv')
-# ds_kog = ColumnDataSource(df_kog)
+df_kog = pd.read_csv(data_path+'koga_updated.csv')
+ds_kog = ColumnDataSource(df_kog)
 
-# p_kog = figure(title="Kogan moment updated / extrapolated", 
-#                 width = 1200,
-#                 height = 850,
-#                 x_axis_label='Issue Date',
-#                 y_axis_type="log",
-#                 tools = TOOLS) 
+p_kog = figure(title="Kogan moment updated / extrapolated", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Issue Date',
+                y_axis_type="log",
+                tools = TOOLS) 
 
-# l_kog = {}
+l_kog = {}
 
-# for i,col in enumerate(df_kog.columns):
-#     if col not in ['issue_date']:
-#         l_kog[i] = p_kog.line(x='issue_date', y=col, 
-#                   source = ds_kog, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog),
-#                   name = col)
+for i,col in enumerate(df_kog.columns):
+    if col not in ['issue_date']:
+        l_kog[i] = p_kog.line(x='issue_date', y=col, 
+                  source = ds_kog, 
+                  line_width = 2, legend_label=col, color=next(colors_kog),
+                  name = col)
 
-# hover_tool_kog = HoverTool(
-#     tooltips = [
-#         ("Issue date", "$x"),
-#         ('ValuePerPatent', '@ValuePerPatent'),
-#         ('CostPerPatent', '@CostPerPatent'),
-#         ('KM_article', '@KM_article'),
-#         ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
-#         ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
-#         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
-#         ],
-#     mode='vline',
-#     renderers = [l_kog[4]]
-# )
-# p_kog.add_tools(hover_tool_kog)
+hover_tool_kog = HoverTool(
+    tooltips = [
+        ("Issue date", "$x"),
+        ('ValuePerPatent', '@ValuePerPatent'),
+        ('CostPerPatent', '@CostPerPatent'),
+        ('KM_article', '@KM_article'),
+        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
+        ],
+    mode='vline',
+    renderers = [l_kog[4]]
+)
+p_kog.add_tools(hover_tool_kog)
 
-# p_kog.legend.click_policy="hide"
-# p_kog.legend.label_text_font_size = '8pt'
-# p_kog.add_layout(p_kog.legend[0], 'right')
+p_kog.legend.click_policy="hide"
+p_kog.legend.label_text_font_size = '8pt'
+p_kog.add_layout(p_kog.legend[0], 'right')
 
 
 # colors_kog2 = itertools.cycle(Category18)
@@ -2792,8 +2792,55 @@ sixth_panel = row(sensitivity_report,sensitivity_weights_report)
 # p_kog2.add_layout(p_kog2.legend[0], 'right')
 # p_kog2.add_tools(hover_tool_kog2)
 
-# #!!! seventh_panel
+
+colors_to_data = itertools.cycle(Category18)
+
+df_to_data = pd.read_csv(data_path+'turnover_imports_weighted_11_countries.csv'
+                         )[['year','HS_digits','A3']].pivot(
+                                columns= 'HS_digits',
+                                index = 'year',
+                                values = 'A3'
+                            )[[6,8,10]]
+df_to_data = df_to_data.rename(columns={6:'6',
+                                        8:'8',
+                                        10:'10'})
+ds_to_data = ColumnDataSource(df_to_data)
+
+p_to_data = figure(title="Turnover moment for rule A3, time window (y,y+5)", 
+                width = 1200,
+                height = 850,
+                x_axis_label='Year',
+                # y_axis_type="log",
+                tools = TOOLS) 
+
+l_to_data = {}
+
+for i,col in enumerate(['6','8','10']):
+    if col not in ['year']:
+        l_to_data[i] = p_to_data.line(x='year', y=col, 
+                  source = ds_to_data, 
+                  line_width = 2, legend_label=col, color=next(colors_to_data),
+                  name = col)
+
+hover_tool_to_data = HoverTool(
+    tooltips = [
+        ("Year", "$x"),
+        ('HS6', '@6'),
+        ('HS8', '@8'),
+        ('HS10', '@10'),
+        ],
+    mode='vline',
+    renderers = [l_to_data[1]]
+)
+p_to_data.add_tools(hover_tool_to_data)
+
+p_to_data.legend.click_policy="hide"
+p_to_data.legend.label_text_font_size = '8pt'
+p_to_data.add_layout(p_to_data.legend[0], 'right')
+
+#!!! seventh_panel
 # seventh_panel = row(p_kog,p_kog2)
+seventh_panel = row(p_kog,p_to_data)
 
 #%% 7 countries comparison of patent flows data
 
@@ -2935,7 +2982,7 @@ curdoc().add_root(column(first_panel,
                             fourth_panel, 
                             fifth_panel, 
                             sixth_panel,
-                          # seventh_panel,
+                           seventh_panel,
                           # eigth_panel
                          )
                   )
