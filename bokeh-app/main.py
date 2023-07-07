@@ -830,6 +830,8 @@ comments_dic['1002'] = {
     "1.28" : "1.28 : 2018 smooth 3y",
 }
 
+comments_dic['1005'] = comments_dic['1002']
+
 comments_dic['1003'] = {
     "baseline":"baseline : 2015",
     # '0.1':'0.1:better RD targeting',
