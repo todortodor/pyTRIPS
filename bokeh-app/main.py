@@ -206,7 +206,7 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRGDP','UUPCOST','SINNOVPATUS',
-  'TO','TE','DOMPATINUS',
+  'TO','TE','DOMPATINUS','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW','objective']
 # list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 #  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
@@ -882,6 +882,19 @@ comments_dic['1004'] = {
     '15.1':'15.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
     }
 
+comments_dic['1006'] = {
+    "baseline":"baseline : 2015, same as 1004",
+    '1.0':'1.0:SPFLOWDOM instead of SPFLOW',
+    '2.0':'2.0:DOMPATUS instead of DOMPATINUS',
+    '2.1':'2.1:1992 partial calibration',
+    '3.0':'3.0:DOMPATUS and DOMPATINUS',
+    '3.1':'3.1:1992 partial calibration',
+    '4.0':'4.0:2.0 with higher weight on DOMPATUS',
+    '4.1':'4.1:1992 partial calibration',
+    '5.0':'5.0:3.0 with higher weight on DOMPAT(IN)US',
+    '5.1':'5.1:1992 partial calibration',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -892,7 +905,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1005','1004']    
+baseline_list = ['1005','1004','1006']    
 baseline_mom = '1004'
 
 def section(s):

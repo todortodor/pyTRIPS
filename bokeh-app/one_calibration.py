@@ -15,21 +15,31 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1004'
+baseline_number = '1006'
+# n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/0.4/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
     start_time = time.perf_counter()
 
     m = moments()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/0.4/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
 
+
+# m.list_of_moments.remove('SPFLOW')
+# m.list_of_moments.remove('DOMPATINUS')
+# m.list_of_moments.append('SPFLOWDOM')
+# m.list_of_moments.append('DOMPATUS')
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.weights_dict['RD'] = 10
-# m.weights_dict['GROWTH'] = 5
+p.calib_parameters = ['delta','T','eta']
+m.list_of_moments = ['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
+m.load_data('data/data_11_countries_1992/')
 # m.weights_dict['TO'] = 5
 # m.weights_dict['TE'] = 5
 # m.weights_dict['DOMPATINUS'] = 5
@@ -70,7 +80,7 @@ p_sol = p.copy()
 p_sol.update_parameters(test_ls.x)
 
 sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -103,11 +113,12 @@ commentary = ''
 # baseline_number = '1001'|
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1005
+run_number = 5.0
+# run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

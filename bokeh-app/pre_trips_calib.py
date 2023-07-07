@@ -15,37 +15,37 @@ import os
 import numpy as np
 
 
-baseline_number = '1004'
+baseline_number = '1006'
 
 p_baseline = parameters()
 # p_baseline.correct_eur_patent_cost = True
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
 
-_, sol_baseline = fixed_point_solver(p_baseline,context = 'calibration',x0=p_baseline.guess,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='phi',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=True,
-                        damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
-                        )
-sol_baseline.scale_P(p_baseline)
-sol_baseline.compute_non_solver_quantities(p_baseline)
+# _, sol_baseline = fixed_point_solver(p_baseline,context = 'calibration',x0=p_baseline.guess,
+#                         cobweb_anim=False,tol =1e-14,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='phi',
+#                         plot_convergence=False,
+#                         plot_cobweb=False,
+#                         safe_convergence=0.001,
+#                         disp_summary=True,
+#                         damping = 10,
+#                         max_count = 3e3,
+#                         accel_memory = 50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=5
+#                         )
+# sol_baseline.scale_P(p_baseline)
+# sol_baseline.compute_non_solver_quantities(p_baseline)
 
 m_baseline = moments()
 m_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-m_baseline.compute_moments(sol_baseline,p_baseline)
+# m_baseline.compute_moments(sol_baseline,p_baseline)
 
 
 runs_params = [
@@ -307,16 +307,40 @@ runs_params = [
     #    'DOMPATINUS'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 16.0,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO','UUPCOST'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 16.1,
+    #   'calib_params':['delta','T','eta','nu'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO','UUPCOST'],
+    #   'year':1992
+    #   },
     {
-      'number': 16.0,
-      'calib_params':['delta','T','eta','nu'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO','UUPCOST'],
-      'year':2015
+      'number': 2.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':1992
       },
     {
-      'number': 16.1,
-      'calib_params':['delta','T','eta','nu'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO','UUPCOST'],
+      'number': 3.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':1992
+      },
+    {
+      'number': 4.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':1992
+      },
+    {
+      'number': 5.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
       'year':1992
       },
     ]
@@ -327,6 +351,15 @@ for run_params in runs_params:
                     'variation':str(run_params['number'])}
     year = run_params['year']
     
+    p_baseline = parameters()
+    p_baseline.load_run(
+        'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
+        )
+    m_baseline = moments()
+    m_baseline.load_run(
+        'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
+        )
+    
     p = p_baseline.copy()
     p.load_data(f'data/data_11_countries_{run_params["year"]}/',
                 keep_already_calib_params=True)
@@ -335,8 +368,8 @@ for run_params in runs_params:
     m = m_baseline.copy()
     m.load_data(f'data/data_11_countries_{run_params["year"]}/')
     print(m.data_path)
-    m.TP_target = m_baseline.TP*m.TP_data/m_baseline.TP_data
-    m.inter_TP_target = m_baseline.inter_TP*m.inter_TP_data/m_baseline.inter_TP_data
+    # m.TP_target = m_baseline.TP*m.TP_data/m_baseline.TP_data
+    # m.inter_TP_target = m_baseline.inter_TP*m.inter_TP_data/m_baseline.inter_TP_data
     m.list_of_moments = run_params['list_of_moments']
     # m.weights_dict['KM'] = 10
     # if run_params['year'] == 1992:
@@ -346,8 +379,8 @@ for run_params in runs_params:
     # for i in [0,1,2,6,7]:
     #     p.mask['delta'][i,1] = False
     # p.mask['delta'][0,1] = False
-    if run_params['year'] == 1992:
-        m.TO_target = np.float64(0.015492304)
+    # if run_params['year'] == 1992:
+    #     m.TO_target = np.float64(0.015492304)
     #     p.delta[0,1] = p.delta[0,1]/(1-0.05*473/365)
     # p.mask['eta'][0,1] = False
     # p.mask['delta'][1,1] = False
