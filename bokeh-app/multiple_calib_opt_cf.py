@@ -161,7 +161,7 @@ runs_params = [
 
 write = True
 
-baseline_number = '1005'
+baseline_number = '1011'
 
 for variation_number in [1]:
     
@@ -218,7 +218,7 @@ for variation_number in [1]:
         #   'SINNOVPATEU',
         #   'DOMPATINUS',
         #   'DOMPATINEU']
-        m.TO_target = np.float64(0.01463)
+        # m.TO_target = np.float64(0.01463)
         
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
         

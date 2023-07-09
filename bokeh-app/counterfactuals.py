@@ -16,7 +16,7 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1004','variation': 'baseline'},
+    {'baseline':'1010','variation': 'baseline'},
     ]
 
 for baseline_dic in baseline_dics:

@@ -897,6 +897,39 @@ comments_dic['1006'] = {
     '5.1':'5.1:1992 partial calibration',
     }
 
+comments_dic['1010'] = {
+    "baseline":"baseline : 2015, new correction US flows and new TO",
+    # '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
+    # '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
+    '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
+    '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
+    '3.0':'3.0:full calibration',
+    '3.1':'3.1:full calibration',
+    # '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    # '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
+    # '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
+    # '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
+    # '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
+    # '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
+    # '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
+    # '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
+    '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
+    # '9.2':'9.2:1995',
+    # '10.0':'10.0:full calibration, delta_US fixed',
+    # '10.1':'10.1:full calibration, delta_US fixed',
+    # '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
+    # '11.1':'11.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
+    # '12.0':'12.0:full calibration except delta_US fixed, KM and TO not targeted',
+    # '12.1':'12.1:full calibration except delta_US fixed, KM and TO not targeted',
+    # '13.0':'13.0:full calibration except delta_US and nu fixed, KM and TO not targeted',
+    # '13.1':'13.1:full calibration except delta_US and nu fixed, KM and TO not targeted',
+    # '14.0':'14.0:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    # '14.1':'14.1:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    # '15.0':'15.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    # '15.1':'15.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -907,8 +940,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1005','1004','1006']    
-baseline_mom = '1004'
+baseline_list = ['1004','1005','1006','1010']    
+baseline_mom = '1010'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1320,10 +1353,10 @@ print(time.perf_counter() - start)
 
 #%% Time series
 
-baseline_time = '1005'
+baseline_time = '1011'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
 # baseline_time_list = ['607','806','903']
-baseline_time_list = ['1005']
+baseline_time_list = ['1005','1011']
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
@@ -1431,6 +1464,7 @@ par_time_report = column(controls_par_time, p_par_time)
 #!!! second_panel
 # second_panel = row(par_time_report, explication_calib_params)
 second_panel = row(par_time_report)
+
 
 #%% counterfactuals
 
@@ -2991,8 +3025,9 @@ seventh_panel = row(p_kog,p_to_data)
 
 #%% build curdoc
 print(time.perf_counter() - start)
-curdoc().add_root(column(first_panel, 
-                           second_panel, 
+curdoc().add_root(column(
+    first_panel, 
+                            second_panel, 
                            third_panel, 
                             fourth_panel, 
                             fifth_panel, 

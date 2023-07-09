@@ -1,0 +1,219 @@
+countryname,countrycode,ccode7,ccode13,ccode12,ccode11
+United States,USA,1,1,1,1
+Albania,ALB,100,100,100,100
+Austria,AUT,2,2,2,2
+Belgium,BEL,2,2,2,2
+Bulgaria,BGR,2,2,2,2
+Croatia,HRV,2,2,2,2
+Cyprus,CYP,2,2,2,2
+Czechia,CZE,2,2,2,2
+Denmark,DNK,2,2,2,2
+Estonia,EST,2,2,2,2
+Finland,FIN,2,2,2,2
+France,FRA,2,2,2,2
+Germany,DEU,2,2,2,2
+Greece,GRC,2,2,2,2
+Hungary,HUN,2,2,2,2
+Iceland,ISL,2,2,2,2
+Ireland,IRL,2,2,2,2
+Italy,ITA,2,2,2,2
+Latvia,LVA,2,2,2,2
+Liechtenstein,LIE,100,100,100,100
+Lithuania,LTU,2,2,2,2
+Luxembourg,LUX,2,2,2,2
+Malta,MLT,2,2,2,2
+Monaco,MCO,100,100,100,100
+Netherlands,NLD,2,2,2,2
+North Macedonia,MKD,100,100,100,100
+Norway,NOR,2,2,2,2
+Poland,POL,2,2,2,2
+Portugal,PRT,2,2,2,2
+Romania,ROU,2,2,2,2
+San Marino,SMR,100,100,100,100
+Serbia,SRB,100,100,100,100
+Slovak Republic,SVK,2,2,2,2
+Slovenia,SVN,2,2,2,2
+Spain,ESP,2,2,2,2
+Sweden,SWE,2,2,2,2
+Switzerland,CHE,2,2,2,2
+Turkiye,TUR,2,2,2,2
+United Kingdom,GBR,2,2,2,2
+Japan,JPN,3,3,3,3
+China,CHN,4,4,4,4
+Brazil,BRA,5,5,5,5
+India,IND,6,6,6,6
+Canada,CAN,100,7,7,7
+"Korea, Rep.",KOR,100,8,8,8
+Russian Federation,RUS,100,9,9,9
+Australia,AUS,100,10,10,100
+Mexico,MEX,100,11,11,10
+Indonesia,IDN,100,12,100,100
+Afghanistan,AFG,100,100,100,100
+Algeria,DZA,100,100,100,100
+American Samoa,ASM,100,100,100,100
+Andorra,AND,100,100,100,100
+Angola,AGO,100,100,100,100
+Antigua and Barbuda,ATG,100,100,100,100
+Argentina,ARG,100,100,100,100
+Armenia,ARM,100,100,100,100
+Aruba,ABW,100,100,100,100
+Azerbaijan,AZE,100,100,100,100
+"Bahamas, The",BHS,100,100,100,100
+Bahrain,BHR,100,100,100,100
+Bangladesh,BGD,100,100,100,100
+Barbados,BRB,100,100,100,100
+Belarus,BLR,100,100,100,100
+Belize,BLZ,100,100,100,100
+Benin,BEN,100,100,100,100
+Bermuda,BMU,100,100,100,100
+Bhutan,BTN,100,100,100,100
+Bolivia,BOL,100,100,100,100
+Bosnia and Herzegovina,BIH,100,100,100,100
+Botswana,BWA,100,100,100,100
+British Virgin Islands,VGB,100,100,100,100
+Brunei Darussalam,BRN,100,100,100,100
+Burkina Faso,BFA,100,100,100,100
+Burundi,BDI,100,100,100,100
+Cabo Verde,CPV,100,100,100,100
+Cambodia,KHM,100,100,100,100
+Cameroon,CMR,100,100,100,100
+Cayman Islands,CYM,100,100,100,100
+Central African Republic,CAF,100,100,100,100
+Chad,TCD,100,100,100,100
+Channel Islands,CHI,100,100,100,100
+Chile,CHL,100,100,100,100
+Colombia,COL,100,100,100,100
+Comoros,COM,100,100,100,100
+"Congo, Dem. Rep.",COD,100,100,100,100
+"Congo, Rep.",COG,100,100,100,100
+Costa Rica,CRI,100,100,100,100
+Cote d'Ivoire,CIV,100,100,100,100
+Cuba,CUB,100,100,100,100
+Curacao,CUW,100,100,100,100
+Djibouti,DJI,100,100,100,100
+Dominica,DMA,100,100,100,100
+Dominican Republic,DOM,100,100,100,100
+Ecuador,ECU,100,100,100,100
+"Egypt, Arab Rep.",EGY,100,100,100,100
+El Salvador,SLV,100,100,100,100
+Equatorial Guinea,GNQ,100,100,100,100
+Eritrea,ERI,100,100,100,100
+Eswatini,SWZ,100,100,100,100
+Ethiopia,ETH,100,100,100,100
+Faroe Islands,FRO,100,100,100,100
+Fiji,FJI,100,100,100,100
+French Polynesia,PYF,100,100,100,100
+Gabon,GAB,100,100,100,100
+"Gambia, The",GMB,100,100,100,100
+Georgia,GEO,100,100,100,100
+Ghana,GHA,100,100,100,100
+Gibraltar,GIB,100,100,100,100
+Greenland,GRL,100,100,100,100
+Grenada,GRD,100,100,100,100
+Guam,GUM,100,100,100,100
+Guatemala,GTM,100,100,100,100
+Guinea,GIN,100,100,100,100
+Guinea-Bissau,GNB,100,100,100,100
+Guyana,GUY,100,100,100,100
+Haiti,HTI,100,100,100,100
+Honduras,HND,100,100,100,100
+"Hong Kong SAR, China",HKG,100,100,100,100
+"Iran, Islamic Rep.",IRN,100,100,100,100
+Iraq,IRQ,100,100,100,100
+Isle of Man,IMN,100,100,100,100
+Israel,ISR,100,100,100,100
+Jamaica,JAM,100,100,100,100
+Jordan,JOR,100,100,100,100
+Kazakhstan,KAZ,100,100,100,100
+Kenya,KEN,100,100,100,100
+Kiribati,KIR,100,100,100,100
+"Korea, Dem. People's Rep.",PRK,100,100,100,100
+Kosovo,XKX,100,100,100,100
+Kuwait,KWT,100,100,100,100
+Kyrgyz Republic,KGZ,100,100,100,100
+Lao PDR,LAO,100,100,100,100
+Lebanon,LBN,100,100,100,100
+Lesotho,LSO,100,100,100,100
+Liberia,LBR,100,100,100,100
+Libya,LBY,100,100,100,100
+"Macao SAR, China",MAC,100,100,100,100
+Madagascar,MDG,100,100,100,100
+Malawi,MWI,100,100,100,100
+Malaysia,MYS,100,100,100,100
+Maldives,MDV,100,100,100,100
+Mali,MLI,100,100,100,100
+Marshall Islands,MHL,100,100,100,100
+Mauritania,MRT,100,100,100,100
+Mauritius,MUS,100,100,100,100
+"Micronesia, Fed. Sts.",FSM,100,100,100,100
+Moldova,MDA,100,100,100,100
+Mongolia,MNG,100,100,100,100
+Montenegro,MNE,100,100,100,100
+Morocco,MAR,100,100,100,100
+Mozambique,MOZ,100,100,100,100
+Myanmar,MMR,100,100,100,100
+Namibia,NAM,100,100,100,100
+Nauru,NRU,100,100,100,100
+Nepal,NPL,100,100,100,100
+New Caledonia,NCL,100,100,100,100
+New Zealand,NZL,100,100,100,100
+Nicaragua,NIC,100,100,100,100
+Niger,NER,100,100,100,100
+Nigeria,NGA,100,100,100,100
+Northern Mariana Islands,MNP,100,100,100,100
+Oman,OMN,100,100,100,100
+Pakistan,PAK,100,100,100,100
+Palau,PLW,100,100,100,100
+Panama,PAN,100,100,100,100
+Papua New Guinea,PNG,100,100,100,100
+Paraguay,PRY,100,100,100,100
+Peru,PER,100,100,100,100
+Philippines,PHL,100,100,100,100
+Puerto Rico,PRI,100,100,100,100
+Qatar,QAT,100,100,100,100
+Rwanda,RWA,100,100,100,100
+Samoa,WSM,100,100,100,100
+Sao Tome and Principe,STP,100,100,100,100
+Saudi Arabia,SAU,100,100,100,100
+Senegal,SEN,100,100,100,100
+Seychelles,SYC,100,100,100,100
+Sierra Leone,SLE,100,100,100,100
+Singapore,SGP,100,100,100,100
+Sint Maarten (Dutch part),SXM,100,100,100,100
+Solomon Islands,SLB,100,100,100,100
+Somalia,SOM,100,100,100,100
+South Africa,ZAF,100,100,100,100
+South Sudan,SSD,100,100,100,100
+Sri Lanka,LKA,100,100,100,100
+St. Kitts and Nevis,KNA,100,100,100,100
+St. Lucia,LCA,100,100,100,100
+St. Martin (French part),MAF,100,100,100,100
+St. Vincent and the Grenadines,VCT,100,100,100,100
+Sudan,SDN,100,100,100,100
+Suriname,SUR,100,100,100,100
+Syrian Arab Republic,SYR,100,100,100,100
+Tajikistan,TJK,100,100,100,100
+Tanzania,TZA,100,100,100,100
+Thailand,THA,100,100,100,100
+Timor-Leste,TLS,100,100,100,100
+Togo,TGO,100,100,100,100
+Tonga,TON,100,100,100,100
+Trinidad and Tobago,TTO,100,100,100,100
+Tunisia,TUN,100,100,100,100
+Turkmenistan,TKM,100,100,100,100
+Turks and Caicos Islands,TCA,100,100,100,100
+Tuvalu,TUV,100,100,100,100
+Uganda,UGA,100,100,100,100
+Ukraine,UKR,100,100,100,100
+United Arab Emirates,ARE,100,100,100,100
+Uruguay,URY,100,100,100,100
+Uzbekistan,UZB,100,100,100,100
+Vanuatu,VUT,100,100,100,100
+"Venezuela, RB",VEN,100,100,100,100
+Vietnam,VNM,100,100,100,100
+Virgin Islands (U.S.),VIR,100,100,100,100
+West Bank and Gaza,PSE,100,100,100,100
+"Yemen, Rep.",YEM,100,100,100,100
+Zambia,ZMB,100,100,100,100
+Zimbabwe,ZWE,100,100,100,100
+World,WLD,999,999,999,999

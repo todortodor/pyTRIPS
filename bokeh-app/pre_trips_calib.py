@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 
-baseline_number = '1006'
+baseline_number = '1010'
 
 p_baseline = parameters()
 # p_baseline.correct_eur_patent_cost = True
@@ -61,30 +61,30 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
-    # {
-    #   'number': 2.0,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
-    #   'year':2015
-    #   },
-    # {
-    #   'number': 2.1,
-      # 'calib_params':['delta','T','eta'],
-      # 'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
-    #   'year':1992
-    #   },
-    # {
-    #   'number': 3.0,
-    #   'calib_params':p_baseline.calib_parameters,
-    #   'list_of_moments':m_baseline.list_of_moments,
-    #   'year':2015
-    #   },
-    # {
-    #   'number': 3.1,
-    #   'calib_params':p_baseline.calib_parameters,
-    #   'list_of_moments':m_baseline.list_of_moments,
-    #   'year':1992
-    #   },
+    {
+      'number': 2.0,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'year':2015
+      },
+    {
+      'number': 2.1,
+       'calib_params':['delta','T','eta'],
+       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+      'year':1992
+      },
+    {
+      'number': 3.0,
+      'calib_params':p_baseline.calib_parameters,
+      'list_of_moments':m_baseline.list_of_moments,
+      'year':2015
+      },
+    {
+      'number': 3.1,
+      'calib_params':p_baseline.calib_parameters,
+      'list_of_moments':m_baseline.list_of_moments,
+      'year':1992
+      },
     # {
     #   'number': 4.0,
     #   'calib_params':['delta','T','eta'],
@@ -145,18 +145,18 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
-    # {
-    #   'number': 9.0,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':2015
-    #   },
-    # {
-    #   'number': 9.1,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':1992
-    #   },
+    {
+      'number': 9.0,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':2015
+      },
+    {
+      'number': 9.1,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':1992
+      },
     # {
     #   'number': 9.2,
     #   'calib_params':['delta','T','eta'],
@@ -319,30 +319,30 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','TO','UUPCOST'],
     #   'year':1992
     #   },
-    {
-      'number': 2.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':1992
-      },
-    {
-      'number': 3.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':1992
-      },
-    {
-      'number': 4.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':1992
-      },
-    {
-      'number': 5.1,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':1992
-      },
+    # {
+    #   'number': 2.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 3.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 4.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 5.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
     ]
 
 for run_params in runs_params:
@@ -351,14 +351,14 @@ for run_params in runs_params:
                     'variation':str(run_params['number'])}
     year = run_params['year']
     
-    p_baseline = parameters()
-    p_baseline.load_run(
-        'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
-        )
-    m_baseline = moments()
-    m_baseline.load_run(
-        'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
-        )
+    # p_baseline = parameters()
+    # p_baseline.load_run(
+    #     'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
+    #     )
+    # m_baseline = moments()
+    # m_baseline.load_run(
+    #     'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(run_params['number'])[0]+'.0/'
+    #     )
     
     p = p_baseline.copy()
     p.load_data(f'data/data_11_countries_{run_params["year"]}/',
@@ -479,7 +479,7 @@ from data_funcs import write_calibration_results
 import os
 import numpy as np
 
-baseline_number = '1004'
+baseline_number = '1010'
 
 p_baseline = parameters()
 p_baseline.correct_eur_patent_cost = True
@@ -514,7 +514,7 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 import pandas as pd
 
 # runs = [5,6,7,8,9,10,11,12,16,17,18,19]
-runs = [14]
+runs = [9]
 
 recap = pd.DataFrame(
     index = pd.MultiIndex.from_product([runs, p_baseline.countries+['Negishi','Equal']],

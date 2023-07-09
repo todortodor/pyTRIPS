@@ -16,7 +16,8 @@ import pandas as pd
 
 legacy_data_path = 'data/'
 pflows_path = '/Users/slepot/Documents/taff/datas/PATSTAT/results/'
-WDI_data_path = '/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/'
+# WDI_data_path = '/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/'
+WDI_data_path = '/Users/slepot/Dropbox/TRIPS/Calibration data/'
 
 moments_descriptions = pd.read_csv(
     legacy_data_path+'moments_descriptions.csv', sep=';', index_col=0)
@@ -111,6 +112,7 @@ config_dics = [{
     'year': y,
     'N': N}
     for y in range(1990,2019)
+    # for y in range(1990,1991)
     # for y in [1990]
     # for y in range(2005,2006)
     # for N in [7,12,13]
@@ -126,7 +128,8 @@ for config_dic in config_dics:
     year_rnd_gdp = np.maximum(config_dic['year'], 1996)
     nbr_of_countries = config_dic['N']
     path = f'data/data_{nbr_of_countries}_countries_{year}/'
-    dropbox_path = f'/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
+    dropbox_path = f'/Users/slepot/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
+    # dropbox_path = f'/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
     
     if write:
         try:
@@ -145,10 +148,14 @@ for config_dic in config_dics:
     
     
     
+    # crosswalk_countries = pd.read_csv(
+    #     '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/countries_wdi.csv')
+    # crosswalk_sectors = pd.read_csv(
+    #     '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/crosswalk_sectors_OECD.csv')
     crosswalk_countries = pd.read_csv(
-        '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/countries_wdi.csv')
+        'data/countries_wdi.csv')
     crosswalk_sectors = pd.read_csv(
-        '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/crosswalk_sectors_OECD.csv')
+        'data/crosswalk_sectors_OECD.csv')
 
     crosswalk_sectors['Code'] = crosswalk_sectors['Code'].str.replace('D', '')
     crosswalk_sectors = crosswalk_sectors.set_index('Code')
@@ -225,13 +232,13 @@ for config_dic in config_dics:
                         ).reset_index().set_index(['country', 'year'])
 
     iot_OECD = pd.read_csv(
-        f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
+        f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/input_output_{year_OECD}.csv')
     output_OECD = pd.read_csv(
-        f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/output_{year_OECD}.csv')
+        f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/output_{year_OECD}.csv')
     consumption_OECD = pd.read_csv(
-        f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/consumption_{year_OECD}.csv')
+        f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/consumption_{year_OECD}.csv')
     va_OECD = pd.read_csv(
-        f'/Users/slepot/Dropbox/Green Logistics/Global Sustainability Index/OECD_ICIO_data/yearly_CSV/datas{year_OECD}/VA_{year_OECD}.csv')
+        f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/VA_{year_OECD}.csv')
 
     iot_OECD['row_country'] = iot_OECD['row_country'].map(
         crosswalk_countries['country_code'])
@@ -480,7 +487,6 @@ for config_dic in config_dics:
             indonesia_flows['patent flows'] = indonesia_flows[
                 'patent flows'
             ]/pd.read_csv(
-                pflows_path+f'factors/{factor_type}_{nbr_of_countries}_countries.csv'
             ).set_index(
                 ['year', 'origin_code']
             ).loc[year]['factor']
@@ -488,11 +494,23 @@ for config_dic in config_dics:
         for origin in indonesia_flows.index:
             pflows.loc[(origin,12),'patent flows'] = indonesia_flows.loc[origin,'patent flows']
     
+    year_after_us_correc = 2001
+    if year<year_after_us_correc:
+        us_correction = pd.read_csv(
+            pflows_path+f'factors/granted_patents_US_factor_{nbr_of_countries}_countries.csv'
+        ).set_index(['year','origin_code'])
+        year_before_us_correc = max(year, 1997) 
+        for origin_code in range(1, nbr_of_countries+1):
+            pflows.loc[origin_code,1] = pflows.loc[origin_code,1].values/(
+                us_correction.loc[year_after_us_correc]/us_correction.loc[year_before_us_correc]
+                ).loc[origin_code].values
+    
     for origin_code in range(1, nbr_of_countries+1):
         for destination_code in range(1, nbr_of_countries+1):
             if (origin_code, destination_code) not in pflows.index or pflows.loc[(origin_code, destination_code)].isna().any():
                 pflows.loc[(origin_code, destination_code),
                             'patent flows'] = 0
+                
     for origin_code in range(1, nbr_of_countries+1):
         for destination_code in range(1, nbr_of_countries+1):
             if pflows.loc[(origin_code, destination_code),
@@ -522,7 +540,7 @@ for config_dic in config_dics:
     scalar_moments.loc['JUPCOST', 'value'] = pflows.loc[(1, 3), 'patent flows']*final_pat_fees.loc[1, 'fee']\
         * gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']/1e12
     # scalar_moments.loc['TO', 'value'] = 0.018546283
-    scalar_moments.loc['TO', 'value'] = 0.014603
-    if write or True:
+    scalar_moments.loc['TO', 'value'] = 0.017496806
+    if write:
         scalar_moments.to_csv(path+'scalar_moments.csv')
         scalar_moments.to_csv(dropbox_path+'scalar_moments.csv')
