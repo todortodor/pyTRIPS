@@ -916,7 +916,7 @@ comments_dic['1010'] = {
     # '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
-    # '9.2':'9.2:1995',
+    '9.2':'9.2:same conditions, 3-year smoothed out data',
     # '10.0':'10.0:full calibration, delta_US fixed',
     # '10.1':'10.1:full calibration, delta_US fixed',
     # '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',

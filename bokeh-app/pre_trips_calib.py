@@ -61,30 +61,30 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
-    {
-      'number': 2.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
-      'year':2015
-      },
-    {
-      'number': 2.1,
-       'calib_params':['delta','T','eta'],
-       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
-      'year':1992
-      },
-    {
-      'number': 3.0,
-      'calib_params':p_baseline.calib_parameters,
-      'list_of_moments':m_baseline.list_of_moments,
-      'year':2015
-      },
-    {
-      'number': 3.1,
-      'calib_params':p_baseline.calib_parameters,
-      'list_of_moments':m_baseline.list_of_moments,
-      'year':1992
-      },
+    # {
+    #   'number': 2.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 2.1,
+    #    'calib_params':['delta','T','eta'],
+    #    'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
+    #   'year':1992
+    #   },
+    # {
+    #   'number': 3.0,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 3.1,
+    #   'calib_params':p_baseline.calib_parameters,
+    #   'list_of_moments':m_baseline.list_of_moments,
+    #   'year':1992
+    #   },
     # {
     #   'number': 4.0,
     #   'calib_params':['delta','T','eta'],
@@ -145,24 +145,24 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 9.0,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':2015
+    #   },
+    # {
+    #   'number': 9.1,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
     {
-      'number': 9.0,
-      'calib_params':['delta','T','eta'],
-      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':2015
-      },
-    {
-      'number': 9.1,
+      'number': 9.2,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
       'year':1992
       },
-    # {
-    #   'number': 9.2,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':1995
-    #   },
     # {
     #   'number': 10.0,
     #   'calib_params':p_baseline.calib_parameters,
@@ -361,12 +361,15 @@ for run_params in runs_params:
     #     )
     
     p = p_baseline.copy()
-    p.load_data(f'data/data_11_countries_{run_params["year"]}/',
+    # p.load_data(f'data/data_11_countries_{run_params["year"]}/',
+    #             keep_already_calib_params=True)
+    p.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/',
                 keep_already_calib_params=True)
     p.calib_parameters = run_params['calib_params']
     
     m = m_baseline.copy()
-    m.load_data(f'data/data_11_countries_{run_params["year"]}/')
+    # m.load_data(f'data/data_11_countries_{run_params["year"]}/')
+    m.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/')
     print(m.data_path)
     # m.TP_target = m_baseline.TP*m.TP_data/m_baseline.TP_data
     # m.inter_TP_target = m_baseline.inter_TP*m.inter_TP_data/m_baseline.inter_TP_data
