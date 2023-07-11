@@ -145,24 +145,24 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP'],
     #   'year':1992
     #   },
-    # {
-    #   'number': 9.0,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':2015
-    #   },
-    # {
-    #   'number': 9.1,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':1992
-    #   },
     {
-      'number': 9.2,
+      'number': 9.0,
+      'calib_params':['delta','T','eta'],
+      'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+      'year':2015
+      },
+    {
+      'number': 9.1,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
       'year':1992
       },
+    # {
+    #   'number': 9.2,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
     # {
     #   'number': 10.0,
     #   'calib_params':p_baseline.calib_parameters,
@@ -343,6 +343,7 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
     #   'year':1992
     #   },
+    
     ]
 
 for run_params in runs_params:
@@ -553,10 +554,11 @@ for i in runs:
     m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.0/')
     m.compute_moments(sol,p)
     
-    sol_baseline = sol.copy()
+    # sol_baseline = sol.copy()
     
     p_pre = parameters()
-    p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
+    # p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
+    p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.2/')
     _, sol_pre = fixed_point_solver(p_pre,context = 'calibration',x0=p_pre.guess,
                             cobweb_anim=False,tol =1e-14,
                             accelerate=False,
@@ -579,7 +581,8 @@ for i in runs:
     sol_pre.scale_P(p_pre)
     sol_pre.compute_non_solver_quantities(p_pre)
     m_pre = moments()
-    m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
+    # m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.1/')
+    m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{i}.2/')
     m_pre.compute_moments(sol_pre,p_pre)
     
     p_pre_cf = p_baseline.copy()
@@ -732,13 +735,13 @@ for i in runs:
     fig,ax = plt.subplots(2,1,figsize = (10,8))
     reduc[['static welfare change','static welfare change, fixed delta north']] = \
         100*reduc[['static welfare change','static welfare change, fixed delta north']]-100
-    # reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
-    reduc.reset_index().plot.bar(x='country',y=['static welfare change'],
+    reduc.reset_index().plot.bar(x='country',y=['static welfare change','static welfare change, fixed delta north'],
+    # reduc.reset_index().plot.bar(x='country',y=['static welfare change'],
                                  ax=ax[0])
     reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']] = \
         100*reduc[['dynamic welfare change','dynamic welfare change, fixed delta north']]-100
-    # reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
-    reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change'],
+    reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change','dynamic welfare change, fixed delta north'],
+    # reduc.reset_index().plot.bar(x='country',y=['dynamic welfare change'],
                                  ax=ax[1])
     # plt.savefig(f'../misc/pre_trips_cf/pre_trips_cf_{i}.png')
     plt.show()

@@ -900,35 +900,13 @@ comments_dic['1006'] = {
 
 comments_dic['1010'] = {
     "baseline":"baseline : 2015, new correction US flows and new TO",
-    # '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
-    # '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
     '3.0':'3.0:full calibration',
     '3.1':'3.1:full calibration',
-    # '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-    # '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-    # '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-    # '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-    # '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
-    # '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
-    # '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
-    # '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
     '9.2':'9.2:same conditions, 3-year smoothed out data',
-    # '10.0':'10.0:full calibration, delta_US fixed',
-    # '10.1':'10.1:full calibration, delta_US fixed',
-    # '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
-    # '11.1':'11.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
-    # '12.0':'12.0:full calibration except delta_US fixed, KM and TO not targeted',
-    # '12.1':'12.1:full calibration except delta_US fixed, KM and TO not targeted',
-    # '13.0':'13.0:full calibration except delta_US and nu fixed, KM and TO not targeted',
-    # '13.1':'13.1:full calibration except delta_US and nu fixed, KM and TO not targeted',
-    # '14.0':'14.0:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-    # '14.1':'14.1:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-    # '15.0':'15.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-    # '15.1':'15.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
     }
 
 baselines_dic_param = {}
@@ -941,7 +919,7 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1004','1005','1006','1010','1011']    
+baseline_list = ['1010','1011']    
 baseline_mom = '1010'
 
 def section(s):
@@ -1357,7 +1335,7 @@ print(time.perf_counter() - start)
 baseline_time = '1011'
 # baseline_time_list = ['607','608','609','610','614','615','616','617']    
 # baseline_time_list = ['607','806','903']
-baseline_time_list = ['1005','1011']
+baseline_time_list = ['1011']
 par_time = 'delta'
 par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
 baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
@@ -1470,7 +1448,7 @@ second_panel = row(par_time_report)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '1004'
+baseline_cf = '1010'
 country_cf = 'USA'
 
 def section_end(s):
@@ -1478,7 +1456,7 @@ def section_end(s):
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1004') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1010') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -1674,10 +1652,10 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1004'
+baseline_dyn_cf = '1010'
 country_dyn_cf = 'USA'
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1004'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1010'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
                             options=countries+['World','Harmonizing','Uniform_delta'])
@@ -1835,17 +1813,17 @@ third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '1004'
+baseline_dyn_nash_coop = '1010'
 variation_dyn_nash_coop = 'baseline'
 equilibrium_type ='Nash'
 
 baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
     # '607','501'
-    '1004'
+    '1010'
     ])
 dic_of_possible_variations_dyn_nash_coop = {
     # '1003':['baseline','0.4'],
-    '1004':['baseline'],
+    '1010':['baseline'],
     # '607':['baseline'],
     # '501':['1.0','2.0']
     }
@@ -2026,7 +2004,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1004'
+baseline_nash_coop = '1010'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -2061,7 +2039,7 @@ baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline',
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
                                     # options=['802','803','804','805','806'])
-                                    options=['1004'])
+                                    options=['1010'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2248,13 +2226,13 @@ fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas
 
 #%% dynamic solver
 
-baseline_dyn = '1004'
+baseline_dyn = '1010'
 country_dyn = 'USA'
 sector_dyn = 'Patent'
 
 baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
                               # options=['501','604','607','608','609','610']
-                              options=['1004']
+                              options=['1010']
                               )
 
 baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
@@ -2659,12 +2637,12 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
-# baseline_jac = '1003'
+# baseline_jac = '1010'
 # country_jac = 'USA'
 # sector_jac = 'Patent'
 
 # # baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['501','604','607','608','609','610'])
-# baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['1003'])
+# baseline_jac_select = Select(value=baseline_jac, title='Baseline', options=['1010'])
 
 # baseline_jac_path = results_path+'baseline_'+baseline_jac+'_variations/'
 # files_in_dir = next(os.walk(baseline_jac_path))[1]

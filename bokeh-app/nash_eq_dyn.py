@@ -39,7 +39,9 @@ for baseline_dic in baseline_dics:
     
     p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method=method,
                      plot_convergence = True,solver_options=None,tol=5e-3,plot_history=False,
-                     dynamics=True)
+                     dynamics=True,
+                     delta_init=[12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
+                     )
     
     write = True
     if write:

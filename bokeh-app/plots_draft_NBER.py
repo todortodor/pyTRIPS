@@ -16,6 +16,8 @@ import matplotlib.pylab as pylab
 from data_funcs import write_calibration_results
 import seaborn as sns
 from adjustText import adjust_text
+from bokeh.palettes import Category10, Dark2
+Category18 = list(Category10[10])+['#e8ba02']+list(Dark2[8])
 
 params = {'legend.fontsize': 'x-large',
           'figure.figsize': (16, 12),
@@ -42,7 +44,8 @@ coop_eq_path = 'coop_eq_recaps/'
 
 save_formats = ['eps','png','pdf']
 
-countries_names = {'USA':'USA','EUR':'Europe','JAP':'Japan','CHN':'China',
+countries_names = {'USA':'USA','EUR':'Europe','JAP':'Japan','CHN':'China','KOR':'Korea',
+                   'CAN':'Canada','MEX':'Mexico','RUS':'Russia',
                   'BRA':'Brazil','IND':'India','ROW':'Rest of the world'}
 
 parameters_description = {
@@ -71,12 +74,12 @@ except:
 
 #%% Choose a run, load parameters, moments, solution
 
-baseline = '607'
+baseline = '1010'
 variation = 'baseline'
 
-baseline_pre_trips_variation = '618'
+baseline_pre_trips_variation = '1010'
 pre_trips_cf = True
-pre_trips_variation = '5.1'
+pre_trips_variation = '9.2'
 
 output_path = 'output/'
 output_name = 'draft_NBER'
@@ -153,6 +156,10 @@ df_without_diag.style.format(precision=2).to_latex(save_path+'pat_over_trade_coe
                   )
 
 df_without_diag.to_csv(save_path+'pat_over_trade_coeffs_without_diag.csv',float_format='%.2f')
+
+#%% Time series of number of international families by office 
+
+
 
 #%% write excel spredsheet of the baseline
 
@@ -513,8 +520,8 @@ df.to_csv(save_path+parameter+'_patenting.csv',float_format='%.6f')
 
 recap_growth_rate = pd.DataFrame(columns = ['delta_change']+p_baseline.countries+['World'])
 
-# for c in p_baseline.countries+['World','Uniform_delta']:
-for c in ['Uniform_delta']:
+for c in p_baseline.countries+['World','Uniform_delta']:
+# for c in ['Uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','growth','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -551,6 +558,7 @@ for c in ['Uniform_delta']:
             
             recap_growth_rate.loc[run,'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
             recap_growth_rate.loc[run,c] = sol_c.g
+            # print(c,recap_growth_rate.loc[run])
 
     fig,ax = plt.subplots()
     # ax2 = ax.twinx()
@@ -573,7 +581,7 @@ for c in ['Uniform_delta']:
     # ax2.set_ylabel('Growth rate change')
 
     for i,country in enumerate(p_baseline.countries):
-        ax.plot(recap.delta_change,recap[country],color=sns.color_palette()[i],label=countries_names[country])
+        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
     
     ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
     ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
@@ -625,7 +633,7 @@ for with_world in [True,False]:
     for i,country in enumerate(p_baseline.countries):
         ax.plot(recap_growth_rate.delta_change,
                 recap_growth_rate[country]*100,
-                color=sns.color_palette()[i],
+                color=Category18[i],
                 label=countries_names[country])
     if with_world:
         ax.plot(recap_growth_rate.delta_change,
@@ -1053,7 +1061,7 @@ for c in p_baseline.countries+['World','Uniform_delta']:
         ax.set_xticklabels(xtl)
 
     for i,country in enumerate(p_baseline.countries):
-        ax.plot(recap.delta_change,recap[country],color=sns.color_palette()[i],label=countries_names[country])
+        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
     
     ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
     ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
@@ -1464,10 +1472,15 @@ except:
 modified_countries_names = {'USA': 'USA',
  'EUR': 'Europe',
  'JAP': 'Japan',
+ 'KOR':'Korea',
+ 'CAN':'Canada',
+ 'MEX':'Mexico',
+ 'RUS':'Russia',
  'CHN': 'China',
  'BRA': 'Brazil',
  'IND': 'India',
  'ROW': 'Rest of\nthe world'}
+
 df = pd.DataFrame(
     index = pd.Index([modified_countries_names[c] for c in p_baseline.countries]+['World\nNegishi','World\nEqual'],
                                        name = 'country')
@@ -1496,8 +1509,8 @@ for col in ['static_welfare_change','dynamic_welfare_change',
     fig,ax = plt.subplots()
     # ax.bar(df.index, df['static welfare change']*100-100)
     ax.barh(df.index, df[col]*100-100, 
-            color = sns.color_palette()[:len(p_baseline.countries)]+[grey_rgb,grey_rgb],
-           # color = sns.color_palette()[:len(p_baseline.countries)+2],
+            color = Category18[:len(p_baseline.countries)]+[grey_rgb,grey_rgb],
+           # color = Category18[:len(p_baseline.countries)+2],
            # hatch = ['']*len(p_baseline.countries)+['/','x']
            )
     ax.invert_yaxis()
