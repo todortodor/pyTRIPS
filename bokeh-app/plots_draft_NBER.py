@@ -158,8 +158,43 @@ df_without_diag.style.format(precision=2).to_latex(save_path+'pat_over_trade_coe
 df_without_diag.to_csv(save_path+'pat_over_trade_coeffs_without_diag.csv',float_format='%.2f')
 
 #%% Time series of number of international families by office 
+years = [y for y in range(1990,2019)]
+nb_countries = p_baseline.N
 
+pflows = pd.concat(
+    [pd.read_csv(data_path+f'data_{nb_countries}_countries_{y}/country_country_moments.csv',
+                 index_col=[0,1])
+     for y in years],
+    axis=0,
+    keys=years,
+    names=['year','origin_code','destination_code'],
+    # ignore_index=True
+    )
 
+c_map = {i+1:p_baseline.countries[i] for i in range(nb_countries)}
+
+ori = pflows.query('origin_code!=destination_code').groupby(['destination_code','year']).sum().reset_index()
+ori['destination_code'] = ori['destination_code'].map(c_map)
+# ori['destination_code'] = ori['destination_code'].map(countries_names)
+ori = ori.pivot(
+    columns = 'destination_code',
+    index = 'year',
+    values = 'patent flows'
+    )
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    
+    ax.set_ylabel('International patent families by destination')
+    ax.plot(ori.index,ori[country],color=Category18[i],label=countries_names[country])
+    
+    ax.legend()
+    
+    plt.yscale('log')
+    
+for save_format in save_formats:
+    plt.savefig(save_path+'international_pat_families_by_office.'+save_format,format=save_format)
+    
+plt.show()
 
 #%% write excel spredsheet of the baseline
 
