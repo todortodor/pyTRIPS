@@ -555,8 +555,8 @@ df.to_csv(save_path+parameter+'_patenting.csv',float_format='%.6f')
 
 recap_growth_rate = pd.DataFrame(columns = ['delta_change']+p_baseline.countries+['World'])
 
-for c in p_baseline.countries+['World','Uniform_delta']:
-# for c in ['Uniform_delta']:
+for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
+# for c in ['Upper_uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','growth','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -570,7 +570,7 @@ for c in p_baseline.countries+['World','Uniform_delta']:
     files_in_dir = next(os.walk(country_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
-    for run in run_list:
+    for i,run in enumerate(run_list):
         p = parameters()
         # p.load_data(country_path+run+'/')
         p.load_run(country_path+run+'/')
@@ -586,6 +586,8 @@ for c in p_baseline.countries+['World','Uniform_delta']:
                 recap.loc[run, 'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
             if c == 'Uniform_delta':
                 recap.loc[run, 'delta_change'] = p.delta[0,1]
+            if c == 'Upper_uniform_delta':
+                recap.loc[run,'delta_change'] = np.logspace(-2,0,len(run_list))[i]
             recap.loc[run, 'growth'] = sol_c.g
             recap.loc[run, 'world_negishi'] = sol_c.cons_eq_negishi_welfare_change
             recap.loc[run, 'world_equal'] = sol_c.cons_eq_pop_average_welfare_change
@@ -603,7 +605,7 @@ for c in p_baseline.countries+['World','Uniform_delta']:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
         ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
-    if c == 'Uniform_delta':
+    if c == 'Uniform_delta' or c == 'Upper_uniform_delta':
         ax.set_xlabel(r'Harmonized $\delta$')
         plt.axvline(x=p_baseline.delta[0,1], lw = 1, color = 'k')
         xt = ax.get_xticks() 
@@ -641,6 +643,9 @@ for c in p_baseline.countries+['World','Uniform_delta']:
     if c == 'Uniform_delta':
         caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
         recap = recap.rename(columns = {'delta_change':'delta'})
+    if c == 'Upper_uniform_delta':
+        caption = 'Consumption equivalent welfares in the partially harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
         
     recap.style.to_latex(save_path+c+'_unilateral_patent_protection_counterfactual.tex',
                       caption=caption,
@@ -649,6 +654,14 @@ for c in p_baseline.countries+['World','Uniform_delta']:
     recap.to_csv(save_path+c+'_unilateral_patent_protection_counterfactual.csv')
     
     if c == 'Uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(save_path+c+'_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(save_path+c+'_US_values.csv')
+        
+    if c == 'Upper_uniform_delta':
         delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
         delta_US_values.style.to_latex(save_path+c+'_US_values.tex',
                           caption=caption,
@@ -1036,8 +1049,8 @@ write_calibration_results(save_path+'Coop_negishi_weights',p_coop_negishi,m_coop
 
 #%% Unilateral patent protections counterfactuals with dynamics
 
-for c in p_baseline.countries+['World','Uniform_delta']:
-# for c in ['Uniform_delta']:
+# for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
+for c in ['Upper_uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -1072,6 +1085,8 @@ for c in p_baseline.countries+['World','Uniform_delta']:
             recap.loc[run, 'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
         if c == 'Uniform_delta':
             recap.loc[run, 'delta_change'] = p.delta[0,1]
+        if c == 'Upper_uniform_delta':
+            recap.loc[run,'delta_change'] = np.logspace(-2,0,len(run_list))[i]
         recap.loc[run, 'world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
         recap.loc[run, 'world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
         recap.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
@@ -1085,7 +1100,7 @@ for c in p_baseline.countries+['World','Uniform_delta']:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
         ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
-    if c == 'Uniform_delta':
+    if c == 'Uniform_delta' or c == 'Upper_uniform_delta':
         ax.set_xlabel(r'Harmonized $\delta$')
         plt.axvline(x=p_baseline.delta[0,1], lw = 1, color = 'k')
         xt = ax.get_xticks() 
@@ -1114,6 +1129,9 @@ for c in p_baseline.countries+['World','Uniform_delta']:
     if c == 'Uniform_delta':
         caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
         recap = recap.rename(columns = {'delta_change':'delta'})
+    if c == 'Upper_uniform_delta':
+        caption = 'Consumption equivalent welfares in the partially harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
     
     recap.style.to_latex(save_path+c+'_dyn_unilateral_patent_protection_counterfactual.tex',
                       caption=caption,
@@ -1122,6 +1140,14 @@ for c in p_baseline.countries+['World','Uniform_delta']:
     recap.to_csv(save_path+c+'_dyn_unilateral_patent_protection_counterfactual.csv')
     
     if c == 'Uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(save_path+c+'_dyn_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(save_path+c+'_dyn_US_values.csv')
+        
+    if c == 'Upper_uniform_delta':
         delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_baseline.delta[0,1]))].to_frame()
         delta_US_values.style.to_latex(save_path+c+'_dyn_US_values.tex',
                           caption=caption,

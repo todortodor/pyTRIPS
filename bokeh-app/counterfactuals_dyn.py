@@ -127,40 +127,46 @@ for baseline_dic in baseline_dics:
     
     # delta_factor_array = np.logspace(-1,1,31)
     
-    # for c in p_baseline.countries:
-    #     make_counterfactual(p_baseline,c,local_path,
-    #                         sol_baseline=sol_baseline,
-    #                         # delta_factor_array=delta_factor_array,
-    #                         dynamics=True)
-    #     make_counterfactual_recap(p_baseline, sol_baseline, c,
-    #                                   local_path,recap_path,
-    #                                   dynamics=True,Nt=25,t_inf=500)
+    for c in p_baseline.countries:
+        make_counterfactual(p_baseline,c,local_path,
+                            sol_baseline=sol_baseline,
+                            # delta_factor_array=delta_factor_array,
+                            dynamics=True)
+        make_counterfactual_recap(p_baseline, sol_baseline, c,
+                                      local_path,recap_path,
+                                      dynamics=True,Nt=25,t_inf=500)
     
-    # make_counterfactual(p_baseline,'World',local_path,
-    #                     # delta_factor_array=delta_factor_array,
-    #                     sol_baseline=sol_baseline,dynamics=True)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-    #                               local_path,recap_path,
-    #                               dynamics=True,Nt=25,t_inf=500)
+    make_counterfactual(p_baseline,'World',local_path,
+                        # delta_factor_array=delta_factor_array,
+                        sol_baseline=sol_baseline,dynamics=True)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+                                  local_path,recap_path,
+                                  dynamics=True,Nt=25,t_inf=500)
     
-    # # delta_factor_array = np.linspace(0,1,31)
-    # make_counterfactual(p_baseline,'Harmonizing',local_path,
-    #                     # delta_factor_array=delta_factor_array,
-    #                     sol_baseline=sol_baseline,dynamics=True)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
-    #                               local_path,recap_path,
-    #                               dynamics=True,Nt=25,t_inf=500)
+    # delta_factor_array = np.linspace(0,1,31)
+    make_counterfactual(p_baseline,'Harmonizing',local_path,
+                        # delta_factor_array=delta_factor_array,
+                        sol_baseline=sol_baseline,dynamics=True)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+                                  local_path,recap_path,
+                                  dynamics=True,Nt=25,t_inf=500)
     
-    # make_counterfactual(p_baseline,'Uniform_delta',local_path,
-    #                     sol_baseline=sol_baseline,dynamics=True)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
-    #                               local_path,recap_path,
-    #                               dynamics=True,Nt=25,t_inf=500)
+    make_counterfactual(p_baseline,'Uniform_delta',local_path,
+                        sol_baseline=sol_baseline,dynamics=True)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
+                                  local_path,recap_path,
+                                  dynamics=True,Nt=25,t_inf=500)
     
     make_counterfactual(p_baseline,'Upper_harmonizing',local_path,
                         # delta_factor_array=delta_factor_array,
                         sol_baseline=sol_baseline,dynamics=True)
     make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
+                                  local_path,recap_path,
+                                  dynamics=True,Nt=25,t_inf=500)
+    
+    make_counterfactual(p_baseline,'Upper_uniform_delta',local_path,
+                        sol_baseline=sol_baseline,dynamics=True)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_uniform_delta',
                                   local_path,recap_path,
                                   dynamics=True,Nt=25,t_inf=500)
     

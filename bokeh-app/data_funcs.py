@@ -365,7 +365,7 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
     
-    for run in run_list:
+    for i,run in enumerate(run_list):
         # print(run)
         p = parameters()
         p.load_run(country_path+run+'/')
@@ -406,6 +406,9 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         if country == 'Uniform_delta':
             recap.loc[run, 'delt'] = p.delta[0,1]
             recap_dyn.loc[run, 'delt'] = p.delta[0,1]
+        if country == 'Upper_uniform_delta':
+            recap.loc[run, 'delt'] = np.logspace(-2,0,101)[i]
+            recap_dyn.loc[run, 'delt'] = np.logspace(-2,0,101)[i]
         recap.loc[run, 'growth'] = sol_c.g
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         
