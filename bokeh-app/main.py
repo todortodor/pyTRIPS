@@ -1487,7 +1487,7 @@ cf_list = sorted([s for s in os.listdir(cf_path)
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
-                            options=countries+['World','Harmonizing','Uniform_delta'])
+                            options=countries+['World','Harmonizing','Upper_harmonizing','Uniform_delta'])
 
 def get_data_cf(baseline,country):
     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
@@ -1658,7 +1658,7 @@ country_dyn_cf = 'USA'
 baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1010'])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
-                            options=countries+['World','Harmonizing','Uniform_delta'])
+                            options=countries+['World','Harmonizing','Upper_harmonizing','Uniform_delta'])
 
 def get_data_dyn_cf(baseline,country):
     df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')

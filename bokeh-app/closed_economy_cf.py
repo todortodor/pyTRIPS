@@ -12,12 +12,14 @@ from solver_funcs import fixed_point_solver
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
+from bokeh.palettes import Category10, Dark2
+Category18 = list(Category10[10])+['#e8ba02']+list(Dark2[8])
 
 p = parameters()
 # p.load_run('calibration_results_matched_economy/baseline_803_variations/1.0/')
-p.load_run('calibration_results_matched_economy/607/')
+p.load_run('calibration_results_matched_economy/1010/')
 # df = pd.DataFrame(index = p.countries, columns = ['welfare','growth rate'])
-deltas = np.logspace(-8,1,31)
+deltas = np.logspace(-8,8,41)
 df = pd.DataFrame(index=[i for i in range(deltas.shape[0])],columns = p.countries+['delta'])
 df_l_r = pd.DataFrame(index=[i for i in range(deltas.shape[0])],columns = p.countries+['delta'])
 df_g_1 = pd.DataFrame(index=[i for i in range(deltas.shape[0])],columns = p.countries+['delta'])
@@ -143,19 +145,19 @@ sns.set_style('whitegrid')
 
 fig,ax = plt.subplots()
 
-for c in p.countries:
-    ax.plot(df['delta'],df[c],label=c)
+for i,c in enumerate(p.countries):
+    ax.plot(df['delta'],df[c],label=c,color=Category18[i])
 
-ax.scatter(p.delta[:,1],df_closed['welfare'],color = sns.color_palette()[:p.N],marker='x',label = 'Calibrated deltas')
+ax.scatter(p.delta[:,1],df_closed['welfare'],color = Category18[:p.N],marker='x',label = 'Calibrated deltas')
 opt_deltas = [df.loc[np.argmax(df[c]),'delta'] for c in p.countries]
 opt_welfares = [df[c].max() for c in p.countries]
-ax.scatter(opt_deltas,opt_welfares,color = sns.color_palette()[:p.N],label = 'Optimal deltas')
+ax.scatter(opt_deltas,opt_welfares,color = Category18[:p.N],label = 'Optimal deltas')
 
 ax.set_xscale('log')
 ax.set_xlabel('Delta')
 ax.set_ylabel('Welfare')
 
-plt.legend()
+plt.legend(loc = 'center right')
 
 plt.show()
 

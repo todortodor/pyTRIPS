@@ -358,7 +358,7 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
     recap_dyn = pd.DataFrame(columns = ['delt']+p_baseline.countries)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
-    if country == 'Harmonizing':
+    if country == 'Harmonizing' or 'Upper_harmonizing':
         idx_country = p_baseline.countries.index(harmonizing_country)
     country_path = local_path+country+'/'
     files_in_dir = next(os.walk(country_path))[1]
@@ -391,6 +391,18 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
                 )/np.log(
                     p_baseline.delta[idx_country,1]/p_baseline.delta[1,1]
                     )
+        if country == 'Upper_harmonizing':
+            recap.loc[run, 'delt'] = np.log(
+                p.delta[-1,1]/p_baseline.delta[-1,1]
+                )/np.log(
+                    p_baseline.delta[idx_country,1]/p_baseline.delta[-1,1]
+                    )
+            recap_dyn.loc[run, 'delt'] = np.log(
+                p.delta[-1,1]/p_baseline.delta[-1,1]
+                )/np.log(
+                    p_baseline.delta[idx_country,1]/p_baseline.delta[-1,1]
+                    )
+            
         if country == 'Uniform_delta':
             recap.loc[run, 'delt'] = p.delta[0,1]
             recap_dyn.loc[run, 'delt'] = p.delta[0,1]

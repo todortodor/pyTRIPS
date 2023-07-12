@@ -88,3 +88,7 @@ for baseline_dic in baseline_dics:
     make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
     make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
                                   local_path,recap_path)
+
+    make_counterfactual(p_baseline,'Upper_harmonizing',local_path,dynamics=False)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
+                                  local_path,recap_path)

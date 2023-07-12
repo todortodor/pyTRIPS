@@ -1376,7 +1376,7 @@ write_calibration_results(save_path+'dyn_Coop_negishi_weights',p_coop_negishi,m_
 p_pre = parameters()
 p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{pre_trips_variation}/')
 _, sol_pre = fixed_point_solver(p_pre,context = 'calibration',x0=p_pre.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1401,7 +1401,7 @@ p_pre_cf = p_baseline.copy()
 p_pre_cf.delta[...,1] = p_pre.delta[...,1]
 
 _, sol_pre_cf = fixed_point_solver(p_pre_cf,context = 'counterfactual',x0=p_pre_cf.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
@@ -1452,7 +1452,7 @@ p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
 p_pre_cf_fix_north.delta[0:3,1] = p_baseline.delta[0:3,1]
 
 _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
-                        cobweb_anim=False,tol =1e-15,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
