@@ -200,6 +200,36 @@ plt.show()
 
 write_calibration_results(save_path+'baseline',p_baseline,m_baseline,sol_baseline,commentary = '')
 
+#%% Comparing trade flows with patent flows
+
+fig,ax = plt.subplots()
+
+tflow_shares = m_baseline.ccs_moments.query('destination_code!=origin_code'
+                                    ).xs(1,level=2)
+tflow_shares = tflow_shares/tflow_shares.sum()
+pflow_shares = m_baseline.cc_moments.query('destination_code!=origin_code'
+                                    )
+pflow_shares = pflow_shares/pflow_shares.sum()
+
+ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
+            m_baseline.SPFLOW.ravel()[pflow_shares.values.ravel()>1e-6],
+            label = 'International patent shares: model')
+ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
+            tflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
+            label = 'International trade shares')
+
+ax.set_xlabel('International patent shares: data',fontsize=22)
+ax.set_ylabel('Model',fontsize=22)
+
+ax.set_xscale('log')
+ax.set_yscale('log')
+ax.plot(np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel()>1e-6]),
+        np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel()>1e-6]),
+        ls='--',color='grey')
+
+plt.legend(fontsize=22)
+plt.show()
+
 #%% plot matching of moments : SPFLOW
 
 moment = 'SPFLOW'
@@ -584,6 +614,7 @@ for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
                 recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
             if c == 'World':
                 recap.loc[run, 'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
+                recap_growth_rate.loc[run,'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
             if c == 'Uniform_delta':
                 recap.loc[run, 'delta_change'] = p.delta[0,1]
             if c == 'Upper_uniform_delta':
@@ -593,7 +624,7 @@ for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
             recap.loc[run, 'world_equal'] = sol_c.cons_eq_pop_average_welfare_change
             recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
             
-            recap_growth_rate.loc[run,'delta_change'] = p.delta[0,1]/p_baseline.delta[0,1]
+            
             recap_growth_rate.loc[run,c] = sol_c.g
             # print(c,recap_growth_rate.loc[run])
 
@@ -1049,8 +1080,8 @@ write_calibration_results(save_path+'Coop_negishi_weights',p_coop_negishi,m_coop
 
 #%% Unilateral patent protections counterfactuals with dynamics
 
-# for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
-for c in ['Upper_uniform_delta']:
+for c in p_baseline.countries+['World','Uniform_delta','Upper_uniform_delta']:
+# for c in ['Upper_uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -1064,7 +1095,7 @@ for c in ['Upper_uniform_delta']:
     files_in_dir = next(os.walk(country_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
     run_list.sort(key=float)
-    for run in run_list:
+    for i,run in enumerate(run_list):
         # p = parameters(n=7,s=2)
         p = parameters()
         p.load_run(country_path+run+'/')
@@ -1475,7 +1506,8 @@ dyn_sol_pre_cf.compute_non_solver_quantities(p_pre_cf)
 
 p_pre_cf_fix_north = p_baseline.copy()
 p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
-p_pre_cf_fix_north.delta[0:3,1] = p_baseline.delta[0:3,1]
+for country_idx in [0,1,2,6,7]:
+    p_pre_cf_fix_north.delta[country_idx,1] = p_baseline.delta[country_idx,1]
 
 _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
                         cobweb_anim=False,tol =1e-14,
