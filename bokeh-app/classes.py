@@ -581,7 +581,8 @@ class var:
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
             * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
         B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
-        temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:]*(A+B))
+        #!!! temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:]*(A+B))
+        temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:]*(A+B))
         one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
         price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :]/(p.sigma[None, :]-1)) ).prod(axis=1)
         if assign:
@@ -1360,7 +1361,8 @@ class dynamic_var:
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :, None] \
             * ((self.PSI_M + self.PSI_M_0[...,None]) * self.phi**power[None, None, :, None]).sum(axis=1)
         B = (self.PSI_CD + self.PSI_CD_0[...,None])*(self.phi**p.theta[None,None,:,None]).sum(axis=1)**(power/p.theta)[None, :, None]
-        temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:,None]*(A+B))
+        #!!! temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:,None]*(A+B))
+        temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:,None]*(A+B))
         one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
         price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :, None]/(p.sigma[None, :, None]-1)) ).prod(axis=1)
         return price_indices

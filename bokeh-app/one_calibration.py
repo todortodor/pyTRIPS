@@ -111,10 +111,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1010'
+baseline_number = '1020'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1.0
+run_number = 1020
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

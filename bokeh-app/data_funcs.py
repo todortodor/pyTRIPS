@@ -358,7 +358,7 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
     recap_dyn = pd.DataFrame(columns = ['delt']+p_baseline.countries)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
-    if country == 'Harmonizing' or 'Upper_harmonizing':
+    if country == 'Harmonizing' or country == 'Upper_harmonizing':
         idx_country = p_baseline.countries.index(harmonizing_country)
     country_path = local_path+country+'/'
     files_in_dir = next(os.walk(country_path))[1]
@@ -377,6 +377,8 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         if country in p_baseline.countries:
             recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
             recap_dyn.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
+            # print(p.delta[idx_country,1])
+            # print(idx_country)
         if country == 'World':
             recap.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
             recap_dyn.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
@@ -424,4 +426,4 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         recap.to_csv(recap_path+country+'.csv', index=False)
     if dynamics:
         recap_dyn.to_csv(recap_path+'dyn_'+country+'.csv', index=False)
-    
+        # print(country,recap_dyn)

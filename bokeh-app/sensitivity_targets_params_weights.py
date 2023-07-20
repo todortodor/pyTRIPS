@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '1004'
+baseline = '1010'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters()
 p_baseline.load_run(baseline_path)
@@ -56,7 +56,8 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 m_baseline.compute_moments(sol_baseline, p_baseline)
 
 moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
-                     'DOMPATINUS','DOMPATINEU','TE','OUT']
+                      'DOMPATINUS','DOMPATINEU','TE','OUT']
+# moments_to_change = ['TE','OUT']
 parameters_to_change = ['gamma','rho']
 
 weights_to_change = m_baseline.list_of_moments
@@ -126,11 +127,13 @@ for k, v in dic_runs.items():
         print(k)
         print(v)
         print(target)
-        m = moments()
-        m.load_run(baseline_path)
-        m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters()
-        p.load_run(baseline_path)
+        # m = moments()
+        # m.load_run(baseline_path)
+        # m.drop_CHN_IND_BRA_ROW_from_RD = True
+        m = m_baseline.copy()
+        # p = parameters()
+        # p.load_run(baseline_path)
+        p = p_baseline.copy()
         # if moment_to_change == 'ERDUS' and 'ERDUS' not in m.list_of_moments:
         #     m.list_of_moments.append('ERDUS')
         #     if 'kappa' not in p.calib_parameters:
@@ -242,11 +245,13 @@ for k, v in dic_runs.items():
         print(k)
         print(v)
         print(par)
-        m = moments()
-        m.load_run(baseline_path)
+        # m = moments()
+        # m.load_run(baseline_path)
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters()
-        p.load_run(baseline_path)
+        m = m_baseline.copy()
+        # p = parameters()
+        # p.load_run(baseline_path)
+        p = p_baseline.copy()
         if par_to_change == 'zeta':
             if 'zeta' in p.calib_parameters:
                 p.calib_parameters.remove('zeta')
@@ -354,11 +359,13 @@ for k, v in dic_runs.items():
         print(k)
         print(v)
         print(weight)
-        m = moments()
-        m.load_run(baseline_path)
+        # m = moments()
+        # m.load_run(baseline_path)
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
-        p = parameters()
-        p.load_run(baseline_path)
+        m = m_baseline.copy()
+        # p = parameters()
+        # p.load_run(baseline_path)
+        p = p_baseline.copy()
         m.weights_dict[mom_weight_to_change] = weight
         bounds = p.make_parameters_bounds()
         start_time = time.perf_counter()

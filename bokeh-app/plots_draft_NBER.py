@@ -74,12 +74,15 @@ except:
 
 #%% Choose a run, load parameters, moments, solution
 
-baseline = '1010'
+baseline = '1020'
 variation = 'baseline'
 
-baseline_pre_trips_variation = '1010'
+baseline_pre_trips_variation = '1020'
 pre_trips_cf = True
 pre_trips_variation = '9.2'
+
+baseline_pre_trips_full_variation = '1020'
+pre_trips_full_variation = '3.1'
 
 output_path = 'output/'
 output_name = 'draft_NBER'
@@ -216,10 +219,10 @@ ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
             label = 'International patent shares: model')
 ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
             tflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
-            label = 'International trade shares')
+            label = 'International trade shares',marker='^')
 
-ax.set_xlabel('International patent shares: data',fontsize=22)
-ax.set_ylabel('Model',fontsize=22)
+ax.set_xlabel('International patent shares: data')
+ax.set_ylabel('Model')
 
 ax.set_xscale('log')
 ax.set_yscale('log')
@@ -227,7 +230,11 @@ ax.plot(np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel(
         np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel()>1e-6]),
         ls='--',color='grey')
 
-plt.legend(fontsize=22)
+plt.legend()
+
+for save_format in save_formats:
+    plt.savefig(save_path+'trade_vs_patent_flows.'+save_format,format=save_format)
+
 plt.show()
 
 #%% plot matching of moments : SPFLOW
@@ -1626,3 +1633,411 @@ df.style.format(precision=5).to_latex(pre_trips_path+'pre_trips.tex',
                   )
 
 df.to_csv(pre_trips_path+'pre_trips.csv',float_format='%.5f')
+
+#%% Semi-elasticities to compare with Bertolotti
+
+df = pd.DataFrame(columns = ['value'], index = pd.Index([],name='Quantity'))
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{pre_trips_variation}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'calibration',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+p_pre_cf = p_baseline.copy()
+p_pre_cf.delta[...,1] = p_pre.delta[...,1]
+
+_, sol_pre_cf = fixed_point_solver(p_pre_cf,context = 'counterfactual',x0=p_pre_cf.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre_cf.scale_P(p_pre_cf)
+sol_pre_cf.compute_non_solver_quantities(p_pre_cf)
+
+p_pre_cf_full = p_baseline.copy()
+p_pre_cf_full.delta[0,1] = 1/(1/p_pre_cf_full.delta[0,1]+1/12)
+
+_, sol_pre_cf_full = fixed_point_solver(p_pre_cf_full,context = 'counterfactual',x0=p_pre_cf_full.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre_cf_full.scale_P(p_pre_cf_full)
+sol_pre_cf_full.compute_non_solver_quantities(p_pre_cf_full)
+
+p_pre_full = parameters()
+p_pre_full.load_run(
+    f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{pre_trips_full_variation}/'
+    )
+
+_, sol_pre_full = fixed_point_solver(p_pre_full,context = 'counterfactual',x0=p_pre_full.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre_full.scale_P(p_pre_full)
+sol_pre_full.compute_non_solver_quantities(p_pre_full)
+
+df.loc['Semi-elasticity 2015','value'] = sol_baseline.semi_elast_patenting_delta[0,1]
+df.loc['Semi-elasticity 1992 full calibration','value'] = sol_pre_full.semi_elast_patenting_delta[0,1]
+df.loc['Semi-elasticity 1992 partial calibration','value'] = sol_pre.semi_elast_patenting_delta[0,1]
+df.loc['Semi-elasticity 2015 with 1992 partial calibration deltas','value'] = sol_pre_cf.semi_elast_patenting_delta[0,1]
+df.loc['GE effect of decreasing US delta on Patenting flow US-US','value'
+       ] = sol_pre_cf_full.pflow[0,0]/sol_baseline.pflow[0,0]-1
+
+caption = 'Effect of US patent protection on US-US patenting flows'
+
+df.style.format(precision=5).to_latex(save_path+'patenting_semi_elast.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(save_path+'patenting_semi_elast.csv',float_format='%.5f')
+
+#%% A look at dynamics
+
+dyn_save_path = save_path+'dynamics/'
+
+try:
+    os.mkdir(dyn_save_path)
+except:
+    pass
+
+p = p_baseline.copy()
+p.delta[0,1] = 0.05
+
+sol, dyn_sol = dyn_fixed_point_solver(p, sol_baseline, Nt=21,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 50,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol.compute_non_solver_quantities(p)
+
+time = np.linspace(0,dyn_sol.t_inf,10001)
+time_truncated = time[:1201]
+
+def fit_and_eval(vec,dyn_sol,time,time_truncated,
+                 normalization_start,normalization_end,
+                 normalize_start=False,normalize_end=False):
+    fit = np.polyval(np.polyfit(dyn_sol.t_real,
+                vec,
+                dyn_sol.Nt),time)
+    res = fit
+    if normalize_start:
+        res = fit/normalization_start
+    if normalize_start and normalize_end:
+        res = (fit-normalization_start)/np.abs(normalization_end-normalization_start)
+    return res[:time_truncated.shape[0]]
+
+def add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,normalize_start,
+               normalize_end,label=None,color=sns.color_palette()[0]):
+    ax.plot(time_truncated,fit_and_eval(qty,
+                                        dyn_sol,
+                                        time,time_truncated,
+                      normalization_start = norm_start,
+                      normalization_end = norm_end,
+                      normalize_start=normalize_start,
+                      normalize_end=normalize_end)
+            ,label=label,
+            color=color)
+    if not normalize_start and not normalize_end:
+        ax.scatter(x=[0,60],
+                    y=[norm_start,norm_end],
+                    color=color)
+    if normalize_start and not normalize_end:
+        ax.scatter(x=[0,60],
+                    y=[1,norm_end/np.abs(norm_start)],
+                    color=color)
+    if normalize_start and normalize_end:
+        ax.scatter(x=[0,60],
+                    y=[0,np.sign(norm_end-norm_start)*norm_end/np.abs(norm_end)],
+                    color='k')
+        
+    ax.set_xlabel('Time (years)')
+
+# Growth rate
+fig,ax = plt.subplots()
+qty = dyn_sol.g
+norm_start = dyn_sol.sol_init.g
+norm_end = dyn_sol.sol_fin.g
+name = 'growth_rate'
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+               normalize_start=True,
+               normalize_end=False,
+               label='Growth rate',
+               color=Category18[0])
+ax.set_ylabel('Growth rate')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'growth_rate.'+save_format,format=save_format)
+plt.show()
+
+# Real final consumption
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty = dyn_sol.nominal_final_consumption[i,:]/dyn_sol.price_indices[i,:]
+    norm_start = dyn_sol.sol_init.nominal_final_consumption[i]/dyn_sol.sol_init.price_indices[i]
+    norm_end = dyn_sol.sol_fin.nominal_final_consumption[i]/dyn_sol.sol_fin.price_indices[i]
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel('Real final consumption')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'real_final_consumption.'+save_format,format=save_format)
+plt.show()
+
+# Real profit
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty = (dyn_sol.profit[:,i,1,:]/dyn_sol.price_indices[i,:]).sum(axis=0)
+    norm_start = (dyn_sol.sol_init.profit[:,i,1]*dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
+                  ).sum()
+    norm_end = (dyn_sol.sol_fin.profit[:,i,1]*dyn_sol.sol_fin.w[i]/dyn_sol.sol_fin.price_indices[i]
+                ).sum()
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel('Real profit')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'real_profit.'+save_format,format=save_format)
+plt.show()
+
+# Research Labor
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty =dyn_sol.l_R[i,1,:]
+    norm_start = dyn_sol.sol_init.l_R[i,1]
+    norm_end = dyn_sol.sol_fin.l_R[i,1]
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,                   
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel('Labor allocated to research')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'research_labor.'+save_format,format=save_format)
+plt.show()
+
+# Real wage
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty = dyn_sol.w[i,:]/dyn_sol.price_indices[i,:]
+    norm_start = dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
+    norm_end = dyn_sol.sol_fin.w[i]/dyn_sol.sol_fin.price_indices[i]
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel('Real wage')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'real_wage.'+save_format,format=save_format)
+plt.show()
+
+# PSI CD
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty = dyn_sol.PSI_CD[i,1,:]+dyn_sol.PSI_CD_0[i,1,None]
+    norm_start = dyn_sol.sol_init.PSI_CD[i,1]
+    norm_end = dyn_sol.sol_fin.PSI_CD[i,1]
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel(r'$\Psi^{CD}_n$')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'psi_cd.'+save_format,format=save_format)
+plt.show()
+
+# Interest rate
+fig,ax = plt.subplots()
+for i,country in enumerate(p_baseline.countries):
+    qty = dyn_sol.r[i,:]
+    norm_start = dyn_sol.sol_init.r
+    norm_end = dyn_sol.sol_fin.r
+    add_graph(dyn_sol,qty,norm_start,norm_end,
+                   ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=False,
+                   label=country,
+                   color=Category18[i])
+ax.set_ylabel('Interest rate')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'interest_rate.'+save_format,format=save_format)
+plt.show()
+
+# Different US quantities
+fig,ax = plt.subplots()
+i = 0
+qty = dyn_sol.g
+norm_start = dyn_sol.sol_init.g
+norm_end = dyn_sol.sol_fin.g
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Growth rate',
+               color=Category18[0])
+
+qty = dyn_sol.nominal_final_consumption[i,:]/dyn_sol.price_indices[i,:]
+norm_start = dyn_sol.sol_init.nominal_final_consumption[i]/dyn_sol.sol_init.price_indices[i]
+norm_end = dyn_sol.sol_fin.nominal_final_consumption[i]/dyn_sol.sol_fin.price_indices[i]
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Real final consumption',
+               color=Category18[1])
+
+qty = (dyn_sol.profit[:,i,1,:]/dyn_sol.price_indices[i,:]).sum(axis=0)
+norm_start = (dyn_sol.sol_init.profit[:,i,1]*dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
+              ).sum()
+norm_end = (dyn_sol.sol_fin.profit[:,i,1]*dyn_sol.sol_fin.w[i]/dyn_sol.sol_fin.price_indices[i]
+            ).sum()
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Real profit',
+               color=Category18[2])
+
+qty =dyn_sol.l_R[i,1,:]
+norm_start = dyn_sol.sol_init.l_R[i,1]
+norm_end = dyn_sol.sol_fin.l_R[i,1]
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Research labor',
+               color=Category18[3])
+
+qty = dyn_sol.w[i,:]/dyn_sol.price_indices[i,:]
+norm_start = dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
+norm_end = dyn_sol.sol_fin.w[i]/dyn_sol.sol_fin.price_indices[i]
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Real wage',
+               color=Category18[4])
+
+qty = dyn_sol.PSI_CD[i,1,:]+dyn_sol.PSI_CD_0[i,1,None]
+norm_start = dyn_sol.sol_init.PSI_CD[i,1]
+norm_end = dyn_sol.sol_fin.PSI_CD[i,1]
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label=r'$\Psi^{CD}_n$',
+               color=Category18[5])
+
+qty = dyn_sol.r[i,:]
+norm_start = dyn_sol.sol_init.r
+norm_end = dyn_sol.sol_fin.r
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+                   normalize_start=True,
+                   normalize_end=True,
+               label='Interest rate',
+               color=Category18[6])
+
+ax.set_ylabel('Time evolution of normalized US quantities')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(dyn_save_path+'normalized_us_quantities.'+save_format,format=save_format)
+plt.show()

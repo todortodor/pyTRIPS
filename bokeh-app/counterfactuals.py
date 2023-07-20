@@ -16,7 +16,7 @@ from data_funcs import make_counterfactual_recap
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1010','variation': 'baseline'},
+    {'baseline':'1020','variation': 'baseline'},
     ]
 
 for baseline_dic in baseline_dics:
@@ -72,27 +72,29 @@ for baseline_dic in baseline_dics:
     sol_baseline.scale_P(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
-    # for c in p_baseline.countries:
-    #     make_counterfactual(p_baseline,c,local_path,dynamics=False)
-    #     make_counterfactual_recap(p_baseline, sol_baseline, c,
-    #                                   local_path,recap_path)
+    for c in p_baseline.countries:
+        make_counterfactual(p_baseline,c,local_path,dynamics=False)
+        make_counterfactual_recap(p_baseline, sol_baseline, c,
+                                      local_path,recap_path)
     
-    # make_counterfactual(p_baseline,'World',local_path,dynamics=False)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-    #                               local_path,recap_path)
+    make_counterfactual(p_baseline,'World',local_path,dynamics=False)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+                                  local_path,recap_path)
     
-    # make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
-    #                               local_path,recap_path)
+    make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+                                  local_path,recap_path)
     
-    # make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
-    #                               local_path,recap_path)
+    make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
+                                  local_path,recap_path)
 
-    # make_counterfactual(p_baseline,'Upper_harmonizing',local_path,dynamics=False)
-    # make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
-    #                               local_path,recap_path)
+    make_counterfactual(p_baseline,'Upper_harmonizing',local_path,dynamics=False)
+    make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
+                                  local_path,recap_path)
     
     make_counterfactual(p_baseline,'Upper_uniform_delta',local_path,dynamics=False)
     make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_uniform_delta',
                                   local_path,recap_path)
+    
+#%%

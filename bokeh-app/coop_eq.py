@@ -25,7 +25,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1010','variation': 'baseline'},
+    {'baseline':'1020','variation': 'baseline'},
     ]
 
 lb_delta = 0.01
@@ -84,3 +84,5 @@ for baseline_dic in baseline_dics:
                                      'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+
+#%%
