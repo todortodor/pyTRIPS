@@ -24,65 +24,119 @@ params = {'legend.fontsize': 'x-large',
          'ytick.labelsize':'x-large'}
 pylab.rcParams.update(params)
 
-baseline_dics = [
-    {'baseline':'1020','variation': 'baseline'},
-    ]
+# baseline_dics = [
+#     # {'baseline':'1030','variation': 'baseline'},
+#     # {'baseline':'1030','variation': '99.0'},
+#     # {'baseline':'1030','variation': '99.1'},
+#     # {'baseline':'1030','variation': '99.2'},
+#     # {'baseline':'1030','variation': '99.3'},
+#     # {'baseline':'1030','variation': '99.4'},
+#     # {'baseline':'1030','variation': '99.5'},
+#     # {'baseline':'1030','variation': '99.6'},
+#     # {'baseline':'1030','variation': '99.7'},
+#     # {'baseline':'1030','variation': '99.8'},
+#     # {'baseline':'1030','variation': '99.9'},
+#     # {'baseline':'1030','variation': '99.10'},
+#     # {'baseline':'1030','variation': '99.11'},
+#     # {'baseline':'1030','variation': '99.12'},
+#     # {'baseline':'1030','variation': '99.13'},
+#     {'baseline':'1030','variation': '99.14'},
+#     {'baseline':'1030','variation': '99.15'},
+#     ]
+
+baseline_dics = [{'baseline': '1030', 'variation': '20.0'},
+  {'baseline': '1030', 'variation': '20.1'},
+  {'baseline': '1030', 'variation': '20.2'},
+  {'baseline': '1030', 'variation': '20.3'},
+  {'baseline': '1030', 'variation': '20.4'},
+  {'baseline': '1030', 'variation': '20.5'},
+  {'baseline': '1030', 'variation': '20.6'},
+  {'baseline': '1030', 'variation': '20.7'},
+  {'baseline': '1030', 'variation': '20.8'},
+  {'baseline': '1030', 'variation': '20.9'},
+  {'baseline': '1030', 'variation': '20.10'},
+  {'baseline': '1030', 'variation': '20.11'},
+  {'baseline': '1030', 'variation': '20.12'},
+  {'baseline': '1030', 'variation': '20.13'},
+  {'baseline': '1030', 'variation': '20.14'},
+  {'baseline': '1030', 'variation': '20.15'},
+  {'baseline': '1030', 'variation': '20.16'},
+  {'baseline': '1030', 'variation': '20.17'},
+  {'baseline': '1030', 'variation': '20.18'},
+  {'baseline': '1030', 'variation': '20.19'},
+  {'baseline': '1030', 'variation': '20.20'},
+  {'baseline': '1030', 'variation': '20.21'},
+  {'baseline': '1030', 'variation': '20.22'},
+  {'baseline': '1030', 'variation': '20.23'},
+  {'baseline': '1030', 'variation': '20.24'}]
+
 
 lb_delta = 0.01
 ub_delta = 12
+# ub_delta = 1
 
-for baseline_dic in baseline_dics:    
-    if baseline_dic['variation'] == 'baseline':
-        baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
-    else:
-        baseline_path = \
-            f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
-    
-    assert os.path.exists(baseline_path), 'run doesnt exist'
-    
-    print(baseline_path)
-    p_baseline = parameters()
-    p_baseline.load_run(baseline_path)  
-    
-    for aggregation_method in ['pop_weighted','negishi']:
-        print(aggregation_method)
+import time
+
+if __name__ == '__main__':
+    for baseline_dic in baseline_dics:    
+        if baseline_dic['variation'] == 'baseline':
+            baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
+        else:
+            baseline_path = \
+                f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
         
-        p_opti, sol_opti = find_coop_eq(p_baseline,aggregation_method,
-                         lb_delta=0.01,ub_delta=12,dynamics=False,
-                         solver_options=None,tol=1e-15,
-                         static_eq_deltas = None,custom_weights=None)
+        assert os.path.exists(baseline_path), 'run doesnt exist'
         
-        write = True
-        if write:
-            if not os.path.exists('coop_eq_recaps/deltas.csv'):
-                deltas_df = pd.DataFrame(columns = ['baseline',
-                                                'variation',
-                                                'aggregation_method'] + p_baseline.countries)
-                deltas_df.to_csv('coop_eq_recaps/deltas.csv')
-            deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
-            run = pd.DataFrame(data = [baseline_dic['baseline'],
-                            baseline_dic['variation'],
-                            aggregation_method]+p_opti.delta[...,1].tolist(), 
-                            index = ['baseline',
-                                     'variation',
-                                     'aggregation_method'] + p_baseline.countries).T
-            deltas_df = pd.concat([deltas_df, run],ignore_index=True)
-            deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+        print(baseline_path)
+        p_baseline = parameters()
+        p_baseline.load_run(baseline_path)  
+        
+        for aggregation_method in ['pop_weighted','negishi']:
+        # for aggregation_method in ['negishi']:
+            print(aggregation_method)
             
-            if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
-                cons_eq_welfares = pd.DataFrame(columns = ['baseline',
-                                                'variation',
-                                                'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
+            start = time.perf_counter()
+            
+            p_opti, sol_opti = find_coop_eq(p_baseline,aggregation_method,
+                             lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
+                             solver_options=None,tol=1e-8,
+                             static_eq_deltas = None,custom_weights=None,
+                             # custom_x0 = np.ones(p_baseline.N)*12,
+                             custom_x0 = None,
+                             max_workers=12)
+            
+            print(time.perf_counter() - start)
+            
+            write = True
+            if write:
+                if not os.path.exists('coop_eq_recaps/deltas.csv'):
+                    deltas_df = pd.DataFrame(columns = ['baseline',
+                                                    'variation',
+                                                    'aggregation_method'] + p_baseline.countries)
+                    deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+                deltas_df = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0)
+                run = pd.DataFrame(data = [baseline_dic['baseline'],
+                                baseline_dic['variation'],
+                                aggregation_method]+p_opti.delta[...,1].tolist(), 
+                                index = ['baseline',
+                                         'variation',
+                                         'aggregation_method'] + p_baseline.countries).T
+                deltas_df = pd.concat([deltas_df, run],ignore_index=True)
+                deltas_df.to_csv('coop_eq_recaps/deltas.csv')
+                
+                if not os.path.exists('coop_eq_recaps/cons_eq_welfares.csv'):
+                    cons_eq_welfares = pd.DataFrame(columns = ['baseline',
+                                                    'variation',
+                                                    'aggregation_method'] + p_baseline.countries + ['Equal','Negishi'])
+                    cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
+                cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
+                run = pd.DataFrame(data = [baseline_dic['baseline'],
+                                baseline_dic['variation'],
+                                aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
+                                                                   sol_opti.cons_eq_negishi_welfare_change], 
+                                index = ['baseline',
+                                         'variation',
+                                         'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
+                cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
-            cons_eq_welfares = pd.read_csv('coop_eq_recaps/cons_eq_welfares.csv',index_col=0)
-            run = pd.DataFrame(data = [baseline_dic['baseline'],
-                            baseline_dic['variation'],
-                            aggregation_method]+sol_opti.cons_eq_welfare.tolist()+[sol_opti.cons_eq_pop_average_welfare_change,
-                                                               sol_opti.cons_eq_negishi_welfare_change], 
-                            index = ['baseline',
-                                     'variation',
-                                     'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
-            cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
-            cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
 
-#%%

@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '1010'
+baseline = '1020'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters()
 p_baseline.load_run(baseline_path)
@@ -55,10 +55,14 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 
 m_baseline.compute_moments(sol_baseline, p_baseline)
 
+# moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
+#                       'DOMPATINUS','DOMPATINEU','TE','OUT']
 moments_to_change = ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
-                      'DOMPATINUS','DOMPATINEU','TE','OUT']
+                      'DOMPATINUS','TE','OUT','GPDIFF']
+# moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS',
+#  'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS', 'TE']
 # moments_to_change = ['TE','OUT']
-parameters_to_change = ['gamma','rho']
+parameters_to_change = ['gamma','rho','kappa']
 
 weights_to_change = m_baseline.list_of_moments
 
@@ -99,12 +103,28 @@ make_dirs([parent_moment_result_path,
            parent_param_dropbox_path,
            parent_weight_result_path,
            parent_weight_dropbox_path,
-           sensitivity_path])
+            sensitivity_path
+           ])
 
 #%% make calibration runs for different moment(s) target
 
-dic_runs = dict([(mom, np.linspace(getattr(m_baseline,mom+'_target')*0.5,getattr(m_baseline,mom+'_target')*1.5,11))
+dic_runs = dict([(mom, np.linspace(getattr(m_baseline,mom+'_target')*0.9,getattr(m_baseline,mom+'_target')*1.1,21))
                  for mom in moments_to_change])
+
+# dic_runs = {}
+
+# for mom in moments_to_change:
+#     if mom in ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH','DOMPATINUS','TE','OUT','GPDIFF']:
+#         dic_runs[mom] = np.linspace(
+#             getattr(m_baseline,mom+'_target')*0.9,
+#             getattr(m_baseline,mom+'_target')*1.1,
+#             21
+#             )
+    
+#     if mom in ['RD','RP','SRGDP','SPFLOW']:
+#         dic_runs[mom] = 
+#         for 
+
 
 for k, v in dic_runs.items():
     print(k)
@@ -216,7 +236,7 @@ for k, v in dic_runs.items():
         
 #%% make calibration runs for different parameters
 
-dic_runs = dict([(par, np.linspace(getattr(p_baseline,par)*0.5,getattr(p_baseline,par)*1.5,11))
+dic_runs = dict([(par, np.linspace(getattr(p_baseline,par)*0.9,getattr(p_baseline,par)*1.1,21))
                  for par in parameters_to_change])
 # if 'kappa' in parameters_to_change:
 #     dic_runs['kappa'] = np.linspace(getattr(p_baseline,'kappa')*0.8,getattr(p_baseline,'kappa')*1.2,21)

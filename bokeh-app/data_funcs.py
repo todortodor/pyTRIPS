@@ -360,6 +360,8 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         idx_country = p_baseline.countries.index(country)
     if country == 'Harmonizing' or country == 'Upper_harmonizing':
         idx_country = p_baseline.countries.index(harmonizing_country)
+    if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
+        idx_country = p_baseline.countries.index(country[:3])
     country_path = local_path+country+'/'
     files_in_dir = next(os.walk(country_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
@@ -404,13 +406,27 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
                 )/np.log(
                     p_baseline.delta[idx_country,1]/p_baseline.delta[-1,1]
                     )
-            
+        if country == 'trade_cost_eq_trips_all_countries_all_sectors':
+            recap.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+            recap_dyn.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+        if country == 'trade_cost_eq_trips_all_countries_pat_sectors':
+            recap.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+            recap_dyn.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+        if country == 'trade_cost_all_countries_all_sectors':
+            recap.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+            recap_dyn.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+        if country == 'trade_cost_all_countries_pat_sectors':
+            recap.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
+            recap_dyn.loc[run, 'delt'] = p.tau[0,1,1]/p_baseline.tau[0,1,1]
         if country == 'Uniform_delta':
             recap.loc[run, 'delt'] = p.delta[0,1]
             recap_dyn.loc[run, 'delt'] = p.delta[0,1]
         if country == 'Upper_uniform_delta':
             recap.loc[run, 'delt'] = np.logspace(-2,0,101)[i]
             recap_dyn.loc[run, 'delt'] = np.logspace(-2,0,101)[i]
+        if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
+            recap.loc[run, 'delt'] = p.tau[idx_country,idx_country-1,1]/p_baseline.tau[idx_country,idx_country-1,1]
+            recap_dyn.loc[run, 'delt'] = p.tau[idx_country,idx_country-1,1]/p_baseline.tau[idx_country,idx_country-1,1]
         recap.loc[run, 'growth'] = sol_c.g
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         
@@ -421,6 +437,7 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
                                                     sol_fin = sol_c)
             dyn_sol_c.compute_non_solver_quantities(p)
             recap_dyn.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
+        
             
     if not dynamics:
         recap.to_csv(recap_path+country+'.csv', index=False)

@@ -1,0 +1,52 @@
+,max_sensitivity
+k,UUPCOST
+g_0,GROWTH
+fe,KM
+fo,KM
+zeta,RD_EUR
+nu,KM
+theta,RD_JAP
+delta USA,SINNOVPATUS
+delta EUR,SPFLOW_USA_destination
+delta JAP,SPFLOW_CHN_destination
+delta CHN,SPFLOW_USA_destination
+delta BRA,SPFLOW_USA_destination
+delta IND,SPFLOW_USA_destination
+delta CAN,SPFLOW_USA_destination
+delta KOR,SPFLOW_USA_destination
+delta RUS,SPFLOW_USA_destination
+delta MEX,SPFLOW_USA_destination
+delta ROW,SPFLOW_USA_destination
+eta USA,UUPCOST
+eta EUR,UUPCOST
+eta JAP,RD_JAP
+eta CHN,UUPCOST
+eta BRA,UUPCOST
+eta IND,UUPCOST
+eta CAN,RD_CAN
+eta KOR,RD_KOR
+eta RUS,UUPCOST
+eta MEX,UUPCOST
+eta ROW,UUPCOST
+T USA Non patent^(1/theta),RD_JAP
+T EUR Non patent^(1/theta),RD_JAP
+T JAP Non patent^(1/theta),RD_EUR
+T CHN Non patent^(1/theta),SRGDP_CHN
+T BRA Non patent^(1/theta),SRGDP_BRA
+T IND Non patent^(1/theta),SRGDP_IND
+T CAN Non patent^(1/theta),RD_JAP
+T KOR Non patent^(1/theta),RD_JAP
+T RUS Non patent^(1/theta),SRGDP_RUS
+T MEX Non patent^(1/theta),SRGDP_MEX
+T ROW Non patent^(1/theta),SRGDP_ROW
+T USA Patent^(1/theta),RD_EUR
+T EUR Patent^(1/theta),RD_USA
+T JAP Patent^(1/theta),RD_USA
+T CHN Patent^(1/theta),RD_USA
+T BRA Patent^(1/theta),GROWTH
+T IND Patent^(1/theta),KM
+T CAN Patent^(1/theta),RD_USA
+T KOR Patent^(1/theta),RD_USA
+T RUS Patent^(1/theta),GROWTH
+T MEX Patent^(1/theta),GROWTH
+T ROW Patent^(1/theta),SPFLOW_USA_origin

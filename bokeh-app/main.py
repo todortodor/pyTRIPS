@@ -948,6 +948,61 @@ comments_dic['1020'] = {
     '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
     '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
     '9.2':'9.2:same conditions, 3-year smoothed out data 1992',
+    '10.1':'10.1:2015 calibration with 1992 trade costs',
+    '10.2':'10.2:2015 calibration with doubled trade costs in pat sector',
+    }
+
+comments_dic['1030'] = {
+    "baseline":"baseline : 2015",
+    '3.0':'3.0:full calibration 2015',
+    '3.1':'3.1:full calibration 1992',
+    '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
+    '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
+    '9.2':'9.2:same conditions, 3-year smoothed out data 1992',
+    '10.2':'10.2:2015 calibration with doubled trade costs in pat sector',
+    # "11.0" : "11.0 : 1990 smooth 3y",
+    # "11.1" : "11.1 : 1991 smooth 3y",
+    # "11.2" : "11.2 : 1992 smooth 3y",
+    # "11.3" : "11.3 : 1993 smooth 3y",
+    # "11.4" : "11.4 : 1994 smooth 3y",
+    # "11.5" : "11.5 : 1995 smooth 3y",
+    # "11.6" : "11.6 : 1996 smooth 3y",
+    # "11.7" : "11.7 : 1997 smooth 3y",
+    # "11.8" : "11.8 : 1998 smooth 3y",
+    # "11.9" : "11.9 : 1999 smooth 3y",
+    # "11.10" : "11.10 : 2000 smooth 3y",
+    # "11.11" : "11.11 : 2001 smooth 3y",
+    # "11.12" : "11.12 : 2002 smooth 3y",
+    # "11.13" : "11.13 : 2003 smooth 3y",
+    # "11.14" : "11.14 : 2004 smooth 3y",
+    # "11.15" : "11.15 : 2005 smooth 3y",
+    # "11.16" : "11.16 : 2006 smooth 3y",
+    # "11.17" : "11.17 : 2007 smooth 3y",
+    # "11.18" : "11.18 : 2008 smooth 3y",
+    # "11.19" : "11.19 : 2009 smooth 3y",
+    # "11.20" : "11.20 : 2010 smooth 3y",
+    # "11.21" : "11.21 : 2011 smooth 3y",
+    # "11.22" : "11.22 : 2012 smooth 3y",
+    # "11.23" : "11.23 : 2013 smooth 3y",
+    # "11.24" : "11.24 : 2014 smooth 3y",
+    # "11.25" : "11.25 : 2015 smooth 3y",
+    # "11.26" : "11.26 : 2016 smooth 3y",
+    # "11.27" : "11.27 : 2017 smooth 3y",
+    # "11.28" : "11.28 : 2018 smooth 3y",
+    '99.0':'99.0: Low TO',
+    '99.1':'99.1: High TO',
+    '99.2':'99.2: Low TE',
+    '99.3':'99.3: High TE',
+    '99.4':'99.4: Low KM',
+    '99.5':'99.5: High KM',
+    '99.6':'99.6: Low Sigma',
+    '99.7':'99.7: High Sigma',
+    '99.8':'99.8: Low Kappa',
+    '99.9':'99.9: High Kappa',
+    '99.10':'99.10: Low Growth',
+    '99.11':'99.11: High Growth',
+    '99.12':'99.12: Low rho',
+    '99.13':'99.13: High rho',
     }
 
 baselines_dic_param = {}
@@ -960,8 +1015,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['501','607','608','609','610','614','615','616','617']    
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
-baseline_list = ['1020']    
-baseline_mom = '1020'
+baseline_list = ['1030']    
+baseline_mom = '1030'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -984,7 +1039,8 @@ for baseline_nbr in baseline_list:
         run_list = sorted(run_list, key=section)
     
         for run in run_list:
-            if run not in ['2.1.9','99']:
+            # if run not in ['2.1.9','99'] and not run.startswith('99'):
+            if run in comments_dic[baseline_nbr]:
                 p_to_add,m_to_add,sol_to_add = load(baseline_variations_path+run+'/',
                                                     data_path = data_path,
                                                     dir_path=dir_path)
@@ -1008,7 +1064,7 @@ for baseline_nbr in baseline_list:
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
     files_in_dir = next(os.walk(baseline_variations_path))[1]
     for f in files_in_dir:
-        if f[0].isnumeric() and f not in full_run_list:
+        if f[0].isnumeric() and f not in full_run_list and f in comments_dic[baseline_nbr]:
             full_run_list.append(f)
 full_run_list = ['target','baseline']+sorted(full_run_list,key = section)
 #add empty columns to dfs
@@ -1373,123 +1429,123 @@ print(time.perf_counter() - start)
 
 #%% Time series
 
-baseline_time = '1020'
-# baseline_time_list = ['607','608','609','610','614','615','616','617']    
-# baseline_time_list = ['607','806','903']
-baseline_time_list = ['1020']
-par_time = 'delta'
-par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
-baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
+# baseline_time = '1020'
+# # baseline_time_list = ['607','608','609','610','614','615','616','617']    
+# # baseline_time_list = ['607','806','903']
+# baseline_time_list = ['1020']
+# par_time = 'delta'
+# par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
+# baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
 
 
-years_time = [y for y in range(1990,2019)]
-runs_time = ['1.'+str(i) for i in range(29)]
+# years_time = [y for y in range(1990,2019)]
+# runs_time = ['1.'+str(i) for i in range(29)]
 
-def build_time_series(baseline_time,par_time):
-    # df = baselines_dic_param[baseline_time][par_time].T.reindex(
-    #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-    #     )
-    df = baselines_dic_param[baseline_time][par_time].copy()
-    df = df[runs_time]
-    # print(df)
-    df.columns = years_time
-    df = df.T
-    df = df.reindex(
-        columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-        )
-    df.index.name = 'year'
-    return df
+# def build_time_series(baseline_time,par_time):
+#     # df = baselines_dic_param[baseline_time][par_time].T.reindex(
+#     #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+#     #     )
+#     df = baselines_dic_param[baseline_time][par_time].copy()
+#     df = df[runs_time]
+#     # print(df)
+#     df.columns = years_time
+#     df = df.T
+#     df = df.reindex(
+#         columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+#         )
+#     df.index.name = 'year'
+#     return df
 
-df_par_time = build_time_series(baseline_time,par_time)
-ds_par_time = ColumnDataSource(df_par_time)
-p_par_time = figure(title="Time series", 
-                width = 1500,
-                height = 850,
-            y_axis_label='Parameter',
-            tools = TOOLS)
-hover_tool_par_time = HoverTool()
-hover_tool_par_time.tooltips = [
-    ("Year", "@year"),
-    ("value", "$y")
-    ]
+# df_par_time = build_time_series(baseline_time,par_time)
+# ds_par_time = ColumnDataSource(df_par_time)
+# p_par_time = figure(title="Time series", 
+#                 width = 1500,
+#                 height = 850,
+#             y_axis_label='Parameter',
+#             tools = TOOLS)
+# hover_tool_par_time = HoverTool()
+# hover_tool_par_time.tooltips = [
+#     ("Year", "@year"),
+#     ("value", "$y")
+#     ]
 
-p_par_time.add_tools(hover_tool_par_time)
-colors_par_time = itertools.cycle(Category18)
-lines_par_time = {}
+# p_par_time.add_tools(hover_tool_par_time)
+# colors_par_time = itertools.cycle(Category18)
+# lines_par_time = {}
 
-for col in df_par_time.columns:
-    if col != 'kappa':
-        lines_par_time[col] = p_par_time.line(x='year', y=col, 
-                                        source = ds_par_time, 
-                                        color=next(colors_par_time),
-                                        line_width = 2,
-                                        # legend_label=col
-                                        )
+# for col in df_par_time.columns:
+#     if col != 'kappa':
+#         lines_par_time[col] = p_par_time.line(x='year', y=col, 
+#                                         source = ds_par_time, 
+#                                         color=next(colors_par_time),
+#                                         line_width = 2,
+#                                         # legend_label=col
+#                                         )
 
-legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-                        for col in countries]
-legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
-                    label_text_font_size="10pt",
-                    )
-p_par_time.add_layout(legend_par_time , 'right')
+# legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                         for col in countries]
+# legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
+#                     label_text_font_size="10pt",
+#                     )
+# p_par_time.add_layout(legend_par_time , 'right')
     
-def update_par_time(attrname, old, new):
-    df_par_time = build_time_series(baseline_time_select.value,new)
-    ds_par_time.data = df_par_time
-    if new!='scalars':
-        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-                                for col in countries]
-    else:
-        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-    legend_par_time.items = legend_items_par_time
+# def update_par_time(attrname, old, new):
+#     df_par_time = build_time_series(baseline_time_select.value,new)
+#     ds_par_time.data = df_par_time
+#     if new!='scalars':
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in countries]
+#     else:
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+#     legend_par_time.items = legend_items_par_time
     
-def update_baseline_time(attrname, old, new):
-    df_par_time = build_time_series(new,par_time_select.value)
-    ds_par_time.data = df_par_time
-    if new!='scalars':
-        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-                                for col in countries]
-    else:
-        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-    legend_par_time.items = legend_items_par_time
+# def update_baseline_time(attrname, old, new):
+#     df_par_time = build_time_series(new,par_time_select.value)
+#     ds_par_time.data = df_par_time
+#     if new!='scalars':
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in countries]
+#     else:
+#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+#     legend_par_time.items = legend_items_par_time
 
-controls_par_time = row(baseline_time_select,par_time_select)
+# controls_par_time = row(baseline_time_select,par_time_select)
 
-par_time_select.on_change('value', update_par_time)
-baseline_time_select.on_change('value', update_baseline_time)
+# par_time_select.on_change('value', update_par_time)
+# baseline_time_select.on_change('value', update_baseline_time)
 
-par_time_report = column(controls_par_time, p_par_time)    
+# par_time_report = column(controls_par_time, p_par_time)    
 
-# explication_calib_params = Div(text=
-#                           "607 variations : <br> \
-#                               calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
-#                                 targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
-#                                     TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
-#                           608 variations : <br> \
-#                               calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
-#                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-#                                     SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-#                           609 variations :<br> \
-#                               calibrated parameters : eta,T,delta <br> \
-#                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-#                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-#                           610 variations :<br> \
-#                               calibrated parameters : eta,T,delta <br> \
-#                                 targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
-#                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-#                           ")
+# # explication_calib_params = Div(text=
+# #                           "607 variations : <br> \
+# #                               calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
+# #                                 targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
+# #                                     TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
+# #                           608 variations : <br> \
+# #                               calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
+# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           609 variations :<br> \
+# #                               calibrated parameters : eta,T,delta <br> \
+# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           610 variations :<br> \
+# #                               calibrated parameters : eta,T,delta <br> \
+# #                                 targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
+# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+# #                           ")
 
-#!!! second_panel
-# second_panel = row(par_time_report, explication_calib_params)
-second_panel = row(par_time_report)
+# #!!! second_panel
+# # second_panel = row(par_time_report, explication_calib_params)
+# second_panel = row(par_time_report)
 
 
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '1020'
+baseline_cf = '1030'
 country_cf = 'USA'
 
 def section_end(s):
@@ -1497,7 +1553,7 @@ def section_end(s):
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1020') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1030') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -1694,14 +1750,30 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1020'
+baseline_dyn_cf = '1030'
 country_dyn_cf = 'USA'
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1020'])
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1030',
+                                                                                  '1030_99.0',
+                                                                                  '1030_99.1',
+                                                                                  '1030_99.2',
+                                                                                  '1030_99.3',
+                                                                                  '1030_99.4',
+                                                                                  '1030_99.5',
+                                                                                  '1030_99.6',
+                                                                                  '1030_99.7',
+                                                                                  '1030_99.8',
+                                                                                  '1030_99.9',
+                                                                                  '1030_99.10',
+                                                                                  '1030_99.11',
+                                                                                  '1030_99.12',
+                                                                                  '1030_99.13'
+                                                                                  ])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
-                            options=countries+['World','Harmonizing','Upper_harmonizing',
-                                               'Uniform_delta','Upper_uniform_delta'])
+                            options=countries+['World'])
+                            # options=countries+['World','Harmonizing','Upper_harmonizing',
+                            #                    'Uniform_delta','Upper_uniform_delta'])
 
 def get_data_dyn_cf(baseline,country):
     df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
@@ -1856,206 +1928,208 @@ third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '1020'
-variation_dyn_nash_coop = 'baseline'
-equilibrium_type ='Nash'
+# baseline_dyn_nash_coop = '1030'
+# variation_dyn_nash_coop = 'baseline'
+# equilibrium_type ='Nash'
 
-baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
-    # '607','501'
-    '1020'
-    ])
-dic_of_possible_variations_dyn_nash_coop = {
-    # '1003':['baseline','0.4'],
-    '1020':['baseline'],
-    # '607':['baseline'],
-    # '501':['1.0','2.0']
-    }
-variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
-                            title='Variation', 
-                            options=dic_of_possible_variations_dyn_nash_coop[baseline_dyn_nash_coop])
-equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
+# baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
+#     # '607','501'
+#     '1030'
+#     ])
+# dic_of_possible_variations_dyn_nash_coop = {
+#     # '1003':['baseline','0.4'],
+#     '1030':['baseline','99.0','99.1','99.2','99.3','99.4','99.5','99.6','99.7',     
+#             '99.8',     '99.9',     '99.10',     '99.11',
+#             '99.12',     '99.13'],
+#     # '607':['baseline'],
+#     # '501':['1.0','2.0']
+#     }
+# variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
+#                             title='Variation', 
+#                             options=dic_of_possible_variations_dyn_nash_coop[baseline_dyn_nash_coop])
+# equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
 
-def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
-    if equilibrium_type == 'Nash':
-        deltas = pd.read_csv(nash_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            ][countries].values.squeeze()
+# def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
+#     if equilibrium_type == 'Nash':
+#         deltas = pd.read_csv(nash_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             ][countries].values.squeeze()
     
-    if equilibrium_type == 'Coop eq':
-        deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            & (deltas.aggregation_method == 'pop_weighted')
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            & (welfares.aggregation_method == 'pop_weighted')
-            ][countries].values.squeeze()
+#     if equilibrium_type == 'Coop eq':
+#         deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             & (deltas.aggregation_method == 'pop_weighted')
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             & (welfares.aggregation_method == 'pop_weighted')
+#             ][countries].values.squeeze()
     
-    if equilibrium_type == 'Coop negishi':
-        deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            & (deltas.aggregation_method == 'negishi')
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            & (welfares.aggregation_method == 'negishi')
-            ][countries].values.squeeze()
+#     if equilibrium_type == 'Coop negishi':
+#         deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             & (deltas.aggregation_method == 'negishi')
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             & (welfares.aggregation_method == 'negishi')
+#             ][countries].values.squeeze()
         
-    df = pd.DataFrame(index = pd.Index(countries,name='country'))
-    df['deltas'] = eq_deltas
-    df['welfares'] = eq_welfares
-    df['colors'] = Category18[:len(df)]
+#     df = pd.DataFrame(index = pd.Index(countries,name='country'))
+#     df['deltas'] = eq_deltas
+#     df['welfares'] = eq_welfares
+#     df['colors'] = Category18[:len(df)]
     
-    return df
+#     return df
 
-def get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
-    if variation_dyn_nash_coop == 'baseline':
-        temp_run = baseline_dyn_nash_coop
-    else:
-        temp_run = baseline_dyn_nash_coop+'_'+variation_dyn_nash_coop
+# def get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
+#     if variation_dyn_nash_coop == 'baseline':
+#         temp_run = baseline_dyn_nash_coop
+#     else:
+#         temp_run = baseline_dyn_nash_coop+'_'+variation_dyn_nash_coop
     
-    if equilibrium_type == 'Nash':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_nash_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Nash':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_nash_eq/baseline_{temp_run}/all_countries.csv')
     
-    if equilibrium_type == 'Coop eq':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_equal_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Coop eq':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_equal_eq/baseline_{temp_run}/all_countries.csv')
     
-    if equilibrium_type == 'Coop negishi':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_negishi_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Coop negishi':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_negishi_eq/baseline_{temp_run}/all_countries.csv')
 
-    return dyn_deviation_recap
+#     return dyn_deviation_recap
   
-ds_dyn_eq = ColumnDataSource(get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
-# ds_dyn_eq_dev = ColumnDataSource(get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
+# ds_dyn_eq = ColumnDataSource(get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
+# # ds_dyn_eq_dev = ColumnDataSource(get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
 
-colors_dyn_eq_dev = itertools.cycle(Category18)
+# colors_dyn_eq_dev = itertools.cycle(Category18)
 
-p_dyn_eq_dev = figure(title="With transitional dynamics Equilibria and unilateral deviations from it", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Delta',
-                y_axis_label='Normalized Consumption equivalent welfare change',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_dyn_eq_dev = figure(title="With transitional dynamics Equilibria and unilateral deviations from it", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare change',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-# for country_eq_dev in countries:
-#     color = next(colors_dyn_eq_dev)
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_welfare', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       legend_label=country_eq_dev+'_welfare')
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_world_negishi', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       line_dash='dashed',
-#                       legend_label=country_eq_dev+'_world_negishi')
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_world_equal', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       line_dash='dotted',
-#                       legend_label=country_eq_dev+'_world_equal')
+# # for country_eq_dev in countries:
+# #     color = next(colors_dyn_eq_dev)
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_welfare', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       legend_label=country_eq_dev+'_welfare')
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_world_negishi', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       line_dash='dashed',
+# #                       legend_label=country_eq_dev+'_world_negishi')
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_world_equal', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       line_dash='dotted',
+# #                       legend_label=country_eq_dev+'_world_equal')
 
-p_dyn_eq_dev.circle(x = 'deltas', y = 'welfares', source = ds_dyn_eq, size=4,color = 'colors')
+# p_dyn_eq_dev.circle(x = 'deltas', y = 'welfares', source = ds_dyn_eq, size=4,color = 'colors')
 
-# p_dyn_eq_dev.legend.click_policy="hide"
-# p_dyn_eq_dev.legend.label_text_font_size = '8pt'
-# p_dyn_eq_dev.add_layout(p_dyn_eq_dev.legend[0], 'right')
+# # p_dyn_eq_dev.legend.click_policy="hide"
+# # p_dyn_eq_dev.legend.label_text_font_size = '8pt'
+# # p_dyn_eq_dev.add_layout(p_dyn_eq_dev.legend[0], 'right')
 
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("delta", "$x"),
-    ("welfare", "$y")
-    ] 
-p_dyn_eq_dev.add_tools(hover_tool_eq)
-
-
-labels_dyn_eq_dev = LabelSet(x='deltas', y='welfares', text='country',
-              x_offset=2, y_offset=2, source=ds_dyn_eq, text_font_size="7pt")
-
-p_dyn_eq_dev.add_layout(labels_dyn_eq_dev)
+# hover_tool_eq = HoverTool()
+# hover_tool_eq.tooltips = [
+#     ("delta", "$x"),
+#     ("welfare", "$y")
+#     ] 
+# p_dyn_eq_dev.add_tools(hover_tool_eq)
 
 
-def update_baseline_dyn_nash(attrname, old, new):
-    variation_dyn_nash_coop_select.value = dic_of_possible_variations_dyn_nash_coop[new][0]
-    variation_dyn_nash_coop_select.options = dic_of_possible_variations_dyn_nash_coop[new]
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(new,
-                                                variation_dyn_nash_coop_select.value,
-                                                equilibrium_type_select.value)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(new,
-    #                                               variation_dyn_nash_coop_select.value,
-    #                                               equilibrium_type_select.value)
+# labels_dyn_eq_dev = LabelSet(x='deltas', y='welfares', text='country',
+#               x_offset=2, y_offset=2, source=ds_dyn_eq, text_font_size="7pt")
+
+# p_dyn_eq_dev.add_layout(labels_dyn_eq_dev)
+
+
+# def update_baseline_dyn_nash(attrname, old, new):
+#     variation_dyn_nash_coop_select.value = dic_of_possible_variations_dyn_nash_coop[new][0]
+#     variation_dyn_nash_coop_select.options = dic_of_possible_variations_dyn_nash_coop[new]
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(new,
+#                                                 variation_dyn_nash_coop_select.value,
+#                                                 equilibrium_type_select.value)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(new,
+#     #                                               variation_dyn_nash_coop_select.value,
+#     #                                               equilibrium_type_select.value)
     
-def update_variation_dyn_nash_coop(attrname, old, new):
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
-                                                new,
-                                                equilibrium_type_select.value)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
-    #                                               new,
-    #                                               equilibrium_type_select.value)
+# def update_variation_dyn_nash_coop(attrname, old, new):
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
+#                                                 new,
+#                                                 equilibrium_type_select.value)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
+#     #                                               new,
+#     #                                               equilibrium_type_select.value)
     
-def update_equilibrium_type(attrname, old, new):
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
-                                                variation_dyn_nash_coop_select.value,
-                                                new)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
-    #                                               variation_dyn_nash_coop_select.value,
-    #                                               new)
+# def update_equilibrium_type(attrname, old, new):
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
+#                                                 variation_dyn_nash_coop_select.value,
+#                                                 new)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
+#     #                                               variation_dyn_nash_coop_select.value,
+#     #                                               new)
 
-controls_dyn_eq_dev = row(baseline_dyn_nash_coop_select, variation_dyn_nash_coop_select, equilibrium_type_select)
+# controls_dyn_eq_dev = row(baseline_dyn_nash_coop_select, variation_dyn_nash_coop_select, equilibrium_type_select)
 
-baseline_dyn_nash_coop_select.on_change('value', update_baseline_dyn_nash)
-variation_dyn_nash_coop_select.on_change('value', update_variation_dyn_nash_coop)
-equilibrium_type_select.on_change('value', update_equilibrium_type)
+# baseline_dyn_nash_coop_select.on_change('value', update_baseline_dyn_nash)
+# variation_dyn_nash_coop_select.on_change('value', update_variation_dyn_nash_coop)
+# equilibrium_type_select.on_change('value', update_equilibrium_type)
 
-dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
+# dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 
 
 #%% Nash / coop equilibrium
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1020'
+baseline_nash_coop = '1030'
 
 dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
 def get_data_nash_coop(baseline_nash_number):
 
-    welf_coop = pd.read_csv(coop_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+    welf_coop = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    welf_nash = pd.read_csv(nash_eq_path+'cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+    welf_nash = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation'],keep='last').sort_values(['baseline','variation'])
         
     welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
@@ -2082,7 +2156,7 @@ baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline',
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
                                     # options=['802','803','804','805','806'])
-                                    options=['1020'])
+                                    options=['1030'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
@@ -2096,7 +2170,7 @@ colors_nash = itertools.cycle(Category18)
 
 x_range_nash = welf_nash['run'].to_list()
 
-p_eq = figure(title="Static cooperative and Nash equilibrium", 
+p_eq = figure(title="Cooperative and Nash equilibrium", 
                 width = 1200,
                 height = 900,
                 x_range = x_range_nash,
@@ -2134,11 +2208,11 @@ columns = [
         TableColumn(field="comments", title="Description"),
     ]
 
-explication = Div(text="In the legend, first is the quantity displayed and last\
-                  is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
-                      - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
-                      - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
-                          ")
+# explication = Div(text="In the legend, first is the quantity displayed and last\
+#                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
+#                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
+#                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
+#                           ")
 
 data_table_welfares = pd.concat([welf_nash.set_index('run'),
               welf_negishi.set_index('run'),
@@ -2156,9 +2230,9 @@ table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_
                           )
 
 def get_delta_nash_coop(baseline_number):
-    deltas_coop = pd.read_csv(coop_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+    deltas_coop = pd.read_csv(coop_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    deltas_nash = pd.read_csv(nash_eq_path+'deltas.csv',index_col=0).drop_duplicates(['baseline', 
+    deltas_nash = pd.read_csv(nash_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
                                 'variation'],keep='last').sort_values(['baseline','variation'])
     
     deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
@@ -2191,7 +2265,7 @@ colors_deltas_negishi = itertools.cycle(Category18)
 colors_deltas_pop_weighted = itertools.cycle(Category18)
 colors_deltas_nash = itertools.cycle(Category18)
 
-p_deltas_eq = figure(title="Static cooperative and Nash equilibrium", 
+p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
                 width = 1200,
                 height = 900,
                 x_range = x_range_nash,
@@ -2264,419 +2338,420 @@ nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_we
 nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
 
 #!!! fourth panel
-fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
+fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
+# fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
 # fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 
 #%% dynamic solver
 
-baseline_dyn = '1020'
-country_dyn = 'USA'
-sector_dyn = 'Patent'
+# baseline_dyn = '1020'
+# country_dyn = 'USA'
+# sector_dyn = 'Patent'
 
-baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
-                              # options=['501','604','607','608','609','610']
-                              options=['1020']
-                              )
+# baseline_dyn_select = Select(value=baseline_dyn, title='Baseline', 
+#                               # options=['501','604','607','608','609','610']
+#                               options=['1020']
+#                               )
 
-baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
-files_in_dir = next(os.walk(baseline_dyn_path))[1]
-run_list = [f for f in files_in_dir if f[0].isnumeric()]
-run_list = sorted(run_list, key=section)
-variation_dyn_select = Select(value='baseline', title='Variation', 
-                              options=['baseline']+run_list)
+# baseline_dyn_path = results_path+'baseline_'+baseline_dyn+'_variations/'
+# files_in_dir = next(os.walk(baseline_dyn_path))[1]
+# run_list = [f for f in files_in_dir if f[0].isnumeric()]
+# run_list = sorted(run_list, key=section)
+# variation_dyn_select = Select(value='baseline', title='Variation', 
+#                               options=['baseline']+run_list)
 
-def update_list_of_runs_dyn(attr, old, new):
-    baseline_dyn_path = results_path+'baseline_'+new+'_variations/'
-    files_in_dir = next(os.walk(baseline_dyn_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list = sorted(run_list, key=section)
-    variation_dyn_select.options = ['baseline']+run_list
+# def update_list_of_runs_dyn(attr, old, new):
+#     baseline_dyn_path = results_path+'baseline_'+new+'_variations/'
+#     files_in_dir = next(os.walk(baseline_dyn_path))[1]
+#     run_list = [f for f in files_in_dir if f[0].isnumeric()]
+#     run_list = sorted(run_list, key=section)
+#     variation_dyn_select.options = ['baseline']+run_list
 
-country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
-                                                                                    'IND','CAN','KOR','RUS','AUS',
-                                                                                    'MEX', 'ROW','World'])
-slider_dyn = Slider(start=-1, end=0.5, value=0, step=0.01, title="Log change of delta")    
+# country_dyn_select = Select(value='USA', title='Country delta to change', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
+#                                                                                     'IND','CAN','KOR','RUS','AUS',
+#                                                                                     'MEX', 'ROW','World'])
+# slider_dyn = Slider(start=-1, end=0.5, value=0, step=0.01, title="Log change of delta")    
 
-state_computation = Div(text="Done")
+# state_computation = Div(text="Done")
 
-def make_time_evolution_df(dyn_sol):
-    qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
-    df = pd.DataFrame(index = pd.Index(qties,name='Quantity'), 
-                      columns = ['Initial jump mean','Initial jump median',
-                                  'Typical time of evolution\nmean','Typical time of evolution\nmedian'])
-    for qty in qties:
-        a =  dyn_sol.get_jump(qty)
-        df.loc[qty,'Initial jump mean'] = a[0].round(2)
-        df.loc[qty,'Initial jump median'] = a[1].round(2)
-        b = dyn_sol.get_typical_time_evolution(qty)
-        df.loc[qty,'Typical time of evolution\nmean'] = b[0].round(2)
-        df.loc[qty,'Typical time of evolution\nmedian'] = b[1].round(2)
-    return df
+# def make_time_evolution_df(dyn_sol):
+#     qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
+#     df = pd.DataFrame(index = pd.Index(qties,name='Quantity'), 
+#                       columns = ['Initial jump mean','Initial jump median',
+#                                   'Typical time of evolution\nmean','Typical time of evolution\nmedian'])
+#     for qty in qties:
+#         a =  dyn_sol.get_jump(qty)
+#         df.loc[qty,'Initial jump mean'] = a[0].round(2)
+#         df.loc[qty,'Initial jump median'] = a[1].round(2)
+#         b = dyn_sol.get_typical_time_evolution(qty)
+#         df.loc[qty,'Typical time of evolution\nmean'] = b[0].round(2)
+#         df.loc[qty,'Typical time of evolution\nmedian'] = b[1].round(2)
+#     return df
 
-def fit_and_eval(vec,dyn_sol):
-    fit = np.polyval(np.polyfit(dyn_sol.t_real,
-                vec,
-                dyn_sol.Nt),np.linspace(0,dyn_sol.t_inf,2001))
-    return fit
+# def fit_and_eval(vec,dyn_sol):
+#     fit = np.polyval(np.polyfit(dyn_sol.t_real,
+#                 vec,
+#                 dyn_sol.Nt),np.linspace(0,dyn_sol.t_inf,2001))
+#     return fit
 
-def create_column_data_source_from_dyn_sol(dyn_sol):
-    data_dyn = {}
-    data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
-    for agg_qty in ['g']:
-        data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
-    for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','ratios_of_consumption_levels_change_not_normalized',
-                  'integrand_welfare','second_term_sum_welfare','integral_welfare']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            if c_s_qty in ['PSI_CD']:
-                data_dyn[c_s_qty+c] = fit_and_eval(
-                    (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel(),dyn_sol)
-            else:
-                data_dyn[c_s_qty+c] = fit_and_eval(
-                    getattr(dyn_sol,c_s_qty)[i,1,:].ravel(),dyn_sol)
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
-            temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
-            temp_sum_i = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=1)
-        else:
-            temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
-            temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn['sum_n_'+c_c_s_qty+c] = fit_and_eval(temp_sum_n[i,1,:].ravel(),dyn_sol)
-            data_dyn['sum_i_'+c_c_s_qty+c] = fit_and_eval(temp_sum_i[i,1,:].ravel(),dyn_sol)
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn['real_final_consumption'+c] = fit_and_eval((getattr(dyn_sol,'nominal_final_consumption')[i,:]
-                                                /getattr(dyn_sol,'price_indices')[i,:]).ravel(),dyn_sol)
+# def create_column_data_source_from_dyn_sol(dyn_sol):
+#     data_dyn = {}
+#     data_dyn['time'] = np.linspace(0,dyn_sol.t_inf,2001)
+#     for agg_qty in ['g']:
+#         data_dyn[agg_qty] = fit_and_eval(getattr(dyn_sol,agg_qty),dyn_sol)
+#     for c_qty in ['Z','r','price_indices','w','nominal_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+#                   'integrand_welfare','second_term_sum_welfare','integral_welfare']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn[c_qty+c] = fit_and_eval(getattr(dyn_sol,c_qty)[i,:].ravel(),dyn_sol)
+#     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             if c_s_qty in ['PSI_CD']:
+#                 data_dyn[c_s_qty+c] = fit_and_eval(
+#                     (getattr(dyn_sol,c_s_qty)+getattr(dyn_sol,c_s_qty+'_0')[...,None])[i,1,:].ravel(),dyn_sol)
+#             else:
+#                 data_dyn[c_s_qty+c] = fit_and_eval(
+#                     getattr(dyn_sol,c_s_qty)[i,1,:].ravel(),dyn_sol)
+#     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+#         if c_c_s_qty in ['PSI_MPD','PSI_MPND','PSI_MNP']:
+#             temp_sum_n = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=0)
+#             temp_sum_i = (getattr(dyn_sol,c_c_s_qty)+getattr(dyn_sol,c_c_s_qty+'_0')[...,None]).sum(axis=1)
+#         else:
+#             temp_sum_n = getattr(dyn_sol,c_c_s_qty).sum(axis=0)
+#             temp_sum_i = getattr(dyn_sol,c_c_s_qty).sum(axis=1)
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn['sum_n_'+c_c_s_qty+c] = fit_and_eval(temp_sum_n[i,1,:].ravel(),dyn_sol)
+#             data_dyn['sum_i_'+c_c_s_qty+c] = fit_and_eval(temp_sum_i[i,1,:].ravel(),dyn_sol)
+#     for i,c in enumerate(dyn_sol.countries):
+#         data_dyn['real_final_consumption'+c] = fit_and_eval((getattr(dyn_sol,'nominal_final_consumption')[i,:]
+#                                                 /getattr(dyn_sol,'price_indices')[i,:]).ravel(),dyn_sol)
     
-    data_dyn_init = {}
-    data_dyn_init['time'] = [0]
-    for agg_qty in ['g']:
-        data_dyn_init[agg_qty] = [getattr(dyn_sol.sol_init,agg_qty)]
-    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init[c_qty+c] = [getattr(dyn_sol.sol_init,c_qty)[i]]
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty == 'profit':
-            temp_sum_n = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=0)[:,1]
-            temp_sum_i = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=1)[:,1]
-        else:
-            temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
-            temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
-            data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
-        data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
-        data_dyn_init['integrand_welfare'+c] = [None]
-        data_dyn_init['integral_welfare'+c] = [None]
-        data_dyn_init['second_term_sum_welfare'+c] = [None]
-        data_dyn_init['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
+#     data_dyn_init = {}
+#     data_dyn_init['time'] = [0]
+#     for agg_qty in ['g']:
+#         data_dyn_init[agg_qty] = [getattr(dyn_sol.sol_init,agg_qty)]
+#     for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_init[c_qty+c] = [getattr(dyn_sol.sol_init,c_qty)[i]]
+#     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_init[c_s_qty+c] = [getattr(dyn_sol.sol_init,c_s_qty)[i,1]]
+#     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+#         if c_c_s_qty == 'profit':
+#             temp_sum_n = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=0)[:,1]
+#             temp_sum_i = (getattr(dyn_sol.sol_init,c_c_s_qty)*getattr(dyn_sol.sol_init,'w')[None,:,None]).sum(axis=1)[:,1]
+#         else:
+#             temp_sum_n = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=0)[:,1]
+#             temp_sum_i = getattr(dyn_sol.sol_init,c_c_s_qty).sum(axis=1)[:,1]
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_init['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+#             data_dyn_init['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+#     for i,c in enumerate(dyn_sol.countries):
+#         data_dyn_init['real_final_consumption'+c] = [getattr(dyn_sol.sol_init,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_init,'price_indices')[i]]
+#         data_dyn_init['r'+c] = [getattr(dyn_sol.sol_init,'r')]
+#         data_dyn_init['integrand_welfare'+c] = [None]
+#         data_dyn_init['integral_welfare'+c] = [None]
+#         data_dyn_init['second_term_sum_welfare'+c] = [None]
+#         data_dyn_init['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
         
-    data_dyn_fin = {}
-    data_dyn_fin['time'] = [dyn_sol.t_inf]
-    for agg_qty in ['g']:
-        data_dyn_fin[agg_qty] = [getattr(dyn_sol.sol_fin,agg_qty)]
-    for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin[c_qty+c] = [getattr(dyn_sol.sol_fin,c_qty)[i]]
-    for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
-    for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
-        if c_c_s_qty == 'profit':
-            temp_sum_n = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=0)[:,1]
-            temp_sum_i = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=1)[:,1]
-        else:
-            temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
-            temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
-        for i,c in enumerate(dyn_sol.countries):
-            data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
-            data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
-    for i,c in enumerate(dyn_sol.countries):
-        data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
-        data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
-        data_dyn_fin['integrand_welfare'+c] = [None]
-        data_dyn_fin['integral_welfare'+c] = [None]
-        data_dyn_fin['second_term_sum_welfare'+c] = [None]
-        data_dyn_fin['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
+#     data_dyn_fin = {}
+#     data_dyn_fin['time'] = [dyn_sol.t_inf]
+#     for agg_qty in ['g']:
+#         data_dyn_fin[agg_qty] = [getattr(dyn_sol.sol_fin,agg_qty)]
+#     for c_qty in ['Z','price_indices','w','nominal_final_consumption']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_fin[c_qty+c] = [getattr(dyn_sol.sol_fin,c_qty)[i]]
+#     for c_s_qty in ['l_R','psi_o_star','PSI_CD','l_Ao']:
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_fin[c_s_qty+c] = [getattr(dyn_sol.sol_fin,c_s_qty)[i,1]]
+#     for c_c_s_qty in ['l_Ae','PSI_MPD','PSI_MPND','PSI_MNP','profit']:
+#         if c_c_s_qty == 'profit':
+#             temp_sum_n = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=0)[:,1]
+#             temp_sum_i = (getattr(dyn_sol.sol_fin,c_c_s_qty)*getattr(dyn_sol.sol_fin,'w')[None,:,None]).sum(axis=1)[:,1]
+#         else:
+#             temp_sum_n = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=0)[:,1]
+#             temp_sum_i = getattr(dyn_sol.sol_fin,c_c_s_qty).sum(axis=1)[:,1]
+#         for i,c in enumerate(dyn_sol.countries):
+#             data_dyn_fin['sum_n_'+c_c_s_qty+c] = [temp_sum_n[i]]
+#             data_dyn_fin['sum_i_'+c_c_s_qty+c] = [temp_sum_i[i]]
+#     for i,c in enumerate(dyn_sol.countries):
+#         data_dyn_fin['real_final_consumption'+c] = [getattr(dyn_sol.sol_fin,'nominal_final_consumption')[i]/getattr(dyn_sol.sol_fin,'price_indices')[i]]
+#         data_dyn_fin['r'+c] = [getattr(dyn_sol.sol_fin,'r')]
+#         data_dyn_fin['integrand_welfare'+c] = [None]
+#         data_dyn_fin['integral_welfare'+c] = [None]
+#         data_dyn_fin['second_term_sum_welfare'+c] = [None]
+#         data_dyn_fin['ratios_of_consumption_levels_change_not_normalized'+c] = [None]
         
-    return data_dyn, data_dyn_init, data_dyn_fin
+#     return data_dyn, data_dyn_init, data_dyn_fin
 
-def compute_dyn(event):
-    if variation_dyn_select.value == 'baseline':
-        path = results_path+baseline_dyn_select.value+'/'
-    else:
-        path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-    p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
-                                  dir_path=dir_path)
-    p_dyn_cf = p_dyn.copy()
-    if country_dyn_select.value != 'World':
-        p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
-    else:
-        p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*(10**slider_dyn.value)
-    start = time.perf_counter()
-    dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
-                                          t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
-    end = time.perf_counter()
-    if country_dyn_select.value == 'World':
-        message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
-    else:
-        message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
-    state_computation.text = message
-    temp = create_column_data_source_from_dyn_sol(dyn_sol)
-    ds_dyn.data = temp[0]
-    ds_dyn_init.data = temp[1]
-    ds_dyn_fin.data = temp[2]
-    source_table_time_evol.data = make_time_evolution_df(dyn_sol)
+# def compute_dyn(event):
+#     if variation_dyn_select.value == 'baseline':
+#         path = results_path+baseline_dyn_select.value+'/'
+#     else:
+#         path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+#     p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+#                                   dir_path=dir_path)
+#     p_dyn_cf = p_dyn.copy()
+#     if country_dyn_select.value != 'World':
+#         p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*(10**slider_dyn.value)
+#     else:
+#         p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*(10**slider_dyn.value)
+#     start = time.perf_counter()
+#     dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+#                                           t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+#     end = time.perf_counter()
+#     if country_dyn_select.value == 'World':
+#         message = 'Done, computation for all deltas multiplied by a factor '+str(10**slider_dyn.value)+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+#     else:
+#         message = 'Done, computation for delta '+country_dyn_select.value+' = '+str(p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1])+'<br>Convergence : '+str(convergence)+'<br>Computation time : '+str(end-start)
+#     state_computation.text = message
+#     temp = create_column_data_source_from_dyn_sol(dyn_sol)
+#     ds_dyn.data = temp[0]
+#     ds_dyn_init.data = temp[1]
+#     ds_dyn_fin.data = temp[2]
+#     source_table_time_evol.data = make_time_evolution_df(dyn_sol)
     
-if variation_dyn_select.value == 'baseline':
-    path = results_path+baseline_dyn_select.value+'/'
-else:
-    path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
-p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
-                              dir_path=dir_path)
-p_dyn_cf = p_dyn.copy()
-if country_dyn_select.value != 'World':
-    p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
-else:
-    p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
-dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
-                                      t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
+# if variation_dyn_select.value == 'baseline':
+#     path = results_path+baseline_dyn_select.value+'/'
+# else:
+#     path = results_path+'baseline_'+baseline_dyn_select.value+'_variations/'+variation_dyn_select.value+'/'
+# p_dyn, m_dyn, sol_dyn = load(path, data_path=data_path,
+#                               dir_path=dir_path)
+# p_dyn_cf = p_dyn.copy()
+# if country_dyn_select.value != 'World':
+#     p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1] = p_dyn_cf.delta[p_dyn.countries.index(country_dyn_select.value),1]*10**slider_dyn.value
+# else:
+#     p_dyn_cf.delta[:,1] = p_dyn_cf.delta[:,1]*slider_dyn.value
+# dyn_sol, sol_c, convergence = rough_dyn_fixed_point_solver(p_dyn_cf, sol_dyn, sol_fin = None,Nt=25,
+#                                       t_inf=500, x0=None, tol = 1e-14, max_count=1e6, safe_convergence=0.1,damping=50, damping_post_acceleration=10)
 
-source_table_time_evol = ColumnDataSource(make_time_evolution_df(dyn_sol))
-columns_time_evol = [TableColumn(field=col) for col in 
-                      ['Quantity','Initial jump mean','Initial jump median',
-                                'Typical time of evolution\nmean','Typical time of evolution\nmedian']]
-table_widget_time_evol = DataTable(source=source_table_time_evol, columns=columns_time_evol, width=600, height=750)
+# source_table_time_evol = ColumnDataSource(make_time_evolution_df(dyn_sol))
+# columns_time_evol = [TableColumn(field=col) for col in 
+#                       ['Quantity','Initial jump mean','Initial jump median',
+#                                 'Typical time of evolution\nmean','Typical time of evolution\nmedian']]
+# table_widget_time_evol = DataTable(source=source_table_time_evol, columns=columns_time_evol, width=600, height=750)
 
-button_compute_dyn = Button(label="Compute",align='end')
-button_compute_dyn.on_event(ButtonClick, compute_dyn)
+# button_compute_dyn = Button(label="Compute",align='end')
+# button_compute_dyn.on_event(ButtonClick, compute_dyn)
 
-qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
-                                                    'real_final_consumption','ratios_of_consumption_levels_change_not_normalized',
-                                                    'l_R','l_Ao','psi_o_star',
-                                                    'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
-                                                    'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
-                                                    'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
-country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
-                                                                                    'IND','CAN','KOR','RUS','AUS',
-                                                                                    'MEX', 'ROW'])
+# qty_dyn_display_select = Select(value='g', title='Quantity', options=['g','Z','r','price_indices','w','nominal_final_consumption',
+#                                                     'real_final_consumption','ratios_of_consumption_levels_change_not_normalized',
+#                                                     'l_R','l_Ao','psi_o_star',
+#                                                     'PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
+#                                                     'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+#                                                     'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit'])
+# country_dyn_display_select = Select(value='USA', title='Country', options=['USA', 'EUR', 'JAP', 'CHN', 'BRA', 
+#                                                                                     'IND','CAN','KOR','RUS','AUS',
+#                                                                                     'MEX', 'ROW'])
 
-temp = create_column_data_source_from_dyn_sol(dyn_sol)
-data_dyn_default = temp[0]
-data_dyn_init_default = temp[1]
-data_dyn_fin_default = temp[2]
-ds_dyn = ColumnDataSource(data_dyn_default)
-ds_dyn_init = ColumnDataSource(data_dyn_init_default)
-ds_dyn_fin = ColumnDataSource(data_dyn_fin_default)
-up_max = max([max(ds_dyn.data['g']), max(ds_dyn_fin.data['g']), max(ds_dyn_init.data['g'])])
-down_min = min([min(ds_dyn.data['g']), min(ds_dyn_fin.data['g']), min(ds_dyn_init.data['g'])])
-delta = up_max-down_min
-if delta == 0:
-    delta = 1
-p_dyn_figure = figure(title="Dynamic solver",
-                width = 1200,
-                height = 750,
-                x_axis_label='Time',
-                y_axis_label='Value',
-                tools = TOOLS,
-                x_range = (-20,dyn_sol.t_inf+20),
-                y_range=(down_min-delta*0.1,up_max+delta*0.1)
-                )
+# temp = create_column_data_source_from_dyn_sol(dyn_sol)
+# data_dyn_default = temp[0]
+# data_dyn_init_default = temp[1]
+# data_dyn_fin_default = temp[2]
+# ds_dyn = ColumnDataSource(data_dyn_default)
+# ds_dyn_init = ColumnDataSource(data_dyn_init_default)
+# ds_dyn_fin = ColumnDataSource(data_dyn_fin_default)
+# up_max = max([max(ds_dyn.data['g']), max(ds_dyn_fin.data['g']), max(ds_dyn_init.data['g'])])
+# down_min = min([min(ds_dyn.data['g']), min(ds_dyn_fin.data['g']), min(ds_dyn_init.data['g'])])
+# delta = up_max-down_min
+# if delta == 0:
+#     delta = 1
+# p_dyn_figure = figure(title="Dynamic solver",
+#                 width = 1200,
+#                 height = 750,
+#                 x_axis_label='Time',
+#                 y_axis_label='Value',
+#                 tools = TOOLS,
+#                 x_range = (-20,dyn_sol.t_inf+20),
+#                 y_range=(down_min-delta*0.1,up_max+delta*0.1)
+#                 )
 
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("Time", "$x"),
-    ("value", "$y")
-    ] 
-p_dyn_figure.add_tools(hover_tool_eq)
+# hover_tool_eq = HoverTool()
+# hover_tool_eq.tooltips = [
+#     ("Time", "$x"),
+#     ("value", "$y")
+#     ] 
+# p_dyn_figure.add_tools(hover_tool_eq)
 
-lines_dyn = {}
-for col in data_dyn_default.keys():
-    if col != time:
-        lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
-        if col != 'g':
-            lines_dyn[col].visible = False
+# lines_dyn = {}
+# for col in data_dyn_default.keys():
+#     if col != time:
+#         lines_dyn[col] = p_dyn_figure.line(x='time', y=col, source = ds_dyn)
+#         if col != 'g':
+#             lines_dyn[col].visible = False
 
-init_dyn = {}
-for col in data_dyn_init_default.keys():
-    if col != time:
-        init_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_init, color='red',size=8)
-        if col != 'g':
-            init_dyn[col].visible = False
+# init_dyn = {}
+# for col in data_dyn_init_default.keys():
+#     if col != time:
+#         init_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_init, color='red',size=8)
+#         if col != 'g':
+#             init_dyn[col].visible = False
             
-fin_dyn = {}
-for col in data_dyn_fin_default.keys():
-    if col != time:
-        fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
-        if col != 'g':
-            fin_dyn[col].visible = False
+# fin_dyn = {}
+# for col in data_dyn_fin_default.keys():
+#     if col != time:
+#         fin_dyn[col] = p_dyn_figure.circle(x='time', y=col, source = ds_dyn_fin, color='red',size=8)
+#         if col != 'g':
+#             fin_dyn[col].visible = False
 
-def update_graph_dyn(event):
-    if qty_dyn_display_select.value in ['g']:
-        col = qty_dyn_display_select.value
-    elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
-                                          'ratios_of_consumption_levels_change_not_normalized',
-                                'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
-                                'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
-                                'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
-        col = qty_dyn_display_select.value+country_dyn_display_select.value
-    lines_dyn[col].visible = True
-    if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
-                                            'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
-        init_dyn[col].visible = True
-        fin_dyn[col].visible = True
-    else:
-        init_dyn[col].visible = False
-        fin_dyn[col].visible = False
+# def update_graph_dyn(event):
+#     if qty_dyn_display_select.value in ['g']:
+#         col = qty_dyn_display_select.value
+#     elif qty_dyn_display_select.value in ['Z','r','price_indices','w','nominal_final_consumption','real_final_consumption',
+#                                           'ratios_of_consumption_levels_change_not_normalized',
+#                                 'l_R','l_Ao','psi_o_star','PSI_CD','integrand_welfare','integral_welfare','second_term_sum_welfare',
+#                                 'sum_n_l_Ae','sum_n_PSI_MPD','sum_n_PSI_MPND','sum_n_PSI_MNP','sum_n_profit',
+#                                 'sum_i_l_Ae','sum_i_PSI_MPD','sum_i_PSI_MPND','sum_i_PSI_MNP','sum_i_profit']:
+#         col = qty_dyn_display_select.value+country_dyn_display_select.value
+#     lines_dyn[col].visible = True
+#     if qty_dyn_display_select.value not in ['integrand_welfare','integral_welfare',
+#                                             'second_term_sum_welfare','ratios_of_consumption_levels_change_not_normalized']:
+#         init_dyn[col].visible = True
+#         fin_dyn[col].visible = True
+#     else:
+#         init_dyn[col].visible = False
+#         fin_dyn[col].visible = False
 
-    for other_column in lines_dyn:
-        if other_column != col:
-            lines_dyn[other_column].visible = False
-            init_dyn[other_column].visible = False
-            fin_dyn[other_column].visible = False
-    try:
-        up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
-        down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
-    except:
-        up_max = max(ds_dyn.data[col])
-        down_min = min(ds_dyn.data[col])
-    delta = up_max-down_min
-    if delta == 0:
-        delta = 1
-    p_dyn_figure.y_range.start=down_min-delta*0.1
-    p_dyn_figure.y_range.end=up_max+delta*0.1
-    p_dyn_figure.x_range.start=-20
-    p_dyn_figure.x_range.end=dyn_sol.t_inf+20
+#     for other_column in lines_dyn:
+#         if other_column != col:
+#             lines_dyn[other_column].visible = False
+#             init_dyn[other_column].visible = False
+#             fin_dyn[other_column].visible = False
+#     try:
+#         up_max = max([max(ds_dyn.data[col]), max(ds_dyn_fin.data[col]), max(ds_dyn_init.data[col])])
+#         down_min = min([min(ds_dyn.data[col]), min(ds_dyn_fin.data[col]), min(ds_dyn_init.data[col])])
+#     except:
+#         up_max = max(ds_dyn.data[col])
+#         down_min = min(ds_dyn.data[col])
+#     delta = up_max-down_min
+#     if delta == 0:
+#         delta = 1
+#     p_dyn_figure.y_range.start=down_min-delta*0.1
+#     p_dyn_figure.y_range.end=up_max+delta*0.1
+#     p_dyn_figure.x_range.start=-20
+#     p_dyn_figure.x_range.end=dyn_sol.t_inf+20
         
-button_display_dyn = Button(label="Display",align='end')
-button_display_dyn.on_event(ButtonClick, update_graph_dyn)
+# button_display_dyn = Button(label="Display",align='end')
+# button_display_dyn.on_event(ButtonClick, update_graph_dyn)
 
-controls_dyn = row(baseline_dyn_select, variation_dyn_select, country_dyn_select, slider_dyn, button_compute_dyn, state_computation)
-controls_display_dyn = row(qty_dyn_display_select, 
-                            country_dyn_display_select,
-                            button_display_dyn)
+# controls_dyn = row(baseline_dyn_select, variation_dyn_select, country_dyn_select, slider_dyn, button_compute_dyn, state_computation)
+# controls_display_dyn = row(qty_dyn_display_select, 
+#                             country_dyn_display_select,
+#                             button_display_dyn)
 
-baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
+# baseline_dyn_select.on_change('value', update_list_of_runs_dyn)
 
-dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
+# dyn_report = column(controls_dyn,controls_display_dyn,p_dyn_figure)
 
 
 #!!! fifth_panel
 # fifth_panel = row(counterfactuals_report, counterfactuals_to_report)
-fifth_panel = row(dyn_report,table_widget_time_evol)
+# fifth_panel = row(dyn_report,table_widget_time_evol)
 
 #%% sensitivities
 
-baselines_dic_sensi = {}
+# baselines_dic_sensi = {}
 
-for baseline_nbr in ['1004']:
-    baselines_dic_sensi[baseline_nbr] = {} 
-    baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
-    files_in_dir = os.listdir(baseline_sensi_path)
-    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-    for f in files_in_dir:
-        baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
+# for baseline_nbr in ['1004']:
+#     baselines_dic_sensi[baseline_nbr] = {} 
+#     baseline_sensi_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_tables/'
+#     files_in_dir = os.listdir(baseline_sensi_path)
+#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+#     for f in files_in_dir:
+#         baselines_dic_sensi[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_path+f,index_col = 0)
     
-baseline_sensi = '1004'
-qty_sensi = 'objective'
+# baseline_sensi = '1004'
+# qty_sensi = 'objective'
 
-baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
-qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
+# baseline_sensi_select = Select(value=baseline_sensi, title='Baseline', options=sorted(baselines_dic_sensi.keys()))
+# qty_sensi_select = Select(value=qty_sensi, title='Quantity', options=sorted(baselines_dic_sensi[baseline_sensi].keys()))
 
-ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
-p_sensi = figure(title="Sensitivity", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in moment or parameter',
-                y_axis_label='Value',
-                tools = TOOLS)
+# ds_sensi = ColumnDataSource(baselines_dic_sensi[baseline_sensi][qty_sensi])
+# p_sensi = figure(title="Sensitivity", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in moment or parameter',
+#                 y_axis_label='Value',
+#                 tools = TOOLS)
 
-colors_sensi = itertools.cycle(Category18)
+# colors_sensi = itertools.cycle(Category18)
 
-for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
-    if col!='zeta':
-        p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
+# for col in baselines_dic_sensi[baseline_sensi][qty_sensi].columns[1:]:
+#     if col!='zeta':
+#         p_sensi.line(x='Change', y=col, source = ds_sensi, color=next(colors_sensi),line_width = 2, legend_label=col)
 
-p_sensi.legend.click_policy="hide"
-p_sensi.legend.label_text_font_size = '8pt'
-p_sensi.add_layout(p_sensi.legend[0], 'right')
+# p_sensi.legend.click_policy="hide"
+# p_sensi.legend.label_text_font_size = '8pt'
+# p_sensi.add_layout(p_sensi.legend[0], 'right')
 
-def update_baseline_sensi(attrname, old, new):
-    qty_sensi = qty_sensi_select.value
-    ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
+# def update_baseline_sensi(attrname, old, new):
+#     qty_sensi = qty_sensi_select.value
+#     ds_sensi.data = baselines_dic_sensi[new][qty_sensi]
     
-def update_qty_sensi(attrname, old, new):
-    baseline_sensi = baseline_sensi_select.value
-    ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
+# def update_qty_sensi(attrname, old, new):
+#     baseline_sensi = baseline_sensi_select.value
+#     ds_sensi.data = baselines_dic_sensi[baseline_sensi][new]
 
-controls_sensi = row(baseline_sensi_select, qty_sensi_select)
+# controls_sensi = row(baseline_sensi_select, qty_sensi_select)
 
-baseline_sensi_select.on_change('value', update_baseline_sensi)
-qty_sensi_select.on_change('value', update_qty_sensi)
+# baseline_sensi_select.on_change('value', update_baseline_sensi)
+# qty_sensi_select.on_change('value', update_qty_sensi)
 
-sensitivity_report = column(controls_sensi,p_sensi)
+# sensitivity_report = column(controls_sensi,p_sensi)
 
 # %% weights sensitivities
 
-baselines_dic_sensi_weights = {}
+# baselines_dic_sensi_weights = {}
 
-# for baseline_nbr in ['101','102','104']:
-for baseline_nbr in ['802']:
-    baselines_dic_sensi_weights[baseline_nbr] = {}
-    baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
-    files_in_dir = os.listdir(baseline_sensi_weights_path)
-    files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
-    for f in files_in_dir:
-        # if f not in ['GPDIFF.csv','GROWTH.csv']:
-            baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
+# # for baseline_nbr in ['101','102','104']:
+# for baseline_nbr in ['802']:
+#     baselines_dic_sensi_weights[baseline_nbr] = {}
+#     baseline_sensi_weights_path = results_path+'baseline_'+baseline_nbr+'_sensitivity_weights_tables/'
+#     files_in_dir = os.listdir(baseline_sensi_weights_path)
+#     files_in_dir = [ filename for filename in files_in_dir if filename.endswith('.csv') ]
+#     for f in files_in_dir:
+#         # if f not in ['GPDIFF.csv','GROWTH.csv']:
+#             baselines_dic_sensi_weights[baseline_nbr][f[:-4]] = pd.read_csv(baseline_sensi_weights_path+f,index_col = 0)
     
-baseline_sensi_weights = '802'
-qty_sensi_weights = 'objective'
+# baseline_sensi_weights = '802'
+# qty_sensi_weights = 'objective'
 
-baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
-qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
+# baseline_sensi_weights_select = Select(value=baseline_sensi_weights, title='Baseline', options=sorted(baselines_dic_sensi_weights.keys()))
+# qty_sensi_weights_select = Select(value=qty_sensi_weights, title='Quantity', options=sorted(baselines_dic_sensi_weights[baseline_sensi_weights].keys()))
 
-ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
-p_sensi_weights = figure(title="Sensitivity to the weights", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in weight',
-                y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
-                y_axis_type="log",
-                tools = TOOLS)
+# ds_sensi_weights = ColumnDataSource(baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights])
+# p_sensi_weights = figure(title="Sensitivity to the weights", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in weight',
+#                 y_axis_label='Objective function or contribution to objective function: loss(moment,target)',
+#                 y_axis_type="log",
+#                 tools = TOOLS)
 
-colors_sensi_weights = itertools.cycle(Category18)
+# colors_sensi_weights = itertools.cycle(Category18)
 
-for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
-    # if col not in ['zeta','GPDIFF_weight','GROWTH_weight']:
-        p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, 
-                              legend_label=col)
+# for col in baselines_dic_sensi_weights[baseline_sensi_weights][qty_sensi_weights].columns[1:]:
+#     # if col not in ['zeta','GPDIFF_weight','GROWTH_weight']:
+#         p_sensi_weights.line(x='Change', y=col, source = ds_sensi_weights, color=next(colors_sensi_weights),line_width = 2, 
+#                               legend_label=col)
 
-p_sensi_weights.legend.click_policy="hide"
-p_sensi_weights.legend.label_text_font_size = '8pt'
-p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
+# p_sensi_weights.legend.click_policy="hide"
+# p_sensi_weights.legend.label_text_font_size = '8pt'
+# p_sensi_weights.add_layout(p_sensi_weights.legend[0], 'right')
 
-def update_baseline_sensi_weights(attrname, old, new):
-    qty_sensi_weights = qty_sensi_weights_select.value
-    ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
+# def update_baseline_sensi_weights(attrname, old, new):
+#     qty_sensi_weights = qty_sensi_weights_select.value
+#     ds_sensi_weights.data = baselines_dic_sensi_weights[new][qty_sensi_weights]
     
-def update_qty_sensi_weights(attrname, old, new):
-    baseline_sensi_weights = baseline_sensi_weights_select.value
-    ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
+# def update_qty_sensi_weights(attrname, old, new):
+#     baseline_sensi_weights = baseline_sensi_weights_select.value
+#     ds_sensi_weights.data = baselines_dic_sensi_weights[baseline_sensi_weights][new]
 
-controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
+# controls_sensi_weights = row(baseline_sensi_weights_select, qty_sensi_weights_select)
 
-baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
-qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
+# baseline_sensi_weights_select.on_change('value', update_baseline_sensi_weights)
+# qty_sensi_weights_select.on_change('value', update_qty_sensi_weights)
 
-sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
+# sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #%% Jacobian panel
 
@@ -2778,140 +2853,140 @@ sensitivity_weights_report = column(controls_sensi_weights,p_sensi_weights)
 
 #!!! sixth panel
 # sixth_panel = row(sensitivity_report,sensitivity_weights_report,jac_report)
-sixth_panel = row(sensitivity_report,sensitivity_weights_report)
+# sixth_panel = row(sensitivity_report,sensitivity_weights_report)
 
 #%% Kogan paper
 
-colors_kog = itertools.cycle(Category18)
+# colors_kog = itertools.cycle(Category18)
 
-df_kog = pd.read_csv(data_path+'koga_updated.csv')
-ds_kog = ColumnDataSource(df_kog)
+# df_kog = pd.read_csv(data_path+'koga_updated.csv')
+# ds_kog = ColumnDataSource(df_kog)
 
-p_kog = figure(title="Kogan moment updated / extrapolated", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Issue Date',
-                y_axis_type="log",
-                tools = TOOLS) 
-
-l_kog = {}
-
-for i,col in enumerate(df_kog.columns):
-    if col not in ['issue_date']:
-        l_kog[i] = p_kog.line(x='issue_date', y=col, 
-                  source = ds_kog, 
-                  line_width = 2, legend_label=col, color=next(colors_kog),
-                  name = col)
-
-hover_tool_kog = HoverTool(
-    tooltips = [
-        ("Issue date", "$x"),
-        ('ValuePerPatent', '@ValuePerPatent'),
-        ('CostPerPatent', '@CostPerPatent'),
-        ('KM_article', '@KM_article'),
-        ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
-        ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
-        ('KM_extrapolatedCost', '@KM_extrapolatedCost')
-        ],
-    mode='vline',
-    renderers = [l_kog[4]]
-)
-p_kog.add_tools(hover_tool_kog)
-
-p_kog.legend.click_policy="hide"
-p_kog.legend.label_text_font_size = '8pt'
-p_kog.add_layout(p_kog.legend[0], 'right')
-
-
-# colors_kog2 = itertools.cycle(Category18)
-
-# df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
-# ds_kog2 = ColumnDataSource(df_kog2)
-
-# p_kog2 = figure(title="Kogan moment", 
+# p_kog = figure(title="Kogan moment updated / extrapolated", 
 #                 width = 1200,
 #                 height = 850,
-#                 x_axis_label='Market Prior',
+#                 x_axis_label='Issue Date',
+#                 y_axis_type="log",
 #                 tools = TOOLS) 
 
-# l_kog2 = {}
+# l_kog = {}
 
-# for i,col in enumerate(df_kog2.columns):
-#     if col not in ['market prior']:
-#         l_kog2[i] = p_kog2.line(x='market prior', y=col, 
-#                   source = ds_kog2, 
-#                   line_width = 2, legend_label=col, color=next(colors_kog2))
+# for i,col in enumerate(df_kog.columns):
+#     if col not in ['issue_date']:
+#         l_kog[i] = p_kog.line(x='issue_date', y=col, 
+#                   source = ds_kog, 
+#                   line_width = 2, legend_label=col, color=next(colors_kog),
+#                   name = col)
 
-# hover_tool_kog2 = HoverTool(
+# hover_tool_kog = HoverTool(
 #     tooltips = [
-#         ("market prior", "$x"),
-#         ('1950 to 2007', '@from1950to2007'),
-#         ('1980 to 2007', '@from1980to2007'),
-#         ('1995 to 2007', '@from1995to2007'),
-#         ('2002 to 2007', '@from2002to2007'),
-#         ('1950 to 2020', '@from1950to2020'),
-#         ('1980 to 2020', '@from1980to2020'),
-#         ('1995 to 2020', '@from1995to2020'),
-#         ('2002 to 2020', '@from2002to2020'),
+#         ("Issue date", "$x"),
+#         ('ValuePerPatent', '@ValuePerPatent'),
+#         ('CostPerPatent', '@CostPerPatent'),
+#         ('KM_article', '@KM_article'),
+#         ('ValuePerPatentUpdated', '@ValuePerPatentUpdated'),
+#         ('CostPerPatentExtrapolated', '@CostPerPatentExtrapolated'),
+#         ('KM_extrapolatedCost', '@KM_extrapolatedCost')
 #         ],
 #     mode='vline',
-#     renderers = [l_kog2[4]]
+#     renderers = [l_kog[4]]
 # )
+# p_kog.add_tools(hover_tool_kog)
 
-# p_kog2.legend.click_policy="hide"
-# p_kog2.legend.label_text_font_size = '8pt'
-# p_kog2.add_layout(p_kog2.legend[0], 'right')
-# p_kog2.add_tools(hover_tool_kog2)
+# p_kog.legend.click_policy="hide"
+# p_kog.legend.label_text_font_size = '8pt'
+# p_kog.add_layout(p_kog.legend[0], 'right')
 
 
-colors_to_data = itertools.cycle(Category18)
+# # colors_kog2 = itertools.cycle(Category18)
 
-df_to_data = pd.read_csv(data_path+'turnover_imports_weighted_11_countries.csv'
-                         )[['year','HS_digits','A3']].pivot(
-                                columns= 'HS_digits',
-                                index = 'year',
-                                values = 'A3'
-                            )[[6,8,10]]
-df_to_data = df_to_data.rename(columns={6:'6',
-                                        8:'8',
-                                        10:'10'})
-ds_to_data = ColumnDataSource(df_to_data)
+# # df_kog2 = pd.read_csv(data_path+'KM_prior.csv')
+# # ds_kog2 = ColumnDataSource(df_kog2)
 
-p_to_data = figure(title="Turnover moment for rule A3, time window (y,y+5)", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Year',
-                # y_axis_type="log",
-                tools = TOOLS) 
+# # p_kog2 = figure(title="Kogan moment", 
+# #                 width = 1200,
+# #                 height = 850,
+# #                 x_axis_label='Market Prior',
+# #                 tools = TOOLS) 
 
-l_to_data = {}
+# # l_kog2 = {}
 
-for i,col in enumerate(['6','8','10']):
-    if col not in ['year']:
-        l_to_data[i] = p_to_data.line(x='year', y=col, 
-                  source = ds_to_data, 
-                  line_width = 2, legend_label=col, color=next(colors_to_data),
-                  name = col)
+# # for i,col in enumerate(df_kog2.columns):
+# #     if col not in ['market prior']:
+# #         l_kog2[i] = p_kog2.line(x='market prior', y=col, 
+# #                   source = ds_kog2, 
+# #                   line_width = 2, legend_label=col, color=next(colors_kog2))
 
-hover_tool_to_data = HoverTool(
-    tooltips = [
-        ("Year", "$x"),
-        ('HS6', '@6'),
-        ('HS8', '@8'),
-        ('HS10', '@10'),
-        ],
-    mode='vline',
-    renderers = [l_to_data[1]]
-)
-p_to_data.add_tools(hover_tool_to_data)
+# # hover_tool_kog2 = HoverTool(
+# #     tooltips = [
+# #         ("market prior", "$x"),
+# #         ('1950 to 2007', '@from1950to2007'),
+# #         ('1980 to 2007', '@from1980to2007'),
+# #         ('1995 to 2007', '@from1995to2007'),
+# #         ('2002 to 2007', '@from2002to2007'),
+# #         ('1950 to 2020', '@from1950to2020'),
+# #         ('1980 to 2020', '@from1980to2020'),
+# #         ('1995 to 2020', '@from1995to2020'),
+# #         ('2002 to 2020', '@from2002to2020'),
+# #         ],
+# #     mode='vline',
+# #     renderers = [l_kog2[4]]
+# # )
 
-p_to_data.legend.click_policy="hide"
-p_to_data.legend.label_text_font_size = '8pt'
-p_to_data.add_layout(p_to_data.legend[0], 'right')
+# # p_kog2.legend.click_policy="hide"
+# # p_kog2.legend.label_text_font_size = '8pt'
+# # p_kog2.add_layout(p_kog2.legend[0], 'right')
+# # p_kog2.add_tools(hover_tool_kog2)
 
-#!!! seventh_panel
-# seventh_panel = row(p_kog,p_kog2)
-seventh_panel = row(p_kog,p_to_data)
+
+# colors_to_data = itertools.cycle(Category18)
+
+# df_to_data = pd.read_csv(data_path+'turnover_imports_weighted_11_countries.csv'
+#                          )[['year','HS_digits','A3']].pivot(
+#                                 columns= 'HS_digits',
+#                                 index = 'year',
+#                                 values = 'A3'
+#                             )[[6,8,10]]
+# df_to_data = df_to_data.rename(columns={6:'6',
+#                                         8:'8',
+#                                         10:'10'})
+# ds_to_data = ColumnDataSource(df_to_data)
+
+# p_to_data = figure(title="Turnover moment for rule A3, time window (y,y+5)", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Year',
+#                 # y_axis_type="log",
+#                 tools = TOOLS) 
+
+# l_to_data = {}
+
+# for i,col in enumerate(['6','8','10']):
+#     if col not in ['year']:
+#         l_to_data[i] = p_to_data.line(x='year', y=col, 
+#                   source = ds_to_data, 
+#                   line_width = 2, legend_label=col, color=next(colors_to_data),
+#                   name = col)
+
+# hover_tool_to_data = HoverTool(
+#     tooltips = [
+#         ("Year", "$x"),
+#         ('HS6', '@6'),
+#         ('HS8', '@8'),
+#         ('HS10', '@10'),
+#         ],
+#     mode='vline',
+#     renderers = [l_to_data[1]]
+# )
+# p_to_data.add_tools(hover_tool_to_data)
+
+# p_to_data.legend.click_policy="hide"
+# p_to_data.legend.label_text_font_size = '8pt'
+# p_to_data.add_layout(p_to_data.legend[0], 'right')
+
+# #!!! seventh_panel
+# # seventh_panel = row(p_kog,p_kog2)
+# seventh_panel = row(p_kog,p_to_data)
 
 #%% 7 countries comparison of patent flows data
 
@@ -3047,14 +3122,13 @@ seventh_panel = row(p_kog,p_to_data)
 
 #%% build curdoc
 print(time.perf_counter() - start)
-curdoc().add_root(column(
-                            first_panel, 
-                            second_panel, 
+curdoc().add_root(column(first_panel, 
+                            # second_panel, 
                            third_panel, 
                             fourth_panel, 
-                            fifth_panel, 
-                            sixth_panel,
-                           seventh_panel,
+                           #  fifth_panel, 
+                           #  sixth_panel,
+                           # seventh_panel,
                           # eigth_panel
                          )
                   )

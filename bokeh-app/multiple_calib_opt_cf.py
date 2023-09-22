@@ -16,87 +16,144 @@ import os
 import numpy as np
 import pandas as pd
 
+# #%%
+
+baseline = {
+    "number": None,
+    "TO_target": 0.017496806,
+    "TE_target": 5.0,
+    "KM_target": 0.09277,
+    "sigma": 2.9,
+    "kappa": 0.5,
+    "rho": 0.02,
+    "GROWTH_target": 0.0168692,
+    "UUPCOST": 0.0047164777
+}
+
+possibilities = {
+    "TO_target": [0.014, 0.021],
+    "TE_target": [4, 6],
+    "KM_target": [0.074, 0.111],
+    "sigma": [2.32, 3.48],
+    "kappa": [0.4, 0.6],
+    "GROWTH_target": [0.0135, 0.02024],
+    "rho": [0.0093, 0.031],
+    "UUPCOST_target": [0.00377318216, 0.00565977324]
+}
+
+to_change = []
+count = 0
+runs_params = []
+for k in possibilities:
+    for v in possibilities[k]:
+        dic = baseline.copy()
+        dic[k] = v
+        dic['number'] = count
+        runs_params.append(dic)
+        count = count+1
+
+#%%
+
+runs_params = [{'number': 14,
+ 'TO_target': 0.017496806,
+ 'TE_target': 5.0,
+ 'KM_target': 0.09277,
+ 'sigma': 2.9,
+ 'kappa': 0.5,
+ 'rho': 0.02,
+ 'GROWTH_target': 0.0168692,
+ 'UUPCOST_target': 0.00377318216},
+{'number': 15,
+ 'TO_target': 0.017496806,
+ 'TE_target': 5.0,
+ 'KM_target': 0.09277,
+ 'sigma': 2.9,
+ 'kappa': 0.5,
+ 'rho': 0.02,
+ 'GROWTH_target': 0.0168692,
+ 'UUPCOST_target': 0.00565977324}]
+
 # runs_params = [
-#     # {"number":0,"TO_target":0.01},
-#     # {"number":1,"TO_target":0.0105},
-#     # {"number":2,"TO_target":0.011},
-#     # {"number":3,"TO_target":0.0115},
-#     # {"number":4,"TO_target":0.012},
-#     # {"number":5,"TO_target":0.0125},
-#     # {"number":6,"TO_target":0.013},
-#     # {"number":7,"TO_target":0.0135},
-#     # {"number":8,"TO_target":0.014},
-#     # {"number":9,"TO_target":0.0145},
-#     # {"number":10,"TO_target":0.015},
-#     # {"number":11,"TO_target":0.0155},
-#     # {"number":12,"TO_target":0.016},
-#     # {"number":13,"TO_target":0.0165},
-#     # {"number":14,"TO_target":0.017},
-#     # {"number":15,"TO_target":0.0175},
-#     # {"number":16,"TO_target":0.018},
-#     # {"number":17,"TO_target":0.0185},
-#     # {"number":18,"TO_target":0.019},
-#     # {"number":19,"TO_target":0.0195},
-#     # {"number":20,"TO_target":0.02},
-#     # {"number":21,"TO_target":0.014603},
-#     # {"number":22,"TO_target":0.019661},
-# #     {"number":21,"TO_target":0.0205},
-# #     {"number":22,"TO_target":0.021},
+#     {"number":0,"TO_target":0.01},
+#     {"number":1,"TO_target":0.0105},
+#     {"number":2,"TO_target":0.011},
+#     {"number":3,"TO_target":0.0115},
+#     {"number":4,"TO_target":0.012},
+#     {"number":5,"TO_target":0.0125},
+#     {"number":6,"TO_target":0.013},
+#     {"number":7,"TO_target":0.0135},
+#     {"number":8,"TO_target":0.014},
+#     {"number":9,"TO_target":0.0145},
+#     {"number":10,"TO_target":0.015},
+#     {"number":11,"TO_target":0.0155},
+#     {"number":12,"TO_target":0.016},
+#     {"number":13,"TO_target":0.0165},
+#     {"number":14,"TO_target":0.017},
+#     {"number":15,"TO_target":0.0175},
+#     {"number":16,"TO_target":0.018},
+#     {"number":17,"TO_target":0.0185},
+#     {"number":18,"TO_target":0.019},
+#     {"number":19,"TO_target":0.0195},
+#     {"number":20,"TO_target":0.02},
+#     {"number":21,"TO_target":0.014603},
+#     {"number":22,"TO_target":0.019661},
+#     {"number":21,"TO_target":0.0205},
+#     {"number":22,"TO_target":0.021},
 #     {"number":23,"TO_target":0.022},
 #     {"number":24,"TO_target":0.024},
 #     {"number":25,"TO_target":0.026},
 #     {"number":26,"TO_target":0.028},
 #     {"number":27,"TO_target":0.03},
-#     # {"number":23,"TO_target":0.0215},
-#     # {"number":24,"TO_target":0.022},
-#     # {"number":25,"TO_target":0.0225},
-#     # {"number":26,"TO_target":0.023},
-#     # {"number":27,"TO_target":0.0235},
-#     # {"number":28,"TO_target":0.024},
-#     # {"number":29,"TO_target":0.0245},
-#     # {"number":30,"TO_target":0.025},
-#     # {"number":31,"TO_target":0.0255},
-#     # {"number":32,"TO_target":0.026},
-#     # {"number":33,"TO_target":0.0265},
-# #     {"number":34,"TO_target":0.027},
-# #     {"number":35,"TO_target":0.0275},
-# #     {"number":36,"TO_target":0.028},
-# #     {"number":37,"TO_target":0.0285},
-# #     {"number":38,"TO_target":0.029},
-# #     {"number":39,"TO_target":0.0295},
-# #     {"number":40,"TO_target":0.03}
+#     {"number":23,"TO_target":0.0215},
+#     {"number":24,"TO_target":0.022},
+#     {"number":25,"TO_target":0.0225},
+#     {"number":26,"TO_target":0.023},
+#     {"number":27,"TO_target":0.0235},
+#     {"number":28,"TO_target":0.024},
+#     {"number":29,"TO_target":0.0245},
+#     {"number":30,"TO_target":0.025},
+#     {"number":31,"TO_target":0.0255},
+#     {"number":32,"TO_target":0.026},
+#     {"number":33,"TO_target":0.0265},
+#     {"number":34,"TO_target":0.027},
+#     {"number":35,"TO_target":0.0275},
+#     {"number":36,"TO_target":0.028},
+#     {"number":37,"TO_target":0.0285},
+#     {"number":38,"TO_target":0.029},
+#     {"number":39,"TO_target":0.0295},
+#     {"number":40,"TO_target":0.03}
 #     ]
-runs_params = [
-{'number': 0, 'year': 1990},
-{'number': 1, 'year': 1991},
-{'number': 2, 'year': 1992},
-{'number': 3, 'year': 1993},
-{'number': 4, 'year': 1994},
-{'number': 5, 'year': 1995},
-{'number': 6, 'year': 1996},
-{'number': 7, 'year': 1997},
-{'number': 8, 'year': 1998},
-{'number': 9, 'year': 1999},
-{'number': 10, 'year': 2000},
-{'number': 11, 'year': 2001},
-{'number': 12, 'year': 2002},
-{'number': 13, 'year': 2003},
-{'number': 14, 'year': 2004},
-{'number': 15, 'year': 2005},
-{'number': 16, 'year': 2006},
-{'number': 17, 'year': 2007},
-{'number': 18, 'year': 2008},
-{'number': 19, 'year': 2009},
-{'number': 20, 'year': 2010},
-{'number': 21, 'year': 2011},
-{'number': 22, 'year': 2012},
-{'number': 23, 'year': 2013},
-{'number': 24, 'year': 2014},
-{'number': 25, 'year': 2015},
-{'number': 26, 'year': 2016},
-{'number': 27, 'year': 2017},
-{'number': 28, 'year': 2018}
-]
+# runs_params = [
+# # {'number': 0, 'year': 1990},
+# # {'number': 1, 'year': 1991},
+# # {'number': 2, 'year': 1992},
+# # {'number': 3, 'year': 1993},
+# # {'number': 4, 'year': 1994},
+# # {'number': 5, 'year': 1995},
+# {'number': 6, 'year': 1996},
+# {'number': 7, 'year': 1997},
+# {'number': 8, 'year': 1998},
+# {'number': 9, 'year': 1999},
+# {'number': 10, 'year': 2000},
+# {'number': 11, 'year': 2001},
+# {'number': 12, 'year': 2002},
+# {'number': 13, 'year': 2003},
+# {'number': 14, 'year': 2004},
+# {'number': 15, 'year': 2005},
+# {'number': 16, 'year': 2006},
+# {'number': 17, 'year': 2007},
+# {'number': 18, 'year': 2008},
+# {'number': 19, 'year': 2009},
+# {'number': 20, 'year': 2010},
+# {'number': 21, 'year': 2011},
+# {'number': 22, 'year': 2012},
+# {'number': 23, 'year': 2013},
+# {'number': 24, 'year': 2014},
+# {'number': 25, 'year': 2015},
+# {'number': 26, 'year': 2016},
+# {'number': 27, 'year': 2017},
+# {'number': 28, 'year': 2018}
+# ]
 
 # for drop_SRDUS in [False,True]:
 #     for patenting_cost_moment in ['UUPCOST','PCOSTNOAGG']:
@@ -159,11 +216,13 @@ runs_params = [
 #   'loss_func': 'ratio'},
 #  ]
 
+from solver_funcs import calibration_func
+
 write = True
 
-baseline_number = '1020'
+baseline_number = '1030'
 
-for variation_number in [1]:
+for variation_number in [99]:
     
     for run_params in runs_params:
         print(run_params)
@@ -171,16 +230,20 @@ for variation_number in [1]:
                         'variation':str(variation_number)+'.'+str(run_params['number'])}
         # baseline_dic = {'baseline':baseline_number,
         #                 'variation':'1.'+str(run_params['number'])}
-        year = run_params['year']
+        # year = run_params['year']
         p = parameters()
         p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+        # p.load_data(f'data_smooth_3_years/data_11_countries_{year}/',keep_already_calib_params=True)
         # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
         # p.load_data('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
-        p.load_data(f'data_smooth_3_years/data_11_countries_{year}/',keep_already_calib_params=True)
         # p.load_data(f'data/data_13_countries_{year}/',keep_already_calib_params=True)
         # p.update_khi_and_r_hjort(0.16)
         # p.r_hjort[1] = p.r_hjort[1]*3.6
         # p.calib_parameters = ['eta','T','delta']
+        
+        p.sigma[1] = run_params['sigma']
+        p.kappa = run_params['kappa']
+        p.rho = run_params['rho']
         
         sol = var.var_from_vector(p.guess,p,context='calibration')
         sol.scale_P(p)
@@ -189,11 +252,13 @@ for variation_number in [1]:
         m = moments()
         # m.load_data()
         m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+        # m.load_data(f'data_smooth_3_years/data_11_countries_{year}/')
+        # m.list_of_moments = ['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
         # m.compute_moments(sol,p)
         # number_of_int_patents_model_baseline = m.inter_TP.copy()
         # number_of_int_patents_data_baseline = m.inter_TP_data.copy()
         # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_number}.{run_params["number"]-1}/')
-        m.load_data(f'data_smooth_3_years/data_11_countries_{year}/')
+        
         # m.load_data(f'data/data_13_countries_{year}/')
         # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'+str(variation_number)+'.0/')
         # if 'theta' not in p.calib_parameters:
@@ -206,23 +271,16 @@ for variation_number in [1]:
         #     m.list_of_moments.append('TE')
         # m.inter_TP_target = number_of_int_patents_model_baseline*m.inter_TP_data/number_of_int_patents_data_baseline
         # m.weights_dict['inter_TP'] = 3
-        # m.list_of_moments = ['OUT',
-        #   'RD',
-        #   'RP',
-        #   'SRGDP',
-        #   'inter_TP',
-        #   'SINNOVPATUS',
-        #   'SPFLOW',
-        #   'UUPCOST',
-        #   'SRDUS',
-        #   'SINNOVPATEU',
-        #   'DOMPATINUS',
-        #   'DOMPATINEU']
+        
         # m.TO_target = np.float64(0.01463)
         
         # m.drop_CHN_IND_BRA_ROW_from_RD = True
         
-        # m.TO_target = np.float64(run_params['TO_target'])
+        m.TO_target = np.float64(run_params['TO_target'])
+        m.TE_target = np.float64(run_params['TE_target'])
+        m.KM_target = np.float64(run_params['KM_target'])
+        m.GROWTH_target = np.float64(run_params['GROWTH_target'])
+        m.UUPCOST_target = np.float64(run_params['UUPCOST_target'])
         
         # if run_params['drop_SRDUS']:
         #     if 'SRDUS' in m.list_of_moments:
@@ -244,10 +302,10 @@ for variation_number in [1]:
         start_time = time.perf_counter()
         cond = True
         iterations = 0
-        max_iter = 5
+        max_iter = 10
         
         while cond:
-            if iterations < max_iter-2:
+            if iterations < max_iter-4:
                 test_ls = optimize.least_squares(fun = calibration_func,    
                                         x0 = p.make_p_vector(), 
                                         args = (p,m,p.guess,hist,start_time), 
@@ -272,7 +330,7 @@ for variation_number in [1]:
         
         sol, sol_c = fixed_point_solver(p_sol,x0=p_sol.guess,
                                         context = 'calibration',
-                                cobweb_anim=False,tol =1e-15,
+                                cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',

@@ -1,0 +1,52 @@
+,max_sensitivity
+k,UUPCOST
+g_0,GROWTH
+fe,KM
+fo,KM
+zeta,TO
+nu,TO
+theta,TE
+delta USA,TO
+delta EUR,TO
+delta JAP,TO
+delta CHN,TO
+delta BRA,TO
+delta IND,TO
+delta CAN,TO
+delta KOR,TO
+delta RUS,TO
+delta MEX,TO
+delta ROW,TO
+eta USA,TO
+eta EUR,TO
+eta JAP,RD_JAP
+eta CHN,TO
+eta BRA,TO
+eta IND,TO
+eta CAN,TO
+eta KOR,RD_KOR
+eta RUS,TO
+eta MEX,TO
+eta ROW,TO
+T USA Non patent^(1/theta),TE
+T EUR Non patent^(1/theta),TE
+T JAP Non patent^(1/theta),TE
+T CHN Non patent^(1/theta),TE
+T BRA Non patent^(1/theta),SRGDP_BRA
+T IND Non patent^(1/theta),SRGDP_IND
+T CAN Non patent^(1/theta),TE
+T KOR Non patent^(1/theta),TE
+T RUS Non patent^(1/theta),TE
+T MEX Non patent^(1/theta),SRGDP_MEX
+T ROW Non patent^(1/theta),SRGDP_ROW
+T USA Patent^(1/theta),OUT
+T EUR Patent^(1/theta),OUT
+T JAP Patent^(1/theta),OUT
+T CHN Patent^(1/theta),OUT
+T BRA Patent^(1/theta),OUT
+T IND Patent^(1/theta),OUT
+T CAN Patent^(1/theta),OUT
+T KOR Patent^(1/theta),TO
+T RUS Patent^(1/theta),OUT
+T MEX Patent^(1/theta),OUT
+T ROW Patent^(1/theta),OUT

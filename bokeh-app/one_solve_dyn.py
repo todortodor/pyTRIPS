@@ -15,7 +15,8 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 p_init = parameters()
-p_init.load_run('calibration_results_matched_economy/1010/')
+# p_init.load_run('calibration_results_matched_economy/1020/')
+p_init.load_run('calibration_results_matched_economy/baseline_1030_variations/10.2/')
 
 sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                                 context = 'counterfactual',
@@ -41,8 +42,17 @@ sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
 p = p_init.copy()
+# p.delta[:,1] = np.array([0.01,0.01,0.01,12,12.0,12.0,12.0,0.01,0.01,12.0,12.0])
+# p.delta[:,1] = np.array([0.01,0.01,0.01,12.0,12.0,12.0,0.01,0.01,12.0,12.0,12.0])
+p.delta[:,1] = np.array([0.01,0.01,0.01,12.0,12.0,12.0,0.01,0.01,12.0,0.01,12.0])
+
+# p.load_run('calibration_results_matched_economy/baseline_1020_variations/20.0/')
 # p.delta[0,1] = 0.05
-p.delta[:,1] = 12
+# p.delta[1,1] = 0.1
+# p.delta[2,1] = 0.2
+# p.delta[3,1] = 0.3
+# p.delta[4,1] = 0.01
+# p.delta[:,1] = 12
 # p.delta[0,1] = 1e-2
 
 
@@ -68,6 +78,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=21,
                         damping_post_acceleration=10
                         )
 dyn_sol.compute_non_solver_quantities(p)
+print(dyn_sol.cons_eq_pop_average_welfare_change)
 # def make_time_evolution_df(dyn_sol):
 #     qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
 #     df = pd.DataFrame(index = qties, columns = ['Initial jump','Typical time of evolution'])

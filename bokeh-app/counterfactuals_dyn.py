@@ -14,182 +14,184 @@ import seaborn as sns
 from classes import moments, parameters, var, dynamic_var
 from solver_funcs import fixed_point_solver, dyn_fixed_point_solver, make_counterfactual
 from data_funcs import make_counterfactual_recap
+from concurrent.futures import ProcessPoolExecutor
+import time
 
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1020','variation': 'baseline'},
-    # {'baseline':'1003','variation': '0.4'},
-   # {'baseline':'803','variation': '1.0'},
-   # {'baseline':'803','variation': '1.1'},
-   # {'baseline':'803','variation': '1.2'},
-   # {'baseline':'803','variation': '1.3'},
-   # {'baseline':'803','variation': '1.4'},
-   # {'baseline':'803','variation': '1.5'},
-    # {'baseline':'611','variation': 'baseline'},
-    # {'baseline':'611','variation': '1.0'},
-    # {'baseline':'611','variation': '1.1'},
-    # {'baseline':'611','variation': '1.2'},
-    # {'baseline':'611','variation': '1.3'},
-    # {'baseline':'611','variation': '1.4'},
-    # {'baseline':'611','variation': '1.5'},
-    # {'baseline':'611','variation': '1.6'},
-    # {'baseline':'611','variation': '1.7'},
-    # {'baseline':'611','variation': '1.8'},
-    # {'baseline':'611','variation': '1.9'},
-    # {'baseline':'611','variation': '1.10'},
-    # {'baseline':'611','variation': '1.11'},
-    # {'baseline':'611','variation': '1.12'},
-    # {'baseline':'611','variation': '1.13'},
-    # {'baseline':'611','variation': '1.14'},
-    # {'baseline':'611','variation': '1.15'},
-    # {'baseline':'611','variation': '1.16'},
-    # {'baseline':'611','variation': '1.17'},
-    # {'baseline':'611','variation': '1.18'},
-    # {'baseline':'611','variation': '1.19'},
-    # {'baseline':'611','variation': '1.20'},
-    # {'baseline':'611','variation': '1.21'},
-    # {'baseline':'611','variation': '1.22'},
-    # {'baseline':'611','variation': '1.23'},
-    # {'baseline':'611','variation': '1.24'},
-    # {'baseline':'611','variation': '1.25'},
-    # {'baseline':'611','variation': '1.26'},
-    # {'baseline':'611','variation': '1.27'},
-    # {'baseline':'611','variation': '1.28'},
-    # {'baseline':'611','variation': '1.29'},
-    # {'baseline':'611','variation': '1.30'},
-    # {'baseline':'611','variation': '1.31'},
-    # {'baseline':'611','variation': '1.32'},
-    # {'baseline':'611','variation': '1.33'},
-    # {'baseline':'611','variation': '1.34'},
-    # {'baseline':'611','variation': '1.35'},
-    # {'baseline':'611','variation': '1.36'},
-    # {'baseline':'611','variation': '1.37'},
-    # {'baseline':'611','variation': '1.38'},
-    # {'baseline':'611','variation': '1.39'},
-    # {'baseline':'611','variation': '1.40'},
+    # {'baseline':'1030','variation': 'baseline'},
+    # {'baseline':'1030','variation': '99.0'},
+    # {'baseline':'1030','variation': '99.1'},
+    # {'baseline':'1030','variation': '99.2'},
+    # {'baseline':'1030','variation': '99.3'},
+    # {'baseline':'1030','variation': '99.4'},
+    # {'baseline':'1030','variation': '99.5'},
+    # {'baseline':'1030','variation': '99.6'},
+    # {'baseline':'1030','variation': '99.7'},
+    # {'baseline':'1030','variation': '99.8'},
+    # {'baseline':'1030','variation': '99.9'},
+    # {'baseline':'1030','variation': '99.10'},
+    # {'baseline':'1030','variation': '99.11'},
+    # {'baseline':'1030','variation': '99.12'},
+    # {'baseline':'1030','variation': '99.13'},
+    {'baseline':'1030','variation': '99.14'},
+    {'baseline':'1030','variation': '99.15'},
     ]
 
-for baseline_dic in baseline_dics:
-    if baseline_dic['variation'] == 'baseline':
-        baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
-    else:
-        baseline_path = \
-            f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
-    print(baseline_path)
-    
-    assert os.path.exists(baseline_path), 'run doesnt exist'
-    
-    p_baseline = parameters()
-    p_baseline.load_run(baseline_path)
-    if baseline_dic['variation'] == 'baseline':
-        local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
-    else:
-        local_path = \
-            f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
+def process_country(args):
+    p, c, local_path, sol_baseline, recap_path, dynamics, Nt, t_inf = args
+    print(c,local_path)
+    make_counterfactual(p, c, local_path, sol_baseline=sol_baseline, dynamics=dynamics)
+    make_counterfactual_recap(p, sol_baseline, c, local_path, recap_path, dynamics=dynamics, Nt=Nt, t_inf=t_inf)
+    return 'done'
 
-    try:
-        os.mkdir(local_path)
-    except:
-        pass
+if __name__ == '__main__':
+    for baseline_dic in baseline_dics:
+        if baseline_dic['variation'] == 'baseline':
+            baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
+        else:
+            baseline_path = \
+                f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/{baseline_dic["variation"]}/'
+        print(baseline_path)
+        
+        assert os.path.exists(baseline_path), 'run doesnt exist'
+        
+        p_baseline = parameters()
+        p_baseline.load_run(baseline_path)
+        if baseline_dic['variation'] == 'baseline':
+            local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
+        else:
+            local_path = \
+                f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
     
-    if baseline_dic['variation'] == 'baseline':
-        recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
-    else:
-        recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
+        try:
+            os.mkdir(local_path)
+        except:
+            pass
+        
+        if baseline_dic['variation'] == 'baseline':
+            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
+        else:
+            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
+        
+        sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 3e3,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                )
+        
+        sol_baseline.scale_P(p_baseline)
+        sol_baseline.compute_non_solver_quantities(p_baseline)
+        
+        # lb_delta=0.01
+        # ub_delta=12
+        
+        # delta_factor_array = np.logspace(-1,1,31)
+        
+        # sequential processes
+        # for c in p_baseline.countries:
+        #     make_counterfactual(p_baseline,c,local_path,
+        #                         sol_baseline=sol_baseline,
+        #                         # delta_factor_array=delta_factor_array,
+        #                         dynamics=True)
+        #     make_counterfactual_recap(p_baseline, sol_baseline, c,
+        #                                   local_path,recap_path,
+        #                                   dynamics=True,Nt=25,t_inf=500)
     
-    sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
-                            context = 'counterfactual',
-                            cobweb_anim=False,tol =1e-14,
-                            accelerate=False,
-                            accelerate_when_stable=True,
-                            cobweb_qty='phi',
-                            plot_convergence=False,
-                            plot_cobweb=False,
-                            safe_convergence=0.001,
-                            disp_summary=True,
-                            damping = 10,
-                            max_count = 3e3,
-                            accel_memory = 50, 
-                            accel_type1=True, 
-                            accel_regularization=1e-10,
-                            accel_relaxation=0.5, 
-                            accel_safeguard_factor=1, 
-                            accel_max_weight_norm=1e6,
-                            damping_post_acceleration=5
-                            )
+        args_list = [(p_baseline.copy(), c, local_path, sol_baseline.copy(), recap_path, True, 25, 500
+                      ) for c in p_baseline.countries]
+                      # ) for c in p_baseline.countries+['World']]
+        
+        # Create a ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=4) as executor:
+            # returns = executor.map(lambda args: process_country(*args), args_list)
+            results = list(executor.map(process_country, args_list))
+        
+        # make_counterfactual(p_baseline,'World',local_path,
+        #                     # delta_factor_array=delta_factor_array,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # # delta_factor_array = np.linspace(0,1,31)
+        # make_counterfactual(p_baseline,'Harmonizing',local_path,
+        #                     # delta_factor_array=delta_factor_array,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'Uniform_delta',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'Upper_harmonizing',local_path,
+        #                     # delta_factor_array=delta_factor_array,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'Upper_uniform_delta',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_uniform_delta',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # p_pre = parameters()
+        # p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/9.2/')
+        
+        # alt_delta = p_pre.delta[...,1]
+        # for country_idx in [0,1,2,6,7,10]:
+        #     alt_delta[country_idx] = p_baseline.delta[country_idx,1]
+        
+        # make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_all_sectors',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True,alt_delta=alt_delta)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_all_sectors',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_pat_sectors',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True,alt_delta=alt_delta)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_pat_sectors',
+        #                                local_path,recap_path,
+        #                                dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'trade_cost_all_countries_all_sectors',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_all_countries_all_sectors',
+                                      # local_path,recap_path,
+                                      # dynamics=True,Nt=25,t_inf=500)
+        
+        # make_counterfactual(p_baseline,'trade_cost_all_countries_pat_sectors',local_path,
+        #                     sol_baseline=sol_baseline,dynamics=True)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_all_countries_pat_sectors',
+        #                               local_path,recap_path,
+        #                               dynamics=True,Nt=25,t_inf=500)
+        
+        # for c in ['CHN','IND','RUS']:
+        #     make_counterfactual(p_baseline,c+'_trade_cost_eq_trips_exp_imp_pat_sect',local_path,
+        #                         sol_baseline=sol_baseline,dynamics=True,alt_delta=alt_delta)
+        #     make_counterfactual_recap(p_baseline, sol_baseline,c+'_trade_cost_eq_trips_exp_imp_pat_sect',
+        #                                   local_path,recap_path,
+        #                                   dynamics=True,Nt=25,t_inf=500)
     
-    sol_baseline.scale_P(p_baseline)
-    sol_baseline.compute_non_solver_quantities(p_baseline)
-    
-    lb_delta=0.01
-    ub_delta=12
-    
-    # delta_factor_array = np.logspace(-1,1,31)
-    
-    for c in p_baseline.countries:
-        make_counterfactual(p_baseline,c,local_path,
-                            sol_baseline=sol_baseline,
-                            # delta_factor_array=delta_factor_array,
-                            dynamics=True)
-        make_counterfactual_recap(p_baseline, sol_baseline, c,
-                                      local_path,recap_path,
-                                      dynamics=True,Nt=25,t_inf=500)
-    
-    make_counterfactual(p_baseline,'World',local_path,
-                        # delta_factor_array=delta_factor_array,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-    # delta_factor_array = np.linspace(0,1,31)
-    make_counterfactual(p_baseline,'Harmonizing',local_path,
-                        # delta_factor_array=delta_factor_array,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-    make_counterfactual(p_baseline,'Uniform_delta',local_path,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-    make_counterfactual(p_baseline,'Upper_harmonizing',local_path,
-                        # delta_factor_array=delta_factor_array,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_harmonizing',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-    make_counterfactual(p_baseline,'Upper_uniform_delta',local_path,
-                        sol_baseline=sol_baseline,dynamics=True)
-    make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_uniform_delta',
-                                  local_path,recap_path,
-                                  dynamics=True,Nt=25,t_inf=500)
-    
-#%%
-for country in p_baseline.countries:
-    recap_dyn = pd.read_csv(recap_path+'dyn_'+country+'.csv')
-    recap = pd.read_csv(recap_path+country+'.csv')
-    
-    fig,ax = plt.subplots(2,1,figsize=(15,10),layout = "constrained")
-    
-    for i,c in enumerate(p_baseline.countries):
-        ax[1].plot(recap['delt'],recap[c],color=sns.color_palette()[i],label = c)
-        ax[0].plot(recap_dyn['delt'],recap_dyn[c],color=sns.color_palette()[i],label = c)
-    
-    ax[0].set_xscale('log')
-    ax[1].set_xscale('log')
-    ax[0].legend(title='With dynamics')
-    ax[1].legend(title='Steady state only')
-    plt.suptitle('Patent protection counterfactual for '+country)
-    
-    # plt.savefig('/Users/slepot/Dropbox/TRIPS/simon_version/code/misc/dynamics_counterfactuals/'+country)
-    
-    plt.show()
-    
-    
-          
