@@ -226,7 +226,7 @@ for mom in moments_to_change:
 
 df = pd.DataFrame()
 
-moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS', 'OUT',
+moments_to_change = ['kappa','rho','sigma','GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS', 'OUT',
   'TO', 'UUPCOST', 'DOMPATINUS', 'TE', 'SRGDP', 'RD', 'RP', 'SPFLOW']
 # moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS',
 #   'UUPCOST', 'DOMPATINUS', 'SRGDP', 'RD', 'RP', 'SPFLOW']
@@ -253,7 +253,7 @@ def fill_row(df,parent_moment_result_path,mom_idx,p_baseline):
 for mom in moments_to_change:
     print(mom)
     if mom in ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
-                          'DOMPATINUS','TE','OUT','GPDIFF']:
+                          'DOMPATINUS','TE','OUT','GPDIFF','kappa','rho','sigma']:
         mom_idx = mom
         fill_row(df,parent_moment_result_path,mom_idx,p_baseline)
     if mom in ['RD','RP','SRGDP']:
@@ -378,14 +378,14 @@ for idx in df.index:
 
 #%%
 
-table_path = 'calibration_results_matched_economy/baseline_1020_sensitivity_tables/'
+table_path = 'calibration_results_matched_economy/baseline_1030_sensitivity_tables/'
 
 try:
     os.mkdir(table_path)
 except:
     pass
 
-df.to_csv(table_path+'all_sensitivity_table_20_no_TE_TO_OUT.csv')
+df.to_csv(table_path+'all_sensitivity_table_20.csv')
 df_max_col.to_csv(table_path+'max_col_all_sensitivity_table_20_no_TE_TO_OUT.csv')
 df.to_csv(table_path+'all_sensitivity_table_20_no_TE_TO_OUT.csv')
 df_max_col.to_csv(table_path+'max_col_all_sensitivity_table_20_no_TE_TO_OUT.csv')
