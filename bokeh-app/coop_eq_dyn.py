@@ -24,52 +24,29 @@ params = {'legend.fontsize': 'x-large',
          'ytick.labelsize':'x-large'}
 pylab.rcParams.update(params)
 
-# baseline_dics = [
-#     # {'baseline':'1030','variation': 'baseline'},
-#     # {'baseline':'1030','variation': '99.0'},
-#     # {'baseline':'1030','variation': '99.1'},
-#     # {'baseline':'1030','variation': '99.2'},
-#     # {'baseline':'1030','variation': '99.3'},
-#     # {'baseline':'1030','variation': '99.4'},
-#     # {'baseline':'1030','variation': '99.5'},
-#     # {'baseline':'1030','variation': '99.6'},
-#     # {'baseline':'1030','variation': '99.7'},
-#     # {'baseline':'1030','variation': '99.8'},
-#     # {'baseline':'1030','variation': '99.9'},
-#     # {'baseline':'1030','variation': '99.10'},
-#     # {'baseline':'1030','variation': '99.11'},
-#     # {'baseline':'1030','variation': '99.12'},
-#     # {'baseline':'1030','variation': '99.13'},
-#     # {'baseline':'1030','variation': '99.14'},
-#     # {'baseline':'1030','variation': '99.15'},
-#     ]
-
 baseline_dics = [
-  # {'baseline': '1030', 'variation': '20.0'},
-  # {'baseline': '1030', 'variation': '20.1'},
-  # {'baseline': '1030', 'variation': '20.2'},
-  # {'baseline': '1030', 'variation': '20.3'},
-  # {'baseline': '1030', 'variation': '20.4'},
-  # {'baseline': '1030', 'variation': '20.5'},
-  # {'baseline': '1030', 'variation': '20.6'},
-  # {'baseline': '1030', 'variation': '20.7'},
-  # {'baseline': '1030', 'variation': '20.8'},
-  # {'baseline': '1030', 'variation': '20.9'},
-  # {'baseline': '1030', 'variation': '20.10'},
-  # {'baseline': '1030', 'variation': '20.11'},
-  {'baseline': '1030', 'variation': '20.12'},
-  {'baseline': '1030', 'variation': '20.13'},
-  {'baseline': '1030', 'variation': '20.14'},
-  {'baseline': '1030', 'variation': '20.15'},
-  {'baseline': '1030', 'variation': '20.16'},
-  {'baseline': '1030', 'variation': '20.17'},
-  {'baseline': '1030', 'variation': '20.18'},
-  {'baseline': '1030', 'variation': '20.19'},
-  {'baseline': '1030', 'variation': '20.20'},
-  {'baseline': '1030', 'variation': '20.21'},
-  {'baseline': '1030', 'variation': '20.22'},
-  {'baseline': '1030', 'variation': '20.23'},
-  {'baseline': '1030', 'variation': '20.24'}]
+    # {'baseline':'1030','variation': 'baseline'},
+    # {'baseline':'1030','variation': '99.0'},
+    # {'baseline':'1030','variation': '99.1'},
+    # {'baseline':'1030','variation': '99.2'},
+    # {'baseline':'1030','variation': '99.3'},
+    # {'baseline':'1030','variation': '99.4'},
+    # {'baseline':'1030','variation': '99.5'},
+    {'baseline':'1030','variation': '99.6'},
+    {'baseline':'1030','variation': '99.7'},
+    # {'baseline':'1030','variation': '99.8'},
+    # {'baseline':'1030','variation': '99.9'},
+    # {'baseline':'1030','variation': '99.10'},
+    # {'baseline':'1030','variation': '99.11'},
+    # {'baseline':'1030','variation': '99.12'},
+    # {'baseline':'1030','variation': '99.13'},
+    # {'baseline':'1030','variation': '99.14'},
+    # {'baseline':'1030','variation': '99.15'},
+    ]
+
+# baseline_dics = [
+#   {'baseline': '1030', 'variation': '2.0'},
+#   ]
 
 lb_delta = 0.01
 ub_delta = 12
@@ -126,7 +103,7 @@ if __name__ == '__main__':
                               #     accel_max_weight_norm=1e6,
                               #     damping_post_acceleration=10),
                                custom_dyn_sol_options = None,
-                             custom_weights=None,max_workers=12)
+                             custom_weights=None,max_workers=4)
             
             write = True
             if write:
@@ -175,22 +152,33 @@ if __name__ == '__main__':
 # import matplotlib.pylab as pylab
 
 # baseline_dics = [
-#     # {'baseline':'1030','variation': 'baseline'},
-#     # {'baseline':'1030','variation': '99.0'},
-#     # {'baseline':'1030','variation': '99.1'},
-#     # {'baseline':'1030','variation': '99.2'},
-#     # {'baseline':'1030','variation': '99.3'},
-#     # {'baseline':'1030','variation': '99.4'},
-#     # {'baseline':'1030','variation': '99.5'},
-#     {'baseline':'1030','variation': '99.6'},
-#     # {'baseline':'1030','variation': '99.7'},
-#     # {'baseline':'1030','variation': '99.8'},
-#     # {'baseline':'1030','variation': '99.9'},
-#     {'baseline':'1030','variation': '99.10'},
-#     {'baseline':'1030','variation': '99.11'},
-#     {'baseline':'1030','variation': '99.12'},
-#     {'baseline':'1030','variation': '99.13'},
-#     ]
+#   {'baseline': '1030', 'variation': 'baseline'},
+#   {'baseline': '1030', 'variation': '20.0'},
+#   # {'baseline': '1030', 'variation': '20.1'},
+#   # {'baseline': '1030', 'variation': '20.2'},
+#   # {'baseline': '1030', 'variation': '20.3'},
+#   # {'baseline': '1030', 'variation': '20.4'},
+#   # {'baseline': '1030', 'variation': '20.5'},
+#   # {'baseline': '1030', 'variation': '20.6'},
+#   # {'baseline': '1030', 'variation': '20.7'},
+#   # {'baseline': '1030', 'variation': '20.8'},
+#   # {'baseline': '1030', 'variation': '20.9'},
+#   # {'baseline': '1030', 'variation': '20.10'},
+#   # {'baseline': '1030', 'variation': '20.11'},
+#   # {'baseline': '1030', 'variation': '20.12'},
+#   # {'baseline': '1030', 'variation': '20.13'},
+#   # {'baseline': '1030', 'variation': '20.14'},
+#   # {'baseline': '1030', 'variation': '20.15'},
+#   # {'baseline': '1030', 'variation': '20.16'},
+#   # {'baseline': '1030', 'variation': '20.17'},
+#   # {'baseline': '1030', 'variation': '20.18'},
+#   # {'baseline': '1030', 'variation': '20.19'},
+#   # {'baseline': '1030', 'variation': '20.20'},
+#   # {'baseline': '1030', 'variation': '20.21'},
+#   # {'baseline': '1030', 'variation': '20.22'},
+#   # {'baseline': '1030', 'variation': '20.23'},
+#   # {'baseline': '1030', 'variation': '20.24'}
+#   ]
 
 # lb_delta = 0.01
 # ub_delta = 12
@@ -234,8 +222,8 @@ if __name__ == '__main__':
 #         sol_baseline.scale_P(p_baseline)
 #         sol_baseline.compute_non_solver_quantities(p_baseline)
         
-#         # for aggregation_method in ['negishi','pop_weighted']:
-#         for aggregation_method in ['pop_weighted']:
+#         for aggregation_method in ['negishi','pop_weighted']:
+#         # for aggregation_method in ['pop_weighted']:
 #             print(aggregation_method)
 #             dyn_eq_deltas = pd.read_csv('coop_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(
 #                 ['baseline','variation','aggregation_method'],keep='last')
@@ -243,6 +231,8 @@ if __name__ == '__main__':
 #                 (dyn_eq_deltas.baseline.astype('str') == baseline_dic['baseline'])
 #                 & (dyn_eq_deltas.variation.astype('str') == baseline_dic['variation'])
 #                 & (dyn_eq_deltas.aggregation_method == aggregation_method)][p_baseline.countries].values.squeeze()
+            
+#             print(dyn_eq_deltas)
             
 #             p = p_baseline.copy()
 #             p.delta[...,1] = dyn_eq_deltas
@@ -279,7 +269,7 @@ if __name__ == '__main__':
             
 #             corner_corrected_deltas = p.delta[...,1].copy()
 #             for i,c in enumerate(p_baseline.countries):
-#                 if c=='RUS':
+#                 if c=='CHN':
 #                     p_corner = p.copy()
 #                     p_corner.delta[i,1] = ub_delta
                     
@@ -367,7 +357,7 @@ if __name__ == '__main__':
 #             # corner_corrected_deltas = p.delta[...,1].copy()
 #             for i,c in enumerate(p_baseline.countries):
 #                 # if p.delta[i,1] < 2*lb_delta or c=='MEX':
-#                 if c=='RUS':
+#                 if c=='CHN':
 #                     p_corner = p.copy()
 #                     p_corner.delta[i,1] = lb_delta
                     
@@ -486,3 +476,6 @@ if __name__ == '__main__':
 #                                           'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
 #                 cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
 #                 cons_eq_welfares.to_csv('coop_eq_recaps/dyn_cons_eq_welfares.csv')
+                
+#%%
+

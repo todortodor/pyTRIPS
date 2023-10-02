@@ -25,17 +25,21 @@ baseline_dics = [
     # {'baseline':'1030','variation': '99.3'},
     # {'baseline':'1030','variation': '99.4'},
     # {'baseline':'1030','variation': '99.5'},
-    # {'baseline':'1030','variation': '99.6'},
-    # {'baseline':'1030','variation': '99.7'},
+    {'baseline':'1030','variation': '99.6'},
+    {'baseline':'1030','variation': '99.7'},
     # {'baseline':'1030','variation': '99.8'},
     # {'baseline':'1030','variation': '99.9'},
     # {'baseline':'1030','variation': '99.10'},
     # {'baseline':'1030','variation': '99.11'},
     # {'baseline':'1030','variation': '99.12'},
     # {'baseline':'1030','variation': '99.13'},
-    {'baseline':'1030','variation': '99.14'},
-    {'baseline':'1030','variation': '99.15'},
+    # {'baseline':'1030','variation': '99.14'},
+    # {'baseline':'1030','variation': '99.15'},
     ]
+
+# baseline_dics = [
+#   {'baseline': '1030', 'variation': '2.0'},
+#   ]
 
 def process_country(args):
     p, c, local_path, sol_baseline, recap_path = args
@@ -109,7 +113,7 @@ if __name__ == '__main__':
         # parallel processes
         # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
         args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
-        with ProcessPoolExecutor(max_workers=4) as executor:
+        with ProcessPoolExecutor(max_workers=12) as executor:
             # returns = executor.map(lambda args: process_country(*args), args_list)
             results = list(executor.map(process_country, args_list))
         

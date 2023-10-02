@@ -1082,7 +1082,7 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
                                  custom_weights=None,custom_sol_options=None,
                                  custom_dyn_sol_options=None):
     p.delta[...,1] = deltas
-    # print(p.delta[...,1])
+    print(p.delta[...,1])
     if custom_sol_options is None:
         custom_sol_options = dict(cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -1171,6 +1171,25 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
             accel_safeguard_factor=1, 
             accel_max_weight_norm=1e6,
             damping_post_acceleration=10)
+        # if np.all(deltas>5):
+        #     custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
+        #     accelerate=False,
+        #     accelerate_when_stable=False,
+        #     cobweb_qty='l_R',
+        #     plot_convergence=False,
+        #     plot_cobweb=False,
+        #     plot_live = False,
+        #     safe_convergence=1e-8,
+        #     disp_summary=False,
+        #     damping = 0,
+        #     max_count = 50000,
+        #     accel_memory =5, 
+        #     accel_type1=True, 
+        #     accel_regularization=1e-10,
+        #     accel_relaxation=1, 
+        #     accel_safeguard_factor=1, 
+        #     accel_max_weight_norm=1e6,
+        #     damping_post_acceleration=10)
         sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_init=sol_baseline, Nt=23,
                                                 x0 = p.dyn_guess,
                                               t_inf=500,
@@ -1213,7 +1232,7 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
         if aggregation_method == 'custom_weights':
             welfare = dyn_sol_c.cons_eq_custom_weights_welfare_change
     
-    # print(deltas,welfare)
+    print(deltas,welfare)
     
     return -welfare
 
@@ -1222,9 +1241,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                  solver_options=None,tol=1e-15,
                  static_eq_deltas = None,custom_weights=None,
                  custom_x0 = None,max_workers=6,
-                 custom_dyn_sol_options=None):
-    
-    custom_sol_options = solver_options
+                 custom_dyn_sol_options=None, displays = True):
     
     if solver_options is None:
         solver_options = dict(cobweb_anim=False,tol =1e-14,
@@ -1244,6 +1261,28 @@ def find_coop_eq(p_baseline,aggregation_method,
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
                                 damping_post_acceleration=5)
+        
+    custom_sol_options = solver_options
+    
+    if custom_dyn_sol_options is None:
+        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
+        accelerate=False,
+        accelerate_when_stable=False,
+        cobweb_qty='l_R',
+        plot_convergence=False,
+        plot_cobweb=False,
+        plot_live = False,
+        safe_convergence=1e-8,
+        disp_summary=False,
+        damping = 60,
+        max_count = 50000,
+        accel_memory =5, 
+        accel_type1=True, 
+        accel_regularization=1e-10,
+        accel_relaxation=1, 
+        accel_safeguard_factor=1, 
+        accel_max_weight_norm=1e6,
+        damping_post_acceleration=10)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                                     context = 'counterfactual',
@@ -1275,8 +1314,6 @@ def find_coop_eq(p_baseline,aggregation_method,
     #                         bounds=bounds
     #     )
     
-    displays = True
-    
     sol = minimize_parallel(fun = minus_world_welfare_of_delta,
                             x0 = x0,
                             tol = tol,
@@ -1296,7 +1333,8 @@ def find_coop_eq(p_baseline,aggregation_method,
     #                                       args = (p,sol_baseline,dynamics,aggregation_method,
     #                                             custom_weights,custom_sol_options),
     #                                       options={'disp':True},
-    #                                       # tol=1e-8
+    #                                        # tol=1e-8,
+    #                                       workers=-1
     #                                       )
 
     p.delta[...,1] = sol.x
@@ -1305,8 +1343,8 @@ def find_coop_eq(p_baseline,aggregation_method,
     #make a 'corner check'
     corner_corrected_deltas = p.delta[...,1].copy()
     for i,c in enumerate(p_baseline.countries):
-        # if p.delta[i,1] > 1 or c=='MEX':
-        if True:
+        if p.delta[i,1] > 1 or c=='MEX':
+        # if True:
             p_corner = p.copy()
             p_corner.delta[i,1] = ub_delta
             
@@ -1331,24 +1369,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                                                              sol_fin=sol_corner,
                                                              Nt=23,
                                                       t_inf=500,
-                                        cobweb_anim=False,tol =1e-14,
-                                        accelerate=False,
-                                        accelerate_when_stable=False,
-                                        cobweb_qty='l_R',
-                                        plot_convergence=False,
-                                        plot_cobweb=False,
-                                        plot_live = False,
-                                        safe_convergence=1e-8,
-                                        disp_summary=False,
-                                        damping = 60,
-                                        max_count = 50000,
-                                        accel_memory =5, 
-                                        accel_type1=True, 
-                                        accel_regularization=1e-10,
-                                        accel_relaxation=1, 
-                                        accel_safeguard_factor=1, 
-                                        accel_max_weight_norm=1e6,
-                                        damping_post_acceleration=10
+                                        **custom_dyn_sol_options
                                         )
         
                 dyn_sol_corner.compute_non_solver_quantities(p)
@@ -1360,7 +1381,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                 # if aggregation_method == 'custom_weights':
                 #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
             
-            if corner_welfare > solution_welfare:
+            if corner_welfare > 1.001*solution_welfare:
                 print('upper corner was better for ',c)
                 corner_corrected_deltas[i] = ub_delta
     
@@ -1386,24 +1407,7 @@ def find_coop_eq(p_baseline,aggregation_method,
         sol, dyn_sol = dyn_fixed_point_solver(p, sol_init=sol_baseline, 
                                                      Nt=23,
                                               t_inf=500,
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=False,
-                                cobweb_qty='l_R',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                plot_live = False,
-                                safe_convergence=1e-8,
-                                disp_summary=False,
-                                damping = 60,
-                                max_count = 50000,
-                                accel_memory =5, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=1, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=10
+                                **custom_dyn_sol_options
                                 )
     
         dyn_sol.compute_non_solver_quantities(p)
@@ -1415,8 +1419,8 @@ def find_coop_eq(p_baseline,aggregation_method,
     
     # corner_corrected_deltas = p.delta[...,1].copy()
     for i,c in enumerate(p_baseline.countries):
-        # if p.delta[i,1] < 2*lb_delta or c=='MEX':
-        if True:
+        if p.delta[i,1] < 2*lb_delta or c=='MEX':
+        # if True:
             p_corner = p.copy()
             p_corner.delta[i,1] = lb_delta
             
@@ -1441,24 +1445,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                                                              sol_fin=sol_corner,
                                                              Nt=23,
                                                       t_inf=500,
-                                        cobweb_anim=False,tol =1e-14,
-                                        accelerate=False,
-                                        accelerate_when_stable=False,
-                                        cobweb_qty='l_R',
-                                        plot_convergence=False,
-                                        plot_cobweb=False,
-                                        plot_live = False,
-                                        safe_convergence=1e-8,
-                                        disp_summary=False,
-                                        damping = 60,
-                                        max_count = 50000,
-                                        accel_memory =5, 
-                                        accel_type1=True, 
-                                        accel_regularization=1e-10,
-                                        accel_relaxation=1, 
-                                        accel_safeguard_factor=1, 
-                                        accel_max_weight_norm=1e6,
-                                        damping_post_acceleration=10
+                                        **custom_dyn_sol_options
                                         )
         
                 dyn_sol_corner.compute_non_solver_quantities(p)
@@ -1470,7 +1457,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                 # if aggregation_method == 'custom_weights':
                 #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
             
-            if corner_welfare > solution_welfare:
+            if corner_welfare > 1.001*solution_welfare:
                 print('lower corner was better for ',c)
                 corner_corrected_deltas[i] = lb_delta
             
@@ -1490,24 +1477,7 @@ def find_coop_eq(p_baseline,aggregation_method,
     if dynamics:
         sol, dyn_sol_c = dyn_fixed_point_solver(p,  sol_baseline, sol_fin=sol_c, Nt=25,
                                               t_inf=500,
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=False,
-                                cobweb_qty='l_R',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                plot_live = False,
-                                safe_convergence=1e-8,
-                                disp_summary=False,
-                                damping = 50,
-                                max_count = 50000,
-                                accel_memory =5, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=1, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=10
+                                **custom_dyn_sol_options
                                 )
         dyn_sol_c.compute_non_solver_quantities(p)
 

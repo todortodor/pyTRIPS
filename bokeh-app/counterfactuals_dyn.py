@@ -27,17 +27,18 @@ baseline_dics = [
     # {'baseline':'1030','variation': '99.3'},
     # {'baseline':'1030','variation': '99.4'},
     # {'baseline':'1030','variation': '99.5'},
-    # {'baseline':'1030','variation': '99.6'},
-    # {'baseline':'1030','variation': '99.7'},
+    {'baseline':'1030','variation': '99.6'},
+    {'baseline':'1030','variation': '99.7'},
     # {'baseline':'1030','variation': '99.8'},
     # {'baseline':'1030','variation': '99.9'},
     # {'baseline':'1030','variation': '99.10'},
     # {'baseline':'1030','variation': '99.11'},
     # {'baseline':'1030','variation': '99.12'},
     # {'baseline':'1030','variation': '99.13'},
-    {'baseline':'1030','variation': '99.14'},
-    {'baseline':'1030','variation': '99.15'},
+    # {'baseline':'1030','variation': '99.14'},
+    # {'baseline':'1030','variation': '99.15'},
     ]
+
 
 def process_country(args):
     p, c, local_path, sol_baseline, recap_path, dynamics, Nt, t_inf = args

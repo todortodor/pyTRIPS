@@ -22,7 +22,7 @@ if new_run:
     p.correct_eur_patent_cost = True
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
-    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
+    # p.load_run('calibration_results_matched_economy/baseline_1030_variations/0.2/')
     # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
@@ -45,8 +45,13 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.load_data('data/data_11_countries_1992/')
 # m.weights_dict['TO'] = 5
 # m.weights_dict['TE'] = 5
-# m.weights_dict['DOMPATINUS'] = 5
+# m.weights_dict['RP'] = 10
 # p.kappa = 0.1
+p.sigma[1] = 3.375
+
+# m.RP_target[3] = m.RP_target[3]*1.2
+# m.SRGDP_target[1] = m.SRGDP_target[1]*1.2
+# m.SRGDP_target = m.SRGDP_target/m.SRGDP_target.sum()
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
@@ -116,15 +121,18 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-# baseline_number = '1020'
+baseline_number = '1030'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1030
+run_number = 99.7
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
-new_baseline = True
+# p_sol.nu[1] = p_sol.nu[1]*2
+# run_number = 2.0
+
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path
@@ -134,8 +142,8 @@ try:
 except:
     pass
 
-write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
-m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
+# write_calibration_results(path+str(run_number),p_sol,m,sol_c,commentary = commentary)
+# m.plot_moments(m.list_of_moments, save_plot = path+str(run_number))
 # write_calibration_results(path+run_str,p_sol,m,sol_c,commentary = commentary)
 # m.plot_moments(m.list_of_moments, save_plot = path+run_str)
 

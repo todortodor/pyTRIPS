@@ -58,7 +58,8 @@ m_baseline.compute_moments(sol_baseline, p_baseline)
 moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS',
   'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS', 'TE']
 # moments_to_change = ['SPFLOW', 'UUPCOST', 'DOMPATINUS', 'TE']
-parameters_to_change = ['rho','kappa','sigma']
+# parameters_to_change = ['rho','kappa','sigma']
+parameters_to_change = ['theta','gamma']
 
 weights_to_change = m_baseline.list_of_moments
 
@@ -167,67 +168,73 @@ def make_alternative_calib(m_baseline,p_baseline,qty_to_change,target,result_pat
 
 #%%
 
-# for par in parameters_to_change:
-#     if par in ['kappa','rho']:
-#         target = getattr(p_baseline,par)*1.20
-#         print(par)
-#         result_path = parent_moment_result_path+par+'/'
-#         make_alternative_calib(m_baseline,p_baseline,par,target,result_path,mom_or_par='par')
-#     if par in ['sigma']:
-#         target = getattr(p_baseline,par).copy()
-#         target[1] = target[1]*1.2
-#         print(par)
-#         result_path = parent_moment_result_path+par+'/'
-#         make_alternative_calib(m_baseline,p_baseline,par,target,result_path,mom_or_par='par')
+for par in parameters_to_change:
+    if par in ['kappa','rho','gamma']:
+        target = getattr(p_baseline,par)*1.20
+        print(par)
+        result_path = parent_moment_result_path+par+'/'
+        make_alternative_calib(m_baseline,p_baseline,par,target,result_path,mom_or_par='par')
+    if par in ['sigma']:
+        target = getattr(p_baseline,par).copy()
+        target[1] = target[1]*1.2
+        print(par)
+        result_path = parent_moment_result_path+par+'/'
+        make_alternative_calib(m_baseline,p_baseline,par,target,result_path,mom_or_par='par')
+    if par in ['theta']:
+        target = getattr(p_baseline,par).copy()
+        target[0] = target[0]*1.2
+        print(par)
+        result_path = parent_moment_result_path+par+'/'
+        make_alternative_calib(m_baseline,p_baseline,par,target,result_path,mom_or_par='par')
 
-for mom in moments_to_change:
-    if mom in ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
-                          'DOMPATINUS','TE','OUT','GPDIFF']:
-        target = getattr(m_baseline,mom+'_target')*1.20
-        print(mom)
-        result_path = parent_moment_result_path+mom+'/'
-        make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
-    if mom in ['RD','RP','SRGDP']:
-        for c,country in enumerate(p_baseline.countries):
-            target = getattr(m_baseline,mom+'_target').copy()
-            target[c] = target[c]*1.20
-            if mom == 'RP':
-                target = target/target[0]
-            if mom == 'SRGDP':
-                target = target/target.sum()
-            print(mom)
-            result_path = parent_moment_result_path+mom+'_'+country+'/'
-            make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
-    if mom in ['SPFLOW']:
-        for d,destination in enumerate(p_baseline.countries):
-            target = m_baseline.cc_moments.copy()
-            # target.loc[d+1,'patent flows'] = target.loc[d+1,'patent flows']*1.05
-            for o,origin in enumerate(p_baseline.countries):
-                target.loc[(d+1,o+1),'patent flows'] = target.loc[(d+1,o+1),'patent flows']*1.20
-            target = target.query("destination_code != origin_code")['patent flows'].values
-            target = target.reshape((p_baseline.N,p_baseline.N-1))
-            target = target/target.sum()
-            print(mom)
-            result_path = parent_moment_result_path+mom+'_destination_'+destination+'/'
-            make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
-        for o,origin in enumerate(p_baseline.countries):
-            target = m_baseline.cc_moments.copy()
-            for d,destination in enumerate(p_baseline.countries):
-                target.loc[(d+1,o+1),'patent flows'] = target.loc[(d+1,o+1),'patent flows']*1.20
-            target = target.query("destination_code != origin_code")['patent flows'].values
-            target = target.reshape((p_baseline.N,p_baseline.N-1))
-            target = target/target.sum()
-            print(mom)
-            result_path = parent_moment_result_path+mom+'_origin_'+origin+'/'
-            make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
+# for mom in moments_to_change:
+#     if mom in ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
+#                           'DOMPATINUS','TE','OUT','GPDIFF']:
+#         target = getattr(m_baseline,mom+'_target')*1.20
+#         print(mom)
+#         result_path = parent_moment_result_path+mom+'/'
+#         make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
+#     if mom in ['RD','RP','SRGDP']:
+#         for c,country in enumerate(p_baseline.countries):
+#             target = getattr(m_baseline,mom+'_target').copy()
+#             target[c] = target[c]*1.20
+#             if mom == 'RP':
+#                 target = target/target[0]
+#             if mom == 'SRGDP':
+#                 target = target/target.sum()
+#             print(mom)
+#             result_path = parent_moment_result_path+mom+'_'+country+'/'
+#             make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
+#     if mom in ['SPFLOW']:
+#         for d,destination in enumerate(p_baseline.countries):
+#             target = m_baseline.cc_moments.copy()
+#             # target.loc[d+1,'patent flows'] = target.loc[d+1,'patent flows']*1.05
+#             for o,origin in enumerate(p_baseline.countries):
+#                 target.loc[(d+1,o+1),'patent flows'] = target.loc[(d+1,o+1),'patent flows']*1.20
+#             target = target.query("destination_code != origin_code")['patent flows'].values
+#             target = target.reshape((p_baseline.N,p_baseline.N-1))
+#             target = target/target.sum()
+#             print(mom)
+#             result_path = parent_moment_result_path+mom+'_destination_'+destination+'/'
+#             make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
+#         for o,origin in enumerate(p_baseline.countries):
+#             target = m_baseline.cc_moments.copy()
+#             for d,destination in enumerate(p_baseline.countries):
+#                 target.loc[(d+1,o+1),'patent flows'] = target.loc[(d+1,o+1),'patent flows']*1.20
+#             target = target.query("destination_code != origin_code")['patent flows'].values
+#             target = target.reshape((p_baseline.N,p_baseline.N-1))
+#             target = target/target.sum()
+#             print(mom)
+#             result_path = parent_moment_result_path+mom+'_origin_'+origin+'/'
+#             make_alternative_calib(m_baseline,p_baseline,mom,target,result_path)
     
 
 #%% Gather changes in one dataframe
 
 df = pd.DataFrame()
 
-moments_to_change = ['kappa','rho','sigma','GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS', 'OUT',
-  'TO', 'UUPCOST', 'DOMPATINUS', 'TE', 'SRGDP', 'RD', 'RP', 'SPFLOW']
+moments_to_change = ['kappa','rho','sigma','KM','TE','TO','UUPCOST','OUT','GROWTH','GPDIFF','theta','gamma','SINNOVPATUS', 
+   'DOMPATINUS', 'SRGDP', 'RD', 'RP', 'SPFLOW']
 # moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS',
 #   'UUPCOST', 'DOMPATINUS', 'SRGDP', 'RD', 'RP', 'SPFLOW']
 # moments_to_change = ['RD']
@@ -271,6 +278,9 @@ for mom in moments_to_change:
         for o,origin in enumerate(p_baseline.countries):
             mom_idx = mom+'_origin_'+origin
             fill_row(df,parent_moment_result_path,mom_idx,p_baseline)
+
+table_path = 'calibration_results_matched_economy/baseline_1030_sensitivity_tables/'
+df.to_csv(table_path+'all_sensitivity_table_20.csv')
 
 #%% try for graphs
 

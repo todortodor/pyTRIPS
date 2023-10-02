@@ -16,19 +16,31 @@ import matplotlib.pylab as pylab
 from data_funcs import write_calibration_results
 import seaborn as sns
 from adjustText import adjust_text
+import scienceplots
 from bokeh.palettes import Category10, Dark2
 Category18 = list(Category10[10])+['#e8ba02']+list(Dark2[8])
+# import matplotlib.pyplot as plt 
+# plt.rcParams.update(plt.rcParamsDefault)
 
-params = {'legend.fontsize': 'x-large',
-          'figure.figsize': (16, 12),
-         'axes.labelsize': 'x-large',
-         'axes.titlesize':'x-large',
-         'xtick.labelsize':'x-large',
-         'ytick.labelsize':'x-large'}
-pylab.rcParams.update(params)
-sns.set()
-sns.set_context('talk')
-sns.set_style('whitegrid')
+# params = {'legend.fontsize': 'x-large',
+#           'figure.figsize': (14, 11),
+#          'axes.labelsize': 'x-large',
+#          'axes.titlesize':'x-large',
+#          'xtick.labelsize':'x-large',
+#          'ytick.labelsize':'x-large'}
+# pylab.rcParams.update(params)
+# sns.set()
+# sns.set_context('talk')
+# # sns.set_style('whitegrid')
+# sns.set(style="whitegrid", 
+#         font_scale=2, 
+#         rc={
+#     "lines.markersize": 10,
+#     "lines.linewidth": 3,
+#     }
+#     )
+plt.style.use(['science','nature','no-latex'])
+plt.style.use(['science','no-latex'])
 
 save_to_tex_options = dict(position_float='centering',
                              clines='all;index',
@@ -41,6 +53,7 @@ results_path = 'calibration_results_matched_economy/'
 cf_path = 'counterfactual_recaps/unilateral_patent_protection/'
 nash_eq_path = 'nash_eq_recaps/'
 coop_eq_path = 'coop_eq_recaps/'
+table_path = 'calibration_results_matched_economy/'
 
 save_formats = ['eps','png','pdf']
 
@@ -64,7 +77,7 @@ parameters_description = {
 #%% create output folder
 
 output_path = 'output/'
-output_name = 'draft_v6'
+output_name = 'draft_v7_nature_plots_no_grid'
 
 presentation_version_path = output_path+output_name+'/'
 try:
@@ -74,7 +87,7 @@ except:
 
 #%% Choose a run, load parameters, moments, solution
 
-baseline = '1020'
+baseline = '1030'
 variation = 'baseline'
 
 baseline_pre_trips_variation = baseline
@@ -82,12 +95,10 @@ pre_trips_cf = True
 pre_trips_variation = '9.2'
 partial_variation = '9.0'
 variation_with_doubled_tau_in_pat_sect = '10.2'
+variation_with_doubled_nu = '2.0'
 
 baseline_pre_trips_full_variation = baseline
 pre_trips_full_variation = '3.1'
-
-output_path = 'output/'
-output_name = 'draft_v6'
 
 if variation == 'baseline':
     run_path = results_path+baseline+'/'
@@ -130,6 +141,12 @@ try:
 except:
     pass
 
+sensitivity_path = save_path+'/sensitivity/'
+try:
+    os.mkdir(sensitivity_path)
+except:
+    pass
+
 counterfactual_plots_path = save_path+'/counterfactuals/'
 try:
     os.mkdir(counterfactual_plots_path)
@@ -160,9 +177,21 @@ try:
 except:
     pass
 
+doubled_nu_path = save_path+'doubled-nu/'
+try:
+    os.mkdir(doubled_nu_path)
+except:
+    pass
+
 dyn_save_path = save_path+'dynamics/'
 try:
     os.mkdir(dyn_save_path)
+except:
+    pass
+
+china_save_path = save_path+'china_india_ex/'
+try:
+    os.mkdir(china_save_path)
 except:
     pass
 
@@ -213,6 +242,7 @@ df_without_diag.style.format(precision=2).to_latex(data_fact_path+'pat_over_trad
 df_without_diag.to_csv(data_fact_path+'pat_over_trade_coeffs_without_diag.csv',float_format='%.2f')
 
 #%% Time series of number of international families by office 
+
 years = [y for y in range(1990,2019)]
 nb_countries = p_baseline.N
 
@@ -239,12 +269,17 @@ ori = ori.pivot(
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
 
-    ax.plot(ori.index,ori[country],color=Category18[i],label=countries_names[country])
+    ax.plot(ori.index,ori[country],
+            color=Category18[i],
+            label=countries_names[country]
+            )
     
-    ax.legend()
+    
     
     plt.yscale('log')
-    
+
+ax.legend(loc=[1.02,0.02])
+# ax.legend()
 ax.set_ylabel('International patent families by destination')
 ax.set_xlim([1990,2015])
 
@@ -277,12 +312,13 @@ ori = ori.pivot(
     index = 'year',
     values = 'patent flows'
     )
+# fig,ax = plt.subplots(figsize=(14,11))
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
 
     ax.plot(ori.index,ori[country],color=Category18[i],label=countries_names[country])
     
-    ax.legend()
+    ax.legend(loc=[1.02,0.02])
     
     plt.yscale('log')
     
@@ -309,11 +345,11 @@ pflow_shares = m_baseline.cc_moments.query('destination_code!=origin_code'
                                     )
 pflow_shares = pflow_shares/pflow_shares.sum()
 
-ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
-            m_baseline.SPFLOW.ravel()[pflow_shares.values.ravel()>1e-6],
+ax.scatter(pflow_shares.values.ravel(),
+            m_baseline.SPFLOW.ravel(),
             label = 'International patent shares: model')
-ax.scatter(pflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
-            tflow_shares.values.ravel()[pflow_shares.values.ravel()>1e-6],
+ax.scatter(pflow_shares.values.ravel(),
+            tflow_shares.values.ravel(),
             label = 'International trade shares',marker='^')
 
 ax.set_xlabel('International patent shares: data')
@@ -321,11 +357,12 @@ ax.set_ylabel('Model')
 
 ax.set_xscale('log')
 ax.set_yscale('log')
-ax.plot(np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel()>1e-6]),
-        np.sort(m_baseline.SPFLOW_target.ravel()[m_baseline.SPFLOW_target.ravel()>1e-6]),
-        ls='--',color='grey')
 
 plt.legend()
+    
+ax.plot([m_baseline.SPFLOW_target.ravel().min(),m_baseline.SPFLOW_target.ravel().max()],
+        [m_baseline.SPFLOW_target.ravel().min(),m_baseline.SPFLOW_target.ravel().max()],
+        ls='--',color='grey')
 
 for save_format in save_formats:
     plt.savefig(calibration_path+'trade_vs_patent_flows.'+save_format,format=save_format)
@@ -350,13 +387,13 @@ y = getattr(m_baseline, moment).ravel()
 fig, ax = plt.subplots()
 
 ax.scatter(x,y)
-ax.plot(x,x,color='grey',ls='--',lw=1)
+ax.plot([x.min(),x.max()],[x.min(),x.max()],color='grey',ls='--',lw=1)
 if annotate_with_labels:
     texts = [ax.annotate(label,
                          xy=(x[i],y[i]),
                         xytext=(2,2),
                         textcoords='offset points',
-                         fontsize = 10
+                          fontsize = 3
                         )
              for i,label in enumerate(labels)]
     
@@ -674,8 +711,8 @@ df.to_csv(counterfactual_plots_path+'uniformization_to_delta_us_table.csv',float
 
 recap_growth_rate = pd.DataFrame(columns = ['delta_change']+p_baseline.countries+['World'])
 
-# for c in p_baseline.countries+['World','Uniform_delta']:
-for c in ['Uniform_delta']:
+for c in p_baseline.countries+['World','Uniform_delta']:
+# for c in ['Uniform_delta']:
     recap = pd.DataFrame(columns = ['delta_change','growth','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -743,7 +780,7 @@ for c in ['Uniform_delta']:
     
     ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
     ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
-    ax.legend()
+    ax.legend(loc=([1,0]))
     
     if c == 'Uniform_delta':
         for save_format in save_formats:
@@ -769,7 +806,7 @@ for c in ['Uniform_delta']:
 
 #%% Counterfactual growth rates
 
-for with_world in [False]:
+for with_world in [True,False]:
 
     fig,ax = plt.subplots()
     
@@ -785,7 +822,7 @@ for with_world in [False]:
         ax.plot(recap_growth_rate.delta_change,
                 recap_growth_rate['World']*100,color='grey',
                 label='All countries',ls='--')
-    ax.legend()
+    ax.legend(loc=[1.02,0.02])
     plt.xscale('log')
     for save_format in save_formats:
         if with_world:
@@ -807,6 +844,8 @@ for with_world in [False]:
 #%%  Counterfactuals with transitional dynamics
 
 #%% Unilateral patent protections counterfactuals with dynamics
+
+
 
 for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_countries_pat_sectors']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
@@ -880,7 +919,7 @@ for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_
     ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
     ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
 
-    ax.legend()
+    ax.legend(loc=[1.02,0.02])
 
     for save_format in save_formats:
         plt.savefig(counterfactual_plots_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
@@ -2538,7 +2577,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real final consumption')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_final_consumption.'+save_format,format=save_format)
@@ -2559,7 +2598,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real profit')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_profit.'+save_format,format=save_format)
@@ -2578,7 +2617,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Labor allocated to research')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'research_labor.'+save_format,format=save_format)
@@ -2597,7 +2636,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real wage')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_wage.'+save_format,format=save_format)
@@ -2616,7 +2655,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel(r'$\Psi^{CD}_n$')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'psi_cd.'+save_format,format=save_format)
@@ -2635,7 +2674,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Interest rate')
-plt.legend()
+plt.legend(loc=[1.02,0.02])
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'interest_rate.'+save_format,format=save_format)
@@ -2781,3 +2820,670 @@ if save_dynamics:
                       )
     
     df.to_csv(dyn_save_path+'welfare_table.csv',float_format='%.5f')
+
+#%% Table of solving for the eta where countries will join the patenting club
+
+df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/CHN.csv')
+df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/IND.csv')
+
+df = pd.DataFrame(index = p_baseline.countries)
+df['baseline eta'] = p_baseline.eta[:,1]
+
+df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_china'].iloc[-1]
+df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_india'].iloc[-1]
+
+df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
+df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
+
+df.to_csv(china_save_path+'china_india_ex.csv')
+
+#%% Sensitivity graphs of the calibration
+
+moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS',
+  'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS', 'TE']
+parameters_to_change = ['rho','kappa','sigma','theta','gamma']
+
+df = pd.read_csv(table_path+f'baseline_{baseline}_sensitivity_tables/all_sensitivity_table_20.csv',index_col=0)
+
+df = df.drop(['RP_USA','RD_CHN','RD_BRA','RD_IND','RD_ROW','RD_MEX','RD_RUS'])
+
+names = {
+    'GPDIFF':'Price growth diff.',
+    'GROWTH':'Agg. growth rate',
+    'KM':'Pat. value rel. RD in US',
+    'OUT':'World output',
+    'SINNOVPATUS':'Share innov. pat. US',
+    'DOMPATINUS':'Share dom. pat. US',
+    'UUPCOST':'Domestic pat. expenditure US',
+    'TO':'Turnover US imports',
+    'TE':'Trade elasticity',
+    'rho':r'$\rho$',
+    'kappa':r'$\kappa$',
+    'sigma':r'$\sigma_1$',
+    'theta':r'$\theta_0$',
+    'gamma':r'$\gamma$',
+    'g_0':'Growth rate of sector 0',
+    'fo':'Patent preparation cost',
+    'fe':'Patent application cost',
+    'k':'Parameter Pareto quality',
+    'nu':'Technology diffusion rate',
+    'zeta':'Product obsolescence rate',
+    }
+
+
+
+for c in p_baseline.countries:
+    names['RD_'+c] = 'RD expend. rel GDP '+c
+    names['RP_'+c] = 'Relative price '+c
+    names['SRGDP_'+c] = 'Share real GDP '+c
+    names['SPFLOW_destination_'+c] = 'Patents in '+c
+    names['SPFLOW_origin_'+c] = 'Patents from '+c
+    names['eta '+c] = 'RD efficiency '+c
+    names['delta '+c] = 'Patent protection '+c
+    names['T Patent '+c] = 'Tech. sector 1 '+c
+    names['T Non patent '+c] = 'Tech. sector 0 '+c
+
+df.index = [names[i] for i in df.index]
+df.columns = [names[i] for i in df.columns]
+
+fig,ax = plt.subplots(figsize=(14,8),dpi=144)
+
+sns.heatmap(df,ax=ax,
+            cmap="vlag",
+            center=0,
+            robust = True,
+            linewidths=0.01,
+            linecolor='grey',
+            cbar_kws={'label':'Elasticity (Colormap range is computed with robust quantiles instead of extreme values)',
+                      'spacing':'proportional'
+                      }
+            )
+
+ax.tick_params('x', top=True, labeltop=True)
+ax.tick_params(axis=u'both', which=u'both',length=0)
+
+# Rotate and align bottom ticklabels
+plt.setp([tick.label1 for tick in ax.xaxis.get_major_ticks()], rotation=45,
+         ha="right", va="center", rotation_mode="anchor")
+# Rotate and align top ticklabels
+plt.setp([tick.label2 for tick in ax.xaxis.get_major_ticks()], rotation=45,
+         ha="left", va="center",rotation_mode="anchor")
+cbar = ax.collections[0].colorbar
+cbar.ax.tick_params(labelsize=12)
+ax.figure.axes[-1].yaxis.label.set_size(11)
+for save_format in save_formats:
+    plt.savefig(sensitivity_path+'full_sensitivities_saturated.'+save_format,format=save_format)
+
+plt.show()
+    
+#%% Sensitivity graphs of the calibration for patenting moments
+
+moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS',
+  'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS', 'TE']
+parameters_to_change = ['rho','kappa','sigma','theta','gamma']
+
+df = pd.read_csv(table_path+f'baseline_{baseline}_sensitivity_tables/all_sensitivity_table_20.csv',index_col=0)
+
+df = df.drop(['RP_USA','RD_CHN','RD_BRA','RD_IND','RD_ROW','RD_MEX','RD_RUS'])
+
+df = df.loc[[x for x in df.index if x.startswith('SPFLOW')]
+            +[x for x in df.index if x.startswith('RD')]
+            ]
+df = df[[x for x in df.columns if x.startswith('delta')]
+        +[x for x in df.columns if x.startswith('eta')]
+        ]
+
+names = {
+    'GPDIFF':'Price growth diff.',
+    'GROWTH':'Agg. growth rate',
+    'KM':'Pat. value rel. RD in US',
+    'OUT':'World output',
+    'SINNOVPATUS':'Share innov. pat. US',
+    'DOMPATINUS':'Share dom. pat. US',
+    'UUPCOST':'Domestic pat. expenditure US',
+    'TO':'Turnover US imports',
+    'TE':'Trade elasticity',
+    'rho':r'$\rho$',
+    'kappa':r'$\kappa$',
+    'sigma':r'$\sigma_1$',
+    'theta':r'$\theta_0$',
+    'gamma':r'$\gamma$',
+    'g_0':'Growth rate of sector 0',
+    'fo':'Patent preparation cost',
+    'fe':'Patent application cost',
+    'k':'Parameter Pareto quality',
+    'nu':'Technology diffusion rate',
+    'zeta':'Product obsolescence rate',
+    }
+
+
+
+for c in p_baseline.countries:
+    names['RD_'+c] = 'RD expend. rel GDP '+c
+    names['RP_'+c] = 'Relative price '+c
+    names['SRGDP_'+c] = 'Share real GDP '+c
+    names['SPFLOW_destination_'+c] = 'Patents in '+c
+    names['SPFLOW_origin_'+c] = 'Patents from '+c
+    names['eta '+c] = 'RD efficiency '+c
+    names['delta '+c] = 'Patent protection '+c
+    names['T Patent '+c] = 'Tech. sector 1 '+c
+    names['T Non patent '+c] = 'Tech. sector 0 '+c
+
+df.index = [names[i] for i in df.index]
+df.columns = [names[i] for i in df.columns]
+
+fig,ax = plt.subplots(figsize=(14,8),dpi=144)
+
+sns.heatmap(df,ax=ax,
+            cmap="vlag",
+            center=0,
+            robust = True,
+            linewidths=0.01,
+            linecolor='grey',
+            cbar_kws={'label':'Elasticity (Colormap range is computed with robust quantiles instead of extreme values)',
+                      'spacing':'proportional'
+                      }
+            )
+
+ax.tick_params('x', top=True, labeltop=True,labelrotation=90)
+ax.tick_params(axis=u'both', which=u'both',length=0)
+# Rotate and align bottom ticklabels
+plt.setp([tick.label1 for tick in ax.xaxis.get_major_ticks()], rotation=45,
+         ha="right", va="center", rotation_mode="anchor")
+# Rotate and align top ticklabels
+plt.setp([tick.label2 for tick in ax.xaxis.get_major_ticks()], rotation=45,
+         ha="left", va="center",rotation_mode="anchor")
+cbar = ax.collections[0].colorbar
+cbar.ax.tick_params(labelsize=12)
+ax.figure.axes[-1].yaxis.label.set_size(11)
+
+for save_format in save_formats:
+    plt.savefig(sensitivity_path+'reduced_sensitivities_saturated.'+save_format,format=save_format)
+
+plt.show()
+
+#%% Results with doubled diffusion speed
+
+#%% Unilateral patent protections counterfactuals with dynamics for doubled nu
+
+variation = variation_with_doubled_nu
+run_path_with_doubled_nu = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_doubled_nu}/'
+
+p_double_nu = parameters()
+p_double_nu.load_run(run_path_with_doubled_nu)
+
+_, sol_double_nu = fixed_point_solver(p_double_nu,context = 'counterfactual',x0=p_double_nu.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_double_nu.scale_P(p_double_nu)
+sol_double_nu.compute_non_solver_quantities(p_double_nu)
+
+
+# for c in ['USA']:
+for c in p_double_nu.countries:
+    recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_double_nu.countries)
+    if variation == 'baseline':
+        local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
+    else:
+        local_path = \
+            f'counterfactual_results/unilateral_patent_protection/baseline_{baseline}_{variation}/'
+    print(c)
+    if c in p_double_nu.countries:
+        idx_country = p_double_nu.countries.index(c)
+    country_path = local_path+c+'/'
+    files_in_dir = next(os.walk(country_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list.sort(key=float)
+    for i,run in enumerate(run_list):
+        p = parameters()
+        p.load_run(country_path+run+'/')
+        if p.guess is not None:
+            sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+            sol_c.scale_P(p)
+            sol_c.compute_non_solver_quantities(p)
+            sol_c.compute_consumption_equivalent_welfare(p,sol_double_nu)
+        if p.dyn_guess is not None:
+            dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+                                                    Nt=25,t_inf=500,
+                                                    sol_init = sol_double_nu,
+                                                    sol_fin = sol_c)
+            dyn_sol_c.compute_non_solver_quantities(p)
+        if c in p_double_nu.countries:
+            recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_double_nu.delta[idx_country,1]
+        if c == 'World':
+            recap.loc[run, 'delta_change'] = p.delta[0,1]/p_double_nu.delta[0,1]
+        if c == 'Uniform_delta':
+            recap.loc[run, 'delta_change'] = p.delta[0,1]
+        if c == 'Upper_uniform_delta':
+            recap.loc[run,'delta_change'] = np.logspace(-2,0,len(run_list))[i]
+        if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+            recap.loc[run, 'delta_change'] = p.tau[0,1,1]/p_double_nu.tau[0,1,1]
+        recap.loc[run, 'world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
+        recap.loc[run, 'world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
+        recap.loc[run,p_double_nu.countries] = dyn_sol_c.cons_eq_welfare
+
+    fig,ax = plt.subplots()
+    
+    plt.xscale('log')
+    
+    ax.set_ylabel('Welfare change')
+    if c in p_double_nu.countries:
+        ax.set_xlabel(r'Proportional change of $\delta$')
+    if c == 'World':
+        ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
+    if c == 'Uniform_delta' or c == 'Upper_uniform_delta':
+        ax.set_xlabel(r'Harmonized $\delta$')
+        plt.axvline(x=p_double_nu.delta[0,1], lw = 1, color = 'k')
+        xt = ax.get_xticks() 
+        xt=np.append(xt,p_double_nu.delta[0,1])
+        xtl=xt.tolist()
+        xtl[-1]=r'$\delta_{US}$'
+        ax.set_xticks(xt)
+        ax.set_xticklabels(xtl)
+    if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+        ax.set_xlabel(r'Proportional change of $\tau$ of all countries in the patenting sector')
+        ax.set_xlim(0.98,1.02)
+        ax.set_ylim(0.98,1.02)
+        plt.xscale('linear')
+
+    for i,country in enumerate(p_double_nu.countries):
+        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
+    
+    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
+    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
+
+    ax.legend(loc=[1.02,0.02])
+
+    for save_format in save_formats:
+        plt.savefig(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
+    plt.show()
+    
+    if c in p_double_nu.countries:
+        caption = 'Consumption equivalent welfares in the unilateral patent protection counterfactual of '+countries_names[c]
+    if c == 'World':
+        caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
+    if c == 'Uniform_delta':
+        caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
+    if c == 'Upper_uniform_delta':
+        caption = 'Consumption equivalent welfares in the partially harmonized delta counterfactual change of all countries'
+        recap = recap.rename(columns = {'delta_change':'delta'})
+    if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+        caption = 'Consumption equivalent welfares in the counterfactual change of delta pre-TRIPS and trade costs of the patenting sectors'
+        recap = recap.rename(columns = {'delta_change':'tau_change'})
+    
+    recap.style.to_latex(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.tex',
+                      caption=caption,
+                      **save_to_tex_options
+                      )
+    recap.to_csv(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.csv')
+    
+    if c == 'Uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
+        
+    if c == 'Upper_uniform_delta':
+        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
+        delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
+                          caption=caption,
+                          **save_to_tex_options
+                          )
+        delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
+
+#%% Nash table with transitional dynamics with doubled nu
+
+all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
+all_nashes = all_nashes.drop_duplicates(['baseline','variation'],keep='last')
+
+run_nash= all_nashes.loc[(all_nashes.baseline == int(baseline)) 
+                         & (all_nashes.variation.astype(str) == variation_with_doubled_nu)]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_nu}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_nu}/')
+
+p_nash = p_pre.copy()
+p_nash.delta[:,1] = run_nash[p_double_nu.countries].values.squeeze()
+
+sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_pre)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_pre)
+
+m_nash = m_pre.copy()
+m_nash.compute_moments(dyn_sol_nash.sol_fin,p_nash)
+m_nash.compute_moments_deviations()
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_double_nu.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'
+                                     ],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_double_nu.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_nash.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Nash equilibrium with doubled nu'
+
+df.style.format(precision=5).to_latex(doubled_nu_path+'dyn_Nash_table_with_doubled_nu.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(doubled_nu_path+'dyn_Nash_table_with_doubled_nu.csv',float_format='%.5f')
+
+write_calibration_results(doubled_nu_path+'dyn_Nash_with_doubled_nu',p_nash,m_nash,dyn_sol_nash.sol_fin,commentary = '')
+
+
+#%% Coop equal weights table with transitional dynamics with doubled nu
+
+all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_equales = all_coop_equales.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_equal= all_coop_equales.loc[(all_coop_equales.baseline == int(baseline))
+                                     & (all_coop_equales.variation == variation_with_doubled_nu)
+                                     & (all_coop_equales.aggregation_method == 'pop_weighted')]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_nu}/')
+# p_pre.tau = p_double_nu.tau.copy()
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_nu}/')
+
+p_coop_equal = p_pre.copy()
+p_coop_equal.delta[:,1] = run_coop_equal[p_double_nu.countries].values.squeeze()
+
+sol, dyn_sol_coop_equal = dyn_fixed_point_solver(p_coop_equal, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_equal.compute_non_solver_quantities(p_coop_equal)
+dyn_sol_coop_equal.sol_fin.compute_consumption_equivalent_welfare(p_coop_equal,sol_pre)
+dyn_sol_coop_equal.sol_fin.compute_world_welfare_changes(p_coop_equal,sol_pre)
+
+m_coop_equal = m_pre.copy()
+m_coop_equal.compute_moments(dyn_sol_coop_equal.sol_fin,p_coop_equal)
+m_coop_equal.compute_moments_deviations()
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_double_nu.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_double_nu.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_coop_equal.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Cooperative equilibrium with population weights'
+
+df.style.format(precision=5).to_latex(doubled_nu_path+'dyn_Coop_population_weights_table_with_doubled_nu.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(doubled_nu_path+'dyn_Coop_population_weights_table_with_doubled_nu.csv',float_format='%.5f')
+
+write_calibration_results(doubled_nu_path+'dyn_Coop_population_weights_with_doubled_nu',p_coop_equal,m_coop_equal,dyn_sol_coop_equal.sol_fin,commentary = '')
+
+#%% Coop negishi weights table with transitional dynamics with doubled nu
+
+all_coop_negishies = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_negishies = all_coop_negishies.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_negishi= all_coop_negishies.loc[(all_coop_negishies.baseline == int(baseline))
+                                     & (all_coop_negishies.variation == variation)
+                                     & (all_coop_negishies.aggregation_method == 'negishi')]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_nu}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+p_coop_negishi = p_pre.copy()
+p_coop_negishi.delta[:,1] = run_coop_negishi[p_double_nu.countries].values.squeeze()
+
+sol, dyn_sol_coop_negishi = dyn_fixed_point_solver(p_coop_negishi, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_negishi.compute_non_solver_quantities(p_coop_negishi)
+dyn_sol_coop_negishi.sol_fin.compute_consumption_equivalent_welfare(p_coop_negishi,sol_pre)
+dyn_sol_coop_negishi.sol_fin.compute_world_welfare_changes(p_coop_negishi,sol_pre)
+
+m_coop_negishi = m_pre.copy()
+m_coop_negishi.compute_moments(dyn_sol_coop_negishi.sol_fin,p_coop_negishi)
+m_coop_negishi.compute_moments_deviations()
+    
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_double_nu.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_double_nu.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_coop_negishi.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Cooperative equilibrium with Negishi weights'
+
+df.style.format(precision=5).to_latex(doubled_nu_path+'dyn_Coop_negishi_weights_table_with_doubled_nu.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(doubled_nu_path+'dyn_Coop_negishi_weights_table_with_doubled_nu.csv',float_format='%.5f')
+
+write_calibration_results(doubled_nu_path+'dyn_Coop_negishi_weights_with_nu',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
+#%%

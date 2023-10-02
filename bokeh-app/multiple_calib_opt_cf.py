@@ -34,7 +34,7 @@ possibilities = {
     "TO_target": [0.014, 0.021],
     "TE_target": [4, 6],
     "KM_target": [0.074, 0.111],
-    "sigma": [2.32, 3.48],
+    "sigma": [2.583, 3.375],
     "kappa": [0.4, 0.6],
     "GROWTH_target": [0.0135, 0.02024],
     "rho": [0.0093, 0.031],
