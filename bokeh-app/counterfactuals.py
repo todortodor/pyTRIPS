@@ -19,14 +19,15 @@ recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
     # {'baseline':'1030','variation': 'baseline'},
+    {'baseline':'1030','variation': '10.2'},
     # {'baseline':'1030','variation': '99.0'},
     # {'baseline':'1030','variation': '99.1'},
     # {'baseline':'1030','variation': '99.2'},
     # {'baseline':'1030','variation': '99.3'},
     # {'baseline':'1030','variation': '99.4'},
     # {'baseline':'1030','variation': '99.5'},
-    {'baseline':'1030','variation': '99.6'},
-    {'baseline':'1030','variation': '99.7'},
+    # {'baseline':'1030','variation': '99.6'},
+    # {'baseline':'1030','variation': '99.7'},
     # {'baseline':'1030','variation': '99.8'},
     # {'baseline':'1030','variation': '99.9'},
     # {'baseline':'1030','variation': '99.10'},
@@ -111,8 +112,8 @@ if __name__ == '__main__':
         # start = time.perf_counter()
         
         # parallel processes
-        # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
-        args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
+        args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
+        # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
         with ProcessPoolExecutor(max_workers=12) as executor:
             # returns = executor.map(lambda args: process_country(*args), args_list)
             results = list(executor.map(process_country, args_list))

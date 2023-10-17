@@ -453,7 +453,7 @@ for i,rob_check in enumerate(variations_of_robust_checks):
     p_pre_cf_fix_north = p.copy()
     p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
     for country_idx in [0,1,2,6,7,10]:
-        p_pre_cf_fix_north.delta[country_idx,1] = p_baseline.delta[country_idx,1]
+        p_pre_cf_fix_north.delta[country_idx,1] = p.delta[country_idx,1]
 
     _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
                             cobweb_anim=False,tol =1e-14,
@@ -508,6 +508,7 @@ for i,rob_check in enumerate(variations_of_robust_checks):
     df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' 1992 delta'] = sol_pre_cf_fix_north.g*100
     
     df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.cons_eq_welfare*100-100
+    df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.sol_fin.g*100
     
     rich_count_indices = [0,1,2,6,7]
     poor_count_indices = [3,4,5,8,9]
@@ -519,12 +520,36 @@ for i,rob_check in enumerate(variations_of_robust_checks):
     
     print(df_welf)
 
+    df_welf.loc['Diff South North'] = df_welf.loc['South'] - df_welf.loc['North']
 
-#%%
 
 # df.to_csv(temp_path+'deltas.csv')
 # df_pre.to_csv(temp_path+'pre_trips_deltas.csv')
-df_welf.round(3).to_csv(temp_path+'pre_trips_welfares.csv')
+    df_welf.round(3).to_csv(temp_path+'pre_trips_welfares.csv')
+    
+#     df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' 2015 delta'] = p.delta[:,1]
+#     df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' 2015 delta'] = sol_c.g*100
+#     df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' 1992 delta'] = p_pre.delta[:,1]
+#     df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' 1992 delta'] = sol_pre_cf_fix_north.g*100
+    
+#     df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' welfare change'] = sol_pre_cf_fix_north.cons_eq_welfare*100-100
+#     df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' welfare change'] = sol_pre_cf_fix_north.g*100
+    
+#     rich_count_indices = [0,1,2,6,7]
+#     poor_count_indices = [3,4,5,8,9]
+    
+#     df_welf.loc['North',variations_of_robust_checks[rob_check]+' welfare change'] = sum([sol_pre_cf_fix_north.cons_eq_welfare[i]*p.labor[i] for i in rich_count_indices]
+#                                                                       )/sum([p.labor[i] for i in rich_count_indices])*100-100
+#     df_welf.loc['South',variations_of_robust_checks[rob_check]+' welfare change'] = sum([sol_pre_cf_fix_north.cons_eq_welfare[i]*p.labor[i] for i in poor_count_indices]
+#                                                                       )/sum([p.labor[i] for i in poor_count_indices])*100-100
+    
+#     print(df_welf)
+
+#   df_welf['Diff South North'] = df_welf['South'] - df_welf['North']
+
+# # df.to_csv(temp_path+'deltas.csv')
+# # df_pre.to_csv(temp_path+'pre_trips_deltas.csv')
+    # df_welf.round(3).to_csv(temp_path+'stat_pre_trips_welfares.csv')
 
 #%%
 

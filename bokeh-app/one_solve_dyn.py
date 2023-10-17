@@ -14,72 +14,174 @@ import pandas as pd
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
+df = pd.DataFrame()
+
 p_init = parameters()
-# p_init.load_run('calibration_results_matched_economy/1030/')
-p_init.load_run('calibration_results_matched_economy/baseline_1030_variations/99.7/')
+for x in np.linspace(0.01-1e-6,0.01+1e-6,3):
+        # p_init.load_run('calibration_results_matched_economy/1030/')
+        p_init.load_run(
+            f'calibration_results_matched_economy/baseline_1030_variations/2.0/')
+        
+        sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1000,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        sol_init.scale_P(p_init)
+        sol_init.compute_non_solver_quantities(p_init) 
+        
+        p = p_init.copy()
+        # p.delta[:,1] = np.array([0.01,0.01,0.01,chn_pat[chn],12.0,12.0,0.01,0.01,rus_pat[rus],0.01,12.0])
+        p.delta[:,1] = np.ones(p.N)*12
+        # p.delta[-2,1] = 6
+        p.delta[0,1] = x
+        
+        sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=23,
+                                              t_inf=500,
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='l_R',
+                                plot_convergence=True,
+                                plot_cobweb=False,
+                                plot_live = False,
+                                safe_convergence=1e-8,
+                                disp_summary=True,
+                                damping = 50,
+                                max_count = 50000,
+                                accel_memory =5, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=1, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        dyn_sol.compute_non_solver_quantities(p)
+        
+        df.loc[x,'welfare_US'] = dyn_sol.cons_eq_welfare[0]
 
-sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
-                                context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='l_R',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=False,
-                        damping = 10,
-                        max_count = 1000,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=10
-                        )
-sol_init.scale_P(p_init)
-sol_init.compute_non_solver_quantities(p_init) 
+df.plot(y='welfare_US')
 
-p = p_init.copy()
-# p.delta[:,1] = np.array([0.01,0.01,0.01,12,12.0,12.0,12.0,0.01,0.01,12.0,12.0])
-p.delta[:,1] = np.array([0.01,0.01,0.01,12.0,12.0,12.0,0.01,0.01,12.0,0.01,12.0])
-# p.delta[:,1] = np.array([0.01,0.01,0.01,12.0,12.0,12.0,0.01,0.01,0.1,0.01,12.0])
-# p.delta[-3,1] = 12
+#%%
 
-# p.load_run('calibration_results_matched_economy/baseline_1020_variations/20.0/')
-# p.delta[0,1] = 0.05
-# p.delta[1,1] = 0.1
-# p.delta[2,1] = 0.2
-# p.delta[3,1] = 0.3
-# p.delta[4,1] = 0.01
-# p.delta[:,1] = 12
-# p.delta[0,1] = 1e-2
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    # '99.10':'Low Growth',
+    # '99.11':'High Growth',
+    # '99.12':'Low rho',
+    # '99.13':'High rho',
+    # '99.14':'Low UUPCOST',
+    # '99.15':'High UUPCOST',
+    }
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    '99.0':'Low TO',
+    '99.1':'High TO',
+    '99.2':'Low TE',
+    '99.3':'High TE',
+    '99.4':'Low KM',
+    '99.5':'High KM',
+    '99.6':'Low Sigma',
+    '99.7':'High Sigma',
+    '99.8':'Low Kappa',
+    '99.9':'High Kappa',
+    # '99.10':'Low Growth',
+    # '99.11':'High Growth',
+    # '99.12':'Low rho',
+    # '99.13':'High rho',
+    # '99.14':'Low UUPCOST',
+    # '99.15':'High UUPCOST',
+    }
+rus_pat = {'RUS strong':0.01,
+           'RUS weak':12}
+chn_pat = {'CHN strong':0.01,
+           'CHN weak':12}
 
+df = pd.DataFrame(index = pd.MultiIndex.from_product(
+    [list(variations_of_robust_checks.values()),
+     ['RUS strong','RUS weak'],
+     ['CHN strong','CHN weak']]),
+    columns = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN', 'KOR', 'RUS', 'MEX', 'ROW', 'Equal'])
 
-sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=21,
-                                      t_inf=500,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='l_R',
-                        plot_convergence=True,
-                        plot_cobweb=False,
-                        plot_live = False,
-                        safe_convergence=1e-8,
-                        disp_summary=True,
-                        damping = 50,
-                        max_count = 50000,
-                        accel_memory =5, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=1, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=10
-                        )
-dyn_sol.compute_non_solver_quantities(p)
-print(dyn_sol.cons_eq_pop_average_welfare_change)
+for rob_check in variations_of_robust_checks:
+    for rus in rus_pat:
+        for chn in chn_pat:
+            p_init = parameters()
+            # p_init.load_run('calibration_results_matched_economy/1030/')
+            if rob_check == 'baseline':
+                p_init.load_run('calibration_results_matched_economy/1030/')
+            else:
+                p_init.load_run(f'calibration_results_matched_economy/baseline_1030_variations/{rob_check}/')
+            
+            sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
+                                            context = 'counterfactual',
+                                    cobweb_anim=False,tol =1e-14,
+                                    accelerate=False,
+                                    accelerate_when_stable=True,
+                                    cobweb_qty='l_R',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    safe_convergence=0.001,
+                                    disp_summary=False,
+                                    damping = 10,
+                                    max_count = 1000,
+                                    accel_memory =50, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=0.5, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=10
+                                    )
+            sol_init.scale_P(p_init)
+            sol_init.compute_non_solver_quantities(p_init) 
+            
+            p = p_init.copy()
+            p.delta[:,1] = np.array([0.01,0.01,0.01,chn_pat[chn],12.0,12.0,0.01,0.01,rus_pat[rus],0.01,12.0])
+            
+            sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=40,
+                                                  t_inf=1000,
+                                    cobweb_anim=False,tol =1e-14,
+                                    accelerate=False,
+                                    accelerate_when_stable=False,
+                                    cobweb_qty='l_R',
+                                    plot_convergence=True,
+                                    plot_cobweb=False,
+                                    plot_live = False,
+                                    safe_convergence=1e-8,
+                                    disp_summary=True,
+                                    damping = 50,
+                                    max_count = 50000,
+                                    accel_memory =5, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=1, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=10
+                                    )
+            dyn_sol.compute_non_solver_quantities(p)
+            
+            df.loc[variations_of_robust_checks[rob_check],rus,chn
+                    ] = dyn_sol.cons_eq_welfare.tolist() + [dyn_sol.cons_eq_pop_average_welfare_change]
+                   # ] = dyn_sol.cons_eq_welfare.tolist() + [dyn_sol.cons_eq_negishi_welfare_change]
+            print(df.T)
 # print(dyn_sol.cons_eq_negishi_welfare_change)
 # def make_time_evolution_df(dyn_sol):
 #     qties = ['w','l_R','l_Ae','l_Ao','price_indices','Z','g','r','profit']
@@ -89,3 +191,16 @@ print(dyn_sol.cons_eq_pop_average_welfare_change)
 #         df.loc[qty,'Typical time of evolution'] = dyn_sol.get_typical_time_evolution(qty)
 #     return df
 # print(make_time_evolution_df(dyn_sol))
+
+#%%
+df_change = df*100-100
+for c in df_change.columns:
+    df_change[c] = df_change[c].astype(float).round(3)
+    
+#%%
+df_add_row = df_change.copy()
+for rob_check in variations_of_robust_checks:
+    for chn in chn_pat:
+        df_add_row.loc[variations_of_robust_checks[rob_check],'diff RUS strong / weak',chn] = \
+            (df_add_row.loc[variations_of_robust_checks[rob_check],'RUS strong',chn
+                           ] - df_add_row.loc[variations_of_robust_checks[rob_check],'RUS weak',chn]).round(3)

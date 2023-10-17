@@ -233,7 +233,7 @@ for par in parameters_to_change:
 
 df = pd.DataFrame()
 
-moments_to_change = ['kappa','rho','sigma','KM','TE','TO','UUPCOST','OUT','GROWTH','GPDIFF','theta','gamma','SINNOVPATUS', 
+moments_to_change = ['theta','gamma','kappa','rho','sigma','KM','TE','TO','UUPCOST','OUT','GROWTH','GPDIFF','SINNOVPATUS', 
    'DOMPATINUS', 'SRGDP', 'RD', 'RP', 'SPFLOW']
 # moments_to_change = ['GPDIFF', 'GROWTH', 'KM', 'SINNOVPATUS',
 #   'UUPCOST', 'DOMPATINUS', 'SRGDP', 'RD', 'RP', 'SPFLOW']
@@ -260,7 +260,7 @@ def fill_row(df,parent_moment_result_path,mom_idx,p_baseline):
 for mom in moments_to_change:
     print(mom)
     if mom in ['KM','UUPCOST','SINNOVPATUS','TO','GROWTH',
-                          'DOMPATINUS','TE','OUT','GPDIFF','kappa','rho','sigma']:
+                          'DOMPATINUS','TE','OUT','GPDIFF','kappa','rho','sigma','theta','gamma']:
         mom_idx = mom
         fill_row(df,parent_moment_result_path,mom_idx,p_baseline)
     if mom in ['RD','RP','SRGDP']:

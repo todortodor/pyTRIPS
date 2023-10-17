@@ -90,160 +90,219 @@ m_baseline.compute_moments_deviations()
 
 
 #%%
-
-p = p_baseline.copy()
-
-for i,country in enumerate(p_baseline.countries):
+if __name__ == '__main__':
     
-    if country in ['BRA','RUS','MEX']:
-        print(country)
-        
-        dynamics = True
-        lb = p_baseline.eta[:,1].min()/10
-        ub = p_baseline.eta[:,1].max()*10
-        it = 0
-        
-        lb_delta = 0.01
-        ub_delta = 12
-        
-        df = pd.DataFrame()
-        
-        if __name__ == '__main__':
-        
-            while ub-lb>1e-5:
-                it = it+1
-                x = (ub+lb)/2
-                p = p_baseline.copy()
-                p.eta[i,1] = x
-                sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                                context = 'counterfactual',
-                                        cobweb_anim=False,tol =1e-14,
-                                        accelerate=False,
-                                        accelerate_when_stable=True,
-                                        cobweb_qty='phi',
-                                        plot_convergence=False,
-                                        plot_cobweb=False,
-                                        # plot_live=True,
-                                        safe_convergence=0.001,
-                                        disp_summary=False,
-                                        damping = 10,
-                                        max_count = 1e4,
-                                        accel_memory = 50, 
-                                        accel_type1=True, 
-                                        accel_regularization=1e-10,
-                                        accel_relaxation=0.5, 
-                                        accel_safeguard_factor=1, 
-                                        accel_max_weight_norm=1e6,
-                                        damping_post_acceleration=5
-                                        ) 
-                sol_c.scale_P(p)
-                sol_c.compute_non_solver_quantities(p)
-                # p_opti, sol_opti = find_coop_eq(p,'pop_weighted',
-                #                   lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
-                #                   # solver_options=None,
-                #                   tol=1e-6,
-                #                   custom_dyn_sol_options = None,
-                #                   solver_options = dict(cobweb_anim=False,tol =1e-14,
-                #                                           accelerate=False,
-                #                                           accelerate_when_stable=True,
-                #                                           cobweb_qty='phi',
-                #                                           plot_convergence=False,
-                #                                           plot_cobweb=False,
-                #                                           safe_convergence=0.001,
-                #                                           disp_summary=False,
-                #                                           damping = 50,
-                #                                           max_count = 1e4,
-                #                                           accel_memory = 50, 
-                #                                           accel_type1=True, 
-                #                                           accel_regularization=1e-10,
-                #                                           accel_relaxation=0.5, 
-                #                                           accel_safeguard_factor=1, 
-                #                                           accel_max_weight_norm=1e6,
-                #                                           damping_post_acceleration=20
-                #                                           ),
-                #                   custom_weights=None,max_workers=12)
-                if dynamics:
-                    p_opti, sol_opti = find_coop_eq(p,'pop_weighted',
-                                     lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
-                                     # solver_options=None,
-                                     tol=1e-6,
-                                       # static_eq_deltas = p_opti.delta[...,1],
-                                        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
+    p = p_baseline.copy()
+    # coop = 'pop_weighted'
+    # for coop in ['pop_weighted','negishi']:
+    for coop in ['pop_weighted']:
+        for i,country in enumerate(p_baseline.countries):
+            
+            if country in ['MEX']:
+                print(country)
+                
+                dynamics = True
+                # lb = p_baseline.eta[:,1].min()/10
+                # lb = p_baseline.eta[i,1]
+                # ub = p_baseline.eta[:,1].max()*6
+                # 0.005403032289568117 0.005246461012418196 0.005403032289568117 values for negishi MEX to restart
+                # lb = p_baseline.eta[i,1]/10
+                # ub = p_baseline.eta[i,1]/2
+                
+                lb = p_baseline.eta[i,1]/200
+                ub = 0.00012936978783306
+                it = 0
+                
+                lb_delta = 0.01
+                ub_delta = 12
+                
+                df = pd.DataFrame()
+                # df = pd.read_csv('/Users/slepot/Documents/taff/pyTRIPS/bokeh-app/solve_for_eta_to_join_pat_club/baseline_1030/pop_weighted_MEX.csv')
+            
+                while (ub-lb)/lb>1e-2:
+                    it = it+1
+                    x = (ub+lb)/2
+                    p = p_baseline.copy()
+                    p.eta[i,1] = x
+                    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                                    context = 'counterfactual',
+                                            cobweb_anim=False,tol =1e-14,
                                             accelerate=False,
-                                            accelerate_when_stable=False,
-                                            cobweb_qty='l_R',
+                                            accelerate_when_stable=True,
+                                            cobweb_qty='phi',
                                             plot_convergence=False,
                                             plot_cobweb=False,
-                                            plot_live = False,
-                                            safe_convergence=1e-8,
+                                            # plot_live=True,
+                                            safe_convergence=0.001,
                                             disp_summary=False,
                                             damping = 500,
-                                            max_count = 100000,
-                                            accel_memory =5, 
+                                            max_count = 1e4,
+                                            accel_memory = 50, 
                                             accel_type1=True, 
                                             accel_regularization=1e-10,
-                                            accel_relaxation=1, 
+                                            accel_relaxation=0.5, 
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
-                                            damping_post_acceleration=10),
-                                       solver_options = dict(cobweb_anim=False,tol =1e-14,
-                                                               accelerate=False,
-                                                               accelerate_when_stable=True,
-                                                               cobweb_qty='phi',
-                                                               plot_convergence=False,
-                                                               plot_cobweb=False,
-                                                               safe_convergence=0.001,
-                                                               disp_summary=False,
-                                                               damping = 50,
-                                                               max_count = 1e4,
-                                                               accel_memory = 50, 
-                                                               accel_type1=True, 
-                                                               accel_regularization=1e-10,
-                                                               accel_relaxation=0.5, 
-                                                               accel_safeguard_factor=1, 
-                                                               accel_max_weight_norm=1e6,
-                                                               damping_post_acceleration=20
-                                                               ),
-                                       # custom_dyn_sol_options = None,
-                                     custom_weights=None,max_workers=12,displays=False)
-                    if p_opti.delta[i,1]<p_baseline.delta[i,1]:
-                        ub = x
-                        # df.loc[it,'eta_china'] = x
-                        df.loc[it,f'eta_{country}'] = x
-                        for j,c in enumerate(p_baseline.countries):
-                            df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
-                    else:
-                        lb = x
-                        # df.loc[it,'eta_china'] = x
-                        df.loc[it,f'eta_{country}'] = x
-                        for j,c in enumerate(p_baseline.countries):
-                            df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
-                    print(x,lb,ub)
-                    print(df)
-                # plt.scatter(df['eta_china'],df['delta_opti_CHN'])
-                # plt.scatter(df['eta_china'].iloc[-1],df['delta_opti_CHN'].iloc[-1],
-                #             color='red')
-                df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_1030/stat_{country}.csv')
-                plt.scatter(df[f'eta_{country}'],df[f'delta_opti_{country}'])
-                plt.scatter(df[f'eta_{country}'].iloc[-1],df[f'delta_opti_{country}'].iloc[-1],
-                            color='red')
-                plt.show()
+                                            damping_post_acceleration=5
+                                            ) 
+                    sol_c.scale_P(p)
+                    sol_c.compute_non_solver_quantities(p)
+                    print(lb,ub,x)
+                    p.guess = sol.x 
+                    p_opti, sol_opti = find_coop_eq(p,coop,
+                                      lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
+                                        # solver_options=None,
+                                      tol=1e-6,
+                                      custom_dyn_sol_options = None,
+                                        solver_options = dict(cobweb_anim=False,tol =1e-14,
+                                                                accelerate=False,
+                                                                accelerate_when_stable=True,
+                                                                cobweb_qty='phi',
+                                                                plot_convergence=False,
+                                                                plot_cobweb=False,
+                                                                safe_convergence=0.001,
+                                                                disp_summary=False,
+                                                                damping = 50,
+                                                                max_count = 1e4,
+                                                                accel_memory = 50, 
+                                                                accel_type1=True, 
+                                                                accel_regularization=1e-10,
+                                                                accel_relaxation=0.5, 
+                                                                accel_safeguard_factor=1, 
+                                                                accel_max_weight_norm=1e6,
+                                                                damping_post_acceleration=20
+                                                                ),
+                                      custom_weights=None,
+                                      max_workers=12)
+                    if dynamics:
+                        p_opti, sol_opti = find_coop_eq(p,coop,
+                                         lb_delta=lb_delta,ub_delta=ub_delta,dynamics=True,
+                                         tol=1e-6,
+                                            static_eq_deltas = p_opti.delta[...,1],
+                                            #   custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-12,
+                                            #       accelerate=False,
+                                            #       accelerate_when_stable=False,
+                                            #       cobweb_qty='l_R',
+                                            #       plot_convergence=False,
+                                            #       plot_cobweb=False,
+                                            #       plot_live = False,
+                                            #       safe_convergence=1e-8,
+                                            #       disp_summary=False,
+                                            #       damping = 500,
+                                            #       max_count = 1000000,
+                                            #       accel_memory =5, 
+                                            #       accel_type1=True, 
+                                            #       accel_regularization=1e-10,
+                                            #       accel_relaxation=1, 
+                                            #       accel_safeguard_factor=1, 
+                                            #       accel_max_weight_norm=1e6,
+                                            #       damping_post_acceleration=10),
+                                            # solver_options = dict(cobweb_anim=False,tol =1e-12,
+                                            #                         accelerate=False,
+                                            #                         accelerate_when_stable=True,
+                                            #                         cobweb_qty='phi',
+                                            #                         plot_convergence=False,
+                                            #                         plot_cobweb=False,
+                                            #                         safe_convergence=0.001,
+                                            #                         disp_summary=False,
+                                            #                         damping = 50,
+                                            #                         max_count = 1e6,
+                                            #                         accel_memory = 50, 
+                                            #                         accel_type1=True, 
+                                            #                         accel_regularization=1e-10,
+                                            #                         accel_relaxation=0.5, 
+                                            #                         accel_safeguard_factor=1, 
+                                            #                         accel_max_weight_norm=1e6,
+                                            #                         damping_post_acceleration=20
+                                            #                         ),
+                                            custom_dyn_sol_options = None,
+                                            solver_options=None,
+                                         custom_weights=None,max_workers=12,displays=True,
+                                         parallel=True)
+                        if p_opti.delta[i,1]<p_baseline.delta[i,1]:
+                            ub = x
+                            # df.loc[it,'eta_china'] = x
+                            df.loc[it,f'eta_{country}'] = x
+                            for j,c in enumerate(p_baseline.countries):
+                                df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
+                        else:
+                            lb = x
+                            # df.loc[it,'eta_china'] = x
+                            df.loc[it,f'eta_{country}'] = x
+                            for j,c in enumerate(p_baseline.countries):
+                                df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
+                        print(x,lb,ub)
+                        print(df)
+                    # plt.scatter(df['eta_china'],df['delta_opti_CHN'])
+                    # plt.scatter(df['eta_china'].iloc[-1],df['delta_opti_CHN'].iloc[-1],
+                    #             color='red')
+                    df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_1030/{coop}_{country}.csv')
+                    # plt.scatter(df[f'eta_{country}'],df[f'delta_opti_{country}'])
+                    # plt.scatter(df[f'eta_{country}'].iloc[-1],df[f'delta_opti_{country}'].iloc[-1],
+                    #             color='red')
+                    # plt.show()
 
 #%%
 
-# df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/CHN.csv')
-# df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/IND.csv')
+# df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/pop_weighted_CHN.csv')
+# df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/pop_weighted_stat_IND.csv')
+# # df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/negishi_CHN.csv')
+# # df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/negishi_IND.csv')
+# # df_bra = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/stat_BRA.csv')
 
 # df = pd.DataFrame(index = p_baseline.countries)
 # df['baseline eta'] = p_baseline.eta[:,1]
 
-# df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_china'].iloc[-1]
-# df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_india'].iloc[-1]
+# df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_CHN'].iloc[-1]
+# df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_IND'].iloc[-1]
+# # df.loc['BRA','eta for which delta_opti = delta_baseline'] = df_bra['eta_BRA'].iloc[-1]
 
 # df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
 # df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
 
-# df.to_csv('/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/simon_version/code/misc/discussion_material_02_10_meeting/china_india_ex.csv')
+## df.to_csv('/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/simon_version/code/misc/discussion_material_02_10_meeting/china_india_ex.csv')
+
+#%%
+
+# markers = {'pop_weighted':'o',
+#       'negishi':'^'}
+# label_coop = {'pop_weighted':'Equal',
+#       'negishi':'Negishi'}
+
+# run_countries = []
+
+# fig,ax = plt.subplots()
+
+# for i, country in enumerate(p_baseline.countries):
+    
+#     for j,coop in enumerate(['pop_weighted','negishi']):
+#         try:
+#             df = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_1030/{coop}_{country}.csv')
+#             # ax.scatter([p_baseline.T[i,1].mean()],[df[f'eta_{country}'].iloc[-1]],
+#             ax.scatter([country],[df[f'eta_{country}'].iloc[-1]],
+#                         # label = f'{country} {label_coop[coop]}',
+#                         marker = markers[coop],
+#                         color = Category18[i])
+#             ax.errorbar([country],[df[f'eta_{country}'].iloc[-1]], yerr = [np.abs(df[f'eta_{country}'].iloc[-1] - df[f'eta_{country}'].iloc[-2])])
+#             run_countries.append(country)
+#             print(coop,country,df[f'eta_{country}'].iloc[-1])
+#         except:
+#             pass
+#     if country in run_countries:
+#         print(run_countries)
+#         ax.scatter([country],[p_baseline.eta[i,1]],
+#                     # label = f'{country} baseline',
+#                     marker = '*',
+#                     color = Category18[i])
+# ax.scatter([],[],marker = 'o', label = 'Equal')
+# ax.scatter([],[],marker = '^', label = 'Negishi')
+# ax.scatter([],[],marker = '*', label = 'Baseline')
+# # ax.set_xscale('log')
+# # ax.set_yscale('log')
+# plt.axhline(y=p_baseline.eta[0,1],color='grey',label='Baseline USA')
+# ax.set_ylabel('Eta')
+# plt.legend()
+# plt.show()
 
 #%%
 

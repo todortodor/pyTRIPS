@@ -21,14 +21,15 @@ recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
     # {'baseline':'1030','variation': 'baseline'},
+    {'baseline':'1030','variation': '10.2'},
     # {'baseline':'1030','variation': '99.0'},
     # {'baseline':'1030','variation': '99.1'},
     # {'baseline':'1030','variation': '99.2'},
     # {'baseline':'1030','variation': '99.3'},
     # {'baseline':'1030','variation': '99.4'},
     # {'baseline':'1030','variation': '99.5'},
-    {'baseline':'1030','variation': '99.6'},
-    {'baseline':'1030','variation': '99.7'},
+    # {'baseline':'1030','variation': '99.6'},
+    # {'baseline':'1030','variation': '99.7'},
     # {'baseline':'1030','variation': '99.8'},
     # {'baseline':'1030','variation': '99.9'},
     # {'baseline':'1030','variation': '99.10'},
@@ -116,11 +117,11 @@ if __name__ == '__main__':
         #                                   dynamics=True,Nt=25,t_inf=500)
     
         args_list = [(p_baseline.copy(), c, local_path, sol_baseline.copy(), recap_path, True, 25, 500
-                      ) for c in p_baseline.countries]
-                      # ) for c in p_baseline.countries+['World']]
+                      # ) for c in p_baseline.countries]
+                       ) for c in p_baseline.countries+['World']]
         
         # Create a ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=4) as executor:
+        with ProcessPoolExecutor(max_workers=12) as executor:
             # returns = executor.map(lambda args: process_country(*args), args_list)
             results = list(executor.map(process_country, args_list))
         

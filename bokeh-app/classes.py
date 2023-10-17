@@ -10,7 +10,7 @@ import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.special import gamma, gammaincc
+from scipy.special import gamma, gammaincc, gammainc
 import scipy.integrate as integrate
 import time
 import os
@@ -889,8 +889,6 @@ class var:
         
     def compute_quantities_with_prod_patents(self,p,upper_bound_integral = np.inf):
         
-        df_terms = pd.DataFrame(index = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max'])
-        
         def incomplete_sum_with_exponent(matrix,exponent):
             res = np.full_like(matrix,np.nan)
             for i in range(matrix.shape[1]):
@@ -902,41 +900,49 @@ class var:
             # return gammaincc(a,x)
         
         def sim(z):
+            bound_A = np.einsum('i,ni->ni',
+                                p.T[..., 1],
+                                incomplete_sum_with_exponent(
+                                    self.phi[..., 1], p.theta[1])/self.phi[..., 1]**p.theta[1]
+                                )/(z**p.theta[1])
+
             A_bracket_1 = upper_inc_gamma(
-                (-p.sigma[1]+p.theta[1]+1)/p.theta[1],
-                p.T[...,1]*(1/z)**p.theta[1]
-                                         )
+                (p.theta[1]+1-p.sigma[1])/p.theta[1],
+                bound_A
+            )
             A_bracket_2 = upper_inc_gamma(
-                (-p.sigma[1]+p.theta[1]+1)/p.theta[1],
-                p.T[...,1]*( p.sigma[1] / ( z*(p.sigma[1] - 1) ) )**p.theta[1]
-                                         )
-            
-            A = np.einsum('ni,i,i->ni',
-                          (incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1])**((p.sigma[1]-1)/p.theta[1]),
-                          p.T[...,1]**(-1/p.theta[1]),
+                (p.theta[1]+1-p.sigma[1])/p.theta[1],
+                bound_A*(p.sigma[1]/(p.sigma[1] - 1))**p.theta[1]
+            )
+
+            A = np.einsum('ni,i,ni->ni',
+                          (incomplete_sum_with_exponent(self.phi[..., 1], p.theta[1])
+                           / self.phi[..., 1]**p.theta[1])**((p.sigma[1]-1)/p.theta[1]),
+                          p.T[..., 1]**(-1/p.theta[1]),
                           A_bracket_1 - A_bracket_2
                           )
-            
+
+            bound_B = np.einsum('i,ni->ni',
+                                p.T[..., 1],
+                                incomplete_sum_with_exponent(
+                                    self.phi[..., 1], p.theta[1])/self.phi[..., 1]**p.theta[1]
+                                )/(z**p.theta[1])
+
             B_bracket_1 = upper_inc_gamma(
                 (p.theta[1]-p.sigma[1])/p.theta[1],
-                np.einsum('i,ni->ni',
-                          p.T[...,1],
-                          incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1]
-                          )/(z**p.theta[1])
-                                         )
+                bound_B
+            )
             B_bracket_2 = upper_inc_gamma(
                 (p.theta[1]-p.sigma[1])/p.theta[1],
-                np.einsum('i,ni->ni',
-                          p.T[...,1],
-                          incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1]
-                          )*( p.sigma[1]/(z*(p.sigma[1] - 1)))**p.theta[1]
-                                         )
-            
+                bound_B*(p.sigma[1]/(p.sigma[1] - 1))**p.theta[1]
+            )
+
             B = np.einsum('ni,ni->ni',
-                          (incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1])**(p.sigma[1]/p.theta[1]),
+                          (incomplete_sum_with_exponent(
+                              self.phi[..., 1], p.theta[1])/self.phi[..., 1]**p.theta[1])**(p.sigma[1]/p.theta[1]),
                           B_bracket_1 - B_bracket_2
                           )/z
-            
+
             return A-B
         
         # integral_calculated = np.full_like(self.phi[...,1],np.nan)
@@ -951,6 +957,7 @@ class var:
         
         def integrand(z):
             return ( z**(-p.theta[1]-1)*np.exp(-p.T[...,1][None,:]*z**(-p.theta[1]))*sim(z) )
+            # return ( z**(-p.theta[1]-1)*np.exp(-p.T[...,1][:,None]*z**(-p.theta[1]))*sim(z) )
         
         # c1 = 0
         # # c2 = 0
@@ -964,47 +971,21 @@ class var:
         # plt.show()
         
         self.integral_result = integrate.quad_vec(lambda x: integrand(x), 0, upper_bound_integral,full_output=1)
-        integral_calculated = integrate.quad_vec(lambda x: integrand(x), 0, upper_bound_integral,full_output=1)[0]
+        integral_calculated = self.integral_result[0]
         
-        df_terms['term_i'] = pd.Series(
-            integral_calculated.ravel()
-            ).describe()
-        
-        A = ( 1 + 
-             (incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1]) * (p.sigma[1]/(p.sigma[1]-1))**p.theta[1]
+        A = (1 +
+             (incomplete_sum_with_exponent(
+                 self.phi[..., 1], p.theta[1])/self.phi[..., 1]**p.theta[1])
+             * (p.sigma[1]/(p.sigma[1]-1))**p.theta[1]
              )**((p.sigma[1] - p.theta[1] - 1)/p.theta[1])
         
-        self.A = A
-        
-        df_terms['term_1'] = pd.Series(
-            (incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1]).ravel()
-            ).describe()
-        
-        df_terms['term_2'] = pd.Series(
-            ((incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])/self.phi[...,1]**p.theta[1]) * (p.sigma[1]/(p.sigma[1]-1))**p.theta[1]).ravel()
-            ).describe()
-        
-        df_terms['term_3'] = pd.Series(
-            A.ravel()
-            ).describe()
-        
         B = np.einsum('i,ni->ni',
-                       p.T[...,1]**((1+p.theta[1])/p.theta[1]),
+                        p.T[...,1]**((1+p.theta[1])/p.theta[1]),
                       # p.T[...,1]**((1)/p.theta[1]),
                       integral_calculated
                       )*p.theta[1]*p.sigma[1]**p.sigma[1]/(
                           (p.sigma[1]-1)**(p.sigma[1]-1)*gamma((p.theta[1]+1-p.sigma[1])/p.theta[1])
                           )
-        
-        self.B = B
-                          
-        df_terms['term_4'] = pd.Series(
-            B.ravel()
-            ).describe()
-        
-        df_terms['term_5'] = pd.Series(
-            (A + B).ravel()
-            ).describe()
         
         self.profit_with_prod_patent = np.zeros_like(self.profit)
         self.profit_with_prod_patent[...,1] = self.profit[...,1]*(A+B)
@@ -1014,40 +995,188 @@ class var:
             self.phi[...,1]**p.theta[1]/(self.phi[...,1]**p.theta[1]).sum(axis=1)[:,None]
             )**((-p.sigma[1]+p.theta[1]+1)/p.theta[1])
         
-        self.profit_with_prod_patent_D_bis = np.zeros_like(self.profit)
-        self.profit_with_prod_patent_D_bis[...,1] = ((p.sigma[1]-1)**(p.sigma[1]-1)/p.sigma[1]**p.sigma[1]
-                                                     )*np.einsum('ni,n,i->ni',
-                                                                 self.X_CD[...,1],
-                                                                 1/self.PSI_CD[...,1],
-                                                                 1/self.w
-                                                                 )
+        # self.profit_with_prod_patent_D_bis = np.zeros_like(self.profit)
+        # self.profit_with_prod_patent_D_bis[...,1] = ((p.sigma[1]-1)**(p.sigma[1]-1)/p.sigma[1]**p.sigma[1]
+        #                                              )*np.einsum('ni,n,i->ni',
+        #                                                          self.X_CD[...,1],
+        #                                                          1/self.PSI_CD[...,1],
+        #                                                          1/self.w
+        #                                                          )
+        
+        # # alternative way of computing with direct integration on p
+        
+        # A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
+        #     * (self.PSI_M * self.phi**(p.sigma-1)[None, None, :]).sum(axis=1)
+        # B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**((p.sigma-1)/p.theta)[None, :]
+        # temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:]*(A+B))
+        # one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
+        # sectoral_price_indices = one_over_price_indices_no_pow_no_prod**(1/(p.sigma[None, :]-1))
+        
+        # sectoral_cons = np.einsum('s,n,ns->ns',
+        #                           p.beta,
+        #                           self.Z,
+        #                           1/sectoral_price_indices
+        #                           )
+                                                                 
+        # self.Pr_E_1_over_psi = np.zeros_like(self.profit)
+        # self.Pr_E_1_over_psi[...,1] = np.einsum('i,,,n,n,ni,,ni,i,i->ni',
+        #                                   p.T[...,1],
+        #                                   (p.sigma[1]-1)**p.theta[1],
+        #                                   1/(p.sigma[1])**(p.theta[1]+1),
+        #                                   sectoral_price_indices[...,1]**p.sigma[1],
+        #                                   sectoral_cons[...,1],
+        #                                   ( self.phi[...,1]**p.theta[1] * ((p.sigma[1]-1)/p.sigma[1])**p.theta[1] + incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])
+        #                                       )**( (p.sigma[1] - p.theta[1] - 1)/p.theta[1] ),
+        #                                   gamma( (p.theta[1]+1-p.sigma[1])/p.theta[1] ),
+        #                                   p.tau[...,1]**-p.theta[1],
+        #                                   self.w**-(p.theta[1]*p.alpha[1]),
+        #                                   self.price_indices**(-p.theta[1]*(1-p.alpha[1]))
+        #                                   )
+        
+        # def p_integrand_for_Pr_E_2_over_psi(x,z,i,j):
+        #     # A = p**(p.theta[1]-p.sigma[1])*np.exp(-incomplete_sum_with_exponent(self.phi[...,1],p.theta[1]) * p**p.theta[1])
+        #     # B = np.einsum('',
+        #     #                 p.tau[...,1],
+        #     #                 p.w**p.alpha[1],
+        #     #                 self.price_indices**(1-p.alpha[1]),
+        #     #                 p**(p.theta[1]-p.sigma[1]-1),
+        #     #                 np.exp(-incomplete_sum_with_exponent(self.phi[...,1],p.theta[1]) * p**p.theta[1])
+        #     #                 )/z
+        #     # return (A-B)[i,j]
+        #     res = np.einsum('ni,,ni->ni',
+        #                     x - np.einsum('ni,i,i->ni',
+        #                             p.tau[...,1],
+        #                             self.w**p.alpha[1],
+        #                             self.price_indices**(1-p.alpha[1]))/z,
+        #                     x**(p.theta[1]-p.sigma[1]-1),
+        #                     np.exp(-incomplete_sum_with_exponent(self.phi[...,1],p.theta[1]) * x**p.theta[1])
+        #                     )*p.theta[1]#!!!/z
+        #     return res[i,j]
+        
+        # # from tqdm import tqdm
+        
+        # def p_integral_for_Pr_E_2_over_psi(z):
+        #     p_lb = np.einsum('ni,i,i->ni',
+        #                     p.tau[...,1],
+        #                     self.w**p.alpha[1],
+        #                     self.price_indices**(1-p.alpha[1]),
+        #                     )/z
+        #     p_ub = p.sigma[1]*p_lb/(p.sigma[1]-1)
+        #     p_integral_calculated = np.zeros_like(self.profit)
+        #     for i in range(p.N):
+        #         for j in range(p.N):
+        #             p_integral_calculated[i,j,1] = integrate.quad(p_integrand_for_Pr_E_2_over_psi, p_lb[i,j], p_ub[i,j], args=(z,i,j))[0]
+        #     return p_integral_calculated
+        
+        # # def second_p_integrand_for_Pr_E_2_over_psi(z):
+        # #     pass
+        
+        # # def second_p_integral_for_Pr_E_2_over_psi():
+        # #     pass
+            
+        # def z_integrand_for_Pr_E_2_over_psi(z):
+        #     return ( z**(-p.theta[1]-1)*np.exp(-p.T[...,1][None,:]*z**(-p.theta[1]))*p_integral_for_Pr_E_2_over_psi(z)[...,1] )
+        
+        # def z_integral_for_Pr_E_2_over_psi():
+        #     return integrate.quad_vec(z_integrand_for_Pr_E_2_over_psi, 0, np.inf, full_output=1)[0]
+            
+                                                         
+        # self.Pr_E_2_over_psi = np.zeros_like(self.profit)
+        # self.Pr_E_2_over_psi[...,1] = np.einsum('i,,n,n,ni,ni->ni',
+        #                                   p.T[...,1],
+        #                                   p.theta[1],
+        #                                   sectoral_price_indices[...,1]**p.sigma[1],
+        #                                   sectoral_cons[...,1],
+        #                                   z_integral_for_Pr_E_2_over_psi(),
+        #                                   incomplete_sum_with_exponent(self.phi[...,1],p.theta[1])
+        #                                   )
+                                                                 
+        # self.profit_with_prod_patent_with_p_integral = (self.Pr_E_1_over_psi+self.Pr_E_2_over_psi)/self.w[None,:,None]
+        
+        # # end alternative way of computing with direct integration on p
         
         self.V_NP_P_minus_V_NP_NP_with_prod_patent = np.zeros_like(self.profit)
         self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1] = \
             self.profit_with_prod_patent[...,1]*(
                 1/(self.G[1]+p.delta[:,1]-p.nu[1])-1/(self.G[1]+p.delta[:,1])
-                )[None,:]
+                )[None,:]*self.w[None,:]
         
         self.V_P_P_minus_V_P_NP_with_prod_patent = np.zeros_like(self.profit)
         self.V_P_P_minus_V_P_NP_with_prod_patent[...,1] = \
             self.profit_with_prod_patent[...,1]*(
                 1/(self.G[1]+p.delta[None,:,1]-p.nu[1])-1/(self.G[1]+p.delta[None,:,1]) \
                     - 1/(self.G[1]+p.delta[None,:,1]+p.delta[:,None,1]-p.nu[1]) + 1/(self.G[1]+p.delta[None,:,1]+p.delta[:,None,1])
-                )[None,:]
+                )*self.w[None,:]
         
-        self.psi_o_star_with_prod_patent = np.full_like(self.psi_o_star,np.inf)
+        # i)
+        # case a
         
-        denom = p.r_hjort*(p.fe[1] + p.fo[1]) + self.psi_o_star[...,1]*(
-            self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1].sum(axis=0) - 
-            np.diagonal(self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1])
-            )
+        self.psi_o_star_with_prod_patent_a = np.full_like(self.psi_o_star,np.inf)
+        self.psi_o_star_without_prod_patent_a = np.full_like(self.psi_o_star,np.inf)
         
-        self.psi_o_star_with_prod_patent[...,1] = self.psi_o_star[...,1]*p.r_hjort*(p.fe[1] + p.fo[1])/denom
-        self.share_innov_patented_dom_with_prod_patent = self.psi_o_star_with_prod_patent**-p.k
+        denom_A = np.diagonal(self.V_P[...,1]-self.V_NP[...,1])/self.w
+        denom_B = (self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]).sum(axis=0)-np.diagonal(
+            self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:])
+        denom = denom_A + denom_B
         
-        num_bracket = self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]*(
+        self.psi_o_star_with_prod_patent_a[...,1] = p.r_hjort*(p.fe[1] + p.fo[1])/denom
+        self.psi_o_star_without_prod_patent_a[...,1] = p.r_hjort*(p.fe[1] + p.fo[1])/denom_A
+        
+        self.share_innov_patented_dom_with_prod_patent_a = self.psi_o_star_with_prod_patent_a**-p.k
+        self.share_innov_patented_dom_without_prod_patent_a = self.psi_o_star_without_prod_patent_a**-p.k
+        
+        # case b
+        
+        self.psi_o_star_with_prod_patent_b = np.full_like(self.psi_o_star,np.inf)
+        self.psi_o_star_without_prod_patent_b = np.full_like(self.psi_o_star,np.inf)
+        
+        mask_B = np.diagonal(self.psi_m_star[...,1])[None,:]<self.psi_m_star[...,1]
+        mask_C = np.diagonal(self.psi_m_star[...,1])[None,:]>self.psi_m_star[...,1]
+        
+        denom_A = np.diagonal(self.V_P[...,1]-self.V_NP[...,1])/self.w
+        denom_B = (mask_B*(self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:])).sum(axis=0)
+        denom_C = (mask_C*(self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]/self.w[None,:])).sum(axis=0)
+        denom = denom_A + denom_B + denom_C
+        
+        self.psi_o_star_with_prod_patent_b[...,1] = p.r_hjort*p.fe[1]/denom
+        self.psi_o_star_without_prod_patent_b[...,1] = p.r_hjort*p.fe[1]/denom_A
+        
+        self.share_innov_patented_dom_with_prod_patent_b = self.psi_o_star_with_prod_patent_b**-p.k
+        self.share_innov_patented_dom_without_prod_patent_b = self.psi_o_star_without_prod_patent_b**-p.k
+        
+        # case c
+        
+        self.psi_o_star_with_prod_patent_c = np.full_like(self.psi_o_star,np.inf)
+        self.psi_o_star_without_prod_patent_c = np.full_like(self.psi_o_star,np.inf)
+        
+        mask_is_n_in_n_star_of_i = self.psi_m_star[...,1] == np.min(self.psi_m_star[...,1],axis=1)
+        
+        denom_A = (mask_is_n_in_n_star_of_i
+                   *(self.V_P[...,1]-self.V_NP[...,1])
+                   /self.w[None,:]
+                   ).sum(axis=0)
+        denom_B = (mask_is_n_in_n_star_of_i
+                   *(self.V_P_P_minus_V_P_NP_with_prod_patent[...,1])
+                   /self.w[None,:]
+                   ).sum(axis=0)
+        denom_C = (~mask_is_n_in_n_star_of_i*self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]
+                   ).sum(axis=0)
+        denom = denom_A + denom_B + denom_C
+        num = (
+            (self.w[:,None]*p.r_hjort[None,:]*p.fe[1]/self.w[None,:])*mask_is_n_in_n_star_of_i
+            ).sum(axis=0) + p.r_hjort*p.fo[1]
+    
+        self.psi_o_star_with_prod_patent_c[...,1] = num/denom
+        self.psi_o_star_without_prod_patent_c[...,1] = num/denom_A
+        
+        self.share_innov_patented_dom_with_prod_patent_c = self.psi_o_star_with_prod_patent_c**-p.k
+        self.share_innov_patented_dom_without_prod_patent_c = self.psi_o_star_without_prod_patent_c**-p.k
+        
+        # ii)
+        
+        num_bracket = self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]*(
             1-np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k)
-            ) + self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]*(
+            ) + self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]/self.w[None,:]*(
                 np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k)
                 )
         
@@ -1057,34 +1186,22 @@ class var:
         
         self.V_with_prod_patent = np.zeros((p.N,p.S))
         
-        A1 = ((p.k/(p.k-1))*self.V_NP[...,1]).sum(axis=0)
+        A1 = ((p.k/(p.k-1))*self.V_NP[...,1]/self.w[None,:]).sum(axis=0)
         A2 = np.einsum('ni,ni,i->i',
-                       self.V_P[...,1] - self.V_NP[...,1],
-                       self.psi_m_star[...,1]**(1-p.k),
-                       self.mult_val_pat
-                       )*(p.k/(p.k-1))
-        A3 = - np.einsum('ni,n,n->i',
-                         self.psi_m_star[...,1]**-p.k,
-                         self.w,
-                         p.r_hjort
-                         )*p.fe[1]
-        B = self.psi_o_star[:,1]**-p.k*p.fo[1]*p.r_hjort*self.w
-        self.V_with_prod_patent[...,1] = A1+A2+A3-B
+                        self.V_P[...,1]/self.w[None,:] - self.V_NP[...,1]/self.w[None,:],
+                        self.psi_m_star[...,1]**(1-p.k),
+                        self.mult_val_pat
+                        )*(p.k/(p.k-1))
+        A3 = - np.einsum('ni,n,n,i->i',
+                          self.psi_m_star[...,1]**-p.k,
+                          self.w,
+                          p.r_hjort,
+                          1/self.w
+                          )*p.fe[1]
+        B = self.psi_o_star[:,1]**-p.k*p.fo[1]*p.r_hjort
+        self.V_with_prod_patent[...,1] = (A1+A2+A3-B)*self.w[None,:]
         
         self.mult_val_all_innov = self.V_with_prod_patent[...,1]/self.V[...,1]
-        
-        # print(A.mean())
-        # # print(integrand[3,...].max())
-        # print(np.array([integrand(3,i,j) for i in range(11) for j in range(11)]).max())
-        # plt.plot(np.linspace(0,100,100), np.array([integrand(x,1,1) for x in np.linspace(0.001,100,100)]))
-        # plt.xscale('log')
-        
-        # return A + B
-        # numerator = p.r_hjort*(p.fe+p.fo)
-        # denominator = self.V_P - self.V_NP
-        # self.psi_o_P_star = 
-        
-        return df_terms
         
     def compute_non_solver_quantities(self,p):
         self.compute_tau(p)
@@ -1773,7 +1890,60 @@ class dynamic_var:
                                 1/(self.sol_init.cons).sum(),
                                 bracket_A+bracket_B
                                 )**(1/power)
+    
+    def compute_consumption_equivalent_welfare_for_subset_of_countries(self,p,countries):
+        countries_indices = [p.countries.index(c) for c in countries]
+        power = 1-1/p.gamma
+        # population-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       np.take((p.labor[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power),countries_indices,axis=0).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
         
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *np.take((p.labor**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power),countries_indices,axis=0).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        cons_eq_pop_average_welfare_change_subset_countries = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/np.take((p.labor**(1/p.gamma)*self.sol_init.cons**power),countries_indices,axis=0).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        # negishi-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       np.take((self.sol_init.cons[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power),countries_indices,axis=0).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *np.take((self.sol_init.cons**(1/p.gamma)*(self.nominal_final_consumption[:,0]
+                                                   /self.price_indices[:,0])**power),countries_indices,axis=0).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        cons_eq_negishi_welfare_change_subset_countries = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/np.take((self.sol_init.cons),countries_indices,axis=0).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        return {'pop_weighted':cons_eq_pop_average_welfare_change_subset_countries,'negishi':cons_eq_negishi_welfare_change_subset_countries}
         
     def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
         self.ratios_of_consumption_levels_change_not_normalized = \

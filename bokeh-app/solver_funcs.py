@@ -369,6 +369,72 @@ def compute_deriv_welfare_to_patent_protec_US(sol_baseline,p,v0=None):
     
     return (sol_c.cons_eq_welfare[0]-1)/epsilon
 
+def compute_deriv_welfare_to_patent_protec(sol_baseline,p_init,
+                                        country = 'USA',
+                                        dynamics=False):
+    epsilon = 1e-2
+    country_index = p_init.countries.index(country)
+    back_up_delta = p_init.delta[country_index,1]
+    p = p_init.copy()
+    p.delta[country_index,1] = p.delta[country_index,1]*(1+epsilon)
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,tol=1e-14,
+                                    context = 'counterfactual',
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=2e3,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=5
+                                  )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    sol_c.compute_world_welfare_changes(p,sol_baseline)
+    res = ((sol_c.cons_eq_welfare-1)/(epsilon*back_up_delta)).tolist(
+        )+[(sol_c.cons_eq_pop_average_welfare_change-1)/(epsilon*back_up_delta)
+           ,(sol_c.cons_eq_negishi_welfare_change-1)/(epsilon*back_up_delta)]
+    
+    if dynamics:
+        sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_fin = sol_c, sol_init=sol_baseline,
+                               Nt=23,
+                               t_inf=500,
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                plot_live = False,
+                                safe_convergence=1e-8,
+                                disp_summary=False,
+                                damping = 60,
+                                max_count = 50000,
+                                accel_memory =5, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=1, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        dyn_sol_c.compute_non_solver_quantities(p)
+        res = ((dyn_sol_c.cons_eq_welfare-1)/(epsilon*back_up_delta)).tolist(
+            )+[(dyn_sol_c.cons_eq_pop_average_welfare_change-1)/(epsilon*back_up_delta),
+               (dyn_sol_c.cons_eq_negishi_welfare_change-1)/(epsilon*back_up_delta)]
+        
+    p.delta[0,1] = back_up_delta
+    
+    return res
+
 def compute_deriv_growth_to_patent_protec_US(sol_baseline,p,v0=None):
     epsilon = 1e-2
     back_up_delta = p.delta[0,1]
@@ -691,6 +757,8 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None,
     p.delta[p.countries.index(c),1] = back_up_delta_value
     p.guess = sol_c.vector_from_var()
     
+    print(delta,c,welfare)
+    
     return welfare
      
 # def minus_welfare_of_delta_pop_weighted(deltas,p,sol_baseline):
@@ -817,7 +885,7 @@ def minimize_delta(args):
         delta_min = optimize.shgo(func=minus_welfare_of_delta,
                                   bounds=[bounds],
                                   args=(p, c, sol_it_baseline, hist_nash, dynamics),
-                                  options={'disp': True},
+                                  options={'disp': True,'f_tol':1e-15},
                                   )
     else:
         delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta,
@@ -838,19 +906,21 @@ def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_
         new_deltas = np.zeros(len(p.countries))
         for i,c in enumerate(p.countries):
             if dynamics:
+                # print('doing that')
                 delta_min = optimize.shgo(func=minus_welfare_of_delta,
                                                       # sampling_method='halton',
                                                       bounds=[bounds],
                                                       args = (p,c,sol_it_baseline, hist_nash, dynamics),
-                                                      options={'disp':True},
-                                                      # tol=1e-8
+                                                      options={'disp':True,'f_tol':1e-4,'minimize_every_iter':False},
+                                                      minimizer_kwargs={'f_tol':1e-4,'eps':1e-4,'finite_diff_rel_step':1e-2}
+                                                      # options = dict(ftol=1e-8)
                                                       )
             else:
                 delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta,
                                                       method='bounded',
                                                         bounds=bounds,
                                                       args = (p,c,sol_it_baseline, hist_nash, dynamics),
-                                                        # options={'disp':3},
+                                                      # options={'disp':3},
                                                       tol=1e-15
                                                       )
     
@@ -1241,7 +1311,8 @@ def find_coop_eq(p_baseline,aggregation_method,
                  solver_options=None,tol=1e-15,
                  static_eq_deltas = None,custom_weights=None,
                  custom_x0 = None,max_workers=6,
-                 custom_dyn_sol_options=None, displays = True):
+                 custom_dyn_sol_options=None, displays = True,
+                 parallel=True):
     
     if solver_options is None:
         solver_options = dict(cobweb_anim=False,tol =1e-14,
@@ -1304,28 +1375,31 @@ def find_coop_eq(p_baseline,aggregation_method,
     
     bounds = [(lb_delta,ub_delta)]*len(p.countries)
     # bounds = (lb_delta,ub_delta)
-    
-    # sol = optimize.minimize(fun = minus_world_welfare_of_delta,
-    #                         x0 = x0,
-    #                         tol = tol,
-    #                         args=(p,sol_baseline,dynamics,aggregation_method,
-    #                               custom_weights,custom_sol_options),
-    #                         # options = {'disp':True},
-    #                         bounds=bounds
-    #     )
-    
-    sol = minimize_parallel(fun = minus_world_welfare_of_delta,
-                            x0 = x0,
-                            tol = tol,
-                            args=(p,sol_baseline,dynamics,aggregation_method,
-                                  custom_weights,custom_sol_options,custom_dyn_sol_options),
-                            # options = {'disp':True},
-                            bounds=bounds, 
-                            parallel={'max_workers':max_workers,
-                                      'loginfo': displays,
-                                      'time':displays,
-                                      'verbose':displays}
-        )
+
+    if parallel:
+        print('parallel')
+        sol = minimize_parallel(fun = minus_world_welfare_of_delta,
+                                x0 = x0,
+                                tol = tol,
+                                args=(p,sol_baseline,dynamics,aggregation_method,
+                                      custom_weights,custom_sol_options,custom_dyn_sol_options),
+                                # options = {'disp':True},
+                                bounds=bounds, 
+                                parallel={'max_workers':max_workers,
+                                          'loginfo': displays,
+                                          'time':displays,
+                                          'verbose':displays}
+            )
+    else:
+        print('not parallel')
+        sol = optimize.minimize(fun = minus_world_welfare_of_delta,
+                                x0 = x0,
+                                tol = tol,
+                                args=(p,sol_baseline,dynamics,aggregation_method,
+                                      custom_weights,custom_sol_options),
+                                options = {'disp':True},
+                                bounds=bounds)
+        
     
     # sol = optimize.shgo(func=minus_world_welfare_of_delta,
     #                                       # sampling_method='halton',

@@ -41,6 +41,17 @@ Category18 = list(Category10[10])+['#e8ba02']+list(Dark2[8])
 #     )
 plt.style.use(['science','nature','no-latex'])
 plt.style.use(['science','no-latex'])
+import matplotlib.pyplot as plt 
+plt.rcParams.update({"axes.grid" : True, 
+                     "grid.color": "grey", 
+                     'axes.axisbelow':True,
+                     "grid.linewidth": 0.1, 
+                     'legend.framealpha':1,
+                     'legend.frameon':1,
+                     'legend.edgecolor':'white',
+                     'figure.dpi':288,
+                     })
+# mpl.rcParams.update({"axes.grid" : True, "grid.color": "black"})
 
 save_to_tex_options = dict(position_float='centering',
                              clines='all;index',
@@ -55,7 +66,8 @@ nash_eq_path = 'nash_eq_recaps/'
 coop_eq_path = 'coop_eq_recaps/'
 table_path = 'calibration_results_matched_economy/'
 
-save_formats = ['eps','png','pdf']
+# save_formats = ['eps','png','pdf']
+save_formats = ['pdf']
 
 countries_names = {'USA':'USA','EUR':'Europe','JAP':'Japan','CHN':'China','KOR':'Korea',
                    'CAN':'Canada','MEX':'Mexico','RUS':'Russia',
@@ -77,7 +89,7 @@ parameters_description = {
 #%% create output folder
 
 output_path = 'output/'
-output_name = 'draft_v7_nature_plots_no_grid'
+output_name = 'draft_v7_nature_plots_light_grid'
 
 presentation_version_path = output_path+output_name+'/'
 try:
@@ -99,6 +111,26 @@ variation_with_doubled_nu = '2.0'
 
 baseline_pre_trips_full_variation = baseline
 pre_trips_full_variation = '3.1'
+
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    '99.0':'Low TO',
+    '99.1':'High TO',
+    '99.2':'Low TE',
+    '99.3':'High TE',
+    '99.4':'Low KM',
+    '99.5':'High KM',
+    '99.6':'Low Sigma',
+    '99.7':'High Sigma',
+    '99.8':'Low Kappa',
+    '99.9':'High Kappa',
+    '99.10':'Low Growth',
+    '99.11':'High Growth',
+    '99.12':'Low rho',
+    '99.13':'High rho',
+    '99.14':'Low UUPCOST',
+    '99.15':'High UUPCOST',
+    }
 
 if variation == 'baseline':
     run_path = results_path+baseline+'/'
@@ -183,6 +215,12 @@ try:
 except:
     pass
 
+counterfactuals_doubled_nu_tau_path = save_path+'counterfactuals_with_doubled_nu_or_tau/'
+try:
+    os.mkdir(counterfactuals_doubled_nu_tau_path)
+except:
+    pass
+
 dyn_save_path = save_path+'dynamics/'
 try:
     os.mkdir(dyn_save_path)
@@ -192,6 +230,12 @@ except:
 china_save_path = save_path+'china_india_ex/'
 try:
     os.mkdir(china_save_path)
+except:
+    pass
+
+robustness_checks_path = save_path+'/robustness_checks/'
+try:
+    os.mkdir(robustness_checks_path)
 except:
     pass
 
@@ -282,6 +326,7 @@ ax.legend(loc=[1.02,0.02])
 # ax.legend()
 ax.set_ylabel('International patent families by destination')
 ax.set_xlim([1990,2015])
+# plt.grid()
 
 for save_format in save_formats:
     plt.savefig(data_fact_path+'international_pat_families_by_office.'+save_format,format=save_format)
@@ -333,6 +378,57 @@ plt.show()
 #%% write excel spredsheet of the baseline
 
 write_calibration_results(calibration_path+'baseline',p_baseline,m_baseline,sol_baseline,commentary = '')
+
+#%% Compute patenting quantities with production patents
+
+sol_baseline.compute_quantities_with_prod_patents(p_baseline)
+
+df = pd.DataFrame(index = p_baseline.countries)
+
+dfs = {}
+
+for cas in ['a','b','c']:
+    dfs[cas] = pd.DataFrame(index = p_baseline.countries)
+    dfs[cas]['percentage share of innovations patented without prod patent'] = getattr(sol_baseline,f'share_innov_patented_dom_without_prod_patent_{cas}')[...,1]*100
+    dfs[cas]['percentage share of innovations patented with prod patent'] = getattr(sol_baseline,f'share_innov_patented_dom_with_prod_patent_{cas}')[...,1]*100
+    dfs[cas]['percentage points share of innovations patented diff'] = dfs[cas]['percentage share of innovations patented with prod patent'
+                                                                        ] - dfs[cas]['percentage share of innovations patented without prod patent']
+
+cases = {'USA':'a', 
+         'EUR':'c', 
+         'JAP':'c', 
+         'CHN':'a', 
+         'BRA':'b', 
+         'IND':'b', 
+         'CAN':'b', 
+         'KOR':'c', 
+         'RUS':'b', 
+         'MEX':'b', 
+         'ROW':'b'}
+    
+for cas in cases:
+    df.loc[cas,'percentage share of innovations patented without prod patent'
+            ] = dfs[cases[cas]].loc[cas,'percentage share of innovations patented without prod patent']
+    df.loc[cas,'percentage share of innovations patented with prod patent'
+            ] = dfs[cases[cas]].loc[cas,'percentage share of innovations patented with prod patent']
+    
+df['percentage points share of innovations patented diff'] = df['percentage share of innovations patented with prod patent'
+                                    ] - df['percentage share of innovations patented without prod patent']
+
+df['Mult Val Pat'] = sol_baseline.mult_val_pat
+df['Mult Val All Innov'] = sol_baseline.mult_val_all_innov
+
+df_profit = pd.DataFrame( index = pd.MultiIndex.from_product(
+    [p_baseline.countries,p_baseline.countries], names = ['destination','origin']
+    ))
+
+df_profit['small pi normalized'] = sol_baseline.profit[...,1].ravel()
+df_profit['large pi B normalized'] = sol_baseline.profit_with_prod_patent[...,1].ravel()
+
+df.round(4).to_csv(calibration_path+'quantities_with_production_patents.csv')
+# for cas in ['a','b','c']:
+#     dfs[cas].round(4).to_csv(f'../misc/case_{cas}.csv')
+df_profit.to_csv(calibration_path+'profits_with_production_patents.csv')
 
 #%% Comparing trade flows with patent flows
 
@@ -386,14 +482,16 @@ y = getattr(m_baseline, moment).ravel()
 
 fig, ax = plt.subplots()
 
-ax.scatter(x,y)
-ax.plot([x.min(),x.max()],[x.min(),x.max()],color='grey',ls='--',lw=1)
+ax.scatter(x,y,s=6,lw=0.6
+            ,marker='+'
+           )
+ax.plot([x.min(),x.max()],[x.min(),x.max()],color='grey',ls='--',lw=0.5)
 if annotate_with_labels:
     texts = [ax.annotate(label,
                          xy=(x[i],y[i]),
-                        xytext=(2,2),
+                        xytext=(1,1),
                         textcoords='offset points',
-                          fontsize = 3
+                          fontsize = 2
                         )
              for i,label in enumerate(labels)]
     
@@ -414,7 +512,8 @@ adjust_text(texts, precision=0.001,
                         ))
 
 for save_format in save_formats:
-    plt.savefig(calibration_path+moment+'.'+save_format,format=save_format)
+    plt.savefig(calibration_path+moment+'_cross_small.'+save_format,format=save_format)
+    # plt.savefig(calibration_path+moment+'.'+save_format,format=save_format)
 
 plt.show()
 
@@ -755,7 +854,7 @@ for c in p_baseline.countries+['World','Uniform_delta']:
 
     fig,ax = plt.subplots()
     plt.xscale('log')
-    ax.set_ylabel('Welfare change')
+    ax.set_ylabel('Welfare change (%)')
     if c in p_baseline.countries:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
@@ -776,11 +875,11 @@ for c in p_baseline.countries+['World','Uniform_delta']:
         ax.set_xticklabels(xtl,rotation=45)
         
     for i,country in enumerate(p_baseline.countries):
-        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
+        ax.plot(recap.delta_change,recap[country]*100-100,color=Category18[i],label=countries_names[country])
     
-    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
-    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
-    ax.legend(loc=([1,0]))
+    ax.plot(recap.delta_change,recap['world_negishi']*100-100,color='k',ls='--',label='World Negishi')
+    ax.plot(recap.delta_change,recap['world_equal']*100-100,color='k',ls=':',label='World Equal')
+    ax.legend(loc=([1.02,0]))
     
     if c == 'Uniform_delta':
         for save_format in save_formats:
@@ -822,7 +921,8 @@ for with_world in [True,False]:
         ax.plot(recap_growth_rate.delta_change,
                 recap_growth_rate['World']*100,color='grey',
                 label='All countries',ls='--')
-    ax.legend(loc=[1.02,0.02])
+    # ax.legend(loc=[1.02,0.02])
+    ax.legend(fontsize = 5,ncol=2)
     plt.xscale('log')
     for save_format in save_formats:
         if with_world:
@@ -845,9 +945,8 @@ for with_world in [True,False]:
 
 #%% Unilateral patent protections counterfactuals with dynamics
 
-
-
-for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_countries_pat_sectors']:
+# for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_countries_pat_sectors']:
+for c in ['trade_cost_eq_trips_all_countries_pat_sectors']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -890,10 +989,10 @@ for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_
         recap.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
 
     fig,ax = plt.subplots()
-    
+    # plt.grid(linestyle='-',linewidth = .1,color='grey')
     plt.xscale('log')
     
-    ax.set_ylabel('Welfare change')
+    ax.set_ylabel('Welfare change (%)')
     if c in p_baseline.countries:
         ax.set_xlabel(r'Proportional change of $\delta$')
     if c == 'World':
@@ -910,16 +1009,31 @@ for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_
     if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
         ax.set_xlabel(r'Proportional change of $\tau$ of all countries in the patenting sector')
         ax.set_xlim(0.98,1.02)
-        ax.set_ylim(0.98,1.02)
+        ax.set_ylim(-2,2)
         plt.xscale('linear')
 
     for i,country in enumerate(p_baseline.countries):
-        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
+        ax.plot(recap.delta_change,recap[country]*100-100,color=Category18[i],label=countries_names[country])
     
-    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
-    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
+    ax.plot(recap.delta_change,recap['world_negishi']*100-100,color='k',ls='--',label='World Negishi')
+    ax.plot(recap.delta_change,recap['world_equal']*100-100,color='k',ls=':',label='World Equal')
 
-    ax.legend(loc=[1.02,0.02])
+    # ax.legend(loc=[1.02,0.02])
+    if c == 'USA':
+        plt.legend(fontsize = 5,ncol=2)
+        # legend = plt.legend(frameon = 1)
+        # frame = legend.get_frame()
+        # frame.set_facecolor('white')
+        # frame.set_edgecolor('white')
+        # # legend = plt.legend(loc="upper right", edgecolor="black")
+        # legend.get_frame().set_alpha(1)
+        # legend.get_frame().set_facecolor((0, 0, 1, 0.1))
+        # pass
+    
+    # if c in ['USA','EUR','JAP','CHN']:
+    #     ax.set_xlabel('')
+    # if c in ['EUR','CHN','IND']:
+    #     ax.set_ylabel('')
 
     for save_format in save_formats:
         plt.savefig(counterfactual_plots_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
@@ -2489,6 +2603,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_baseline, Nt=21,
                         )
 dyn_sol.compute_non_solver_quantities(p)
 
+
 time = np.linspace(0,dyn_sol.t_inf,10001)
 time_truncated = time[:1201]
 
@@ -2577,7 +2692,8 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real final consumption')
-plt.legend(loc=[1.02,0.02])
+# plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.8)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_final_consumption.'+save_format,format=save_format)
@@ -2598,7 +2714,8 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real profit')
-plt.legend(loc=[1.02,0.02])
+# plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.8)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_profit.'+save_format,format=save_format)
@@ -2617,7 +2734,8 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Labor allocated to research')
-plt.legend(loc=[1.02,0.02])
+# plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.7,ncol=4)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'research_labor.'+save_format,format=save_format)
@@ -2636,7 +2754,7 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel('Real wage')
-plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.8)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'real_wage.'+save_format,format=save_format)
@@ -2655,7 +2773,8 @@ for i,country in enumerate(p_baseline.countries):
                    label=country,
                    color=Category18[i])
 # ax.set_ylabel(r'$\Psi^{CD}_n$')
-plt.legend(loc=[1.02,0.02])
+# plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.8)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'psi_cd.'+save_format,format=save_format)
@@ -2668,13 +2787,14 @@ for i,country in enumerate(p_baseline.countries):
     norm_start = dyn_sol.sol_init.r
     norm_end = dyn_sol.sol_fin.r
     add_graph(dyn_sol,qty,norm_start,norm_end,
-                   ax,time,time_truncated,
-                   normalize_start=True,
-                   normalize_end=False,
-                   label=country,
-                   color=Category18[i])
+                    ax,time,time_truncated,
+                    normalize_start=True,
+                    normalize_end=False,
+                    label=country,
+                    color=Category18[i])
 # ax.set_ylabel('Interest rate')
-plt.legend(loc=[1.02,0.02])
+# plt.legend(loc=[1.02,0.02])
+plt.legend(fontsize=4.8)
 if save_dynamics:
     for save_format in save_formats:
         plt.savefig(dyn_save_path+'interest_rate.'+save_format,format=save_format)
@@ -2764,6 +2884,8 @@ if save_dynamics:
         plt.savefig(dyn_save_path+'normalized_us_quantities.'+save_format,format=save_format)
 plt.show()
 
+
+
 df = pd.DataFrame(index = time.round(5)
                   )
 df['Growth'] = growth
@@ -2823,19 +2945,66 @@ if save_dynamics:
 
 #%% Table of solving for the eta where countries will join the patenting club
 
-df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/CHN.csv')
-df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/IND.csv')
+df_chn = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/pop_weighted_CHN.csv')
+df_ind = pd.read_csv('solve_for_eta_to_join_pat_club/baseline_1030/pop_weighted_IND.csv')
 
 df = pd.DataFrame(index = p_baseline.countries)
 df['baseline eta'] = p_baseline.eta[:,1]
 
-df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_china'].iloc[-1]
-df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_india'].iloc[-1]
+df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_CHN'].iloc[-1]
+df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_IND'].iloc[-1]
 
 df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
 df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
 
 df.to_csv(china_save_path+'china_india_ex.csv')
+
+markers = {'pop_weighted':'o',
+      'negishi':'^'}
+label_coop = {'pop_weighted':'Equal',
+      'negishi':'Negishi'}
+
+run_countries = []
+
+markers = {'pop_weighted':'o',
+      'negishi':'^'}
+label_coop = {'pop_weighted':'Equal',
+      'negishi':'Negishi'}
+
+fig,ax = plt.subplots()
+
+for i, country in enumerate(p_baseline.countries):
+    
+    for j,coop in enumerate(['pop_weighted','negishi']):
+        try:
+            df = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv',index_col=0)
+            if df[f'eta_{country}'].iloc[-1] > p_baseline.eta[i,1]:
+                ax.scatter([country],[df[f'eta_{country}'].iloc[-1]],
+                            # label = f'{country} {label_coop[coop]}',
+                            marker = markers[coop],
+                            color = Category18[i])
+                
+                run_countries.append(country)
+            # print(coop,country,df[f'eta_{country}'].iloc[-1])
+        except:
+            pass
+    if country in run_countries:
+        print(run_countries)
+        ax.scatter([country],[p_baseline.eta[i,1]],
+                    # label = f'{country} baseline',
+                    marker = '*',
+                    color = Category18[i])
+ax.scatter([],[],marker = 'o', label = 'Equal', color = 'grey')
+ax.scatter([],[],marker = '^', label = 'Negishi', color = 'grey')
+ax.scatter([],[],marker = '*', label = 'Baseline', color = 'grey')
+# ax.set_xscale('log')
+ax.set_yscale('log')
+plt.axhline(y=p_baseline.eta[0,1],color='grey',label='Baseline USA')
+ax.set_ylabel(r'$\eta$')
+plt.legend()
+for save_format in save_formats:
+    plt.savefig(china_save_path+'all_countries.'+save_format,format=save_format)
+plt.show()
 
 #%% Sensitivity graphs of the calibration
 
@@ -2850,43 +3019,48 @@ df = df.drop(['RP_USA','RD_CHN','RD_BRA','RD_IND','RD_ROW','RD_MEX','RD_RUS'])
 names = {
     'GPDIFF':'Price growth diff.',
     'GROWTH':'Agg. growth rate',
-    'KM':'Pat. value rel. RD in US',
+    'KM':'Pat. value rel. R&D in US',
     'OUT':'World output',
     'SINNOVPATUS':'Share innov. pat. US',
     'DOMPATINUS':'Share dom. pat. US',
     'UUPCOST':'Domestic pat. expenditure US',
     'TO':'Turnover US imports',
-    'TE':'Trade elasticity',
+    'TE':'Trade elasticity patenting',
     'rho':r'$\rho$',
     'kappa':r'$\kappa$',
-    'sigma':r'$\sigma_1$',
-    'theta':r'$\theta_0$',
+    'sigma':r'$\sigma^1$',
+    'theta':r'$\theta^0$',
     'gamma':r'$\gamma$',
-    'g_0':'Growth rate of sector 0',
-    'fo':'Patent preparation cost',
-    'fe':'Patent application cost',
-    'k':'Parameter Pareto quality',
-    'nu':'Technology diffusion rate',
-    'zeta':'Product obsolescence rate',
+    'g_0':r'$g^0$',
+    'fo':r'$f^o$',
+    'fe':r'$f^e$',
+    'k':r'$k$',
+    'nu':r'$\nu$',
+    'zeta':r'$\zeta$',
     }
 
 
 
 for c in p_baseline.countries:
-    names['RD_'+c] = 'RD expend. rel GDP '+c
+    names['RD_'+c] = 'R&D expend. rel. GDP '+c
     names['RP_'+c] = 'Relative price '+c
     names['SRGDP_'+c] = 'Share real GDP '+c
     names['SPFLOW_destination_'+c] = 'Patents in '+c
     names['SPFLOW_origin_'+c] = 'Patents from '+c
-    names['eta '+c] = 'RD efficiency '+c
-    names['delta '+c] = 'Patent protection '+c
-    names['T Patent '+c] = 'Tech. sector 1 '+c
-    names['T Non patent '+c] = 'Tech. sector 0 '+c
+    names['eta '+c] = r'$\eta$ '+c
+    names['delta '+c] = r'$\delta$ '+c
+    names['T Patent '+c] = 'No pat. sector productivity '+c
+    names['T Non patent '+c] = 'Pat. sector productivity '+c
+    # names['T Patent '+c] = r'${(T^{1/\theta})}^1$ '+c
+    # names['T Non patent '+c] = r'${(T^{1/\theta})}^0$ '+c
 
 df.index = [names[i] for i in df.index]
+
+names['theta'] = r'$\theta^1$'
+
 df.columns = [names[i] for i in df.columns]
 
-fig,ax = plt.subplots(figsize=(14,8),dpi=144)
+fig,ax = plt.subplots(figsize=(14,9),dpi=144)
 
 sns.heatmap(df,ax=ax,
             cmap="vlag",
@@ -2894,7 +3068,7 @@ sns.heatmap(df,ax=ax,
             robust = True,
             linewidths=0.01,
             linecolor='grey',
-            cbar_kws={'label':'Elasticity (Colormap range is computed with robust quantiles instead of extreme values)',
+            cbar_kws={'label':'Elasticity',
                       'spacing':'proportional'
                       }
             )
@@ -2904,15 +3078,16 @@ ax.tick_params(axis=u'both', which=u'both',length=0)
 
 # Rotate and align bottom ticklabels
 plt.setp([tick.label1 for tick in ax.xaxis.get_major_ticks()], rotation=45,
-         ha="right", va="center", rotation_mode="anchor")
+         ha="right", va="top", rotation_mode="anchor")
 # Rotate and align top ticklabels
 plt.setp([tick.label2 for tick in ax.xaxis.get_major_ticks()], rotation=45,
-         ha="left", va="center",rotation_mode="anchor")
+         ha="left", va="bottom",rotation_mode="anchor")
 cbar = ax.collections[0].colorbar
 cbar.ax.tick_params(labelsize=12)
 ax.figure.axes[-1].yaxis.label.set_size(11)
 for save_format in save_formats:
     plt.savefig(sensitivity_path+'full_sensitivities_saturated.'+save_format,format=save_format)
+    # plt.savefig(sensitivity_path+'full_sensitivities_saturated_tex.'+save_format,format=save_format)
 
 plt.show()
     
@@ -2926,8 +3101,8 @@ df = pd.read_csv(table_path+f'baseline_{baseline}_sensitivity_tables/all_sensiti
 
 df = df.drop(['RP_USA','RD_CHN','RD_BRA','RD_IND','RD_ROW','RD_MEX','RD_RUS'])
 
-df = df.loc[[x for x in df.index if x.startswith('SPFLOW')]
-            +[x for x in df.index if x.startswith('RD')]
+df = df.loc[[x for x in df.index if x.startswith('RD')]
+            +[x for x in df.index if x.startswith('SPFLOW')]
             ]
 df = df[[x for x in df.columns if x.startswith('delta')]
         +[x for x in df.columns if x.startswith('eta')]
@@ -2936,41 +3111,47 @@ df = df[[x for x in df.columns if x.startswith('delta')]
 names = {
     'GPDIFF':'Price growth diff.',
     'GROWTH':'Agg. growth rate',
-    'KM':'Pat. value rel. RD in US',
+    'KM':'Pat. value rel. R&D in US',
     'OUT':'World output',
     'SINNOVPATUS':'Share innov. pat. US',
     'DOMPATINUS':'Share dom. pat. US',
     'UUPCOST':'Domestic pat. expenditure US',
     'TO':'Turnover US imports',
-    'TE':'Trade elasticity',
+    'TE':'Trade elasticity patenting',
     'rho':r'$\rho$',
     'kappa':r'$\kappa$',
-    'sigma':r'$\sigma_1$',
-    'theta':r'$\theta_0$',
+    'sigma':r'$\sigma^1$',
+    'theta':r'$\theta^0$',
     'gamma':r'$\gamma$',
-    'g_0':'Growth rate of sector 0',
-    'fo':'Patent preparation cost',
-    'fe':'Patent application cost',
-    'k':'Parameter Pareto quality',
-    'nu':'Technology diffusion rate',
-    'zeta':'Product obsolescence rate',
+    'g_0':r'$g^0$',
+    'fo':r'$f^o$',
+    'fe':r'$f^e$',
+    'k':r'$k$',
+    'nu':r'$\nu$',
+    'zeta':r'$\zeta$',
     }
 
 
 
 for c in p_baseline.countries:
-    names['RD_'+c] = 'RD expend. rel GDP '+c
+    names['RD_'+c] = 'R&D expend. rel. GDP '+c
     names['RP_'+c] = 'Relative price '+c
     names['SRGDP_'+c] = 'Share real GDP '+c
     names['SPFLOW_destination_'+c] = 'Patents in '+c
     names['SPFLOW_origin_'+c] = 'Patents from '+c
-    names['eta '+c] = 'RD efficiency '+c
-    names['delta '+c] = 'Patent protection '+c
-    names['T Patent '+c] = 'Tech. sector 1 '+c
-    names['T Non patent '+c] = 'Tech. sector 0 '+c
+    names['eta '+c] = r'$\eta$ '+c
+    names['delta '+c] = r'$\delta$ '+c
+    # names['T Patent '+c] = 'No pat. sector productivity '+c
+    # names['T Non patent '+c] = 'Pat. sector productivity '+c
+    names['T Patent '+c] = r'${(T^{1/\theta})}^1$ '+c
+    names['T Non patent '+c] = r'${(T^{1/\theta})}^0$ '+c
 
 df.index = [names[i] for i in df.index]
+
+names['theta'] = r'$\theta^1$'
+
 df.columns = [names[i] for i in df.columns]
+
 
 fig,ax = plt.subplots(figsize=(14,8),dpi=144)
 
@@ -2980,7 +3161,8 @@ sns.heatmap(df,ax=ax,
             robust = True,
             linewidths=0.01,
             linecolor='grey',
-            cbar_kws={'label':'Elasticity (Colormap range is computed with robust quantiles instead of extreme values)',
+            # cbar_kws={'label':'Elasticity (Colormap range is computed with robust quantiles instead of extreme values)',
+            cbar_kws={'label':'Elasticity',
                       'spacing':'proportional'
                       }
             )
@@ -2998,7 +3180,7 @@ cbar.ax.tick_params(labelsize=12)
 ax.figure.axes[-1].yaxis.label.set_size(11)
 
 for save_format in save_formats:
-    plt.savefig(sensitivity_path+'reduced_sensitivities_saturated.'+save_format,format=save_format)
+    plt.savefig(sensitivity_path+'reduced_sensitivities_saturated_tex.'+save_format,format=save_format)
 
 plt.show()
 
@@ -3006,151 +3188,158 @@ plt.show()
 
 #%% Unilateral patent protections counterfactuals with dynamics for doubled nu
 
+# variation = variation_with_doubled_nu
+# run_path_with_doubled_nu = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_doubled_nu}/'
+
+# p_double_nu = parameters()
+# p_double_nu.load_run(run_path_with_doubled_nu)
+
+# _, sol_double_nu = fixed_point_solver(p_double_nu,context = 'counterfactual',x0=p_double_nu.guess,
+#                         cobweb_anim=False,tol =1e-14,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='phi',
+#                         plot_convergence=False,
+#                         plot_cobweb=False,
+#                         safe_convergence=0.001,
+#                         disp_summary=False,
+#                         damping = 10,
+#                         max_count = 3e3,
+#                         accel_memory = 50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=5
+#                         )
+# sol_double_nu.scale_P(p_double_nu)
+# sol_double_nu.compute_non_solver_quantities(p_double_nu)
+
+
+# # for c in ['USA']:
+# for c in p_double_nu.countries:
+#     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_double_nu.countries)
+#     if variation == 'baseline':
+#         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
+#     else:
+#         local_path = \
+#             f'counterfactual_results/unilateral_patent_protection/baseline_{baseline}_{variation}/'
+#     print(c)
+#     if c in p_double_nu.countries:
+#         idx_country = p_double_nu.countries.index(c)
+#     country_path = local_path+c+'/'
+#     files_in_dir = next(os.walk(country_path))[1]
+#     run_list = [f for f in files_in_dir if f[0].isnumeric()]
+#     run_list.sort(key=float)
+#     for i,run in enumerate(run_list):
+#         p = parameters()
+#         p.load_run(country_path+run+'/')
+#         if p.guess is not None:
+#             sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+#             sol_c.scale_P(p)
+#             sol_c.compute_non_solver_quantities(p)
+#             sol_c.compute_consumption_equivalent_welfare(p,sol_double_nu)
+#         if p.dyn_guess is not None:
+#             dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+#                                                     Nt=25,t_inf=500,
+#                                                     sol_init = sol_double_nu,
+#                                                     sol_fin = sol_c)
+#             dyn_sol_c.compute_non_solver_quantities(p)
+#         if c in p_double_nu.countries:
+#             recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_double_nu.delta[idx_country,1]
+#         if c == 'World':
+#             recap.loc[run, 'delta_change'] = p.delta[0,1]/p_double_nu.delta[0,1]
+#         if c == 'Uniform_delta':
+#             recap.loc[run, 'delta_change'] = p.delta[0,1]
+#         if c == 'Upper_uniform_delta':
+#             recap.loc[run,'delta_change'] = np.logspace(-2,0,len(run_list))[i]
+#         if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+#             recap.loc[run, 'delta_change'] = p.tau[0,1,1]/p_double_nu.tau[0,1,1]
+#         recap.loc[run, 'world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
+#         recap.loc[run, 'world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
+#         recap.loc[run,p_double_nu.countries] = dyn_sol_c.cons_eq_welfare
+
+#     fig,ax = plt.subplots()
+    
+#     plt.xscale('log')
+    
+#     ax.set_ylabel('Welfare change (%)')
+#     if c in p_double_nu.countries:
+#         ax.set_xlabel(r'Proportional change of $\delta$')
+#     if c == 'World':
+#         ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
+#     if c == 'Uniform_delta' or c == 'Upper_uniform_delta':
+#         ax.set_xlabel(r'Harmonized $\delta$')
+#         plt.axvline(x=p_double_nu.delta[0,1], lw = 1, color = 'k')
+#         xt = ax.get_xticks() 
+#         xt=np.append(xt,p_double_nu.delta[0,1])
+#         xtl=xt.tolist()
+#         xtl[-1]=r'$\delta_{US}$'
+#         ax.set_xticks(xt)
+#         ax.set_xticklabels(xtl)
+#     if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+#         ax.set_xlabel(r'Proportional change of $\tau$ of all countries in the patenting sector')
+#         ax.set_xlim(0.98,1.02)
+#         ax.set_ylim(-2,2)
+#         plt.xscale('linear')
+
+#     for i,country in enumerate(p_double_nu.countries):
+#         ax.plot(recap.delta_change,recap[country]*100-100,color=Category18[i],label=countries_names[country])
+    
+#     ax.plot(recap.delta_change,recap['world_negishi']*100-100,color='k',ls='--',label='World Negishi')
+#     ax.plot(recap.delta_change,recap['world_equal']*100-100,color='k',ls=':',label='World Equal')
+
+#     # ax.legend(loc=[1.02,0.02])
+#     ax.legend(fontsize=4,ncol=2)
+
+#     for save_format in save_formats:
+#         plt.savefig(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
+#     plt.show()
+    
+#     if c in p_double_nu.countries:
+#         caption = 'Consumption equivalent welfares in the unilateral patent protection counterfactual of '+countries_names[c]
+#     if c == 'World':
+#         caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
+#     if c == 'Uniform_delta':
+#         caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
+#         recap = recap.rename(columns = {'delta_change':'delta'})
+#     if c == 'Upper_uniform_delta':
+#         caption = 'Consumption equivalent welfares in the partially harmonized delta counterfactual change of all countries'
+#         recap = recap.rename(columns = {'delta_change':'delta'})
+#     if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
+#         caption = 'Consumption equivalent welfares in the counterfactual change of delta pre-TRIPS and trade costs of the patenting sectors'
+#         recap = recap.rename(columns = {'delta_change':'tau_change'})
+    
+#     recap.style.to_latex(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.tex',
+#                       caption=caption,
+#                       **save_to_tex_options
+#                       )
+#     recap.to_csv(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.csv')
+    
+#     if c == 'Uniform_delta':
+#         delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
+#         delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
+#                           caption=caption,
+#                           **save_to_tex_options
+#                           )
+#         delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
+        
+#     if c == 'Upper_uniform_delta':
+#         delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
+#         delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
+#                           caption=caption,
+#                           **save_to_tex_options
+#                           )
+#         delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
+
+#%% Nash table with transitional dynamics with doubled nu
+
 variation = variation_with_doubled_nu
 run_path_with_doubled_nu = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_doubled_nu}/'
 
 p_double_nu = parameters()
 p_double_nu.load_run(run_path_with_doubled_nu)
-
-_, sol_double_nu = fixed_point_solver(p_double_nu,context = 'counterfactual',x0=p_double_nu.guess,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='phi',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=False,
-                        damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
-                        )
-sol_double_nu.scale_P(p_double_nu)
-sol_double_nu.compute_non_solver_quantities(p_double_nu)
-
-
-# for c in ['USA']:
-for c in p_double_nu.countries:
-    recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_double_nu.countries)
-    if variation == 'baseline':
-        local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
-    else:
-        local_path = \
-            f'counterfactual_results/unilateral_patent_protection/baseline_{baseline}_{variation}/'
-    print(c)
-    if c in p_double_nu.countries:
-        idx_country = p_double_nu.countries.index(c)
-    country_path = local_path+c+'/'
-    files_in_dir = next(os.walk(country_path))[1]
-    run_list = [f for f in files_in_dir if f[0].isnumeric()]
-    run_list.sort(key=float)
-    for i,run in enumerate(run_list):
-        p = parameters()
-        p.load_run(country_path+run+'/')
-        if p.guess is not None:
-            sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
-            sol_c.scale_P(p)
-            sol_c.compute_non_solver_quantities(p)
-            sol_c.compute_consumption_equivalent_welfare(p,sol_double_nu)
-        if p.dyn_guess is not None:
-            dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
-                                                    Nt=25,t_inf=500,
-                                                    sol_init = sol_double_nu,
-                                                    sol_fin = sol_c)
-            dyn_sol_c.compute_non_solver_quantities(p)
-        if c in p_double_nu.countries:
-            recap.loc[run, 'delta_change'] = p.delta[idx_country,1]/p_double_nu.delta[idx_country,1]
-        if c == 'World':
-            recap.loc[run, 'delta_change'] = p.delta[0,1]/p_double_nu.delta[0,1]
-        if c == 'Uniform_delta':
-            recap.loc[run, 'delta_change'] = p.delta[0,1]
-        if c == 'Upper_uniform_delta':
-            recap.loc[run,'delta_change'] = np.logspace(-2,0,len(run_list))[i]
-        if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
-            recap.loc[run, 'delta_change'] = p.tau[0,1,1]/p_double_nu.tau[0,1,1]
-        recap.loc[run, 'world_negishi'] = dyn_sol_c.cons_eq_negishi_welfare_change
-        recap.loc[run, 'world_equal'] = dyn_sol_c.cons_eq_pop_average_welfare_change
-        recap.loc[run,p_double_nu.countries] = dyn_sol_c.cons_eq_welfare
-
-    fig,ax = plt.subplots()
-    
-    plt.xscale('log')
-    
-    ax.set_ylabel('Welfare change')
-    if c in p_double_nu.countries:
-        ax.set_xlabel(r'Proportional change of $\delta$')
-    if c == 'World':
-        ax.set_xlabel(r'Proportional change of $\delta$ of all countries')
-    if c == 'Uniform_delta' or c == 'Upper_uniform_delta':
-        ax.set_xlabel(r'Harmonized $\delta$')
-        plt.axvline(x=p_double_nu.delta[0,1], lw = 1, color = 'k')
-        xt = ax.get_xticks() 
-        xt=np.append(xt,p_double_nu.delta[0,1])
-        xtl=xt.tolist()
-        xtl[-1]=r'$\delta_{US}$'
-        ax.set_xticks(xt)
-        ax.set_xticklabels(xtl)
-    if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
-        ax.set_xlabel(r'Proportional change of $\tau$ of all countries in the patenting sector')
-        ax.set_xlim(0.98,1.02)
-        ax.set_ylim(0.98,1.02)
-        plt.xscale('linear')
-
-    for i,country in enumerate(p_double_nu.countries):
-        ax.plot(recap.delta_change,recap[country],color=Category18[i],label=countries_names[country])
-    
-    ax.plot(recap.delta_change,recap['world_negishi'],color='k',ls='--',label='World Negishi')
-    ax.plot(recap.delta_change,recap['world_equal'],color='k',ls=':',label='World Equal')
-
-    ax.legend(loc=[1.02,0.02])
-
-    for save_format in save_formats:
-        plt.savefig(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.'+save_format,format=save_format)
-    plt.show()
-    
-    if c in p_double_nu.countries:
-        caption = 'Consumption equivalent welfares in the unilateral patent protection counterfactual of '+countries_names[c]
-    if c == 'World':
-        caption = 'Consumption equivalent welfares in the patent protection counterfactual change of all countries'
-    if c == 'Uniform_delta':
-        caption = 'Consumption equivalent welfares in the harmonized delta counterfactual change of all countries'
-        recap = recap.rename(columns = {'delta_change':'delta'})
-    if c == 'Upper_uniform_delta':
-        caption = 'Consumption equivalent welfares in the partially harmonized delta counterfactual change of all countries'
-        recap = recap.rename(columns = {'delta_change':'delta'})
-    if c == 'trade_cost_eq_trips_all_countries_pat_sectors':
-        caption = 'Consumption equivalent welfares in the counterfactual change of delta pre-TRIPS and trade costs of the patenting sectors'
-        recap = recap.rename(columns = {'delta_change':'tau_change'})
-    
-    recap.style.to_latex(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.tex',
-                      caption=caption,
-                      **save_to_tex_options
-                      )
-    recap.to_csv(doubled_nu_path+c+'_dyn_unilateral_patent_protection_counterfactual.csv')
-    
-    if c == 'Uniform_delta':
-        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
-        delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
-                          caption=caption,
-                          **save_to_tex_options
-                          )
-        delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
-        
-    if c == 'Upper_uniform_delta':
-        delta_US_values = recap.iloc[np.argmin(np.abs(recap.delta-p_double_nu.delta[0,1]))].to_frame()
-        delta_US_values.style.to_latex(doubled_nu_path+c+'_dyn_US_values.tex',
-                          caption=caption,
-                          **save_to_tex_options
-                          )
-        delta_US_values.to_csv(doubled_nu_path+c+'_dyn_US_values.csv')
-
-#%% Nash table with transitional dynamics with doubled nu
 
 all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
 all_nashes = all_nashes.drop_duplicates(['baseline','variation'],keep='last')
@@ -3263,6 +3452,12 @@ write_calibration_results(doubled_nu_path+'dyn_Nash_with_doubled_nu',p_nash,m_na
 
 
 #%% Coop equal weights table with transitional dynamics with doubled nu
+
+variation = variation_with_doubled_nu
+run_path_with_doubled_nu = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_doubled_nu}/'
+
+p_double_nu = parameters()
+p_double_nu.load_run(run_path_with_doubled_nu)
 
 all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
 all_coop_equales = all_coop_equales.drop_duplicates(['baseline',
@@ -3378,6 +3573,12 @@ write_calibration_results(doubled_nu_path+'dyn_Coop_population_weights_with_doub
 
 #%% Coop negishi weights table with transitional dynamics with doubled nu
 
+variation = variation_with_doubled_nu
+run_path_with_doubled_nu = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_doubled_nu}/'
+
+p_double_nu = parameters()
+p_double_nu.load_run(run_path_with_doubled_nu)
+
 all_coop_negishies = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
 all_coop_negishies = all_coop_negishies.drop_duplicates(['baseline',
                                                      'variation',
@@ -3486,4 +3687,645 @@ df.to_csv(doubled_nu_path+'dyn_Coop_negishi_weights_table_with_doubled_nu.csv',f
 
 write_calibration_results(doubled_nu_path+'dyn_Coop_negishi_weights_with_nu',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
 
-#%%
+#%% Unilateral patent protection counterfactuals for doubled nu and doubled tau
+
+variations_of_robust_checks = {
+    variation_with_doubled_nu:r'Doubled $\nu$',
+     variation_with_doubled_tau_in_pat_sect:r'Doubled trade costs',
+     'baseline':'Baseline',
+    }
+
+import math
+
+for c,country in enumerate(p_baseline.countries):
+# for c,country in enumerate(['USA','EUR','JAP','CHN','KOR']):
+    fig,ax = plt.subplots()
+    for i,rob_check in enumerate(variations_of_robust_checks):
+        variation = rob_check
+        if variation == 'baseline':
+            local_path = cf_path+'baseline_'+baseline+'/'
+        else:
+            local_path = \
+                cf_path+f'baseline_{baseline}_{variation}/'
+        df_welfare = pd.read_csv(local_path+'dyn_'+country+'.csv')
+        if rob_check == 'baseline':
+            ax.plot(df_welfare['delt'],df_welfare[country]*100-100,color='k',
+                    label=variations_of_robust_checks[rob_check]
+                    # ,lw=5
+                    )
+        else:
+            ax.plot(df_welfare['delt'],df_welfare[country]*100-100,
+                    label=variations_of_robust_checks[rob_check],
+                    color = Category18[i],
+                    )
+    ax.set_ylabel('Welfare change (%)')
+    name = countries_names[country]
+    # ax.set_xlabel(fr'Proportional change of $\delta$ {name}')
+    ax.set_xlabel(r'Proportional change of $\delta$')
+    # if country == 'USA':
+    #     ax.set_xlabel(r'Proportional change of $\delta_{US}$')
+    # elif country == 'EUR':
+    #     ax.set_xlabel(r'Proportional change of $\delta_{Europe}$')
+    # else:
+        # ax.set_xlabel(r'Proportional change of $\delta$')
+    ax.set_xscale('log')
+    # handles, labels = ax.get_legend_handles_labels()
+    # ax.set_title(country)
+
+    legend = ax.legend()
+    def export_legend(legend, filename="dbl_tau_nu_legend.pdf"):
+        fig  = legend.figure
+        fig.canvas.draw()
+        bbox  = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        fig.savefig(filename, dpi="figure", bbox_inches=bbox)
+
+    export_legend(legend,filename = counterfactuals_doubled_nu_tau_path+'dbl_tau_nu_legend.pdf')
+    # plt.legend(False)
+    legend.remove()
+    if country == 'USA':
+        ax.legend()
+    # plt.title('Robustness check of unilateral patent policy counterfactual for '+countries_names[country])
+    for save_format in save_formats:
+        plt.savefig(counterfactuals_doubled_nu_tau_path+'dbl_tau_nu_unilateral_patent_protection_'+country+'.'+save_format,format=save_format)
+    
+    plt.show()
+    
+# axes[2,1].legend(handles, labels, loc='center left',fontsize=12)
+# axes[2,1].set_axis_off()
+
+# plt.tight_layout()
+# plt.show()
+
+
+#%% Derivatives of welfares with respect to delta as a function of tau
+
+qty = 'tau_pat_sector'
+
+fig,ax = plt.subplots()
+
+for j,country in enumerate(p_baseline.countries):
+    df = pd.read_csv(f'deriv_welfare_to_patent_protec_cf/{qty}/baseline_1030/{country}',
+                     index_col=0)
+    ax.plot(df[df.columns[0]],df[country],label=country,color=Category18[j])
+    
+# ax.set_xscale('log')
+ax.set_xlabel('Proportional change in trade costs')
+ax.set_ylabel('Derivative of welfare to own patent protection')
+ax.legend(loc=[1.02,0.02])
+
+plt.tight_layout()
+for save_format in save_formats:
+    plt.savefig(counterfactuals_doubled_nu_tau_path+'welfare_derivative_function_of_tau.'+save_format,format=save_format)
+plt.show()
+
+#%% Derivatives of welfares with respect to delta as a function of nu
+
+qty = 'nu'
+
+fig,ax = plt.subplots()
+
+for j,country in enumerate(p_baseline.countries):
+    df = pd.read_csv(f'deriv_welfare_to_patent_protec_cf/{qty}/baseline_1030/{country}',
+                     index_col=0)
+    ax.plot(df[df.columns[0]],df[country],label=country,color=Category18[j])
+    
+# ax.set_xscale('log')
+ax.set_xlabel(r'Proportional change in $\nu$')
+ax.set_ylabel('Derivative of welfare to own patent protection')
+ax.legend(loc=[1.02,0.02])
+
+plt.tight_layout()
+for save_format in save_formats:
+    plt.savefig(counterfactuals_doubled_nu_tau_path+'welfare_derivative_function_of_nu.'+save_format,format=save_format)
+plt.show()
+
+#%% Robustness checks
+
+#%% Unilateral patent protection counterfactuals
+
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    '99.0':'Low TO',
+    '99.1':'High TO',
+    '99.2':'Low TE',
+    '99.3':'High TE',
+    '99.4':'Low KM',
+    '99.5':'High KM',
+    '99.6':'Low Sigma',
+    '99.7':'High Sigma',
+    '99.8':'Low Kappa',
+    '99.9':'High Kappa',
+    '99.10':'Low Growth',
+    '99.11':'High Growth',
+    '99.12':'Low rho',
+    '99.13':'High rho',
+    '99.14':'Low UUPCOST',
+    '99.15':'High UUPCOST',
+    }
+names = {
+    'GPDIFF':'Price growth diff.',
+    'GROWTH':'Agg. growth rate',
+    'KM':'Pat. value rel. RD in US',
+    'OUT':'World output',
+    'SINNOVPATUS':'Share innov. pat. US',
+    'DOMPATINUS':'Share dom. pat. US',
+    'UUPCOST':'Domestic pat. expenditure US',
+    'TO':'Turnover US imports',
+    'TE':'Trade elasticity patenting',
+    'rho':r'$\rho$',
+    'kappa':r'$\kappa$',
+    'sigma':r'$\sigma^1$',
+    'theta':r'$\theta^0$',
+    'gamma':r'$\gamma$',
+    'g_0':r'$g^0$',
+    'fo':r'$f^o$',
+    'fe':r'$f^o$',
+    'k':r'$k$',
+    'nu':r'$\nu$',
+    'zeta':r'$\zeta$',
+    }
+
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    '99.0':'Low Turnover in US imports',
+    '99.1':'High Turnover in US imports',
+    '99.2':'Low Trade elasticity in patenting sector',
+    '99.3':'High Trade elasticity in patenting sector',
+    '99.4':'Low Value of patents relative to R&D expenditure in US',
+    '99.5':'High Value of patents relative to R&D expenditure in US',
+    '99.6':r'Low $\sigma^1$',
+    '99.7':r'High $\sigma^1$',
+    '99.8':r'Low $\kappa$',
+    '99.9':r'High $\kappa$',
+    '99.10':'Low Aggregate growth rate',
+    '99.11':'High Aggregate growth rate',
+    '99.12':r'Low $\rho$',
+    '99.13':r'High $\rho$',
+    '99.14':'Low Domestic patenting expenditure US',
+    '99.15':'High Domestic patenting expenditure US',
+    }
+
+import math
+
+for country in p_baseline.countries:
+    fig,ax = plt.subplots()
+    for i,rob_check in enumerate(variations_of_robust_checks):
+        variation = rob_check
+        if variation == 'baseline':
+            local_path = cf_path+'baseline_'+baseline+'/'
+        else:
+            local_path = \
+                cf_path+f'baseline_{baseline}_{variation}/'
+        df_welfare = pd.read_csv(local_path+'dyn_'+country+'.csv')
+        if rob_check == 'baseline':
+            ax.plot(df_welfare['delt'],df_welfare[country]*100-100,color='k',
+                    label=variations_of_robust_checks[rob_check]
+                    # ,lw=5
+                    )
+        else:
+            if variations_of_robust_checks[rob_check].startswith('High'):
+                ls = '-'
+                zorder = 0
+            if variations_of_robust_checks[rob_check].startswith('Low'):
+                ls = '--'
+                zorder = 0
+            if variations_of_robust_checks[rob_check].startswith('baseline'):
+                zorder = 99
+            ax.plot(df_welfare['delt'],df_welfare[country]*100-100,
+                    label=variations_of_robust_checks[rob_check],
+                    color = Category18[math.floor((i-1)/2)],
+                    ls = ls,
+                    zorder = zorder)
+    ax.set_ylabel('Welfare change (%)')
+    if country == 'USA':
+        ax.set_xlabel(r'Proportional change of $\delta_{US}$')
+    elif country == 'EUR':
+        ax.set_xlabel(r'Proportional change of $\delta_{Europe}$')
+    else:
+        ax.set_xlabel(r'Proportional change of $\delta$')
+    ax.set_xscale('log')
+    legend = ax.legend(ncol = 2,loc = [1.02,0])
+    def export_legend(legend, filename="legend.pdf"):
+        fig  = legend.figure
+        fig.canvas.draw()
+        bbox  = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        fig.savefig(filename, dpi="figure", bbox_inches=bbox)
+
+    export_legend(legend,filename = robustness_checks_path+'rob_check_legend.pdf')
+    # plt.legend(False)
+    legend.remove()
+    # ax.legend(ncol = 2,loc=[1.02,0.02])
+    # plt.title('Robustness check of unilateral patent policy counterfactual for '+countries_names[country])
+    for save_format in save_formats:
+        plt.savefig(robustness_checks_path+'rob_check_unilateral_patent_protection_'+country+'.'+save_format,format=save_format)
+    plt.show()
+    
+    fig,ax = plt.subplots()
+    for i,rob_check in enumerate(variations_of_robust_checks):
+        variation = rob_check
+        if variation == 'baseline':
+            local_path = cf_path+'baseline_'+baseline+'/'
+        else:
+            local_path = \
+                cf_path+f'baseline_{baseline}_{variation}/'
+                
+        df_welfare = pd.read_csv(local_path+'dyn_'+country+'.csv')
+        
+        other_countries_welfare = pd.DataFrame(index = df_welfare.index,columns=['other_countries'])
+        other_countries_welfare['delt'] = df_welfare['delt']
+        other_countries_welfare['other_countries'] = 0
+        
+        for k,other_country in enumerate(p_baseline.countries):
+            if other_country != country:
+                other_countries_welfare['other_countries'] = other_countries_welfare['other_countries']+df_welfare[other_country]*p_baseline.labor[k]
+        other_countries_welfare['other_countries'] = other_countries_welfare['other_countries']/sum([p_baseline.labor[l] for l,c in enumerate(p_baseline.countries) if c!=country])
+        
+        if rob_check == 'baseline':
+            ax.plot(other_countries_welfare['delt'],other_countries_welfare['other_countries']*100-100,color='k',
+                    label=variations_of_robust_checks[rob_check]
+                    # ,lw=5
+                    )
+        else:
+            if variations_of_robust_checks[rob_check].startswith('High'):
+                ls = '-'
+                zorder = 0
+            if variations_of_robust_checks[rob_check].startswith('Low'):
+                ls = '--'
+                zorder = 0
+            if variations_of_robust_checks[rob_check].startswith('baseline'):
+                zorder = 99
+            ax.plot(other_countries_welfare['delt'],other_countries_welfare['other_countries']*100-100,
+                    label=variations_of_robust_checks[rob_check],
+                    color = Category18[math.floor((i-1)/2)],zorder=zorder,
+                    ls = ls)
+    ax.set_ylabel('Welfare change (%)')
+    if country == 'USA':
+        ax.set_xlabel(r'Proportional change of $\delta_{US}$')
+    elif country == 'EUR':
+        ax.set_xlabel(r'Proportional change of $\delta_{Europe}$')
+    else:
+        ax.set_xlabel(r'Proportional change of $\delta$')
+    ax.set_xscale('log')
+
+    for save_format in save_formats:
+        plt.savefig(robustness_checks_path+'rob_check_unilateral_patent_protection_'+country+'_other_countries.'+save_format,format=save_format)
+    plt.show()
+
+#%% Coop eq
+
+variations_of_robust_checks = {
+    'baseline':'Baseline',
+    '99.0':'Low TO',
+    '99.1':'High TO',
+    '99.2':'Low TE',
+    '99.3':'High TE',
+    '99.4':'Low KM',
+    '99.5':'High KM',
+    '99.6':'Low Sigma',
+    '99.7':'High Sigma',
+    '99.8':'Low Kappa',
+    '99.9':'High Kappa',
+    '99.10':'Low Growth',
+    '99.11':'High Growth',
+    '99.12':'Low rho',
+    '99.13':'High rho',
+    '99.14':'Low UUPCOST',
+    '99.15':'High UUPCOST',
+    }
+
+coop_deltas = pd.read_csv('coop_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+df = coop_deltas.loc[(coop_deltas.baseline == int(baseline))
+                        & (coop_deltas.variation.isin(list(variations_of_robust_checks.keys())))
+                           ].drop('baseline',axis=1)
+
+coop_w = pd.read_csv('coop_eq_recaps/dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+dfw = coop_w.loc[(coop_w.baseline == int(baseline))
+                        & (coop_w.variation.isin(list(variations_of_robust_checks.keys())))
+                           ].drop('baseline',axis=1).set_index(['variation','aggregation_method'])
+
+for i,rob_check in enumerate(variations_of_robust_checks):
+    
+    robustness_check_path = robustness_checks_path+variations_of_robust_checks[rob_check]+'/'
+    
+    try:
+        os.mkdir(robustness_check_path)
+    except:
+        pass
+    
+    variation = rob_check
+    variation_pre_trips = '1'+variation
+    if variation == 'baseline':
+        local_path = results_path+baseline+'/'
+        local_path_pre_trips = results_path+f'baseline_{baseline}_variations/9.2/'
+    else:
+        local_path = \
+            results_path+f'baseline_{baseline}_variations/{variation}/'
+        local_path_pre_trips = \
+            results_path+f'baseline_{baseline}_variations/{variation_pre_trips}/'
+    p = parameters()
+    p.load_run(local_path)
+    
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 1000,
+                            accel_memory =50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p) 
+    
+    m = moments()
+    m.load_run(local_path)
+    m.compute_moments(sol_c,p)
+    m.compute_moments_deviations()
+    
+    write_calibration_results(robustness_check_path+'new_baseline',p,m,sol_c,commentary = '')
+    
+    for coop in ['negishi','pop_weighted']:
+        
+        p.delta[...,1] = df.set_index(['variation','aggregation_method']).loc[(variation,coop)][p_baseline.countries].values.squeeze()
+        
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1000,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        sol_c.scale_P(p)
+        sol_c.compute_non_solver_quantities(p) 
+        
+        m.compute_moments(sol_c,p)
+        m.compute_moments_deviations()
+        write_calibration_results(robustness_check_path+'coop_'+coop,p,m,sol_c,commentary = '')
+        
+        dfw.loc[(variation,coop),'growth rate'] = sol_c.g
+
+dfw = dfw.reset_index()
+
+df['variation'] = df['variation'].map(variations_of_robust_checks)
+df[['Change','Quantity']] = df['variation'].str.split(' ',expand=True)
+df = df.drop('variation',axis=1)
+df = df.set_index(['aggregation_method','Quantity','Change'])[p_baseline.countries].sort_index().T.round(3) 
+# df.to_csv(temp_path+'coop_equilibria.csv')
+
+dfw['variation'] = dfw['variation'].map(variations_of_robust_checks)
+dfw[['Change','Quantity']] = dfw['variation'].str.split(' ',expand=True)
+dfw = dfw.drop('variation',axis=1)
+dfw = dfw.set_index(['aggregation_method','Quantity','Change'])[p_baseline.countries+['Equal', 'Negishi', 'growth rate']].sort_index()
+dfw[p_baseline.countries+['Equal', 'Negishi']
+    ] = (dfw[p_baseline.countries+['Equal', 'Negishi']]*100-100).round(2)
+
+dfw['growth rate'] = (dfw['growth rate']*100).round(2)
+
+df.to_csv(robustness_checks_path+'coop_equilibria.csv')
+dfw.T.to_csv(robustness_checks_path+'coop_equilibria_welfare.csv')
+
+#%%  Nash eq
+
+nash_deltas = pd.read_csv('nash_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+df = nash_deltas.loc[(nash_deltas.baseline == int(baseline))
+                        & (nash_deltas.variation.isin(list(variations_of_robust_checks.keys())))
+                           ].drop('baseline',axis=1)
+
+
+nash_w = pd.read_csv('nash_eq_recaps/dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+dfw = nash_w.loc[(nash_w.baseline == int(baseline))
+                        & (nash_w.variation.isin(list(variations_of_robust_checks.keys())))
+                           ].drop('baseline',axis=1).set_index('variation').drop('method',axis=1)
+
+for i,rob_check in enumerate(variations_of_robust_checks):
+    
+    robustness_check_path = robustness_checks_path+variations_of_robust_checks[rob_check]+'/'
+    
+    try:
+        os.mkdir(robustness_check_path)
+    except:
+        pass
+    
+    variation = rob_check
+    variation_pre_trips = '1'+variation
+    if variation == 'baseline':
+        local_path = results_path+baseline+'/'
+        local_path_pre_trips = results_path+f'baseline_{baseline}_variations/9.2/'
+    else:
+        local_path = \
+            results_path+f'baseline_{baseline}_variations/{variation}/'
+        local_path_pre_trips = \
+            results_path+f'baseline_{baseline}_variations/{variation_pre_trips}/'
+    p = parameters()
+    p.load_run(local_path)
+        
+    p.delta[...,1] = df.set_index(
+        ['variation']).loc[variation][p_baseline.countries].values.squeeze()
+    
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 1000,
+                            accel_memory =50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p) 
+    
+    m = moments()
+    m.load_run(local_path)
+    m.compute_moments(sol_c,p)
+    m.compute_moments_deviations()
+    
+    write_calibration_results(robustness_check_path+'nash',p,m,sol_c,commentary = '')
+    
+    dfw.loc[variation,'growth rate'] = sol_c.g
+
+dfw = dfw.reset_index()
+
+df['variation'] = df['variation'].map(variations_of_robust_checks)
+df[['Change','Quantity']] = df['variation'].str.split(' ',expand=True)
+df = df.drop('variation',axis=1)
+df = df.set_index(['Quantity','Change'])[p_baseline.countries].sort_index().T.round(3) 
+# df.to_csv(temp_path+'coop_equilibria.csv')
+
+dfw['variation'] = dfw['variation'].map(variations_of_robust_checks)
+dfw[['Change','Quantity']] = dfw['variation'].str.split(' ',expand=True)
+dfw = dfw.drop('variation',axis=1)
+dfw = dfw.set_index(['Quantity','Change'])[p_baseline.countries+['Equal', 'Negishi', 'growth rate']].sort_index()
+dfw[p_baseline.countries+['Equal', 'Negishi']
+    ] = (dfw[p_baseline.countries+['Equal', 'Negishi']]*100-100).round(2)
+
+dfw['growth rate'] = (dfw['growth rate']*100).round(2)
+
+df.to_csv(robustness_checks_path+'nash_equilibrium.csv')
+dfw.T.to_csv(robustness_checks_path+'nash_equilibrium_welfare.csv')
+
+#%% pre-TRIPS Counterfactuals
+
+df_welf = pd.DataFrame(index = p_baseline.countries+['Growth rate','North','South'])
+
+
+for i,rob_check in enumerate(variations_of_robust_checks):
+    print(rob_check)
+    variation = rob_check
+    variation_pre_trips = '1'+variation
+    if variation == 'baseline':
+        local_path = results_path+baseline+'/'
+        local_path_pre_trips = results_path+f'baseline_{baseline}_variations/9.2/'
+    else:
+        local_path = \
+            results_path+f'baseline_{baseline}_variations/{variation}/'
+        local_path_pre_trips = \
+            results_path+f'baseline_{baseline}_variations/{variation_pre_trips}/'
+    p = parameters()
+    p.load_run(local_path)
+    
+    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                    context = 'counterfactual',
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 1000,
+                            accel_memory =50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p) 
+    
+    p_pre = parameters()
+    p_pre.load_run(local_path_pre_trips)
+    
+    p_pre_cf_fix_north = p.copy()
+    p_pre_cf_fix_north.delta[...,1] = p_pre.delta[...,1]
+    for country_idx in [0,1,2,6,7,10]:
+        p_pre_cf_fix_north.delta[country_idx,1] = p.delta[country_idx,1]
+
+    _, sol_pre_cf_fix_north = fixed_point_solver(p_pre_cf_fix_north,context = 'counterfactual',x0=p_pre_cf_fix_north.guess,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            )
+    sol_pre_cf_fix_north.scale_P(p_pre_cf_fix_north)
+    sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+    sol_pre_cf_fix_north.compute_consumption_equivalent_welfare(p_pre_cf_fix_north,sol_c)
+    sol_pre_cf_fix_north.compute_world_welfare_changes(p_pre_cf_fix_north,sol_c)
+
+    _, dyn_sol_pre_cf_fix_north = dyn_fixed_point_solver(p_pre_cf_fix_north, sol_c,sol_fin=sol_pre_cf_fix_north,
+                            Nt=25,t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 50,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            )
+    dyn_sol_pre_cf_fix_north.compute_non_solver_quantities(p_pre_cf_fix_north)
+    
+    df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' 2015 delta'] = p.delta[:,1]
+    df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' 2015 delta'] = sol_c.g*100
+    df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' 1992 delta'] = p_pre.delta[:,1]
+    df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' 1992 delta'] = sol_pre_cf_fix_north.g*100
+    
+    df_welf.loc[p.countries,variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.cons_eq_welfare*100-100
+    df_welf.loc['Growth rate',variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.sol_fin.g*100
+    
+    # rich_count_indices = [0,1,2,6,7]
+    # poor_count_indices = [3,4,5,8,9]
+    
+    df_welf.loc['World Equal',variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.cons_eq_pop_average_welfare_change*100-100
+    df_welf.loc['North',variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.compute_consumption_equivalent_welfare_for_subset_of_countries(
+        p_pre_cf_fix_north,['USA','EUR','JAP','CAN','KOR'])['pop_weighted']*100-100
+    df_welf.loc['South',variations_of_robust_checks[rob_check]+' welfare change'] = dyn_sol_pre_cf_fix_north.compute_consumption_equivalent_welfare_for_subset_of_countries(
+        p_pre_cf_fix_north,['CHN','BRA','IND','RUS','MEX'])['pop_weighted']*100-100
+    
+    print(df_welf)
+
+    df_welf.loc['Diff South North'] = df_welf.loc['South'] - df_welf.loc['North']
+
+df_welf.round(3).to_csv(robustness_checks_path+'pre_trips_welfares.csv')

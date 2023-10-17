@@ -958,36 +958,38 @@ comments_dic['1030'] = {
     # '0.2':'0.2:high weight on prices',
     '3.0':'3.0:full calibration 2015',
     '3.1':'3.1:full calibration 1992',
-    '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
-    '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
-    '9.2':'9.2:same conditions, 3-year smoothed out data 1992',
-    '10.2':'10.2:2015 calibration with doubled trade costs in pat sector',
+    # '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
+    # '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
+    '9.0':'9.0: partial calibration 2015',
+    '9.1':'9.1: partial calibration 1992',
+    '9.2':'9.2:partial calib, 3-year smoothed data 1992',
+    '10.2':'10.2:2015 doubled trade costs in pat sector',
     # "11.0" : "11.0 : 1990 smooth 3y",
     # "11.1" : "11.1 : 1991 smooth 3y",
-    # "11.2" : "11.2 : 1992 smooth 3y",
-    # "11.3" : "11.3 : 1993 smooth 3y",
-    # "11.4" : "11.4 : 1994 smooth 3y",
-    # "11.5" : "11.5 : 1995 smooth 3y",
-    # "11.6" : "11.6 : 1996 smooth 3y",
-    # "11.7" : "11.7 : 1997 smooth 3y",
-    # "11.8" : "11.8 : 1998 smooth 3y",
-    # "11.9" : "11.9 : 1999 smooth 3y",
-    # "11.10" : "11.10 : 2000 smooth 3y",
-    # "11.11" : "11.11 : 2001 smooth 3y",
-    # "11.12" : "11.12 : 2002 smooth 3y",
-    # "11.13" : "11.13 : 2003 smooth 3y",
-    # "11.14" : "11.14 : 2004 smooth 3y",
-    # "11.15" : "11.15 : 2005 smooth 3y",
-    # "11.16" : "11.16 : 2006 smooth 3y",
-    # "11.17" : "11.17 : 2007 smooth 3y",
-    # "11.18" : "11.18 : 2008 smooth 3y",
-    # "11.19" : "11.19 : 2009 smooth 3y",
-    # "11.20" : "11.20 : 2010 smooth 3y",
-    # "11.21" : "11.21 : 2011 smooth 3y",
-    # "11.22" : "11.22 : 2012 smooth 3y",
-    # "11.23" : "11.23 : 2013 smooth 3y",
-    # "11.24" : "11.24 : 2014 smooth 3y",
-    # "11.25" : "11.25 : 2015 smooth 3y",
+    "11.2" : "11.2 : 1992 smooth 3y",
+    "11.3" : "11.3 : 1993 smooth 3y",
+    "11.4" : "11.4 : 1994 smooth 3y",
+    "11.5" : "11.5 : 1995 smooth 3y",
+    "11.6" : "11.6 : 1996 smooth 3y",
+    "11.7" : "11.7 : 1997 smooth 3y",
+    "11.8" : "11.8 : 1998 smooth 3y",
+    "11.9" : "11.9 : 1999 smooth 3y",
+    "11.10" : "11.10 : 2000 smooth 3y",
+    "11.11" : "11.11 : 2001 smooth 3y",
+    "11.12" : "11.12 : 2002 smooth 3y",
+    "11.13" : "11.13 : 2003 smooth 3y",
+    "11.14" : "11.14 : 2004 smooth 3y",
+    "11.15" : "11.15 : 2005 smooth 3y",
+    "11.16" : "11.16 : 2006 smooth 3y",
+    "11.17" : "11.17 : 2007 smooth 3y",
+    "11.18" : "11.18 : 2008 smooth 3y",
+    "11.19" : "11.19 : 2009 smooth 3y",
+    "11.20" : "11.20 : 2010 smooth 3y",
+    "11.21" : "11.21 : 2011 smooth 3y",
+    "11.22" : "11.22 : 2012 smooth 3y",
+    "11.23" : "11.23 : 2013 smooth 3y",
+    "11.24" : "11.24 : 2014 smooth 3y",
+    "11.25" : "11.25 : 2015 smooth 3y",
     # "11.26" : "11.26 : 2016 smooth 3y",
     # "11.27" : "11.27 : 2017 smooth 3y",
     # "11.28" : "11.28 : 2018 smooth 3y",
@@ -1173,23 +1175,23 @@ for i,col in enumerate(ds_mom.data.keys()):
 legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lin_mom]) 
                     for col, lin_mom in lines_mom.items() if col in comments_dic[baseline_mom]]
 # legend_items_mom = [LegendItem(label=comments_dic[baseline_mom][col], renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data)]
-legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0)
-p_mom.add_layout(legend_mom, 'right')
+# legend_mom = Legend(items=legend_items_mom, click_policy="hide", 
+#                     label_text_font_size="8pt",
+#                     spacing = 0)
+# p_mom.add_layout(legend_mom, 'right')
 
-# legend_mom_split_1 = Legend(items=legend_items_mom[:round((len(legend_items_mom)+1)/2)], click_policy="hide", 
-#                     label_text_font_size="8pt",
-#                     spacing = 0, 
-#                     # location=(10, -60)
-#                     )
-# legend_mom_split_2 = Legend(items=legend_items_mom[round((len(legend_items_mom)+1)/2):], click_policy="hide", 
-#                     label_text_font_size="8pt",
-#                     spacing = 0
-#                     # , location=(10, -60)
-#                     )
-# p_mom.add_layout(legend_mom_split_1, 'right')
-# p_mom.add_layout(legend_mom_split_2, 'right')
+legend_mom_split_1 = Legend(items=legend_items_mom[:round((len(legend_items_mom)+1)/2)], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    # location=(10, -60)
+                    )
+legend_mom_split_2 = Legend(items=legend_items_mom[round((len(legend_items_mom)+1)/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    # , location=(10, -60)
+                    )
+p_mom.add_layout(legend_mom_split_1, 'right')
+p_mom.add_layout(legend_mom_split_2, 'right')
 # columns_mom = [TableColumn(field=col) for col in list(ds_mom.data.keys())]
 columns_mom = [
         TableColumn(field="x"),
@@ -1204,9 +1206,9 @@ def update_baseline_mom(attrname, old, new):
     #                                 renderers=[lines_mom[i]]) for i,col in enumerate(ds_mom.data) if col not in ['x','target']]
     legend_items_mom = [LegendItem(label=comments_dic[new][col], renderers=[lines_mom[col]]) 
                         for col in ds_mom.data if col in comments_dic[new]]
-    legend_mom.items = legend_items_mom
-    # legend_mom_split_1.items = legend_items_mom[:round((len(legend_items_mom)+1)/2)]
-    # legend_mom_split_2.items = legend_items_mom[round((1+len(legend_items_mom))/2):]
+    # legend_mom.items = legend_items_mom
+    legend_mom_split_1.items = legend_items_mom[:round((len(legend_items_mom)+1)/2)]
+    legend_mom_split_2.items = legend_items_mom[round((1+len(legend_items_mom))/2):]
     data_table_mom.columns = [
             TableColumn(field="x"),
         ]+[TableColumn(field=col) for col in ['target']+list(comments_dic[new].keys())]
@@ -1309,22 +1311,22 @@ for col in baselines_dic_param[baseline_par][par].columns:
 
 legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
                     for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
-legend_par = Legend(items=legend_items_par, click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0, 
-                    )
-p_par.add_layout(legend_par, 'right')
-
-# legend_par_split_1 = Legend(items=legend_items_par[:round((len(legend_items_par)+1)/2)], click_policy="hide", 
+# legend_par = Legend(items=legend_items_par, click_policy="hide", 
 #                     label_text_font_size="8pt",
 #                     spacing = 0, 
 #                     )
-# legend_par_split_2 = Legend(items=legend_items_par[round((1+len(legend_items_par))/2):], click_policy="hide", 
-#                     label_text_font_size="8pt",
-#                     spacing = 0
-#                     )
-# p_par.add_layout(legend_par_split_1, 'right')
-# p_par.add_layout(legend_par_split_2, 'right')
+# p_par.add_layout(legend_par, 'right')
+
+legend_par_split_1 = Legend(items=legend_items_par[:round((len(legend_items_par)+1)/2)], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    )
+legend_par_split_2 = Legend(items=legend_items_par[round((1+len(legend_items_par))/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    )
+p_par.add_layout(legend_par_split_1, 'right')
+p_par.add_layout(legend_par_split_2, 'right')
 
 columns_par = [
         TableColumn(field="x"),
@@ -1340,9 +1342,9 @@ def update_baseline_par(attrname, old, new):
     ds_par.data = baselines_dic_param[new][par].loc[x_range_factors]
     legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
                         for col in ds_par.data if col in comments_dic[new]]
-    legend_par.items = legend_items_par
-    # legend_par_split_1.items = legend_items_par[:round((1+len(legend_items_par))/2)]
-    # legend_par_split_2.items = legend_items_par[round((len(legend_items_par)+1)/2):]
+    # legend_par.items = legend_items_par
+    legend_par_split_1.items = legend_items_par[:round((1+len(legend_items_par))/2)]
+    legend_par_split_2.items = legend_items_par[round((len(legend_items_par)+1)/2):]
                       
     data_table_par.columns = [
             TableColumn(field="x"),
@@ -1395,22 +1397,22 @@ for col in baselines_dic_sol_qty[baseline_sol_qty][sol_qty].columns:
 legend_items_sol_qty = [LegendItem(label=comments_dic[baseline_sol_qty][col], renderers=[lin_sol_qty]) 
                         for col, lin_sol_qty in lines_sol_qty.items() if col in comments_dic[baseline_sol_qty]]
 
-legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
-                    label_text_font_size="8pt",
-                    spacing = 0, 
-                    )
-p_sol_qty.add_layout(legend_sol_qty, 'right')
-
-# legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
+# legend_sol_qty = Legend(items=legend_items_sol_qty, click_policy="hide", 
 #                     label_text_font_size="8pt",
 #                     spacing = 0, 
 #                     )
-# legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
-#                     label_text_font_size="8pt",
-#                     spacing = 0
-#                     )
-# p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
-# p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
+# p_sol_qty.add_layout(legend_sol_qty, 'right')
+
+legend_sol_qty_split_1 = Legend(items=legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0, 
+                    )
+legend_sol_qty_split_2 = Legend(items=legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):], click_policy="hide", 
+                    label_text_font_size="8pt",
+                    spacing = 0
+                    )
+p_sol_qty.add_layout(legend_sol_qty_split_1, 'right')
+p_sol_qty.add_layout(legend_sol_qty_split_2, 'right')
 
 
 columns_sol_qty = [
@@ -1427,9 +1429,9 @@ def update_baseline_sol_qty(attrname, old, new):
     ds_sol_qty.data = baselines_dic_sol_qty[new][sol_qty].loc[x_range_factors]
     legend_items_sol_qty = [LegendItem(label=comments_dic[new][col], renderers=[lines_sol_qty[col]]) 
                             for col in ds_sol_qty.data  if col in comments_dic[new]]
-    legend_sol_qty.items = legend_items_sol_qty
-    # legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
-    # legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
+    # legend_sol_qty.items = legend_items_sol_qty
+    legend_sol_qty_split_1.items = legend_items_sol_qty[:round((len(legend_items_sol_qty)+1)/2)]
+    legend_sol_qty_split_2.items = legend_items_sol_qty[round((len(legend_items_sol_qty)+1)/2):]
     data_table_sol_qty.columns = [TableColumn(field=col) for col in list(comments_dic[new].keys())]
     
 def update_sol_qty(attrname, old, new):
@@ -1453,117 +1455,117 @@ print(time.perf_counter() - start)
 
 #%% Time series
 
-# baseline_time = '1020'
-# # baseline_time_list = ['607','608','609','610','614','615','616','617']    
-# # baseline_time_list = ['607','806','903']
-# baseline_time_list = ['1020']
-# par_time = 'delta'
-# par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
-# baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
+baseline_time = '1030'
+# baseline_time_list = ['607','608','609','610','614','615','616','617']    
+# baseline_time_list = ['607','806','903']
+baseline_time_list = ['1020']
+par_time = 'delta'
+par_time_select = Select(value=par_time, title='Quantity', options=sorted(baselines_dic_param[baseline_time].keys()))
+baseline_time_select = Select(value=baseline_time, title='Baseline', options=baseline_time_list)
 
 
-# years_time = [y for y in range(1990,2019)]
-# runs_time = ['1.'+str(i) for i in range(29)]
+years_time = [y for y in range(1992,2016)]
+runs_time = ['11.'+str(i) for i in range(2,26)]
 
-# def build_time_series(baseline_time,par_time):
-#     # df = baselines_dic_param[baseline_time][par_time].T.reindex(
-#     #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-#     #     )
-#     df = baselines_dic_param[baseline_time][par_time].copy()
-#     df = df[runs_time]
-#     # print(df)
-#     df.columns = years_time
-#     df = df.T
-#     df = df.reindex(
-#         columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
-#         )
-#     df.index.name = 'year'
-#     return df
+def build_time_series(baseline_time,par_time):
+    # df = baselines_dic_param[baseline_time][par_time].T.reindex(
+    #     columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+    #     )
+    df = baselines_dic_param[baseline_time][par_time].copy()
+    df = df[runs_time]
+    # print(df)
+    df.columns = years_time
+    df = df.T
+    df = df.reindex(
+        columns=countries+baselines_dic_param[baseline_time]['scalars'].index.to_list()
+        )
+    df.index.name = 'year'
+    return df
 
-# df_par_time = build_time_series(baseline_time,par_time)
-# ds_par_time = ColumnDataSource(df_par_time)
-# p_par_time = figure(title="Time series", 
-#                 width = 1500,
-#                 height = 850,
-#             y_axis_label='Parameter',
-#             tools = TOOLS)
-# hover_tool_par_time = HoverTool()
-# hover_tool_par_time.tooltips = [
-#     ("Year", "@year"),
-#     ("value", "$y")
-#     ]
+df_par_time = build_time_series(baseline_time,par_time)
+ds_par_time = ColumnDataSource(df_par_time)
+p_par_time = figure(title="Time series", 
+                width = 1500,
+                height = 850,
+            y_axis_label='Parameter',
+            tools = TOOLS)
+hover_tool_par_time = HoverTool()
+hover_tool_par_time.tooltips = [
+    ("Year", "@year"),
+    ("value", "$y")
+    ]
 
-# p_par_time.add_tools(hover_tool_par_time)
-# colors_par_time = itertools.cycle(Category18)
-# lines_par_time = {}
+p_par_time.add_tools(hover_tool_par_time)
+colors_par_time = itertools.cycle(Category18)
+lines_par_time = {}
 
-# for col in df_par_time.columns:
-#     if col != 'kappa':
-#         lines_par_time[col] = p_par_time.line(x='year', y=col, 
-#                                         source = ds_par_time, 
-#                                         color=next(colors_par_time),
-#                                         line_width = 2,
-#                                         # legend_label=col
-#                                         )
+for col in df_par_time.columns:
+    if col != 'kappa':
+        lines_par_time[col] = p_par_time.line(x='year', y=col, 
+                                        source = ds_par_time, 
+                                        color=next(colors_par_time),
+                                        line_width = 2,
+                                        # legend_label=col
+                                        )
 
-# legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-#                         for col in countries]
-# legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
-#                     label_text_font_size="10pt",
-#                     )
-# p_par_time.add_layout(legend_par_time , 'right')
+legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                        for col in countries]
+legend_par_time = Legend(items=legend_items_par_time, click_policy="hide", 
+                    label_text_font_size="10pt",
+                    )
+p_par_time.add_layout(legend_par_time , 'right')
     
-# def update_par_time(attrname, old, new):
-#     df_par_time = build_time_series(baseline_time_select.value,new)
-#     ds_par_time.data = df_par_time
-#     if new!='scalars':
-#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-#                                 for col in countries]
-#     else:
-#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-#     legend_par_time.items = legend_items_par_time
+def update_par_time(attrname, old, new):
+    df_par_time = build_time_series(baseline_time_select.value,new)
+    ds_par_time.data = df_par_time
+    if new!='scalars':
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in countries]
+    else:
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+    legend_par_time.items = legend_items_par_time
     
-# def update_baseline_time(attrname, old, new):
-#     df_par_time = build_time_series(new,par_time_select.value)
-#     ds_par_time.data = df_par_time
-#     if new!='scalars':
-#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-#                                 for col in countries]
-#     else:
-#         legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
-#                                 for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
-#     legend_par_time.items = legend_items_par_time
+def update_baseline_time(attrname, old, new):
+    df_par_time = build_time_series(new,par_time_select.value)
+    ds_par_time.data = df_par_time
+    if new!='scalars':
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in countries]
+    else:
+        legend_items_par_time = [LegendItem(label=col, renderers=[lines_par_time[col]]) 
+                                for col in baselines_dic_param[baseline_time]['scalars'].index.to_list() if col != 'kappa']
+    legend_par_time.items = legend_items_par_time
 
-# controls_par_time = row(baseline_time_select,par_time_select)
+controls_par_time = row(baseline_time_select,par_time_select)
 
-# par_time_select.on_change('value', update_par_time)
-# baseline_time_select.on_change('value', update_baseline_time)
+par_time_select.on_change('value', update_par_time)
+baseline_time_select.on_change('value', update_baseline_time)
 
-# par_time_report = column(controls_par_time, p_par_time)    
+par_time_report = column(controls_par_time, p_par_time)    
 
-# # explication_calib_params = Div(text=
-# #                           "607 variations : <br> \
-# #                               calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
-# #                                 targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
-# #                                     TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
-# #                           608 variations : <br> \
-# #                               calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
-# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-# #                                     SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-# #                           609 variations :<br> \
-# #                               calibrated parameters : eta,T,delta <br> \
-# #                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
-# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-# #                           610 variations :<br> \
-# #                               calibrated parameters : eta,T,delta <br> \
-# #                                 targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
-# #                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
-# #                           ")
+# explication_calib_params = Div(text=
+#                           "607 variations : <br> \
+#                               calibrated parameters : eta,k,fe,T,zeta,g_0,delta,nu,fo,theta <br> \
+#                                 targeted moments : GPDIFF,GROWTH,KM,OUT,RD,RP,SRDUS,SRGDP,SINNOVPATUS,\
+#                                     TO,SPFLOW,UUPCOST,SINNOVPATEU,DOMPATINUS,DOMPATINEU,TE<br> \
+#                           608 variations : <br> \
+#                               calibrated parameters : eta,<u><b>fe</b></u>,T,delta,<u><b>fo</b></u> <br> \
+#                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+#                                     SPFLOW,<u><b>UUPCOST</b></u>,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+#                           609 variations :<br> \
+#                               calibrated parameters : eta,T,delta <br> \
+#                                 targeted moments : OUT,RD,RP,SRGDP,SINNOVPATUS,\
+#                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+#                           610 variations :<br> \
+#                               calibrated parameters : eta,T,delta <br> \
+#                                 targeted moments : OUT,RD,RP,<u><b>SRDUS</b></u>,SRGDP,SINNOVPATUS,\
+#                                     SPFLOW,SINNOVPATEU,DOMPATINUS,DOMPATINEU<br> \
+#                           ")
 
-# #!!! second_panel
-# # second_panel = row(par_time_report, explication_calib_params)
-# second_panel = row(par_time_report)
+#!!! second_panel
+# second_panel = row(par_time_report, explication_calib_params)
+second_panel = row(par_time_report)
 
 
 #%% counterfactuals
@@ -3147,7 +3149,7 @@ fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 #%% build curdoc
 print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
-                            # second_panel, 
+                            second_panel, 
                            third_panel, 
                             fourth_panel, 
                            #  fifth_panel, 
