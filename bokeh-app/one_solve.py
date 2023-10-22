@@ -76,9 +76,10 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
 
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
-
+# sol_c.compute_quantities_with_prod_patents(p)
 # print(kappa,round(sol_c.semi_elast_patenting_delta[0,1]*100/12,3))
 
+sol_c.compute_quantities_with_prod_patents(p)
 
 
 #
@@ -91,8 +92,8 @@ sol_c.compute_non_solver_quantities(p)
 
 #%%
 
-df_terms = sol_c.compute_quantities_with_prod_patents(p)
 
+import numpy as np
 import pandas as pd
 
 df1 = pd.DataFrame(index = p.countries)
@@ -109,7 +110,7 @@ for cas in ['a','b','c']:
 
 cases = {'USA':'a', 
          'EUR':'c', 
-         'JAP':'c', 
+         'JAP':'a', 
          'CHN':'a', 
          'BRA':'b', 
          'IND':'b', 
@@ -131,6 +132,32 @@ df1['percentage points share of innovations patented diff'] = df1['percentage sh
 df1['Mult Val Pat'] = sol_c.mult_val_pat
 df1['Mult Val All Innov'] = sol_c.mult_val_all_innov
 
+df2 = pd.DataFrame(index = p.countries)
+
+# df2['initial_pat_thresh'] = np.min(sol_c.psi_m_star[...,1], axis=1)
+df2['min_n(psi_m_star_{n,i}) '] = np.min(sol_c.psi_m_star[...,1], axis=0)
+df2['a_pat_thresh'] = sol_c.psi_o_star_without_prod_patent_a[...,1]
+df2['a_with'] = sol_c.psi_o_star_with_prod_patent_a[...,1]
+df2['b_pat_thresh'] = sol_c.psi_o_star_without_prod_patent_b[...,1]
+df2['b_with'] = sol_c.psi_o_star_with_prod_patent_b[...,1]
+df2['c_pat_thresh'] = sol_c.psi_o_star_without_prod_patent_c[...,1]
+df2['c_with'] = sol_c.psi_o_star_with_prod_patent_c[...,1]
+
+df4 = pd.DataFrame(index = p.countries)
+
+# df2['initial_pat_thresh'] = np.min(sol_c.psi_m_star[...,1], axis=1)
+# df4['min_n(psi_m_star_{n,i}) '] = np.min(sol_c.psi_m_star[...,1], axis=0)
+df4['cc_pat_thresh'] = sol_c.psi_o_star_without_prod_patent_cc[...,1]
+df4['cc1_with'] = sol_c.psi_o_star_with_prod_patent_cc1[...,1]
+df4['cc2_with'] = sol_c.psi_o_star_with_prod_patent_cc2[...,1]
+
+df5 = pd.DataFrame( index = pd.MultiIndex.from_product(
+    [p.countries,p.countries], names = ['destination','origin']
+    ))
+ 
+df5['aa_pat_thresh'] = sol_c.psi_m_star_without_prod_patent_aa[...,1].ravel()
+df5['aa_with'] = sol_c.psi_m_star_with_prod_patent_aa[...,1].ravel()
+
 df3 = pd.DataFrame( index = pd.MultiIndex.from_product(
     [p.countries,p.countries], names = ['destination','origin']
     ))
@@ -138,10 +165,21 @@ df3 = pd.DataFrame( index = pd.MultiIndex.from_product(
 df3['small pi normalized'] = sol_c.profit[...,1].ravel()
 df3['large pi B normalized'] = sol_c.profit_with_prod_patent[...,1].ravel()
 
-df1.round(4).to_csv('../misc/country_specific_terms.csv')
-for cas in ['a','b','c']:
-    dfs[cas].round(4).to_csv(f'../misc/case_{cas}.csv')
+df1.to_csv('../misc/country_specific_terms.csv')
+# for cas in ['a','b','c']:
+#     dfs[cas].to_csv(f'../misc/case_{cas}.csv')
+df2.to_csv('../misc/patenting_thresholds_cases_a_b_c.csv')
+df4.to_csv('../misc/patenting_thresholds_cases_cc.csv')
+df5.to_csv('../misc/patenting_thresholds_case_aa.csv')
 df3.to_csv('../misc/profits.csv')
+
+
+#%% checks
+
+import numpy as np
+
+check_b = (sol_c.psi_o_star_with_prod_patent_b[...,1] < np.min(sol_c.psi_m_star[...,1],axis=1))
+
 
 
 #%%
@@ -173,6 +211,18 @@ for i,origin in enumerate(p.countries):
                                     if np.isclose(sol_c.psi_m_star[n,i,1],
                                                   np.min(sol_c.psi_m_star[:,i,1])
                                                   )])
+
+#%%
+
+import numpy as np
+
+for i,origin in enumerate(p.countries):
+    print(origin,'pat first in :', [destination for n,destination in 
+                                    enumerate(p.countries) 
+                                    if np.isclose(sol_c.psi_m_star[n,i,1],
+                                                  np.min(sol_c.psi_m_star[:,i,1])
+                                                  )])
+    print(np.min(sol_c.psi_m_star[:,i,1]),sol_c.psi_m_star[i,i,1])
     # for n,destination in enumerate(p.countries):
     #     if np.isclose(sol_c.psi_m_star[n,i,1],np.min(sol_c.psi_m_star[:,i,1])):
     #         print(destination)
