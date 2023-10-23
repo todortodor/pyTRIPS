@@ -151,12 +151,25 @@ df4['cc_pat_thresh'] = sol_c.psi_o_star_without_prod_patent_cc[...,1]
 df4['cc1_with'] = sol_c.psi_o_star_with_prod_patent_cc1[...,1]
 df4['cc2_with'] = sol_c.psi_o_star_with_prod_patent_cc2[...,1]
 
+df4['cc_share_innov_pat'] = sol_c.psi_o_star_without_prod_patent_cc[...,1]**-p.k*100
+df4['cc1_share_with'] = sol_c.psi_o_star_with_prod_patent_cc1[...,1]**-p.k*100
+df4['cc2_share_with'] = sol_c.psi_o_star_with_prod_patent_cc2[...,1]**-p.k*100
+
+df4['cc1_share_change'] = (df4['cc1_share_with']-df4['cc_share_innov_pat'])*100/df4['cc_share_innov_pat']
+df4['cc2_share_change'] = (df4['cc2_share_with']-df4['cc_share_innov_pat'])*100/df4['cc_share_innov_pat']
+
+
 df5 = pd.DataFrame( index = pd.MultiIndex.from_product(
     [p.countries,p.countries], names = ['destination','origin']
     ))
  
 df5['aa_pat_thresh'] = sol_c.psi_m_star_without_prod_patent_aa[...,1].ravel()
 df5['aa_with'] = sol_c.psi_m_star_with_prod_patent_aa[...,1].ravel()
+ 
+df5['aa_share_innov_pat'] = sol_c.psi_m_star_without_prod_patent_aa[...,1].ravel()**-p.k*100
+df5['aa_share_with'] = sol_c.psi_m_star_with_prod_patent_aa[...,1].ravel()**-p.k*100
+
+df5['aa_share_change'] = (df5['aa_share_with']-df5['aa_share_innov_pat'])*100/df5['aa_share_innov_pat']
 
 df3 = pd.DataFrame( index = pd.MultiIndex.from_product(
     [p.countries,p.countries], names = ['destination','origin']
@@ -165,13 +178,13 @@ df3 = pd.DataFrame( index = pd.MultiIndex.from_product(
 df3['small pi normalized'] = sol_c.profit[...,1].ravel()
 df3['large pi B normalized'] = sol_c.profit_with_prod_patent[...,1].ravel()
 
-df1.to_csv('../misc/country_specific_terms.csv')
-# for cas in ['a','b','c']:
-#     dfs[cas].to_csv(f'../misc/case_{cas}.csv')
-df2.to_csv('../misc/patenting_thresholds_cases_a_b_c.csv')
+# df1.to_csv('../misc/country_specific_terms.csv')
+# # for cas in ['a','b','c']:
+# #     dfs[cas].to_csv(f'../misc/case_{cas}.csv')
+# df2.to_csv('../misc/patenting_thresholds_cases_a_b_c.csv')
 df4.to_csv('../misc/patenting_thresholds_cases_cc.csv')
 df5.to_csv('../misc/patenting_thresholds_case_aa.csv')
-df3.to_csv('../misc/profits.csv')
+# df3.to_csv('../misc/profits.csv')
 
 
 #%% checks
