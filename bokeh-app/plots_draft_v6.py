@@ -89,7 +89,7 @@ parameters_description = {
 #%% create output folder
 
 output_path = 'output/'
-output_name = 'draft_v7_nature_plots_light_grid'
+output_name = 'draft_v8'
 
 presentation_version_path = output_path+output_name+'/'
 try:
@@ -325,11 +325,11 @@ for i,country in enumerate(p_baseline.countries):
 ax.legend(loc=[1.02,0.02])
 # ax.legend()
 ax.set_ylabel('International patent families by destination')
-ax.set_xlim([1990,2015])
+ax.set_xlim([1990,2018])
 # plt.grid()
 
-for save_format in save_formats:
-    plt.savefig(data_fact_path+'international_pat_families_by_office.'+save_format,format=save_format)
+# for save_format in save_formats:
+#     plt.savefig(data_fact_path+'international_pat_families_by_office.'+save_format,format=save_format)
     
 plt.show()
 
@@ -385,38 +385,9 @@ sol_baseline.compute_quantities_with_prod_patents(p_baseline)
 
 df = pd.DataFrame(index = p_baseline.countries)
 
-dfs = {}
-
-for cas in ['a','b','c']:
-    dfs[cas] = pd.DataFrame(index = p_baseline.countries)
-    dfs[cas]['percentage share of innovations patented without prod patent'] = getattr(sol_baseline,f'share_innov_patented_dom_without_prod_patent_{cas}')[...,1]*100
-    dfs[cas]['percentage share of innovations patented with prod patent'] = getattr(sol_baseline,f'share_innov_patented_dom_with_prod_patent_{cas}')[...,1]*100
-    dfs[cas]['percentage points share of innovations patented diff'] = dfs[cas]['percentage share of innovations patented with prod patent'
-                                                                        ] - dfs[cas]['percentage share of innovations patented without prod patent']
-
-cases = {'USA':'a', 
-         'EUR':'c', 
-         'JAP':'c', 
-         'CHN':'a', 
-         'BRA':'b', 
-         'IND':'b', 
-         'CAN':'b', 
-         'KOR':'c', 
-         'RUS':'b', 
-         'MEX':'b', 
-         'ROW':'b'}
-    
-for cas in cases:
-    df.loc[cas,'percentage share of innovations patented without prod patent'
-            ] = dfs[cases[cas]].loc[cas,'percentage share of innovations patented without prod patent']
-    df.loc[cas,'percentage share of innovations patented with prod patent'
-            ] = dfs[cases[cas]].loc[cas,'percentage share of innovations patented with prod patent']
-    
-df['percentage points share of innovations patented diff'] = df['percentage share of innovations patented with prod patent'
-                                    ] - df['percentage share of innovations patented without prod patent']
-
 df['Mult Val Pat'] = sol_baseline.mult_val_pat
 df['Mult Val All Innov'] = sol_baseline.mult_val_all_innov
+df.round(4).to_csv(calibration_path+'quantities_with_production_patents.csv')
 
 df_profit = pd.DataFrame( index = pd.MultiIndex.from_product(
     [p_baseline.countries,p_baseline.countries], names = ['destination','origin']
@@ -425,10 +396,204 @@ df_profit = pd.DataFrame( index = pd.MultiIndex.from_product(
 df_profit['small pi normalized'] = sol_baseline.profit[...,1].ravel()
 df_profit['large pi B normalized'] = sol_baseline.profit_with_prod_patent[...,1].ravel()
 
-df.round(4).to_csv(calibration_path+'quantities_with_production_patents.csv')
-# for cas in ['a','b','c']:
-#     dfs[cas].round(4).to_csv(f'../misc/case_{cas}.csv')
 df_profit.to_csv(calibration_path+'profits_with_production_patents.csv')
+
+df = pd.DataFrame( index = pd.MultiIndex.from_product(
+    [p_baseline.countries,p_baseline.countries], names = ['destination','origin']
+    ))
+
+df['psi_m_star_without'] = sol_baseline.psi_m_star[...,1].ravel()
+df['psi_m_star_with'] = sol_baseline.psi_m_star_with_prod_patent[...,1].ravel()
+df['change pat threshold'] = (df['psi_m_star_with']-df['psi_m_star_without'])*100/df['psi_m_star_without']
+df['share_innov_pat_without'] = sol_baseline.psi_m_star[...,1].ravel()**-p_baseline.k
+df['share_innov_pat_with'] = sol_baseline.psi_m_star_with_prod_patent[...,1].ravel()**-p_baseline.k
+df['change share_innov_pat'] = (df['share_innov_pat_with']-df['share_innov_pat_without'])*100/df['share_innov_pat_without']
+df['case origin'] = sol_baseline.case_marker.ravel()
+
+df = df.sort_index(level=1)
+
+df.to_csv(calibration_path+'patenting_thresholds_with_production_patents.csv')
+
+
+df_stats = pd.DataFrame()
+
+df_stats['All change pat threshold'] = df['change pat threshold'].describe(percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+df_stats['Inter change pat threshold'] = df.query('origin!=destination')['change pat threshold'].describe(
+    percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+df_stats['Domestic change pat threshold'] = df.query('origin==destination')['change pat threshold'].describe(
+    percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+
+df_stats['All change share innov pat'] = df['change share_innov_pat'].describe(percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+df_stats['Inter change share innov pat'] = df.query('origin!=destination')['change share_innov_pat'].describe(
+    percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+df_stats['Domestic change share innov pat'] = df.query('origin==destination')['change share_innov_pat'].describe(
+    percentiles=[0.05,0.1,0.25,0.5,0.75,0.9,0.95]).round(2)
+
+df_stats.to_csv(calibration_path+'patenting_thresholds_with_production_patents_statistics.csv')
+
+
+#%% Gains from trade
+
+
+p_cf = p_baseline.copy()
+p_cf.tau[:,:,1] = 1e5
+
+for i in range(11):
+    p_cf.tau[i,i,1] = 1
+
+# static gains only
+
+from solver_funcs import fixed_point_solver_with_exog_pat_and_rd 
+
+sol, sol_cf = fixed_point_solver_with_exog_pat_and_rd(p_cf,p_baseline,x0=p_baseline.guess,
+                                context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.1,
+                        disp_summary=False,
+                        damping = 1,
+                        max_count = 1000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=1
+                        # damping=10
+                          # apply_bound_psi_star=True
+                        )
+sol_cf.scale_P(p_cf)
+sol_cf.compute_growth(p_cf)
+
+sol_cf.psi_C = sol_baseline.psi_C.copy()
+sol_cf.psi_star = sol_baseline.psi_star.copy()
+sol_cf.psi_o_star = sol_baseline.psi_o_star.copy()
+sol_cf.psi_m_star = sol_baseline.psi_m_star.copy()
+
+sol_cf.PSI_M = sol_baseline.PSI_M.copy()
+sol_cf.PSI_CD = sol_baseline.PSI_CD.copy()
+
+sol_cf.compute_sectoral_prices(p_cf)
+
+sol_cf.l_Ae = sol_baseline.l_Ae.copy()
+sol_cf.l_Ao = sol_baseline.l_Ao.copy()
+sol_cf.l_P = sol_baseline.l_P.copy()
+
+sol_cf.compute_trade_flows_and_shares(p_cf)
+sol_cf.compute_price_indices(p_cf)
+
+sol_cf.compute_non_solver_quantities(p_cf) 
+sol_cf.compute_consumption_equivalent_welfare(p_cf,sol_baseline)
+sol_cf.compute_world_welfare_changes(p_cf,sol_baseline)
+
+df = pd.DataFrame()
+
+for i,country in enumerate(p_baseline.countries):
+    df.loc[country,'welfare static gains'] = sol_cf.cons_eq_welfare[i]*100-100
+df.loc['Equal','welfare static gains'] = sol_cf.cons_eq_pop_average_welfare_change*100-100
+df.loc['Negishi','welfare static gains'] = sol_cf.cons_eq_negishi_welfare_change*100-100
+df.loc['Growth rate','welfare static gains'] = sol_cf.g*100
+
+# with dynamic gains
+
+sol, sol_cf = fixed_point_solver(p_cf,x0=p_cf.guess,
+                                context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.1,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 50000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=2
+                        # damping=10
+                          # apply_bound_psi_star=True
+                        )
+
+sol_cf.scale_P(p_cf)
+sol_cf.compute_non_solver_quantities(p_cf) 
+
+sol_cf.compute_consumption_equivalent_welfare(p_cf,sol_baseline)
+sol_cf.compute_world_welfare_changes(p_cf,sol_baseline)
+
+for i,country in enumerate(p_baseline.countries):
+    df.loc[country,'welfare dynamic gains'] = sol_cf.cons_eq_welfare[i]*100-100
+df.loc['Equal','welfare dynamic gains'] = sol_cf.cons_eq_pop_average_welfare_change*100-100
+df.loc['Negishi','welfare dynamic gains'] = sol_cf.cons_eq_negishi_welfare_change*100-100
+df.loc['Growth rate','welfare dynamic gains'] = sol_cf.g*100
+
+sol, dyn_sol_cf = dyn_fixed_point_solver(p_cf, sol_init=sol_baseline,sol_fin=sol_cf,Nt=25,
+                        t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_cf.compute_non_solver_quantities(p_cf)
+
+for i,country in enumerate(p_baseline.countries):
+    df.loc[country,'with transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_welfare[i]*100-100
+df.loc['Equal','with transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_pop_average_welfare_change*100-100
+df.loc['Negishi','with transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_negishi_welfare_change*100-100
+# df.loc['Growth rate','with transition welfare dynamic gains'] = sol_cf.g*100
+
+sol, dyn_sol_cf = dyn_fixed_point_solver(p_baseline, sol_init=sol_cf,sol_fin=sol_baseline,Nt=25,
+                        t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_cf.compute_non_solver_quantities(p_baseline)
+
+for i,country in enumerate(p_baseline.countries):
+    df.loc[country,'with reverse transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_welfare[i]*100-100
+df.loc['Equal','with reverse transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_pop_average_welfare_change*100-100
+df.loc['Negishi','with reverse transition welfare dynamic gains'] = dyn_sol_cf.cons_eq_negishi_welfare_change*100-100
+
+df.to_csv(calibration_path+'gains_from_trade.csv')
 
 #%% Comparing trade flows with patent flows
 
@@ -513,9 +678,15 @@ adjust_text(texts, precision=0.001,
 
 for save_format in save_formats:
     plt.savefig(calibration_path+moment+'_cross_small.'+save_format,format=save_format)
-    # plt.savefig(calibration_path+moment+'.'+save_format,format=save_format)
+    plt.savefig(calibration_path+moment+'.'+save_format,format=save_format)
 
 plt.show()
+
+df = pd.DataFrame(index = labels.index)
+df['Target'] = x
+df['Model'] = y
+
+df.to_csv(calibration_path+moment+'.csv')
 
 #%% output table for matching of moments : scalars
 
@@ -945,8 +1116,8 @@ for with_world in [True,False]:
 
 #%% Unilateral patent protections counterfactuals with dynamics
 
-# for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_countries_pat_sectors']:
-for c in ['trade_cost_eq_trips_all_countries_pat_sectors']:
+for c in p_baseline.countries+['World','Uniform_delta','trade_cost_eq_trips_all_countries_pat_sectors']:
+# for c in ['trade_cost_eq_trips_all_countries_pat_sectors']:
     recap = pd.DataFrame(columns = ['delta_change','world_negishi','world_equal']+p_baseline.countries)
     if variation == 'baseline':
         local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline+'/'
@@ -2394,6 +2565,66 @@ df.style.format(precision=5).to_latex(doubled_trade_costs_path+'dyn_Coop_negishi
 df.to_csv(doubled_trade_costs_path+'dyn_Coop_negishi_weights_table_with_doubled_trade_costs_in_pat_sect.csv',float_format='%.5f')
 
 write_calibration_results(doubled_trade_costs_path+'dyn_Coop_negishi_weights_with_doubled_trade_costs_in_pat_sect',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
+#%% Elasticities of patented innovations with respect to trade costs (to compare with Coelli)
+
+df = pd.DataFrame()
+
+for i,country in enumerate(p_baseline.countries):
+# for i,country in enumerate(['USA']):
+    print(country)
+    p = p_baseline.copy()
+    # if (sol_baseline.psi_m_star[:,i,1]==np.min(sol_baseline.psi_m_star[:,i,1])).sum() == 1 and (
+    #         sol_baseline.psi_m_star[:,i,1] == np.min(sol_baseline.psi_m_star[:,i,1]))[i]:
+    #     mask = np.ones(p_baseline.N, dtype=bool)
+    #     mask[i] = False
+    #     x = (sol_baseline.psi_m_star[:,i,1][mask].min()/sol_baseline.psi_m_star[:,i,1].min())**p.k
+        
+    # else:
+    #     x = 1
+    
+    mask = np.ones(p_baseline.N, dtype=bool)
+    mask[i] = False
+    x = sol_baseline.pflow[:,i].sum()/sol_baseline.pflow[:,i][mask].sum()
+                
+    p.tau[:,i,1] = p_baseline.tau[:,i,1]*(1 - 0.01*x/1.032)
+    p.tau[i,i,1] = 1
+
+    sol, dyn_sol = dyn_fixed_point_solver(p, sol_baseline, Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 50,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol.compute_non_solver_quantities(p)
+    df.loc[country,'baseline number of patented innovations'] = sol_baseline.psi_o_star[i,1]**-p.k * sol_baseline.l_R[i,1]**(1-p.kappa)
+    df.loc[country,'change in number of patented innovations'] = (dyn_sol.psi_o_star[i,1,-3]**-p.k * dyn_sol.l_R[i,1,-3]**(1-p.kappa)
+                                                                  / (sol_baseline.psi_o_star[i,1]**-p.k * sol_baseline.l_R[i,1]**(1-p.kappa))
+                                                                  )*100-100
+    df.loc[country,'change in trade cost in percentage'] = x
+    print(df)
+    
+df.loc['average change', 'change in number of patented innovations'] = df.loc[p_baseline.countries,'change in number of patented innovations'].mean()
+df.loc['weighted average change', 'change in number of patented innovations'
+        ] = (df.loc[p_baseline.countries,'change in number of patented innovations']*df.loc[p_baseline.countries,'baseline number of patented innovations']
+            ).sum()/df.loc[p_baseline.countries,'baseline number of patented innovations'].sum()
+
+df.to_csv(calibration_path+'patented_innovations_elast_trade_costs.csv',float_format='%.5f')
 
 #%% Semi-elasticities to compare with Bertolotti
 

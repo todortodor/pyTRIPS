@@ -770,6 +770,18 @@ class var:
         self.nominal_final_consumption = self.Z - self.nominal_intermediate_input.sum(axis=1)
         self.cons = self.nominal_final_consumption/self.price_indices
         
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
+            * (self.PSI_M * self.phi**(p.sigma-1)[None, None, :]).sum(axis=1)
+        B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**((p.sigma-1)/p.theta)[None, :]
+        temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:]*(A+B))
+        one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
+        self.sectoral_price_indices = one_over_price_indices_no_pow_no_prod**(1/(p.sigma[None, :]-1))
+        self.sectoral_cons = np.einsum('s,n,ns->ns',
+                                  p.beta,
+                                  self.Z,
+                                  1/self.sectoral_price_indices
+                                  )
+        
     def compute_gdp(self,p):
         self.gdp = self.nominal_final_consumption + p.deficit_share_world_output*self.Z.sum() + self.w*(p.labor - self.l_P)
     
@@ -1155,25 +1167,43 @@ class var:
         
         # check on ib)
         
-        check_b_lhs = self.psi_o_star_with_prod_patent_b[...,1]
-        check_b_rhs = np.min(self.psi_m_star[...,1],axis=0)
+        # check_b_lhs = self.psi_o_star_with_prod_patent_b[...,1]
+        # check_b_rhs = np.min(self.psi_m_star[...,1],axis=0)
         
         for i,country in enumerate(p.countries):
             if np.argmin(self.psi_m_star[:,i,1]) != i and (
                     self.psi_m_star[:,i,1]==np.min(self.psi_m_star[:,i,1])).sum() == 1:
                 print(f'check b for {country}')
-                if check_b_lhs[i] > check_b_rhs[i]:
+                if self.psi_o_star_with_prod_patent_b[i,1] > np.min(self.psi_m_star[:,i,1]):
                     print('passed')
                 else:
-                    print(f'not passed, lhs: {check_b_lhs[i]}, rhs: {check_b_rhs[i]}')                    
+                    print('not passed')    
+                    
+                print(f'check b for order for {country}')
+                if len([p.countries[x]
+                         for x in np.where(self.psi_m_star[:, i, 1] < self.psi_m_star[i, i, 1])[0]
+                         if x != i]
+                        ) == len([p.countries[x]
+                                 for x in np.where(self.psi_m_star[:, i, 1] < self.psi_o_star_with_prod_patent_b[i, 1])[0]
+                                 if x != i]
+                                ):
+                    print('passed, patents in before :',
+                          [p.countries[x] for x in np.where(self.psi_m_star[:,i,1]<self.psi_m_star[i,i,1])[0] if x!=i],
+                          'to after:',
+                          [p.countries[x] for x in np.where(self.psi_m_star[:,i,1]<self.psi_o_star_with_prod_patent_b[i,1])[0] if x!=i],
+                          'countries patent before origin') 
+                else:
+                    print('not passed, patents in before :',
+                          [p.countries[x] for x in np.where(self.psi_m_star[:,i,1]<self.psi_m_star[i,i,1])[0] if x!=i],
+                          'to after:',
+                          [p.countries[x] for x in np.where(self.psi_m_star[:,i,1]<self.psi_o_star_with_prod_patent_b[i,1])[0] if x!=i],
+                          'countries patent before origin') 
         
         # case c
         
         self.psi_o_star_with_prod_patent_c = np.full_like(self.psi_o_star,np.inf)
         self.psi_o_star_without_prod_patent_c = np.full_like(self.psi_o_star,np.inf)
         
-        # mask_is_n_in_n_star_of_i = self.psi_m_star[...,1] == np.min(self.psi_m_star[...,1],axis=1)
-        # mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=1))
         mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=0))
         
         denom_A = (mask_is_n_in_n_star_of_i
@@ -1237,106 +1267,26 @@ class var:
         denom_C = self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]/self.w[None,:]
         denom = denom_A - denom_B + denom_C
         
-        self.psi_m_star_without_prod_patent_aa[...,1] = self.w[:,None]*p.r_hjort*p.fe[1]/self.w[None,:]/denom_A
-        self.psi_m_star_with_prod_patent_aa[...,1] = self.w[:,None]*p.r_hjort*p.fe[1]/self.w[None,:]/denom
+        self.psi_m_star_without_prod_patent_aa[...,1] = self.w[:,None]*p.r_hjort[:,None]*p.fe[1]/self.w[None,:]/denom_A
+        self.psi_m_star_with_prod_patent_aa[...,1] = self.w[:,None]*p.r_hjort[:,None]*p.fe[1]/self.w[None,:]/denom
          
         # icc)
         
         self.psi_o_star_without_prod_patent_cc = self.psi_o_star_without_prod_patent_c.copy()
         
-        # icc1)
-        
-        self.psi_o_star_with_prod_patent_cc1 = np.full_like(self.psi_o_star,np.inf)
-        
-        def compute_threshold_in_case_icc1_if_card_n_star_is_2(mask_is_n_in_n_star_of_i,country_index):
-            res = np.full_like(self.psi_o_star,np.inf)
-            
-            denom_A = np.diagonal(
-                (self.V_P[..., 1]-self.V_NP[..., 1])/self.w[None, :]
-            )
-            denom_B = (mask_is_n_in_n_star_of_i
-                       *(self.V_P_P_minus_V_P_NP_with_prod_patent[...,1])
-                       /self.w[None,:]
-                       ).sum(axis=0)
-            denom_C = (~mask_is_n_in_n_star_of_i*self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]
-                       ).sum(axis=0)
-            denom = denom_A + denom_B + denom_C
-            num = (
-                (self.w[:,None]*p.r_hjort[:,None]*p.fe[1]/self.w[None,:])*mask_is_n_in_n_star_of_i
-                ).sum(axis=0) + p.r_hjort*p.fo[1]
-            
-            res = num/denom
-            
-            return res[country_index]
-        
-        def compute_threshold_in_case_icc1_if_card_n_star_is_greater_than_2(mask,country_index):
-            new_mask = mask.copy()
-            list_of_reduced_cases_results = []
-            for j, reduced_country in enumerate(p.countries):
-                if j!=country_index and new_mask[j,country_index]:
-                    reduced_mask = new_mask.copy()
-                    print('putting at False the element :',reduced_mask[j,country_index])
-                    reduced_mask[j,country_index] = False
-                    print('new mask is ',reduced_mask[:,country_index])
-                    if reduced_mask[:,country_index].sum() <= 2:
-                        list_of_reduced_cases_results.append(
-                            compute_threshold_in_case_icc1_if_card_n_star_is_2(reduced_mask,country_index)
-                            )
-                    else:
-                        list_of_reduced_cases_results.append(
-                            compute_threshold_in_case_icc1_if_card_n_star_is_greater_than_2(reduced_mask,country_index)
-                            )
-                        
-                    
-            return min(list_of_reduced_cases_results)
-                
-        
-        for i, country in enumerate(p.countries):
-            mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=0))
-            n_card = mask_is_n_in_n_star_of_i[:,i].sum()
-            
-            if mask_is_n_in_n_star_of_i[:,i].sum() <= 2:
-                self.psi_o_star_with_prod_patent_cc1[i,1] = compute_threshold_in_case_icc1_if_card_n_star_is_2(
-                    mask_is_n_in_n_star_of_i,i)
-            else:
-                print(f'dealing with {country} in case icc1, card of n_star is {n_card}')
-                self.psi_o_star_with_prod_patent_cc1[i,1] = compute_threshold_in_case_icc1_if_card_n_star_is_greater_than_2(
-                    mask_is_n_in_n_star_of_i,i)
-
-        
-        # mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=0))
-        
-        # denom_A = np.diagonal(
-        #     (self.V_P[..., 1]-self.V_NP[..., 1])/self.w[None, :]
-        # )
-        # denom_B = (mask_is_n_in_n_star_of_i
-        #            *(self.V_P_P_minus_V_P_NP_with_prod_patent[...,1])
-        #            /self.w[None,:]
-        #            ).sum(axis=0)
-        # denom_C = (~mask_is_n_in_n_star_of_i*self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]
-        #            ).sum(axis=0)
-        # denom = denom_A + denom_B + denom_C
-        # num = (
-        #     (self.w[:,None]*p.r_hjort[:,None]*p.fe[1]/self.w[None,:])*mask_is_n_in_n_star_of_i
-        #     ).sum(axis=0) + p.r_hjort*p.fo[1]
-    
-        # self.psi_o_star_with_prod_patent_cc1[...,1] = num/denom
-        
         # icc2)
         
         self.psi_o_star_with_prod_patent_cc2 = np.full_like(self.psi_o_star,np.inf)
         
-        def compute_threshold_in_case_icc2_if_card_n_star_is_2(mask_is_n_in_n_star_of_i,country_index):
+        def compute_threshold_if_only_patent_domestically_first(country_index):
             res = np.full_like(self.psi_o_star,np.inf)
-            
-            # mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=0))
             
             denom_A = np.diagonal(
                 (self.V_P[..., 1]-self.V_NP[..., 1])/self.w[None, :]
             )
             denom_B = ((self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1])
                        /self.w[None,:]
-                       ).sum(axis=0)-np.diagonal((self.V_P_P_minus_V_P_NP_with_prod_patent[...,1])
+                       ).sum(axis=0)-np.diagonal((self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1])
                                                  /self.w[None,:])
             denom = denom_A + denom_B
             num =  p.r_hjort*(p.fo[1]+p.fe[1])
@@ -1345,54 +1295,126 @@ class var:
             
             return res[country_index]
         
-        def compute_threshold_in_case_icc2_if_card_n_star_is_greater_than_2(mask,country_index):
-            new_mask = mask.copy()
-            list_of_reduced_cases_results = []
-            for j, reduced_country in enumerate(p.countries):
-                if j!=country_index and new_mask[j,country_index]:
-                    reduced_mask = new_mask.copy()
-                    print('putting at False the element :',reduced_mask[j,country_index])
-                    reduced_mask[j,country_index] = False
-                    print('new mask is ',reduced_mask[:,country_index])
-                    if reduced_mask[:,country_index].sum() <= 2:
-                        list_of_reduced_cases_results.append(
-                            compute_threshold_in_case_icc2_if_card_n_star_is_2(reduced_mask,country_index)
-                            )
-                    else:
-                        list_of_reduced_cases_results.append(
-                            compute_threshold_in_case_icc2_if_card_n_star_is_greater_than_2(reduced_mask,country_index)
-                            )
-                        
-                    
-            return min(list_of_reduced_cases_results)
-                
-        
         for i, country in enumerate(p.countries):
-            mask_is_n_in_n_star_of_i = np.isclose(self.psi_m_star[...,1],np.min(self.psi_m_star[...,1],axis=0))
-            n_card = mask_is_n_in_n_star_of_i[:,i].sum()
+            self.psi_o_star_with_prod_patent_cc2[i,1] = compute_threshold_if_only_patent_domestically_first(i)
+        
+        # icc1)
+        
+        self.psi_o_star_with_prod_patent_cc1 = np.full_like(self.psi_o_star,np.inf)
+        self.psi_o_star_with_prod_patent_cc = np.full_like(self.psi_o_star,np.inf)
+        
+        def compute_threshold_if_patent_domestically_and_foreign_simultaneously(mask_is_n_in_n_star_of_i,country_index):
+            res = np.full_like(self.psi_o_star,np.inf)
             
-            if mask_is_n_in_n_star_of_i[:,i].sum() <= 2:
-                self.psi_o_star_with_prod_patent_cc2[i,1] = compute_threshold_in_case_icc2_if_card_n_star_is_2(mask_is_n_in_n_star_of_i,i)
-            else:
-                print(f'dealing with {country} in case icc2, card of n_star is {n_card}')
-                self.psi_o_star_with_prod_patent_cc2[i,1] = compute_threshold_in_case_icc2_if_card_n_star_is_greater_than_2(mask_is_n_in_n_star_of_i,i)
+            # denom_A = np.diagonal(
+            #     (self.V_P[..., 1]-self.V_NP[..., 1])/self.w[None, :]
+            # )
+            # denom_A = 0
+            denom_B = (mask_is_n_in_n_star_of_i
+                       *(self.V_P_P_minus_V_P_NP_with_prod_patent[:,country_index,1]+self.V_P[:,country_index, 1]-self.V_NP[:,country_index,1])
+                       /self.w[country_index]
+                       ).sum()
+            denom_C = (~mask_is_n_in_n_star_of_i*self.V_NP_P_minus_V_NP_NP_with_prod_patent[:,country_index,1]/self.w[country_index]
+                       ).sum()
+            denom = denom_B + denom_C
+            num = (
+                (self.w*p.r_hjort*p.fe[1]/self.w[country_index])*mask_is_n_in_n_star_of_i
+                ).sum() + p.r_hjort[country_index]*p.fo[1]
+            
+            res = num/denom
+            
+            return res
         
-        # ibb)
+        def subsets(s):
+            x = len(s)
+            masks = [1 << i for i in range(x)]
+            for i in range(1,1 << x):
+                yield [ss for mask, ss in zip(masks, s) if i & mask]
+                
+        self.cc1_min_patenting_combination_by_origin = [[x] for x in p.countries]
+                    
+        for i, origin in enumerate(p.countries):
+            initial_mask_is_n_in_n_star_of_i = self.psi_m_star[:,i,1] == np.min(self.psi_m_star[:,i,1])
+            
+            countries_to_test = [p.countries[k] for k in np.where(initial_mask_is_n_in_n_star_of_i)[0] if k!=i]
+            combinations_of_countries_to_test = list(subsets(countries_to_test))
+            self.psi_o_star_with_prod_patent_cc[i,1] = self.psi_o_star_with_prod_patent_cc2[i,1]
+            self.psi_o_star_with_prod_patent_cc1[i,1] = np.inf
+            self.cc1_min_patenting_combination_by_origin[i] = [origin]
+            
+            for combination_of_countries in combinations_of_countries_to_test:
+                new_mask = np.array([c in combination_of_countries or c==origin for c in p.countries])
+                new_threshold = compute_threshold_if_patent_domestically_and_foreign_simultaneously(new_mask,i)
+                print(origin,combination_of_countries,new_mask,new_threshold)
+                if new_threshold < self.psi_o_star_with_prod_patent_cc1[i,1]:
+                    self.psi_o_star_with_prod_patent_cc1[i,1] = new_threshold
+                if new_threshold  < self.psi_o_star_with_prod_patent_cc[i,1]:
+                    self.psi_o_star_with_prod_patent_cc[i,1] = new_threshold
+                    self.cc1_min_patenting_combination_by_origin[i] = combination_of_countries
+            
+        # gather every change of patenting threshold in one array
         
-        # self.psi_o_star_with_prod_patent_bb2 = np.full_like(self.psi_o_star,np.inf)
+        self.psi_m_star_with_prod_patent = np.full_like(self.psi_m_star,np.inf)
+        self.case_marker = np.empty(self.psi_m_star[...,1].shape, dtype="<U20")
         
-        # self.psi_o_star_with_prod_patent_bb2[...,1] = self.psi_o_star_with_prod_patent_cc1[...,1]
-        # # self.psi_o_star_with_prod_patent_bb2[...,1] = np.minimum(
-        # #     self.psi_o_star_with_prod_patent_cc1[...,1],
-        # #     self.psi_o_star_with_prod_patent_cc2[...,1]
-        # #     )
-        
-        # self.psi_o_star_with_prod_patent_bb3 = np.full_like(self.psi_o_star,np.inf)
-        
-        # self.psi_o_star_with_prod_patent_bb3[...,1] = 
-        
+        for i,origin in enumerate(p.countries):
+            if self.psi_m_star[i,i,1] == np.min(self.psi_m_star[:,i,1]) \
+                and np.where(self.psi_m_star[:,i,1] == self.psi_m_star[:,i,1].min())[0].shape[0] == 1:
+                    # case a where the domestic threshold is the smallest one for the origin, and it is the only smallest one
+                    # country i patents only at home first
+                    print(f'{origin},domestic case a')
+                    self.psi_m_star_with_prod_patent[i,i,1] = self.psi_o_star_with_prod_patent_a[i,1]
+                    self.case_marker[i,i] = 'a'
+                    for n,destination in enumerate(p.countries):
+                        if i!=n:
+                            self.psi_m_star_with_prod_patent[n,i,1] = self.psi_m_star_with_prod_patent_aa[n,i,1]
+                            self.case_marker[n,i] = 'aa'
+            
+            elif self.psi_m_star[i,i,1] == np.min(self.psi_m_star[:,i,1]) \
+                and np.where(self.psi_m_star[:,i,1] == self.psi_m_star[:,i,1].min())[0].shape[0] > 1:
+                    # case c where the domestic threshold is the smallest one for the origin, but it is not the only smallest one
+                    # country i patents first at home and abroad at the same time
+                    print(f'{origin},case cc')
+                    # self.psi_m_star_with_prod_patent[i,i,1] = np.minimum(self.psi_o_star_with_prod_patent_cc1[i,1],
+                    #                                                       self.psi_o_star_with_prod_patent_cc2[i,1])
+                    self.psi_m_star_with_prod_patent[i,i,1] = self.psi_o_star_with_prod_patent_cc[i,1]
+                    self.case_marker[i,i] = 'cc'
+                    for n,destination in enumerate(p.countries):
+                        if i!=n:
+                            if self.psi_m_star[n,i,1] == np.min(self.psi_m_star[:,i,1]):
+                                #case cc1)
+                                if p.countries[n] in self.cc1_min_patenting_combination_by_origin[i]:
+                                    self.psi_m_star_with_prod_patent[n,i,1] = self.psi_o_star_with_prod_patent_cc1[i,1]
+                                    self.case_marker[n,i] = 'cc1'
+                                    
+                                #case cc2)
+                                else:
+                                    self.psi_m_star_with_prod_patent[n,i,1] = self.psi_m_star_with_prod_patent_aa[n,i,1]
+                                    self.case_marker[n,i] = 'cc2'
+                                    
+                            elif self.psi_m_star[n,i,1] > np.min(self.psi_m_star[:,i,1]):
+                                self.psi_m_star_with_prod_patent[n,i,1] = self.psi_m_star_with_prod_patent_aa[n,i,1]
+                                self.case_marker[n,i] = 'aa'
+                                
+            elif self.psi_m_star[i,i,1] != np.min(self.psi_m_star[:,i,1]) \
+                and np.where(self.psi_m_star[:,i,1] == self.psi_m_star[:,i,1].min())[0].shape[0] == 1:
+                    # case b where the domestic threshold is not the smallest one for the origin, and the smallest one is unique
+                    # country i patents first abroad
+                    print(f'{origin},case b')
+                    self.psi_m_star_with_prod_patent[i,i,1] = self.psi_o_star_with_prod_patent_b[i,1]
+                    self.case_marker[i,i] = 'b'
+                    for n,destination in enumerate(p.countries):
+                        if i!=n:
+                            if self.psi_m_star[n,i,1] < self.psi_o_star_with_prod_patent_b[i,1]:
+                                self.psi_m_star_with_prod_patent[n,i,1] = self.psi_m_star[n,i,1]
+                                self.case_marker[n,i] = 'bb1'
+                                
+                            elif self.psi_m_star[n,i,1] >= self.psi_o_star_with_prod_patent_b[i,1]:
+                                self.psi_m_star_with_prod_patent[n,i,1] = self.psi_m_star_with_prod_patent_aa[n,i,1]
+                                self.case_marker[n,i] = 'bb2'
+
+
         # ii)
-        
         num_bracket = self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]*(
             1-np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k)
             ) + self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]/self.w[None,:]*(

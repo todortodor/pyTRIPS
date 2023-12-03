@@ -15,6 +15,129 @@ import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 
 df = pd.DataFrame()
+p_init = parameters()
+
+p_init.load_run('calibration_results_matched_economy/1030/')
+p_init.delta[:,1] = 12
+# p_init.delta[:,1] = np.array([0.01000,
+# 0.01000,
+# 0.01000,
+# 12.00000,
+# 12.00000,
+# 12.00000,
+# 0.01000,
+# 0.01000,
+# 12.00000,
+# 0.01000,
+# 12.00000])
+
+sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
+                                context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 1000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+sol_init.scale_P(p_init)
+sol_init.compute_non_solver_quantities(p_init) 
+
+p = p_init.copy()
+# p.delta[:,1] = 12
+p.delta[:,1] = np.array([0.01000,
+0.01000,
+0.01000,
+12.00000,
+12.00000,
+12.00000,
+0.01000,
+0.01000,
+12.00000,
+0.01000,
+12.00000])
+# p.tau[:,i,1] = p_init.tau[:,i,1]/1.01
+# p.tau[i,i,1] = 1
+
+sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=23,
+                                      t_inf=1000,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 50,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol.compute_non_solver_quantities(p)
+
+#%%
+
+df = pd.DataFrame()
+
+for i,country in enumerate(p_init.countries):
+# for i,country in enumerate(['USA']):
+    print(country)
+    p = p_init.copy()
+    p.tau[:,i,1] = p_init.tau[:,i,1]/1.01
+    p.tau[i,i,1] = 1
+
+    sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 50,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol.compute_non_solver_quantities(p)
+    df.loc[country,'baseline number of patented innovations'] = sol_init.psi_o_star[i,1]**-p.k * sol_init.l_R[i,1]**(1-p.kappa)
+    df.loc[country,'change in number of patented innovations'] = (dyn_sol.psi_o_star[i,1,-3]**-p.k * dyn_sol.l_R[i,1,-3]**(1-p.kappa)
+                                                                  / (sol_init.psi_o_star[i,1]**-p.k * sol_init.l_R[i,1]**(1-p.kappa))
+                                                                  )*100-100
+    
+df.loc['average change', 'change in number of patented innovations'] = df.loc[p_init.countries,'change in number of patented innovations'].mean()
+df.loc['weighted average change', 'change in number of patented innovations'
+       ] = (df.loc[p_init.countries,'change in number of patented innovations']*df.loc[p_init.countries,'baseline number of patented innovations']
+            ).sum()/df.loc[p_init.countries,'baseline number of patented innovations'].sum()
+
+#%%
+
 
 p_init = parameters()
 for x in np.linspace(0.01-1e-6,0.01+1e-6,3):
