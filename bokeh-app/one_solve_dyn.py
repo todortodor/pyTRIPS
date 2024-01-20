@@ -18,7 +18,7 @@ df = pd.DataFrame()
 p_init = parameters()
 
 p_init.load_run('calibration_results_matched_economy/1030/')
-p_init.delta[:,1] = 12
+# p_init.delta[:,1] = 12
 # p_init.delta[:,1] = np.array([0.01000,
 # 0.01000,
 # 0.01000,
@@ -55,23 +55,24 @@ sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
 p = p_init.copy()
-# p.delta[:,1] = 12
-p.delta[:,1] = np.array([0.01000,
-0.01000,
-0.01000,
-12.00000,
-12.00000,
-12.00000,
-0.01000,
-0.01000,
-12.00000,
-0.01000,
-12.00000])
+# p.delta[0,1] = 0.05
+p.delta[0,1] = 0.01
+# p.delta[:,1] = np.array([0.01000,
+# 0.01000,
+# 0.01000,
+# 12.00000,
+# 12.00000,
+# 12.00000,
+# 0.01000,
+# 0.01000,
+# 12.00000,
+# 0.01000,
+# 12.00000])
 # p.tau[:,i,1] = p_init.tau[:,i,1]/1.01
 # p.tau[i,i,1] = 1
 
-sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=23,
-                                      t_inf=1000,
+sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
+                                      t_inf=500,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=False,
@@ -81,7 +82,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=23,
                         plot_live = False,
                         safe_convergence=1e-8,
                         disp_summary=True,
-                        damping = 50,
+                        damping = 100,
                         max_count = 50000,
                         accel_memory =5, 
                         accel_type1=True, 
@@ -92,6 +93,12 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=23,
                         damping_post_acceleration=10
                         )
 dyn_sol.compute_non_solver_quantities(p)
+
+# plt.plot(dyn_sol.t_real,dyn_sol.PSI_CD[0,1,:])
+# plt.plot(dyn_sol.t_real,dyn_sol.V_NP_dot[0,0,0,:])
+# plt.plot(dyn_sol.t_real,dyn_sol.r[0,:])
+# plt.scatter(dyn_sol.t_real[-10:],dyn_sol.g[-10:])
+# plt.show()
 
 #%%
 

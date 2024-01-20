@@ -89,7 +89,7 @@ parameters_description = {
 #%% create output folder
 
 output_path = 'output/'
-output_name = 'draft_v8'
+output_name = 'draft_v9'
 
 presentation_version_path = output_path+output_name+'/'
 try:

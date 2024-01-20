@@ -422,6 +422,7 @@ def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=Non
         if plot_live:
             if count<70 and count >0:
                 dyn_var.plot_country(0,title = str(count))
+                
         dyn_var.compute_solver_quantities(p)
 
         x_new = np.concatenate([

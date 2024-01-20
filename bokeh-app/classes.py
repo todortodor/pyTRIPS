@@ -1889,7 +1889,14 @@ class dynamic_var:
     def compute_interest_rate(self,p):
         self.CP_growth_rate = 2*np.einsum('tu,nu->nt',self.D_neuman,self.nominal_final_consumption)\
             /(self.t_inf*self.nominal_final_consumption)
+        
         self.r = p.rho + (self.g[None,:]+self.CP_growth_rate)/p.gamma
+        
+        #!!!
+        self.inflation = 2*np.einsum('tu,nu->nt',self.D_neuman,self.price_indices)\
+            /(self.t_inf*self.price_indices)
+            
+        self.r = self.r + (1-1/p.gamma)*self.inflation
         
     def compute_solver_quantities(self,p):
         self.compute_phi(p)
