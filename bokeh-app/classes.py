@@ -115,6 +115,10 @@ class parameters:
         self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
         self.trade_flows = self.trade_flows.reshape((N,N,S))
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
+        try:
+            self.tariff = pd.read_csv(data_path+'tariff.csv',index_col=[1,0,2]).sort_index().values.squeeze().reshape((N,N,S))
+        except:
+            self.tariff = np.zeros_like(self.trade_flows)
         self.beta = np.einsum('nis->s',self.trade_shares)
         self.deficit_raw = self.data.deficit.values
         self.deficit_raw[0] = self.deficit_raw[0]-self.deficit_raw.sum()
@@ -133,7 +137,7 @@ class parameters:
             #     data_path+'final_pat_fees.csv',index_col=0).loc[2,'fee']/pd.read_csv(
             #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
             # self.r_hjort[1] = self.r_hjort[1]*3.6/1.8
-            # self.r_hjort[1] = self.r_hjort[1]*3.6 #!!!!
+            # self.r_hjort[1] = self.r_hjort[1]*3.6
             self.r_hjort[1] = self.r_hjort[1]*3.872572
             # self.r_hjort[1] = self.r_hjort[1]*43730.23/0.71388/pd.read_csv(
             #         data_path+'final_pat_fees.csv',index_col=0).loc[1,'fee']
@@ -152,6 +156,7 @@ class parameters:
             self.nu_tilde = np.ones(S)*0.1
         
         self.tau = np.full(N*N*S, np.nan).reshape((N,N,S))
+        
         
         self.idx = {'sigma':pd.Index(self.sectors, name='sector'),
                     'theta':pd.Index(self.sectors, name='sector'),
@@ -258,6 +263,8 @@ class parameters:
             except:
                 if pa_name == 'd':
                     self.d = np.array(1.0)
+                if pa_name == 'tariff':
+                    self.tariff = np.zeros_like(self.trade_flows)
                 else:
                     pass
         
@@ -278,7 +285,7 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
-         'kappa','gamma','delta','nu','nu_tilde','d','khi','r_hjort','tau']
+         'kappa','gamma','delta','nu','nu_tilde','d','khi','r_hjort','tau','tariff']
             
     def guess_from_params(self):
         Z_guess = self.data.expenditure.values/self.unit
@@ -583,7 +590,6 @@ class var:
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :] \
             * (self.PSI_M * self.phi**power[None, None, :]).sum(axis=1)
         B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(power/p.theta)[None, :]
-        #!!! temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:]*(A+B))
         temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:]*(A+B))
         one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
         price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :]/(p.sigma[None, :]-1)) ).prod(axis=1)
@@ -650,19 +656,28 @@ class var:
     
     def compute_profit(self,p):
         profit = np.zeros((p.N,p.N,p.S))
-        profit[...,1:] = np.einsum('nis,s,i,nis->nis',
+        profit[...,1:] = np.einsum('nis,s,i,nis,nis->nis',
                                 self.X_M[...,1:],
                                 1/p.sigma[1:],
                                 1/self.w,
-                                1/self.PSI_M[...,1:])
+                                1/self.PSI_M[...,1:],
+                                1/(1+p.tariff[...,1:]))
         return profit
     
     def compute_expenditure(self, p):
-        A = np.einsum('nis->i', self.X)
+        A1 = np.einsum('nis,nis->i', 
+                      self.X,
+                      1/(1+p.tariff))
+        A2 = np.einsum('ins,ins,ins->i', 
+                      self.X,
+                      p.tariff,
+                      1/(1+p.tariff))
         B = np.einsum('i,nis->i', self.w, self.l_Ae)
-        C = p.deficit_share_world_output*self.Z.sum()
+        C = p.deficit_share_world_output*np.einsum('nis,nis->', 
+                      self.X,
+                      1/(1+p.tariff))
         D = np.einsum('n,ins->i', self.w, self.l_Ae)
-        Z = (A+B-(C+D))
+        Z = (A1+A2+B-(C+D))
         return Z
     
     def compute_phi(self, p):
@@ -678,8 +693,9 @@ class var:
                                         1/(self.phi**(p.theta)[None,None,:]).sum(axis=1),
                                         self.P_CD**(1-p.sigma[None,:])
                                         )
-            f_phi = np.einsum('nis,nis->nis',
+            f_phi = np.einsum('nis,nis,nis->nis',
                             p.trade_shares,
+                            1+p.tariff,
                             1/(denominator_M + denominator_CD[:,None,:]))
             
             phi = np.einsum('nis,nns,ns,ns,ns->nis',
@@ -759,7 +775,7 @@ class var:
         self.compute_sectoral_prices(p)
     
     def compute_nominal_value_added(self,p):
-        self.nominal_value_added = p.alpha[None, :]*(self.X-self.X_M/p.sigma[None, None, :]).sum(axis=0)
+        self.nominal_value_added = p.alpha[None, :]*((self.X-self.X_M/p.sigma[None, None, :])/(1+p.tariff)).sum(axis=0)
     
     def compute_nominal_intermediate_input(self,p):
         self.nominal_intermediate_input = np.einsum('s,is->is',
@@ -783,8 +799,18 @@ class var:
                                   )
         
     def compute_gdp(self,p):
-        self.gdp = self.nominal_final_consumption + p.deficit_share_world_output*self.Z.sum() + self.w*(p.labor - self.l_P)
-    
+        self.gdp = self.nominal_final_consumption + \
+            p.deficit_share_world_output*np.einsum('nis,nis->',
+                                                   self.X,
+                                                   1/(1+p.tariff)
+                                                   ) + \
+            self.w*np.einsum('is->i',
+                             self.l_R + self.l_Ao
+                             ) + \
+            np.einsum('n,ins->i',
+                      self.w,
+                      self.l_Ae)
+
     def compute_pflow(self,p):
         self.pflow = np.einsum('nis,is,is->nis',
                               self.psi_m_star[...,1:]**(-p.k),
@@ -1065,7 +1091,7 @@ class var:
         #                             self.price_indices**(1-p.alpha[1]))/z,
         #                     x**(p.theta[1]-p.sigma[1]-1),
         #                     np.exp(-incomplete_sum_with_exponent(self.phi[...,1],p.theta[1]) * x**p.theta[1])
-        #                     )*p.theta[1]#!!!/z
+        #                     )*p.theta[1]/z
         #     return res[i,j]
         
         # # from tqdm import tqdm
@@ -1876,27 +1902,28 @@ class dynamic_var:
             
     def compute_profit(self,p):
         self.profit = np.zeros((p.N,p.N,p.S,self.Nt))
-        self.profit[...,1:,:] = np.einsum('nist,s,nist->nist',
+        self.profit[...,1:,:] = np.einsum('nist,s,nist,nis->nist',
                                 self.X_M[...,1:,:],
                                 1/p.sigma[1:],
-                                1/(self.PSI_M+self.PSI_M_0[...,None])[...,1:,:])
+                                1/(self.PSI_M+self.PSI_M_0[...,None])[...,1:,:],
+                                1/(1+p.tariff[...,1:]))
     
     def compute_nominal_final_consumption(self,p):
-        self.nominal_final_consumption = self.Z - np.einsum('s,nist->it',
+        self.nominal_final_consumption = self.Z - np.einsum('s,nist,nis->it',
                                                             1-p.alpha,
-                                                            self.X - self.X_M/p.sigma[None,None,:,None])
+                                                            self.X - self.X_M/p.sigma[None,None,:,None],
+                                                            1/(1+p.tariff))
     
     def compute_interest_rate(self,p):
         self.CP_growth_rate = 2*np.einsum('tu,nu->nt',self.D_neuman,self.nominal_final_consumption)\
             /(self.t_inf*self.nominal_final_consumption)
         
-        self.r = p.rho + (self.g[None,:]+self.CP_growth_rate)/p.gamma
+        A = p.rho + (self.g[None,:]+self.CP_growth_rate)/p.gamma
         
-        #!!!
         self.inflation = 2*np.einsum('tu,nu->nt',self.D_neuman,self.price_indices)\
             /(self.t_inf*self.price_indices)
             
-        self.r = self.r + (1-1/p.gamma)*self.inflation
+        self.r = A + (1-1/p.gamma)*self.inflation
         
     def compute_solver_quantities(self,p):
         self.compute_phi(p)
@@ -1913,7 +1940,7 @@ class dynamic_var:
         self.compute_interest_rate(p)
         
     def compute_wage(self,p):
-        wage = (p.alpha[None, :, None] * (self.X - self.X_M/p.sigma[None, None, :, None]).sum(axis=0)
+        wage = (p.alpha[None, :, None] * ((self.X - self.X_M/p.sigma[None, None, :, None])/(1+p.tariff)).sum(axis=0)
                 ).sum(axis=1)/self.l_P
         return wage
         
@@ -1923,6 +1950,23 @@ class dynamic_var:
         C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
         D = np.einsum('nt,inst->it', self.w, self.l_Ae)
         Z = (A+B-(C+D))
+        A1 = np.einsum('nist,nis->it', 
+                      self.X,
+                      1/(1+p.tariff))
+        A2 = np.einsum('inst,ins,ins->it', 
+                      self.X,
+                      p.tariff,
+                      1/(1+p.tariff))
+        B = np.einsum('it,nist->i', self.w, self.l_Ae)
+        C = np.einsum('i,t->it',
+                      p.deficit_share_world_output,
+                      np.einsum('nist,nis->t', 
+                                  self.X,
+                                  1/(1+p.tariff)
+                                  )
+                      )
+        D = np.einsum('nt,inst->it', self.w, self.l_Ae)
+        Z = (A1+A2+B-(C+D))
         return Z
         
     def compute_price_indices(self,p):
@@ -1930,7 +1974,7 @@ class dynamic_var:
         A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :, None] \
             * ((self.PSI_M + self.PSI_M_0[...,None]) * self.phi**power[None, None, :, None]).sum(axis=1)
         B = (self.PSI_CD + self.PSI_CD_0[...,None])*(self.phi**p.theta[None,None,:,None]).sum(axis=1)**(power/p.theta)[None, :, None]
-        #!!! temp = (gamma((p.theta+1-p.sigma)/p.sigma)[None,:,None]*(A+B))
+
         temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:,None]*(A+B))
         one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
         price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :, None]/(p.sigma[None, :, None]-1)) ).prod(axis=1)
@@ -2873,14 +2917,14 @@ class moments:
         df.to_csv(path+'list_of_moments.csv',index=False)
         
     def compute_STFLOW(self,var,p):
-        self.STFLOW = (var.X)/var.X.sum()
+        self.STFLOW = (var.X/(1+p.tariff))/(var.X/(1+p.tariff)).sum()
         
     def compute_STFLOWSDOM(self,var,p):
-        self.STFLOWSDOM = (var.X)/np.einsum('nns->ns',var.X)[:,None,:]
+        self.STFLOWSDOM = (var.X/(1+p.tariff))/np.einsum('nns->ns',var.X/(1+p.tariff))[:,None,:]
         
     def compute_SPFLOW(self,var,p):
         pflow = var.pflow
-        self.SPFLOWDOM = pflow/pflow.sum()
+        self.SPFLOWDOM = pflow/(1+p.tariff[...,1])/(pflow/(1+p.tariff[...,1])).sum()
         inter_pflow = remove_diag(var.pflow)
         self.SPFLOW = inter_pflow/inter_pflow.sum()
         
@@ -2892,14 +2936,14 @@ class moments:
         self.SPFLOWDOM_RUS = self.SPFLOWDOM/self.SPFLOWDOM_US
         
     def compute_TWSPFLOW(self,var,p):
-        pflow = var.pflow
+        pflow = var.pflow/(1+p.tariff[...,1])
         self.TWSPFLOWDOM = pflow*p.trade_flows[...,1]/(pflow.sum()*p.trade_flows[...,1].sum())
-        inter_pflow = remove_diag(var.pflow)
-        off_diag_trade_flows = remove_diag(p.trade_flows[...,1])
+        inter_pflow = remove_diag(var.pflow/(1+p.tariff[...,1]))
+        off_diag_trade_flows = remove_diag(p.trade_flows[...,1]/(1+p.tariff[...,1]))
         self.TWSPFLOW = inter_pflow*off_diag_trade_flows/(inter_pflow.sum()*off_diag_trade_flows.sum())        
         
     def compute_OUT(self,var,p):
-        self.OUT = var.Z.sum()
+        self.OUT = (var.X/(1+p.tariff)).sum()
         
     def compute_SRGDP(self,var,p):
         numerator = var.gdp/var.price_indices
@@ -2941,7 +2985,7 @@ class moments:
         self.KM_GDP = self.KM*self.RD_US
         
     def compute_SRDUS(self,var,p):
-        self.SRDUS = var.X_M[:,0,1].sum()/var.X[:,0,1].sum()
+        self.SRDUS = (var.X_M[:,0,1]/(1+p.tariff[:,0,1])).sum()/(var.X[:,0,1]/(1+p.tariff[:,0,1])).sum()
     
     def compute_GPDIFF(self,var,p):
         price_index_growth_rate = var.g_s/(1-p.sigma)+p.alpha*var.g

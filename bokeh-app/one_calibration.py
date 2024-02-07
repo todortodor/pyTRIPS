@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1030'
+baseline_number = '1040'
 # n = 4
 if new_run:
     p = parameters()
@@ -47,7 +47,10 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.weights_dict['TE'] = 5
 # m.weights_dict['RP'] = 10
 # p.kappa = 0.1
-p.sigma[1] = 3.375
+# p.sigma[1] = 3.375
+
+p.tariff[:] = 1.0
+np.einsum('iis->is',p.tariff)[:] = 0
 
 # m.RP_target[3] = m.RP_target[3]*1.2
 # m.SRGDP_target[1] = m.SRGDP_target[1]*1.2
@@ -121,10 +124,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1030'
+baseline_number = '1040'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 99.7
+run_number = 5.0
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
