@@ -171,6 +171,8 @@ class parameters:
                     'k':pd.Index(['scalar']),
                     'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                                                       , names=['destination','origin','sector']),
+                    'tariff':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
+                                                      , names=['destination','origin','sector']),
                     'fe':pd.Index(self.sectors, name='sector'),
                     'r_hjort':pd.Index(self.countries, name='country'),
                     'fo':pd.Index(self.sectors, name='sector'),
@@ -380,6 +382,7 @@ class parameters:
         one_country_p.T = one_country_p.T[country_i:country_i+1,:]
         one_country_p.delta = one_country_p.delta[country_i:country_i+1,:]
         one_country_p.tau = one_country_p.tau[country_i:country_i+1,country_i:country_i+1,:]
+        one_country_p.tariff = one_country_p.tariff[country_i:country_i+1,country_i:country_i+1,:]
         one_country_p.trade_flows = one_country_p.trade_flows[country_i:country_i+1,country_i:country_i+1,:]
         one_country_p.trade_shares = one_country_p.trade_flows/one_country_p.trade_flows.sum()
         one_country_p.r_hjort = one_country_p.r_hjort[country_i:country_i+1]
@@ -708,9 +711,16 @@ class var:
             return phi
         
         elif self.context == 'counterfactual':
-            phi = np.einsum('is,nis,is,is->nis',
+            # phi = np.einsum('is,nis,is,is->nis',
+            #         p.T**(1/p.theta[None,:]),
+            #         1/p.tau,
+            #         self.w[:,None]**(-p.alpha[None,:]),
+            #         self.price_indices[:,None]**(p.alpha[None,:]-1))
+            # return phi
+            phi = np.einsum('is,nis,nis,is,is->nis',
                     p.T**(1/p.theta[None,:]),
                     1/p.tau,
+                    1/(1+p.tariff),
                     self.w[:,None]**(-p.alpha[None,:]),
                     self.price_indices[:,None]**(p.alpha[None,:]-1))
             return phi
@@ -738,18 +748,19 @@ class var:
                         one_over_denominator)**(1/p.theta)[None,None,:]
         return self.phi/phi
     
-    def scale_tau(self,p):
-        self.phi = self.phi\
-            *np.einsum('ns,ns,ns->ns',
-                p.T**(1/p.theta[None,:]),
-                self.w[:,None]**(-p.alpha[None,:]),
-                self.price_indices[:,None]**(p.alpha[None,:]-1))[:,None,:]\
-            /np.einsum('nns->ns',self.phi)[:,None,:]
+    # def scale_tau(self,p):
+    #     self.phi = self.phi\
+    #         *np.einsum('ns,ns,ns->ns',
+    #             p.T**(1/p.theta[None,:]),
+    #             self.w[:,None]**(-p.alpha[None,:]),
+    #             self.price_indices[:,None]**(p.alpha[None,:]-1))[:,None,:]\
+    #         /np.einsum('nns->ns',self.phi)[:,None,:]
     
     def compute_tau(self,p, assign = True):
-        tau = np.einsum('is,nis,is,is->nis',
+        tau = np.einsum('is,nis,nis,is,is->nis',
                         p.T**(1/p.theta[None,:]),
                         1/self.phi,
+                        1/(1+p.tariff),
                         self.w[:,None]**-p.alpha[None,:],
                         self.price_indices[:,None]**(p.alpha[None,:]-1),
                         )
@@ -1761,9 +1772,10 @@ class dynamic_var:
         self.PSI_M_0 = self.PSI_MNP_0+self.PSI_MPND_0+self.PSI_MPD_0
     
     def compute_phi(self, p):
-        self.phi = np.einsum('is,nis,ist,ist->nist',
+        self.phi = np.einsum('is,nis,nis,ist,ist->nist',
                 p.T**(1/p.theta[None,:]),
                 1/p.tau,
+                1/(1+p.tariff),
                 self.w[:,None,:]**(-p.alpha[None,:,None]),
                 self.price_indices[:,None,:]**(p.alpha[None,:,None]-1))
         
@@ -1940,7 +1952,7 @@ class dynamic_var:
         self.compute_interest_rate(p)
         
     def compute_wage(self,p):
-        wage = (p.alpha[None, :, None] * ((self.X - self.X_M/p.sigma[None, None, :, None])/(1+p.tariff)).sum(axis=0)
+        wage = (p.alpha[None, :, None] * ((self.X - self.X_M/p.sigma[None, None, :, None])/(1+p.tariff[...,None])).sum(axis=0)
                 ).sum(axis=1)/self.l_P
         return wage
         
@@ -1957,7 +1969,7 @@ class dynamic_var:
                       self.X,
                       p.tariff,
                       1/(1+p.tariff))
-        B = np.einsum('it,nist->i', self.w, self.l_Ae)
+        B = np.einsum('it,nist->it', self.w, self.l_Ae)
         C = np.einsum('i,t->it',
                       p.deficit_share_world_output,
                       np.einsum('nist,nis->t', 

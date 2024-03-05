@@ -1040,6 +1040,10 @@ comments_dic['1040'] = {
     '5.0':'5.0:tariff = 100%',
     }
 
+comments_dic['1050'] = {
+    "baseline":"baseline : 2015 with data tariffs",
+    '9.2':'9.2:partial calib, 3-year smoothed data 1992'}
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}

@@ -11,7 +11,7 @@ from solver_funcs import fixed_point_solver
 
 p = parameters()
 # p.load_run('calibration_results_matched_economy/1020/')
-p.load_run('calibration_results_matched_economy/1030/')
+p.load_run('calibration_results_matched_economy/1040/')
 # for c in p.countries:
     # p_US = p.make_one_country_parameters(c)
     # p.load_run('calibration_results_matched_economy/405/')
@@ -52,30 +52,61 @@ p.load_run('calibration_results_matched_economy/1030/')
 #                           # apply_bound_psi_star=True
 #                         )
 
-# p.delta[0,1] = 0.01
+importer = 'RUS'
+exporter = 'BRA'
 
+
+# p.delta[0,1] = 0.01
+exporter_index = p.countries.index(exporter)
+importer_index = p.countries.index(importer) 
+
+print(importer,exporter)
+# print(i)
+# p.tariff[importer_index,exporter_index,1] = -0.5
+p.tariff[:,:,1] = -0.5
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='l_R',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=False,
-                        damping = 2,
-                        max_count = 1000,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=1
-                        # damping=10
-                          # apply_bound_psi_star=True
-                        )
+                        #         context = 'counterfactual',
+                        # cobweb_anim=False,tol =1e-14,
+                        # accelerate=False,
+                        # accelerate_when_stable=True,
+                        # cobweb_qty='l_R',
+                        # plot_convergence=True,
+                        # plot_cobweb=False,
+                        # safe_convergence=0.1,
+                        # disp_summary=False,
+                        # damping = 10,
+                        # max_count = 10000,
+                        # accel_memory =50, 
+                        # accel_type1=True, 
+                        # accel_regularization=1e-10,
+                        # accel_relaxation=0.5, 
+                        # accel_safeguard_factor=1, 
+                        # accel_max_weight_norm=1e6,
+                        # damping_post_acceleration=2
+                        # # damping=10
+                        #   # apply_bound_psi_star=True
+                        # )
+context = 'counterfactual',
+cobweb_anim=False,tol =1e-14,
+accelerate=False,
+accelerate_when_stable=True,
+cobweb_qty='l_R',
+plot_convergence=True,
+plot_cobweb=False,
+safe_convergence=0.001,
+disp_summary=False,
+damping = 10,
+max_count = 1000,
+accel_memory =50, 
+accel_type1=True, 
+accel_regularization=1e-10,
+accel_relaxation=0.5, 
+accel_safeguard_factor=1, 
+accel_max_weight_norm=1e6,
+damping_post_acceleration=5
+# damping=10
+  # apply_bound_psi_star=True
+)
 
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 

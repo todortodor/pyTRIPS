@@ -18,6 +18,7 @@ legacy_data_path = 'data/'
 pflows_path = '/Users/slepot/Documents/taff/datas/PATSTAT/results/'
 # WDI_data_path = '/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/'
 WDI_data_path = '/Users/slepot/Dropbox/TRIPS/Calibration data/'
+tariff_data_path = '/Users/slepot/Dropbox/TRIPS/Calibration data/'
 
 moments_descriptions = pd.read_csv(
     legacy_data_path+'moments_descriptions.csv', sep=';', index_col=0)
@@ -25,6 +26,7 @@ scalar_moments = pd.read_csv(
     legacy_data_path+'scalar_moments.csv', index_col=0)
 final_pat_fees = pd.read_csv(
     legacy_data_path+'final_pat_fees.csv', index_col=0)
+
 
 exchange_rates = {
     1990: 1.066116,
@@ -141,12 +143,52 @@ for config_dic in config_dics:
         except:
             pass
 
+    tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
+        ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
+    for tariff_year in range(1990,1996):
+        tariff_all.loc[(tariff_all.year == tariff_year) &
+                   (tariff_all.sector == 0),'tariff'] = tariff_all[(tariff_all.year == 1996) &
+                              (tariff_all.sector == 0)]['tariff'].values
+    
+    tariff = tariff_all[(tariff_all.year == year)].groupby(['origin_code',
+                                                            'destination_code',
+                                                            'sector'])[['tariff']].mean()/100
+    
+    
+    # #%%
+    # import matplotlib.pyplot as plt
+    
+    # fig,ax= plt.subplots(figsize = (12,8))
+    
+    # for s in [0,1]:
+    #     if s==0:
+    #         ls='-'
+    #     else:
+    #         ls ='--'
+    #     for base_year in [1990,2010]:
+    #         if base_year==1990:
+    #             color='r'
+    #         else:
+    #             color='blue'
+    #         x = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean().index.get_level_values(0)
+    #         y = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean()['tariff']
+    #         ax.plot(x,y,label=f'base year {base_year}, sector {s}',ls=ls,color=color)
+    # plt.legend()
+    # plt.show()
+    # #%%
+    
+    
+    if write:
+        tariff.to_csv(path+'tariff.csv')
+        tariff.to_csv(
+            dropbox_path+'tariff.csv')
+    
+    #%%
+        
     if write:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         moments_descriptions.to_csv(
             dropbox_path+'moments_descriptions.csv', sep=';')
-    
-    
     
     # crosswalk_countries = pd.read_csv(
     #     '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/countries_wdi.csv')
@@ -302,8 +344,6 @@ for config_dic in config_dics:
     if write:
         sector_moments.to_csv(path+'sector_moments.csv')
         sector_moments.to_csv(dropbox_path+'sector_moments.csv')
-    
-    
     
     final_pat_fees_year = final_pat_fees.copy()
     #!!! changing EUR patenting fee
