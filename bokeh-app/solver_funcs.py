@@ -1021,8 +1021,8 @@ def minus_welfare_of_delta(delta,p,c,sol_it_baseline, hist = None,
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
+                                plot_convergence=False,
+                                plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
                                 damping = 10,
@@ -1182,7 +1182,7 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
                                 safe_convergence=0.001,
                                 disp_summary=True,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
@@ -1367,7 +1367,7 @@ def minus_welfare_of_tariff(country_tariff,p,c,sol_it_baseline, hist = None,
                             plot_convergence=False,
                             plot_cobweb=False,
                             # plot_live=True,
-                            safe_convergence=0.001,
+                            safe_convergence=0.1,
                             disp_summary=False,
                             damping = 10,
                             max_count = 1e4,
@@ -1377,7 +1377,7 @@ def minus_welfare_of_tariff(country_tariff,p,c,sol_it_baseline, hist = None,
                             accel_relaxation=0.5, 
                             accel_safeguard_factor=1, 
                             accel_max_weight_norm=1e6,
-                            damping_post_acceleration=5
+                            damping_post_acceleration=2
                             ) 
     if sol.status != 'successful':
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
@@ -1386,9 +1386,9 @@ def minus_welfare_of_tariff(country_tariff,p,c,sol_it_baseline, hist = None,
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -1398,7 +1398,7 @@ def minus_welfare_of_tariff(country_tariff,p,c,sol_it_baseline, hist = None,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
         if sol.status != 'successful':
             print(p.delta,'failed2')
@@ -1552,17 +1552,17 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=True,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                                     context = 'counterfactual',
@@ -1598,7 +1598,7 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -1608,7 +1608,7 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
 
         sol_it_baseline.scale_P(p_it_baseline)
@@ -1629,7 +1629,7 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -1639,7 +1639,7 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )   
         sol_it.scale_P(p_it_baseline)
         sol_it.compute_non_solver_quantities(p_it_baseline)
@@ -1680,10 +1680,11 @@ def find_nash_eq_tariff(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_point',
         
         if it>5:
             damping = 5
-            
-        plt.plot(convergence)
-        plt.yscale('log')
-        plt.show()
+        
+        if not parallel:
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
 
     if dynamics:
         return p_it_baseline, dyn_sol_it
@@ -1845,17 +1846,17 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=True,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                                     context = 'counterfactual',
@@ -1891,7 +1892,7 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -1901,7 +1902,7 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
 
         sol_it_baseline.scale_P(p_it_baseline)
@@ -1939,7 +1940,7 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -1949,7 +1950,7 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )   
         sol_it.scale_P(p_it_baseline)
         sol_it.compute_non_solver_quantities(p_it_baseline)
@@ -1990,10 +1991,11 @@ def find_nash_eq_tariff_coop_delta(p_baseline,aggregation_method,lb_tariff=0,ub_
         
         if it>5:
             damping = 5
-            
-        plt.plot(convergence)
-        plt.yscale('log')
-        plt.show()
+        
+        if not parallel:
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
 
     if dynamics:
         return p_it_baseline, dyn_sol_it
@@ -2022,7 +2024,7 @@ def minus_welfare_of_tariff_delta(country_tariff_delta,p,c,sol_it_baseline, hist
                             plot_convergence=False,
                             plot_cobweb=False,
                             # plot_live=True,
-                            safe_convergence=0.001,
+                            safe_convergence=0.1,
                             disp_summary=False,
                             damping = 10,
                             max_count = 1e4,
@@ -2032,7 +2034,7 @@ def minus_welfare_of_tariff_delta(country_tariff_delta,p,c,sol_it_baseline, hist
                             accel_relaxation=0.5, 
                             accel_safeguard_factor=1, 
                             accel_max_weight_norm=1e6,
-                            damping_post_acceleration=5
+                            damping_post_acceleration=2
                             ) 
     if sol.status != 'successful':
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
@@ -2041,9 +2043,9 @@ def minus_welfare_of_tariff_delta(country_tariff_delta,p,c,sol_it_baseline, hist
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -2053,7 +2055,7 @@ def minus_welfare_of_tariff_delta(country_tariff_delta,p,c,sol_it_baseline, hist
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
         if sol.status != 'successful':
             print(p.delta,'failed2')
@@ -2215,17 +2217,17 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=True,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
     
     sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                                     context = 'counterfactual',
@@ -2265,7 +2267,7 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -2275,7 +2277,7 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
 
         sol_it_baseline.scale_P(p_it_baseline)
@@ -2298,7 +2300,7 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -2308,7 +2310,7 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )   
         sol_it.scale_P(p_it_baseline)
         sol_it.compute_non_solver_quantities(p_it_baseline)
@@ -2347,17 +2349,17 @@ def find_nash_eq_tariff_delta(p_baseline,lb_tariff=0,ub_tariff=1,method='fixed_p
         convergence.append(np.linalg.norm(x_new - x_old))
         
         print(convergence)
-        plt.plot(x_new[len(p_baseline.countries):]-x_old[len(p_baseline.countries):])
-        plt.show()
+        if not parallel:
+            plt.plot(x_new[len(p_baseline.countries):]-x_old[len(p_baseline.countries):])
+            plt.show()
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
         
         it += 1
         
         if it>5:
             damping = 5
-            
-        plt.plot(convergence)
-        plt.yscale('log')
-        plt.show()
 
     if dynamics:
         return p_it_baseline, dyn_sol_it
@@ -2405,8 +2407,8 @@ def minus_world_welfare_of_delta(deltas,p,sol_baseline,dynamics,aggregation_meth
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
+                                plot_convergence=False,
+                                plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=False,
                                 damping = 10,
@@ -2543,7 +2545,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                                 safe_convergence=0.001,
                                 disp_summary=False,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
@@ -2796,7 +2798,7 @@ def minus_world_welfare_of_tariff(tariff,p,sol_baseline,dynamics,aggregation_met
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 5,
                                 max_count = 1e4,
@@ -2822,9 +2824,9 @@ def minus_world_welfare_of_tariff(tariff,p,sol_baseline,dynamics,aggregation_met
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -2834,7 +2836,7 @@ def minus_world_welfare_of_tariff(tariff,p,sol_baseline,dynamics,aggregation_met
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
         if sol.status == 'successful':
             p.guess = sol_c.vector_from_var()
@@ -2957,17 +2959,17 @@ def find_coop_eq_tariff(p_baseline,aggregation_method,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
         
     custom_sol_options = solver_options
     
@@ -3083,7 +3085,7 @@ def minus_world_welfare_of_tariff_delta(x,p,sol_baseline,dynamics,aggregation_me
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 5,
                                 max_count = 1e4,
@@ -3109,9 +3111,9 @@ def minus_world_welfare_of_tariff_delta(x,p,sol_baseline,dynamics,aggregation_me
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -3227,17 +3229,17 @@ def find_coop_eq_tariff_delta(p_baseline,aggregation_method,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
         
     custom_sol_options = solver_options
     
@@ -3343,7 +3345,7 @@ def minus_world_welfare_of_delta_nash_tariff(deltas,p,sol_baseline,dynamics,aggr
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 5,
                                 max_count = 1e4,
@@ -3369,9 +3371,9 @@ def minus_world_welfare_of_delta_nash_tariff(deltas,p,sol_baseline,dynamics,aggr
                                 accelerate=False,
                                 accelerate_when_stable=False,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.001,
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
                                 max_count = 1e4,
@@ -3381,7 +3383,7 @@ def minus_world_welfare_of_delta_nash_tariff(deltas,p,sol_baseline,dynamics,aggr
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
+                                damping_post_acceleration=2
                                 )
         if sol.status == 'successful':
             p.guess = sol_c.vector_from_var()
@@ -3491,17 +3493,17 @@ def find_coop_eq_delta_nash_tariff(p_baseline,aggregation_method,
                                 cobweb_qty='phi',
                                 plot_convergence=False,
                                 plot_cobweb=False,
-                                safe_convergence=0.001,
+                                safe_convergence=0.1,
                                 disp_summary=False,
                                 damping = 10,
-                                max_count = 3e3,
+                                max_count = 1e4,
                                 accel_memory = 50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
                                 accel_relaxation=0.5, 
                                 accel_safeguard_factor=1, 
                                 accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5)
+                                damping_post_acceleration=2)
         
     custom_sol_options = solver_options
     
@@ -3714,8 +3716,8 @@ def make_counterfactual(p_baseline,country,local_path,
                                     accelerate=False,
                                     accelerate_when_stable=False,
                                     cobweb_qty='phi',
-                                    plot_convergence=True,
-                                    plot_cobweb=True,
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
                                     safe_convergence=0.001,
                                     disp_summary=False,
                                     damping = 10,

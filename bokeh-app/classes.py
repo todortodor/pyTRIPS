@@ -637,7 +637,7 @@ class var:
         self.compute_price_indices(p)
 
     def compute_wage(self, p):
-        wage = (p.alpha[None, :] * (self.X - self.X_M/p.sigma[None, None, :]).sum(axis=0)
+        wage = (p.alpha[None, :] * ((self.X - self.X_M/p.sigma[None, None, :])/(1+p.tariff)).sum(axis=0)
                 ).sum(axis=1)/self.l_P
         return wage
             
@@ -749,6 +749,7 @@ class var:
         return self.phi/phi
     
     # def scale_tau(self,p):
+        
     #     self.phi = self.phi\
     #         *np.einsum('ns,ns,ns->ns',
     #             p.T**(1/p.theta[None,:]),

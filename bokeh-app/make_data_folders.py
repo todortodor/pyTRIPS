@@ -142,18 +142,24 @@ for config_dic in config_dics:
             os.mkdir(dropbox_path)
         except:
             pass
-
+        
+    
+    correction = True
+    
     tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
         ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
-    for tariff_year in range(1990,1996):
-        tariff_all.loc[(tariff_all.year == tariff_year) &
-                   (tariff_all.sector == 0),'tariff'] = tariff_all[(tariff_all.year == 1996) &
-                              (tariff_all.sector == 0)]['tariff'].values
     
-    tariff = tariff_all[(tariff_all.year == year)].groupby(['origin_code',
+    if correction:
+        for tariff_year in range(1990,1996):
+            tariff_all.loc[(tariff_all.year == tariff_year) &
+                       (tariff_all.sector == 0),'tariff'] = tariff_all.loc[(tariff_all.year == tariff_year) &
+                                  (tariff_all.sector == 0),'tariff']+tariff_all[(tariff_all.year == 1996) &
+                                  (tariff_all.sector == 0)]['tariff'].values-tariff_all[(tariff_all.year == 1995) &
+                                  (tariff_all.sector == 0)]['tariff'].values
+    
+    tariff = tariff_all[(tariff_all.year == year) & (tariff_all.base_year == 2010)].groupby(['origin_code',
                                                             'destination_code',
                                                             'sector'])[['tariff']].mean()/100
-    
     
     # #%%
     # import matplotlib.pyplot as plt

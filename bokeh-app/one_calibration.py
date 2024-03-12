@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1040'
+baseline_number = '1050'
 # n = 4
 if new_run:
     p = parameters()
@@ -23,14 +23,14 @@ if new_run:
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
     # p.load_run('calibration_results_matched_economy/baseline_1030_variations/0.2/')
-    p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
+    # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
     # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
-    m.load_data('data/data_11_countries_2015/')
+    # m.load_data('data/data_11_countries_2015/')
 
 
 

@@ -57,18 +57,20 @@ for y in years:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         
         data_to_average_list = [
-        dict(name='country_country_moments.csv'
-             ,index_col=[0,1]),
-        dict(name='country_country_sector_moments.csv'
+        # dict(name='country_country_moments.csv'
+        #      ,index_col=[0,1]),
+        # dict(name='country_country_sector_moments.csv'
+        #      ,index_col=[0,1,2]),
+        dict(name='tariff.csv'
              ,index_col=[0,1,2]),
-        dict(name='country_moments.csv'
-             ,index_col=[0]),
-        dict(name='final_pat_fees.csv'
-             ,index_col=[0,1]),
-        dict(name='scalar_moments.csv'
-             ,index_col=[0]),
-        dict(name='sector_moments.csv'
-             ,index_col=[0]),
+        # dict(name='country_moments.csv'
+        #      ,index_col=[0]),
+        # dict(name='final_pat_fees.csv'
+        #      ,index_col=[0,1]),
+        # dict(name='scalar_moments.csv'
+        #      ,index_col=[0]),
+        # dict(name='sector_moments.csv'
+        #      ,index_col=[0]),
         ]
         
         for data_to_average in data_to_average_list:
