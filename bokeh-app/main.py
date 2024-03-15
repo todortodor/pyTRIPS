@@ -1069,7 +1069,7 @@ comments_dic['1050'] = {
     # "11.25" : "11.25 : 2015 smooth 3y"
     }
 
-comments_dic['1050'] = {
+comments_dic['1200'] = {
     "baseline":"baseline : 2015 with zero tariffs",
     '9.2':'9.2:partial calib, 3-year smoothed data 1992'
     }
