@@ -45,8 +45,8 @@ India,IND,6,6,6,6
 Canada,CAN,100,7,7,7
 "Korea, Rep.",KOR,100,8,8,8
 Russian Federation,RUS,100,9,9,9
-Australia,AUS,100,10,10,100
-Mexico,MEX,100,11,11,10
+Australia,AUS,100,10,100,100
+Mexico,MEX,100,11,10,10
 Indonesia,IDN,100,12,100,100
 Afghanistan,AFG,100,100,100,100
 Algeria,DZA,100,100,100,100
@@ -182,7 +182,7 @@ Singapore,SGP,100,100,100,100
 Sint Maarten (Dutch part),SXM,100,100,100,100
 Solomon Islands,SLB,100,100,100,100
 Somalia,SOM,100,100,100,100
-South Africa,ZAF,100,100,100,100
+South Africa,ZAF,100,100,11,100
 South Sudan,SSD,100,100,100,100
 Sri Lanka,LKA,100,100,100,100
 St. Kitts and Nevis,KNA,100,100,100,100

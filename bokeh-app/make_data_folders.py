@@ -118,7 +118,7 @@ config_dics = [{
     # for y in [1990]
     # for y in range(2005,2006)
     # for N in [7,12,13]
-    for N in [11]
+    for N in [12]
     ]
 
 write = True
@@ -144,52 +144,52 @@ for config_dic in config_dics:
             pass
         
     
-    correction = True
+    # correction = True
     
-    tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
-        ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
+    # tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
+    #     ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
     
-    if correction:
-        for tariff_year in range(1990,1996):
-            tariff_all.loc[(tariff_all.year == tariff_year) &
-                       (tariff_all.sector == 0),'tariff'] = tariff_all.loc[(tariff_all.year == tariff_year) &
-                                  (tariff_all.sector == 0),'tariff']+tariff_all[(tariff_all.year == 1996) &
-                                  (tariff_all.sector == 0)]['tariff'].values-tariff_all[(tariff_all.year == 1995) &
-                                  (tariff_all.sector == 0)]['tariff'].values
+    # if correction:
+    #     for tariff_year in range(1990,1996):
+    #         tariff_all.loc[(tariff_all.year == tariff_year) &
+    #                    (tariff_all.sector == 0),'tariff'] = tariff_all.loc[(tariff_all.year == tariff_year) &
+    #                               (tariff_all.sector == 0),'tariff']+tariff_all[(tariff_all.year == 1996) &
+    #                               (tariff_all.sector == 0)]['tariff'].values-tariff_all[(tariff_all.year == 1995) &
+    #                               (tariff_all.sector == 0)]['tariff'].values
     
-    tariff = tariff_all[(tariff_all.year == year) & (tariff_all.base_year == 2010)].groupby(['origin_code',
-                                                            'destination_code',
-                                                            'sector'])[['tariff']].mean()/100
+    # tariff = tariff_all[(tariff_all.year == year) & (tariff_all.base_year == 2010)].groupby(['origin_code',
+    #                                                         'destination_code',
+    #                                                         'sector'])[['tariff']].mean()/100
     
-    # #%%
-    # import matplotlib.pyplot as plt
+    # # #%%
+    # # import matplotlib.pyplot as plt
     
-    # fig,ax= plt.subplots(figsize = (12,8))
+    # # fig,ax= plt.subplots(figsize = (12,8))
     
-    # for s in [0,1]:
-    #     if s==0:
-    #         ls='-'
-    #     else:
-    #         ls ='--'
-    #     for base_year in [1990,2010]:
-    #         if base_year==1990:
-    #             color='r'
-    #         else:
-    #             color='blue'
-    #         x = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean().index.get_level_values(0)
-    #         y = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean()['tariff']
-    #         ax.plot(x,y,label=f'base year {base_year}, sector {s}',ls=ls,color=color)
-    # plt.legend()
-    # plt.show()
-    # #%%
+    # # for s in [0,1]:
+    # #     if s==0:
+    # #         ls='-'
+    # #     else:
+    # #         ls ='--'
+    # #     for base_year in [1990,2010]:
+    # #         if base_year==1990:
+    # #             color='r'
+    # #         else:
+    # #             color='blue'
+    # #         x = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean().index.get_level_values(0)
+    # #         y = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean()['tariff']
+    # #         ax.plot(x,y,label=f'base year {base_year}, sector {s}',ls=ls,color=color)
+    # # plt.legend()
+    # # plt.show()
+    # # #%%
     
     
-    if write:
-        tariff.to_csv(path+'tariff.csv')
-        tariff.to_csv(
-            dropbox_path+'tariff.csv')
+    # if write:
+    #     tariff.to_csv(path+'tariff.csv')
+    #     tariff.to_csv(
+    #         dropbox_path+'tariff.csv')
     
-    #%%
+    
         
     if write:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
@@ -350,7 +350,7 @@ for config_dic in config_dics:
     if write:
         sector_moments.to_csv(path+'sector_moments.csv')
         sector_moments.to_csv(dropbox_path+'sector_moments.csv')
-    
+    #%%
     final_pat_fees_year = final_pat_fees.copy()
     #!!! changing EUR patenting fee
     # final_pat_fees_year.loc[2,'fee'] = 30530*gdp_year.loc[2]/exchange_rates[year]/gdp.loc[

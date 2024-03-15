@@ -1069,6 +1069,11 @@ comments_dic['1050'] = {
     # "11.25" : "11.25 : 2015 smooth 3y"
     }
 
+comments_dic['1050'] = {
+    "baseline":"baseline : 2015 with zero tariffs",
+    '9.2':'9.2:partial calib, 3-year smoothed data 1992'
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -1080,8 +1085,9 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['618','701','702']    
 # baseline_list = ['901','803','806','808']    
 # baseline_list = ['1030','1040','1050']    
-baseline_list = ['1050']    
-baseline_mom = '1050'
+# baseline_list = ['1050']    
+baseline_list = ['1200']    
+baseline_mom = '1200'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1311,7 +1317,7 @@ country_sort = {
     'USA':	1,
     'JAP':	2,
     'CAN':	3,
-    'AUS':	13,
+    'ZAF':	13,
     'EUR':	5,
     'KOR':	6,
     'MEX':	7,
@@ -1610,7 +1616,7 @@ print(time.perf_counter() - start)
 #%% counterfactuals
 
 # baseline_cf = '101'
-baseline_cf = '1050'
+baseline_cf = '1200'
 country_cf = 'USA'
 
 def section_end(s):
@@ -1618,7 +1624,7 @@ def section_end(s):
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1050') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1200') and s.startswith('baseline')], key=section_end)#+\
     # sorted([s for s in os.listdir(cf_path) 
     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
     # sorted([s for s in os.listdir(cf_path) 
@@ -1815,7 +1821,7 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1050'
+baseline_dyn_cf = '1200'
 country_dyn_cf = 'USA'
 
 # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1030',
@@ -1834,7 +1840,7 @@ country_dyn_cf = 'USA'
 #                                                                                   '1030_99.12',
 #                                                                                   '1030_99.13'
 #                                                                                   ])
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1050',
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1200',
                                                                                   ])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
@@ -1995,16 +2001,16 @@ third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '1050'
+baseline_dyn_nash_coop = '1200'
 variation_dyn_nash_coop = 'baseline'
 equilibrium_type ='Nash'
 
 baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
     # '607','501'
-    '1030'
+    '1200'
     ])
 dic_of_possible_variations_dyn_nash_coop = {
-    '1050':['baseline'],
+    '1200':['baseline'],
     # '1003':['baseline','0.4'],
     # '1030':['baseline','99.0','99.1','99.2','99.3','99.4','99.5','99.6','99.7',     
     #         '99.8',     '99.9',     '99.10',     '99.11',
@@ -2189,7 +2195,7 @@ dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1050'
+baseline_nash_coop = '1200'
 
 # dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -2224,7 +2230,7 @@ baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline',
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
                                     # options=['802','803','804','805','806'])
-                                    options=['1030'])
+                                    options=['1200'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     

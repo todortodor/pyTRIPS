@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1050'
+baseline_number = '1200'
 # n = 4
 if new_run:
     p = parameters()
@@ -23,14 +23,14 @@ if new_run:
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
     # p.load_run('calibration_results_matched_economy/baseline_1030_variations/0.2/')
-    # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
+    # p.load_data('data/data_12_countries_2015/',keep_already_calib_params=False)
     start_time = time.perf_counter()
 
     m = moments()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
     # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
-    # m.load_data('data/data_11_countries_2015/')
+    # m.load_data('data/data_12_countries_2015/')
 
 
 
@@ -39,13 +39,65 @@ if new_run:
 # m.list_of_moments.append('SPFLOWDOM')
 # m.list_of_moments.append('DOMPATUS')
 m.drop_CHN_IND_BRA_ROW_from_RD = True
+# p.sigma = np.array([2.7, 2.9])
 # m.weights_dict['RD'] = 10
-# p.calib_parameters = ['delta','T','eta']
-# m.list_of_moments = ['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
+# p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
+# m.list_of_moments = ['GPDIFF',
+#  'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS', 'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS',
+#  'TE']
 # m.load_data('data/data_11_countries_1992/')
 # m.weights_dict['TO'] = 5
+# m.weights_dict['TE'] = 10
+# m.weights_dict['GROWTH'] = 10
 # m.weights_dict['TE'] = 5
-# m.weights_dict['RP'] = 10
+# m.weights_dict['GROWTH'] = 5
+# m.weights_dict = {'GPDIFF': 1,
+#  'GROWTH': 5,
+#  'KM': 1,
+#  'KM_GDP': 5,
+#  'OUT': 5,
+#  'RD': 10,
+#  'RD_US': 3,
+#  'RD_RUS': 3,
+#  'RP': 1,
+#  'SPFLOW': 1,
+#  'SPFLOW_US': 1,
+#  'SPFLOW_RUS': 1,
+#  'SPFLOWDOM': 1,
+#  'SPFLOWDOM_US': 1,
+#  'SPFLOWDOM_RUS': 1,
+#  'SRDUS': 1,
+#  'SRGDP': 1,
+#  'SRGDP_US': 1,
+#  'SRGDP_RUS': 1,
+#  'STFLOW': 1,
+#  'SDOMTFLOW': 1,
+#  'JUPCOST': 1,
+#  'UUPCOST': 1,
+#  'PCOSTNOAGG': 1,
+#  'PCOSTINTERNOAGG': 1,
+#  'PCOST': 1,
+#  'PCOSTINTER': 1,
+#  'JUPCOSTRD': 1,
+#  'TP': 1,
+#  'inter_TP': 3,
+#  'Z': 1,
+#  'STFLOWSDOM': 1,
+#  'SINNOVPATEU': 1,
+#  'SINNOVPATUS': 1,
+#  'NUR': 1,
+#  'TO': 5,
+#  'TE': 5,
+#  'DOMPATRATUSEU': 2,
+#  'DOMPATUS': 1,
+#  'DOMPATEU': 1,
+#  'DOMPATINUS': 1,
+#  'DOMPATINEU': 1,
+#  'SPATORIG': 2,
+#  'SPATDEST': 2,
+#  'TWSPFLOW': 1,
+#  'TWSPFLOWDOM': 1,
+#  'ERDUS': 3}
 # p.kappa = 0.1
 # p.sigma[1] = 3.375
 
@@ -61,10 +113,10 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 6
+max_iter = 20
 
 while cond:
-    if iterations < max_iter - 2:
+    if iterations < max_iter - 20:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time), 
@@ -78,7 +130,7 @@ while cond:
                                 args = (p,m,p.guess,hist,start_time), 
                                 bounds = bounds,
                                 max_nfev=1e8,
-                                xtol=1e-16, 
+                                xtol=1e-14, 
                                 verbose = 2)
     cond = iterations < max_iter
     iterations += 1
@@ -124,10 +176,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1050'
+baseline_number = '1200'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1050
+run_number = 1200
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

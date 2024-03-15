@@ -1534,6 +1534,8 @@ write_calibration_results(pre_TRIPS_plots_path+'pre_TRIPS_partial_calibration',p
 
 #%% pre-TRIPS calibration and counterfactual
 
+from classes import moments, parameters, var, dynamic_var
+
 p_pre = parameters()
 p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{pre_trips_variation}/')
 _, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,

@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 
-baseline_number = '1030'
+baseline_number = '1200'
 
 p_baseline = parameters()
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
@@ -88,15 +88,18 @@ for run_params in runs_params:
     
     p = p_baseline.copy()
     if run_params['number'] == 9.2:
-        p.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/',
+        # p.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/',
+        p.load_data(f'data_smooth_3_years/data_12_countries_{run_params["year"]}/',
                     keep_already_calib_params=True)
     else:
-        p.load_data(f'data/data_11_countries_{run_params["year"]}/',
+        # p.load_data(f'data/data_11_countries_{run_params["year"]}/',
+        p.load_data(f'data/data_12_countries_{run_params["year"]}/',
                     keep_already_calib_params=True)
     p.calib_parameters = run_params['calib_params']
     
     m = m_baseline.copy()
-    m.load_data(f'data/data_11_countries_{run_params["year"]}/')
+    # m.load_data(f'data/data_11_countries_{run_params["year"]}/')
+    m.load_data(f'data/data_12_countries_{run_params["year"]}/')
     print(m.data_path)
     m.list_of_moments = run_params['list_of_moments']
     

@@ -103,7 +103,7 @@ class parameters:
                               'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
-                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+                              'KOR', 'RUS', 'MEX', 'ZAF', 'ROW']
         if N==11:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'MEX', 'ROW']
@@ -145,7 +145,7 @@ class parameters:
         if not keep_already_calib_params:
             self.eta = np.ones((N, S))*0.02
             self.eta[:, 0] = 0
-            self.sigma = np.ones(S)*2.7
+            self.sigma = np.ones(S)*2.9
             self.theta = np.ones(S)*5
             self.zeta = np.ones(S)*0.01
             self.T = np.ones((N, S))*1.5
@@ -1568,7 +1568,7 @@ class dynamic_var:
                               'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
-                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+                              'KOR', 'RUS', 'MEX', 'ZAF', 'ROW']
         if N==11:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'MEX', 'ROW']
@@ -2518,55 +2518,55 @@ class moments:
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS']
         else:
             self.list_of_moments = list_of_moments
-        self.weights_dict = {'GPDIFF':1, 
-                             'GROWTH':1, 
-                             'KM':5, 
-                             'KM_GDP':5,
-                             'OUT':4, 
-                             'RD':3, 
-                             'RD_US':3, 
-                             'RD_RUS':3, 
-                             'RP':3, 
-                             'SPFLOW':1, 
-                             'SPFLOW_US':1, 
-                             'SPFLOW_RUS':1, 
-                             'SPFLOWDOM':1, 
-                             'SPFLOWDOM_US':1, 
-                             'SPFLOWDOM_RUS':1, 
-                             'SRDUS':1,
-                             'SRGDP':1, 
-                             'SRGDP_US':1, 
-                             'SRGDP_RUS':1, 
-                             'STFLOW':1,
-                             'SDOMTFLOW':1,
-                             'JUPCOST':1,
-                             'UUPCOST':1,
-                             'PCOSTNOAGG':1,
-                             'PCOSTINTERNOAGG':1,
-                             'PCOST':1,
-                             'PCOSTINTER':1,
-                             'JUPCOSTRD':1,
-                              'TP':1,
-                              'inter_TP':3,
-                              'Z':1,
-                              'STFLOWSDOM':1,
-                             'SINNOVPATEU':1,
-                             'SINNOVPATUS':1,
-                              'NUR':1,
-                              'TO':3,
-                              'TE':3,
-                              'DOMPATRATUSEU':2,
-                              'DOMPATUS':1,
-                              'DOMPATEU':1,
-                              'DOMPATINUS':1,
-                              'DOMPATINEU':1,
-                              'SPATORIG':2,
-                              'SPATDEST':2,
-                              'TWSPFLOW':1,
-                              'TWSPFLOWDOM':1,
-                              'ERDUS':3
+        self.weights_dict = {'GPDIFF': 1,
+                             'GROWTH': 5,
+                             'KM': 1,
+                             'KM_GDP': 5,
+                             'OUT': 5,
+                             'RD': 10,
+                             'RD_US': 3,
+                             'RD_RUS': 3,
+                             'RP': 1,
+                             'SPFLOW': 1,
+                             'SPFLOW_US': 1,
+                             'SPFLOW_RUS': 1,
+                             'SPFLOWDOM': 1,
+                             'SPFLOWDOM_US': 1,
+                             'SPFLOWDOM_RUS': 1,
+                             'SRDUS': 1,
+                             'SRGDP': 1,
+                             'SRGDP_US': 1,
+                             'SRGDP_RUS': 1,
+                             'STFLOW': 1,
+                             'SDOMTFLOW': 1,
+                             'JUPCOST': 1,
+                             'UUPCOST': 1,
+                             'PCOSTNOAGG': 1,
+                             'PCOSTINTERNOAGG': 1,
+                             'PCOST': 1,
+                             'PCOSTINTER': 1,
+                             'JUPCOSTRD': 1,
+                             'TP': 1,
+                             'inter_TP': 3,
+                             'Z': 1,
+                             'STFLOWSDOM': 1,
+                             'SINNOVPATEU': 1,
+                             'SINNOVPATUS': 1,
+                             'NUR': 1,
+                             'TO': 5,
+                             'TE': 5,
+                             'DOMPATRATUSEU': 2,
+                             'DOMPATUS': 1,
+                             'DOMPATEU': 1,
+                             'DOMPATINUS': 1,
+                             'DOMPATINEU': 1,
+                             'SPATORIG': 2,
+                             'SPATDEST': 2,
+                             'TWSPFLOW': 1,
+                             'TWSPFLOWDOM': 1,
+                             'ERDUS': 3
                              }
-        
+
         self.drop_CHN_IND_BRA_ROW_from_RD = True
         self.add_domestic_US_to_SPFLOW = False
         self.add_domestic_EU_to_SPFLOW = False
@@ -2636,7 +2636,7 @@ class moments:
                               'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
         if N==12:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
-                              'KOR', 'RUS', 'AUS', 'MEX', 'ROW']
+                              'KOR', 'RUS', 'MEX', 'ZAF', 'ROW']
         if N==11:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'MEX', 'ROW']
