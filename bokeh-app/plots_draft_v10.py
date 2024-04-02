@@ -236,7 +236,7 @@ try:
 except:
     pass
 
-robustness_checks_path = save_path+'/robustness_checks/'
+robustness_checks_path = save_path+'robustness_checks/'
 try:
     os.mkdir(robustness_checks_path)
 except:
