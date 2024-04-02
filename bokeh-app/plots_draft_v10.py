@@ -107,6 +107,8 @@ pre_trips_cf = True
 pre_trips_variation = '9.2'
 variation_with_doubled_tau_in_pat_sect = '10.2'
 variation_with_zero_trade_costs = '10.3'
+variation_with_zero_tariffs = '10.4'
+variation_with_ten_times_tariffs = '10.5'
 variation_with_doubled_nu = '2.0'
 
 variations_of_robust_checks = {
@@ -4347,6 +4349,10 @@ variations_of_robust_checks = {
      variation_with_doubled_tau_in_pat_sect:r'Doubled trade costs',
      'baseline':'Baseline',
      variation_with_zero_trade_costs:r'Zero trade costs and tariffs',
+     'baseline':'Baseline',
+     variation_with_zero_tariffs:r'Zero tariffs',
+     'baseline':'Baseline',
+     variation_with_ten_times_tariffs:r'Ten times tariffs',
      'baseline':'Baseline',
     }
 

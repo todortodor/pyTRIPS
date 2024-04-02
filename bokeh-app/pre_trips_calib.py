@@ -275,6 +275,92 @@ run_number = 10.3
 p_alt_trade_costs.write_params(local_path+str(run_number)+'/')
 m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
 
+#%% save a version of calibration with no tariffs
+
+baseline_number = 1060
+
+p_alt_trade_costs = p_baseline.copy()
+p_alt_trade_costs.tariff[...] = 0
+
+_, sol_alt_trade_costs = fixed_point_solver(p_alt_trade_costs,context = 'counterfactual',
+                        x0=p_alt_trade_costs.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_alt_trade_costs.scale_P(p_alt_trade_costs)
+sol_alt_trade_costs.compute_non_solver_quantities(p_alt_trade_costs)
+
+p_alt_trade_costs.guess = sol_alt_trade_costs.vector_from_var()
+
+m_alt_trade_costs = moments()
+m_alt_trade_costs.load_run('calibration_results_matched_economy/'+str(baseline_number)+'/')
+m_alt_trade_costs.compute_moments(sol_alt_trade_costs,p_alt_trade_costs)
+m_alt_trade_costs.compute_moments_deviations()
+
+local_path = 'calibration_results_matched_economy/baseline_'+str(baseline_number)+'_variations/'
+run_number = 10.4
+
+p_alt_trade_costs.write_params(local_path+str(run_number)+'/')
+m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
+
+#%% save a version of calibration with large tariffs
+
+baseline_number = 1060
+
+p_alt_trade_costs = p_baseline.copy()
+p_alt_trade_costs.tariff[...] = 10
+
+_, sol_alt_trade_costs = fixed_point_solver(p_alt_trade_costs,context = 'counterfactual',
+                        x0=p_alt_trade_costs.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_alt_trade_costs.scale_P(p_alt_trade_costs)
+sol_alt_trade_costs.compute_non_solver_quantities(p_alt_trade_costs)
+
+p_alt_trade_costs.guess = sol_alt_trade_costs.vector_from_var()
+
+m_alt_trade_costs = moments()
+m_alt_trade_costs.load_run('calibration_results_matched_economy/'+str(baseline_number)+'/')
+m_alt_trade_costs.compute_moments(sol_alt_trade_costs,p_alt_trade_costs)
+m_alt_trade_costs.compute_moments_deviations()
+
+local_path = 'calibration_results_matched_economy/baseline_'+str(baseline_number)+'_variations/'
+run_number = 10.5
+
+p_alt_trade_costs.write_params(local_path+str(run_number)+'/')
+m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
+
 #%% save a version of calibration with doubled nu
 
 baseline_number = 1060
@@ -330,8 +416,8 @@ import numpy as np
 
 baseline_number = '1060'
 
-# for i in range(16):
-for i in [8]:
+for i in range(16):
+# for i in [8]:
     
     p_baseline = parameters()
     p_baseline.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/99.{i}/')

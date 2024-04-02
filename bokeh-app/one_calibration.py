@@ -20,9 +20,9 @@ baseline_number = '1060'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
-    p.load_run('calibration_results_matched_economy/baseline_1060_variations/99.8/')
+    # p.load_run('calibration_results_matched_economy/baseline_1060_variations/99.8/')
     # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
