@@ -21,8 +21,8 @@ except:
 
 years = [y for y in range(1990,2019)]
 # years = [y for y in range(1990,1991)]
-# nbrs_countries = [11]
-nbrs_countries = [12]
+nbrs_countries = [11]
+# nbrs_countries = [12]
 # nbrs_countries = [7]
 
 years_for_smoothing = {}
@@ -58,20 +58,20 @@ for y in years:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         
         data_to_average_list = [
-        dict(name='country_country_moments.csv'
-             ,index_col=[0,1]),
-        dict(name='country_country_sector_moments.csv'
-             ,index_col=[0,1,2]),
-        # dict(name='tariff.csv'
+        # dict(name='country_country_moments.csv'
+        #      ,index_col=[0,1]),
+        # dict(name='country_country_sector_moments.csv'
         #      ,index_col=[0,1,2]),
-        dict(name='country_moments.csv'
-             ,index_col=[0]),
-        dict(name='final_pat_fees.csv'
-             ,index_col=[0,1]),
-        dict(name='scalar_moments.csv'
-             ,index_col=[0]),
-        dict(name='sector_moments.csv'
-             ,index_col=[0]),
+        dict(name='tariff.csv'
+             ,index_col=[0,1,2]),
+        # dict(name='country_moments.csv'
+        #      ,index_col=[0]),
+        # dict(name='final_pat_fees.csv'
+        #      ,index_col=[0,1]),
+        # dict(name='scalar_moments.csv'
+        #      ,index_col=[0]),
+        # dict(name='sector_moments.csv'
+        #      ,index_col=[0]),
         ]
         
         for data_to_average in data_to_average_list:

@@ -15,25 +15,25 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1200'
+baseline_number = '1060'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
-    # p.load_run('calibration_results_matched_economy/baseline_1030_variations/0.2/')
-    # p.load_data('data/data_12_countries_2015/',keep_already_calib_params=False)
+    p.load_run('calibration_results_matched_economy/baseline_1060_variations/99.8/')
+    # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
     # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
-    # m.load_data('data/data_12_countries_2015/')
+    # m.load_data('data/data_11_countries_2015/')
 
 
-
+# p.kappa = 0.4
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('DOMPATINUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -113,10 +113,10 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 20
+max_iter = 6
 
 while cond:
-    if iterations < max_iter - 20:
+    if iterations < max_iter - 4:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time), 
@@ -176,10 +176,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1200'
+baseline_number = '1060'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1200
+run_number = 99.8
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
@@ -187,7 +187,7 @@ path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 # p_sol.nu[1] = p_sol.nu[1]*2
 # run_number = 2.0
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
     path = dropbox_path

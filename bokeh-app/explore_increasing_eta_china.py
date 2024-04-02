@@ -36,7 +36,7 @@ save_to_tex_options = dict(position_float='centering',
                              clines='all;index',
                             hrules=True)
 
-baseline = '1030'
+baseline = '1060'
 variation = 'baseline'
 
 baseline_pre_trips_variation = baseline
@@ -44,7 +44,7 @@ pre_trips_cf = True
 pre_trips_variation = '9.2'
 
 baseline_pre_trips_full_variation = baseline
-pre_trips_full_variation = '3.1'
+# pre_trips_full_variation = '3.1'
 
 output_path = 'output/'
 output_name = 'draft_NBER'
@@ -98,19 +98,19 @@ if __name__ == '__main__':
     for coop in ['pop_weighted']:
         for i,country in enumerate(p_baseline.countries):
             
-            if country in ['MEX']:
+            if country in ['CHN','IND']:
                 print(country)
                 
                 dynamics = True
                 # lb = p_baseline.eta[:,1].min()/10
-                # lb = p_baseline.eta[i,1]
-                # ub = p_baseline.eta[:,1].max()*6
+                lb = p_baseline.eta[i,1]
+                ub = p_baseline.eta[:,1].max()*6
                 # 0.005403032289568117 0.005246461012418196 0.005403032289568117 values for negishi MEX to restart
                 # lb = p_baseline.eta[i,1]/10
                 # ub = p_baseline.eta[i,1]/2
                 
-                lb = p_baseline.eta[i,1]/200
-                ub = 0.00012936978783306
+                # lb = p_baseline.eta[i,1]
+                # ub = p_baseline.eta[i,1]*200
                 it = 0
                 
                 lb_delta = 0.01
@@ -236,7 +236,7 @@ if __name__ == '__main__':
                     # plt.scatter(df['eta_china'],df['delta_opti_CHN'])
                     # plt.scatter(df['eta_china'].iloc[-1],df['delta_opti_CHN'].iloc[-1],
                     #             color='red')
-                    df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_1030/{coop}_{country}.csv')
+                    df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_1060/{coop}_{country}.csv')
                     # plt.scatter(df[f'eta_{country}'],df[f'delta_opti_{country}'])
                     # plt.scatter(df[f'eta_{country}'].iloc[-1],df[f'delta_opti_{country}'].iloc[-1],
                     #             color='red')

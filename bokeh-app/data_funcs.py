@@ -362,6 +362,8 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         idx_country = p_baseline.countries.index(harmonizing_country)
     if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
         idx_country = p_baseline.countries.index(country[:3])
+    if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
+        idx_country = p_baseline.countries.index(country[:3])
     country_path = local_path+country+'/'
     files_in_dir = next(os.walk(country_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
@@ -427,6 +429,9 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
             recap.loc[run, 'delt'] = p.tau[idx_country,idx_country-1,1]/p_baseline.tau[idx_country,idx_country-1,1]
             recap_dyn.loc[run, 'delt'] = p.tau[idx_country,idx_country-1,1]/p_baseline.tau[idx_country,idx_country-1,1]
+        if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
+            recap.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]/p_baseline.tariff[idx_country-1,idx_country,1]
+            recap_dyn.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]/p_baseline.tariff[idx_country-1,idx_country,1]
         recap.loc[run, 'growth'] = sol_c.g
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         

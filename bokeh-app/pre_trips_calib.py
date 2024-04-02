@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 
-baseline_number = '1200'
+baseline_number = '1060'
 
 p_baseline = parameters()
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
@@ -88,18 +88,19 @@ for run_params in runs_params:
     
     p = p_baseline.copy()
     if run_params['number'] == 9.2:
-        # p.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/',
-        p.load_data(f'data_smooth_3_years/data_12_countries_{run_params["year"]}/',
-                    keep_already_calib_params=True)
-    else:
+        p.load_data(f'data_smooth_3_years/data_11_countries_{run_params["year"]}/',
         # p.load_data(f'data/data_11_countries_{run_params["year"]}/',
-        p.load_data(f'data/data_12_countries_{run_params["year"]}/',
+        # p.load_data(f'data_smooth_3_years/data_12_countries_{run_params["year"]}/',
+                    keep_already_calib_params=False)
+    else:
+        p.load_data(f'data/data_11_countries_{run_params["year"]}/',
+        # p.load_data(f'data/data_12_countries_{run_params["year"]}/',
                     keep_already_calib_params=True)
     p.calib_parameters = run_params['calib_params']
     
     m = m_baseline.copy()
-    # m.load_data(f'data/data_11_countries_{run_params["year"]}/')
-    m.load_data(f'data/data_12_countries_{run_params["year"]}/')
+    m.load_data(f'data/data_11_countries_{run_params["year"]}/')
+    # m.load_data(f'data/data_12_countries_{run_params["year"]}/')
     print(m.data_path)
     m.list_of_moments = run_params['list_of_moments']
     
@@ -187,14 +188,14 @@ for run_params in runs_params:
 
 #%% save a version of calibration with doubled trade costs in patenting sector
 
-baseline_number = 1030
+baseline_number = 1060
 
 p_alt_trade_costs = p_baseline.copy()
 p_alt_trade_costs.tau[...,1] = p_baseline.tau[...,1]*2
 for j,_ in enumerate(p_baseline.countries):
     p_alt_trade_costs.tau[j,j,:] = 1
 
-_, sol_alt_trade_costs = fixed_point_solver(p_alt_trade_costs,context = 'calibration',
+_, sol_alt_trade_costs = fixed_point_solver(p_alt_trade_costs,context = 'counterfactual',
                         x0=p_alt_trade_costs.guess,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
@@ -229,6 +230,93 @@ run_number = 10.2
 
 p_alt_trade_costs.write_params(local_path+str(run_number)+'/')
 m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
+
+#%% save a version of calibration with no trade costs
+
+baseline_number = 1060
+
+p_alt_trade_costs = p_baseline.copy()
+p_alt_trade_costs.tau[...] = 1
+p_alt_trade_costs.tariff[...] = 0
+
+_, sol_alt_trade_costs = fixed_point_solver(p_alt_trade_costs,context = 'counterfactual',
+                        x0=p_alt_trade_costs.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_alt_trade_costs.scale_P(p_alt_trade_costs)
+sol_alt_trade_costs.compute_non_solver_quantities(p_alt_trade_costs)
+
+p_alt_trade_costs.guess = sol_alt_trade_costs.vector_from_var()
+
+m_alt_trade_costs = moments()
+m_alt_trade_costs.load_run('calibration_results_matched_economy/'+str(baseline_number)+'/')
+m_alt_trade_costs.compute_moments(sol_alt_trade_costs,p_alt_trade_costs)
+m_alt_trade_costs.compute_moments_deviations()
+
+local_path = 'calibration_results_matched_economy/baseline_'+str(baseline_number)+'_variations/'
+run_number = 10.3
+
+p_alt_trade_costs.write_params(local_path+str(run_number)+'/')
+m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
+
+#%% save a version of calibration with doubled nu
+
+baseline_number = 1060
+
+p_double_nu = p_baseline.copy()
+p_double_nu.nu[...,1] = p_baseline.nu[...,1]*2
+
+_, sol_double_nu = fixed_point_solver(p_double_nu,context = 'counterfactual',
+                        x0=p_double_nu.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_double_nu.scale_P(p_double_nu)
+sol_double_nu.compute_non_solver_quantities(p_double_nu)
+
+p_double_nu.guess = sol_double_nu.vector_from_var()
+
+m_double_nu = moments()
+m_double_nu.load_run('calibration_results_matched_economy/'+str(baseline_number)+'/')
+m_double_nu.compute_moments(sol_double_nu,p_double_nu)
+m_double_nu.compute_moments_deviations()
+
+local_path = 'calibration_results_matched_economy/baseline_'+str(baseline_number)+'_variations/'
+run_number = 2.0
+
+p_double_nu.write_params(local_path+str(run_number)+'/')
+m_double_nu.write_moments(local_path+str(run_number)+'/')
 
 #%% run pre-TRIPS calibration of robustness checks
 

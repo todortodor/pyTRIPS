@@ -18,7 +18,7 @@ legacy_data_path = 'data/'
 pflows_path = '/Users/slepot/Documents/taff/datas/PATSTAT/results/'
 # WDI_data_path = '/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/'
 WDI_data_path = '/Users/slepot/Dropbox/TRIPS/Calibration data/'
-tariff_data_path = '/Users/slepot/Dropbox/TRIPS/Calibration data/'
+tariff_data_path = 'data/'
 
 moments_descriptions = pd.read_csv(
     legacy_data_path+'moments_descriptions.csv', sep=';', index_col=0)
@@ -115,13 +115,14 @@ config_dics = [{
     'N': N}
     for y in range(1990,2019)
     # for y in range(1990,1991)
-    # for y in [1990]
+    # for y in [1992]
     # for y in range(2005,2006)
     # for N in [7,12,13]
-    for N in [12]
+    for N in [11]
     ]
 
-write = True
+write = False
+write_tariff = True
 
 for config_dic in config_dics:
     print(config_dic)
@@ -142,64 +143,12 @@ for config_dic in config_dics:
             os.mkdir(dropbox_path)
         except:
             pass
-        
     
-    # correction = True
-    
-    # tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
-    #     ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
-    
-    # if correction:
-    #     for tariff_year in range(1990,1996):
-    #         tariff_all.loc[(tariff_all.year == tariff_year) &
-    #                    (tariff_all.sector == 0),'tariff'] = tariff_all.loc[(tariff_all.year == tariff_year) &
-    #                               (tariff_all.sector == 0),'tariff']+tariff_all[(tariff_all.year == 1996) &
-    #                               (tariff_all.sector == 0)]['tariff'].values-tariff_all[(tariff_all.year == 1995) &
-    #                               (tariff_all.sector == 0)]['tariff'].values
-    
-    # tariff = tariff_all[(tariff_all.year == year) & (tariff_all.base_year == 2010)].groupby(['origin_code',
-    #                                                         'destination_code',
-    #                                                         'sector'])[['tariff']].mean()/100
-    
-    # # #%%
-    # # import matplotlib.pyplot as plt
-    
-    # # fig,ax= plt.subplots(figsize = (12,8))
-    
-    # # for s in [0,1]:
-    # #     if s==0:
-    # #         ls='-'
-    # #     else:
-    # #         ls ='--'
-    # #     for base_year in [1990,2010]:
-    # #         if base_year==1990:
-    # #             color='r'
-    # #         else:
-    # #             color='blue'
-    # #         x = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean().index.get_level_values(0)
-    # #         y = tariff_all[(tariff_all['sector']==s) & (tariff_all.base_year==base_year)].groupby('year').mean()['tariff']
-    # #         ax.plot(x,y,label=f'base year {base_year}, sector {s}',ls=ls,color=color)
-    # # plt.legend()
-    # # plt.show()
-    # # #%%
-    
-    
-    # if write:
-    #     tariff.to_csv(path+'tariff.csv')
-    #     tariff.to_csv(
-    #         dropbox_path+'tariff.csv')
-    
-    
-        
     if write:
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         moments_descriptions.to_csv(
             dropbox_path+'moments_descriptions.csv', sep=';')
     
-    # crosswalk_countries = pd.read_csv(
-    #     '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/countries_wdi.csv')
-    # crosswalk_sectors = pd.read_csv(
-    #     '/Users/slepot/Dropbox/TRIPS/simon_version/code/data/crosswalk_sectors_OECD.csv')
     crosswalk_countries = pd.read_csv(
         'data/countries_wdi.csv')
     crosswalk_sectors = pd.read_csv(
@@ -287,7 +236,11 @@ for config_dic in config_dics:
         f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/consumption_{year_OECD}.csv')
     va_OECD = pd.read_csv(
         f'/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas{year_OECD}/VA_{year_OECD}.csv')
-
+    
+    trade_OECD_full = (iot_OECD.groupby(['row_country', 'row_sector', 'col_country']
+        ).sum()+consumption_OECD.set_index(['row_country', 'row_sector', 'col_country'])
+                       ).reset_index()
+    
     iot_OECD['row_country'] = iot_OECD['row_country'].map(
         crosswalk_countries['country_code'])
     iot_OECD['col_country'] = iot_OECD['col_country'].map(
@@ -350,6 +303,144 @@ for config_dic in config_dics:
     if write:
         sector_moments.to_csv(path+'sector_moments.csv')
         sector_moments.to_csv(dropbox_path+'sector_moments.csv')
+    
+    iot_OECD_weights = pd.read_csv(
+        '/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas2010/input_output_2010.csv')
+    consumption_OECD_weights = pd.read_csv(
+        '/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas2010/consumption_2010.csv')
+    
+    trade_weights = (iot_OECD_weights.groupby(['row_country', 'row_sector', 'col_country']
+        ).sum()+consumption_OECD_weights.set_index(['row_country', 'row_sector', 'col_country'])
+                       ).reset_index()
+    
+    trade_weights_total = trade_weights.copy()
+    trade_weights_total['row_country'] = trade_weights_total['row_country'].map(
+        crosswalk_countries['country_code'])
+    trade_weights_total['col_country'] = trade_weights_total['col_country'].map(
+        crosswalk_countries['country_code'])
+    trade_weights_total['row_sector'] = trade_weights_total['row_sector'].map(
+        crosswalk_sectors['Sectors'])
+    trade_weights_total = trade_weights_total.groupby(['row_country', 'row_sector', 'col_country']
+            ).sum().reset_index()
+    
+    trade_weights_total['row_country'] = np.minimum(
+        trade_weights_total['row_country'], nbr_of_countries)
+    trade_weights_total['col_country'] = np.minimum(
+        trade_weights_total['col_country'], nbr_of_countries)
+
+    trade_weights_total = trade_weights_total.groupby(
+        ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
+    trade_weights_total = trade_weights_total.reorder_levels(
+        ['row_country', 'col_country', 'row_sector'])
+    
+    trade_weights_total.sort_index(inplace=True)
+
+    trade_weights_total.columns = ['trade']
+
+    trade_weights_total.rename_axis(
+        ['origin_code', 'destination_code', 'sector'], inplace=True)
+    
+    trade_weights['row_sector'] = trade_weights['row_sector'].map({
+        '01T02':'agri_fishing',
+        '03':'agri_fishing',
+        '05T06':'mining_quarrying',
+        '07T08':'mining_quarrying',
+        '09':'mining_quarrying'
+        },na_action='ignore')
+    
+    trade_weights['row_country'] = trade_weights['row_country'].map(
+        crosswalk_countries['country_code'])
+    trade_weights['col_country'] = trade_weights['col_country'].map(
+        crosswalk_countries['country_code'])
+    
+    trade_weights['row_country'] = np.minimum(
+        trade_weights['row_country'], nbr_of_countries)
+    trade_weights['col_country'] = np.minimum(
+        trade_weights['col_country'], nbr_of_countries)
+
+    trade_weights = trade_weights.groupby(
+        ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
+    trade_weights = trade_weights.reorder_levels(
+        ['row_country', 'col_country', 'row_sector'])
+    
+    trade_weights.sort_index(inplace=True)
+
+    trade_weights.columns = ['trade']
+
+    trade_weights.rename_axis(
+        ['origin_code', 'destination_code', 'sector'], inplace=True)
+    
+    tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
+        ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
+    
+    tariff_all = tariff_all.loc[tariff_all['sector'].isin(['agri_fishing',
+                                                           'mining_quarrying',
+                                                           'patenting'])]
+    
+    tariff_all = tariff_all.pivot(index=['origin_code','destination_code','year'],
+                                  columns = 'sector',values='tariff')
+    
+    tariff_all['trade_agri_fishing'] = trade_weights.loc[:,:,'agri_fishing']['trade']
+    tariff_all['trade_mining_quarrying'] = trade_weights.loc[:,:,'mining_quarrying']['trade']
+    tariff_all['trade_non_patent'] = trade_weights_total.loc[:,:,0]['trade']
+    
+    tariff_all = tariff_all.fillna(0)
+    
+    tariff_all['non_patenting'] = (tariff_all['trade_agri_fishing']*tariff_all['agri_fishing']
+                                   +tariff_all['trade_mining_quarrying']*tariff_all['mining_quarrying']
+                                   )/tariff_all['trade_non_patent']
+    
+    tariff_all = pd.melt(tariff_all[['patenting','non_patenting']].reset_index(),
+                         id_vars = ['origin_code', 'destination_code', 'year'],
+                         value_vars = ['patenting','non_patenting'],
+                         var_name='sector',
+                         value_name='tariff'
+                         )
+    
+    tariff_all['sector'] = tariff_all['sector'].map({
+        'patenting':1,
+        'non_patenting':0,
+        },na_action='ignore')
+    
+    # tariff_all = tariff_all.set_index(['year','origin_code', 'destination_code','sector'])
+    # tariff = tariff_all.loc[year]
+    
+    # if correction:
+    #     for tariff_year in range(1990,1996):
+    #         tariff_all.loc[(tariff_all.year == tariff_year) &
+    #                    (tariff_all.sector == 0),'tariff'] = tariff_all.loc[(tariff_all.year == tariff_year) &
+    #                               (tariff_all.sector == 0),'tariff']+tariff_all[(tariff_all.year == 1996) &
+    #                               (tariff_all.sector == 0)]['tariff'].values-tariff_all[(tariff_all.year == 1995) &
+    #                               (tariff_all.sector == 0)]['tariff'].values
+    
+    tariff = tariff_all[tariff_all.year == year].groupby(['origin_code',
+                                                            'destination_code',
+                                                            'sector'])[['tariff']].mean()/100
+    
+    # #%%
+    # import matplotlib.pyplot as plt
+    
+    # fig,ax= plt.subplots(figsize = (12,8))
+    
+    # for s in [0,1]:
+    #     if s==0:
+    #         ls='-'
+    #     else:
+    #         ls ='--'
+    #     x = tariff_all[(tariff_all['sector']==s)].groupby('year').mean().index.get_level_values(0)
+    #     y = tariff_all[(tariff_all['sector']==s)].groupby('year').mean()['tariff']
+    #     ax.plot(x,y,label=f'sector {s}',ls=ls)
+    # plt.legend()
+    # plt.show()
+    
+    # #%%
+    
+    
+    if write or write_tariff:
+        tariff.to_csv(path+'tariff.csv')
+        tariff.to_csv(
+            dropbox_path+'tariff.csv')
+    
     #%%
     final_pat_fees_year = final_pat_fees.copy()
     #!!! changing EUR patenting fee

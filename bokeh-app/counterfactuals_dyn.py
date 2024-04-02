@@ -20,24 +20,26 @@ import time
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1200','variation': 'baseline'},
-    # {'baseline':'1030','variation': '10.2'},
-    # {'baseline':'1030','variation': '99.0'},
-    # {'baseline':'1030','variation': '99.1'},
-    # {'baseline':'1030','variation': '99.2'},
-    # {'baseline':'1030','variation': '99.3'},
-    # {'baseline':'1030','variation': '99.4'},
-    # {'baseline':'1030','variation': '99.5'},
-    # {'baseline':'1030','variation': '99.6'},
-    # {'baseline':'1030','variation': '99.7'},
-    # {'baseline':'1030','variation': '99.8'},
-    # {'baseline':'1030','variation': '99.9'},
-    # {'baseline':'1030','variation': '99.10'},
-    # {'baseline':'1030','variation': '99.11'},
-    # {'baseline':'1030','variation': '99.12'},
-    # {'baseline':'1030','variation': '99.13'},
-    # {'baseline':'1030','variation': '99.14'},
-    # {'baseline':'1030','variation': '99.15'},
+    # {'baseline':'1060','variation': 'baseline'},
+    {'baseline':'1060','variation': '2.0'},
+    {'baseline':'1060','variation': '10.2'},
+    {'baseline':'1060','variation': '10.3'},
+    # {'baseline':'1060','variation': '99.0'},
+    # {'baseline':'1060','variation': '99.1'},
+    # {'baseline':'1060','variation': '99.2'},
+    # {'baseline':'1060','variation': '99.3'},
+    # {'baseline':'1060','variation': '99.4'},
+    # {'baseline':'1060','variation': '99.5'},
+    # {'baseline':'1060','variation': '99.6'},
+    # {'baseline':'1060','variation': '99.7'},
+    # {'baseline':'1060','variation': '99.8'},
+    # {'baseline':'1060','variation': '99.9'},
+    # {'baseline':'1060','variation': '99.10'},
+    # {'baseline':'1060','variation': '99.11'},
+    # {'baseline':'1060','variation': '99.12'},
+    # {'baseline':'1060','variation': '99.13'},
+    # {'baseline':'1060','variation': '99.14'},
+    # {'baseline':'1060','variation': '99.15'},
     ]
 
 
@@ -121,7 +123,7 @@ if __name__ == '__main__':
                        ) for c in p_baseline.countries+['World']]
         
         # Create a ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=12) as executor:
+        with ProcessPoolExecutor(max_workers=4) as executor:
             # returns = executor.map(lambda args: process_country(*args), args_list)
             results = list(executor.map(process_country, args_list))
         
@@ -194,6 +196,13 @@ if __name__ == '__main__':
         #     make_counterfactual(p_baseline,c+'_trade_cost_eq_trips_exp_imp_pat_sect',local_path,
         #                         sol_baseline=sol_baseline,dynamics=True,alt_delta=alt_delta)
         #     make_counterfactual_recap(p_baseline, sol_baseline,c+'_trade_cost_eq_trips_exp_imp_pat_sect',
+        #                                   local_path,recap_path,
+        #                                   dynamics=True,Nt=25,t_inf=500)
+        
+        # for c in ['CHN','IND','RUS']:
+        #     make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect',local_path,
+        #                         sol_baseline=sol_baseline,dynamics=True,alt_delta=alt_delta)
+        #     make_counterfactual_recap(p_baseline, sol_baseline,c+'_tariff_eq_trips_exp_pat_sect',
         #                                   local_path,recap_path,
         #                                   dynamics=True,Nt=25,t_inf=500)
     

@@ -111,13 +111,14 @@ def fixed_point_solver(p, context, x0=None, tol = 1e-15, damping = 10, max_count
                 
         if plot_convergence:
             norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
-            if count%50==0:
-                plt.plot(convergence)
-                plt.yscale('log')
-                plt.show()
+            # if count%50==0:
+            #     plt.plot(convergence)
+            #     plt.yscale('log')
+            #     plt.show()
         if plot_cobweb:
             history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
             history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+        
     
     finish = time.perf_counter()
     solving_time = finish-start
@@ -212,8 +213,6 @@ def fixed_point_solver_with_exog_pat_and_rd(p, p_old, context, x0=None, tol = 1e
         
         init.PSI_M = sol_0.PSI_M.copy()
         init.PSI_CD = sol_0.PSI_CD.copy()
-        
-        
         
         init.compute_sectoral_prices(p)
         
@@ -843,6 +842,25 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
                             accel_max_weight_norm=1e6,
                             damping_post_acceleration=1
                             )
+    # sol, sol_c = fixed_point_solver(p,context = 'calibration', x0=v0,
+    #                         cobweb_anim=False,tol =1e-14,
+    #                         accelerate=False,
+    #                         accelerate_when_stable=True,
+    #                         cobweb_qty='l_R',
+    #                         plot_convergence=False,
+    #                         plot_cobweb=False,
+    #                         safe_convergence=0.1,
+    #                         disp_summary=False,
+    #                         damping =5,
+    #                         max_count = 1000,
+    #                         accel_memory = 50, 
+    #                         accel_type1=True, 
+    #                         accel_regularization=1e-10,
+    #                         accel_relaxation=0.5, 
+    #                         accel_safeguard_factor=1, 
+    #                         accel_max_weight_norm=1e6,
+    #                         damping_post_acceleration=2
+    #                         )
     
     if sol.status == 'failed': 
         print('trying safer')
@@ -3635,9 +3653,15 @@ def make_counterfactual(p_baseline,country,local_path,
         if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
             assert alt_delta is not None
             delta_factor_array = np.linspace(0.5,2,151)
+        if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
+            assert alt_delta is not None
+            delta_factor_array = np.logspace(0,2,151)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
     if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
+        assert alt_delta is not None
+        idx_country = p_baseline.countries.index(country[:3])
+    if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
         assert alt_delta is not None
         idx_country = p_baseline.countries.index(country[:3])
         
@@ -3679,6 +3703,10 @@ def make_counterfactual(p_baseline,country,local_path,
             p.tau[:,idx_country,1] = p_baseline.tau[:,idx_country,1] * delt
             p.tau[idx_country,:,1] = p_baseline.tau[idx_country,:,1] * delt
             p.tau[idx_country,idx_country,:] = 1
+        if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
+            p.delta[:,1] = alt_delta
+            p.tariff[:,idx_country,1] = p_baseline.tariff[:,idx_country,1] * delt
+            p.tariff[idx_country,idx_country,:] = 0
         if country == 'Uniform_delta':
             p.delta[:,1] = delt
         if country == 'Upper_uniform_delta':
