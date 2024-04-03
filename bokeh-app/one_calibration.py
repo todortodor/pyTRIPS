@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1060'
+baseline_number = '1210'
 # n = 4
 if new_run:
     p = parameters()
@@ -23,7 +23,7 @@ if new_run:
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
     # p.load_run('calibration_results_matched_economy/baseline_1060_variations/99.8/')
-    # p.load_data('data/data_11_countries_2015/',keep_already_calib_params=True)
+    # p.load_data('data/data_12_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
@@ -33,7 +33,7 @@ if new_run:
     # m.load_data('data/data_11_countries_2015/')
 
 
-# p.kappa = 0.4
+p.kappa = 0.4
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('DOMPATINUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -176,7 +176,7 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1060'
+baseline_number = '1210'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 run_number = 99.8

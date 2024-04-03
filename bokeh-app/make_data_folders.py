@@ -118,7 +118,7 @@ config_dics = [{
     # for y in [1992]
     # for y in range(2005,2006)
     # for N in [7,12,13]
-    for N in [11]
+    for N in [12]
     ]
 
 write = False
@@ -370,7 +370,7 @@ for config_dic in config_dics:
     trade_weights.rename_axis(
         ['origin_code', 'destination_code', 'sector'], inplace=True)
     
-    tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final.csv').set_index(
+    tariff_all = pd.read_csv(tariff_data_path+f'tariffs_{nbr_of_countries}_countries.csv').set_index(
         ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
     
     tariff_all = tariff_all.loc[tariff_all['sector'].isin(['agri_fishing',

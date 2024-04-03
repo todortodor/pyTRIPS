@@ -21,8 +21,8 @@ except:
 
 years = [y for y in range(1990,2019)]
 # years = [y for y in range(1990,1991)]
-nbrs_countries = [11]
-# nbrs_countries = [12]
+# nbrs_countries = [11]
+nbrs_countries = [12]
 # nbrs_countries = [7]
 
 years_for_smoothing = {}

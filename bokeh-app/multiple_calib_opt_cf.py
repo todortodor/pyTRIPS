@@ -220,12 +220,12 @@ from solver_funcs import calibration_func
 
 write = True
 
-baseline_number = '1060'
+baseline_number = '1210'
 
 # for variation_number in [11]:
 for variation_number in [99]:
     
-    for run_params in runs_params[8:9]:
+    for run_params in runs_params[9:]:
         print(run_params)
         baseline_dic = {'baseline':baseline_number,
                         'variation':str(variation_number)+'.'+str(run_params['number'])}
