@@ -17,7 +17,7 @@ warnings.simplefilter('ignore', np.RankWarning)
 df = pd.DataFrame()
 p_init = parameters()
 
-p_init.load_run('calibration_results_matched_economy/1050/')
+p_init.load_run('calibration_results_matched_economy/1210/')
 # p_init.delta[:,1] = 12
 # p_init.delta[:,1] = np.array([0.01000,
 # 0.01000,
@@ -41,7 +41,7 @@ sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                         plot_convergence=False,
                         plot_cobweb=False,
                         safe_convergence=0.001,
-                        disp_summary=True,
+                        disp_summary=False,
                         damping = 10,
                         max_count = 1000,
                         accel_memory =50, 
@@ -57,7 +57,7 @@ sol_init.compute_non_solver_quantities(p_init)
 
 p = p_init.copy()
 # p_guess = sol_init.vector_from_var()
-# p.delta[0,1] = 0.05
+p.delta[9,1] = 1
 # p.delta[0,1] = 0.01
 # p.delta[:,1] = np.array([0.01000,
 # 0.01000,
@@ -82,7 +82,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         plot_convergence=False,
                         plot_cobweb=False,
                         safe_convergence=0.001,
-                        disp_summary=True,
+                        disp_summary=False,
                         damping = 10,
                         max_count = 1000,
                         accel_memory =50, 

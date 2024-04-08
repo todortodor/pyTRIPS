@@ -111,23 +111,23 @@ if __name__ == '__main__':
         # delta_factor_array = np.logspace(-1,1,31)
         
         # sequential processes
-        # for c in p_baseline.countries:
-        #     make_counterfactual(p_baseline,c,local_path,
-        #                         sol_baseline=sol_baseline,
-        #                         # delta_factor_array=delta_factor_array,
-        #                         dynamics=True)
-        #     make_counterfactual_recap(p_baseline, sol_baseline, c,
-        #                                   local_path,recap_path,
-        #                                   dynamics=True,Nt=25,t_inf=500)
+        for c in p_baseline.countries:
+             make_counterfactual(p_baseline,c,local_path,
+                                 sol_baseline=sol_baseline,
+                                 # delta_factor_array=delta_factor_array,
+                                 dynamics=True)
+             make_counterfactual_recap(p_baseline, sol_baseline, c,
+                                           local_path,recap_path,
+                                           dynamics=True,Nt=25,t_inf=500)
     
-        args_list = [(p_baseline.copy(), c, local_path, sol_baseline.copy(), recap_path, True, 25, 500
-                      # ) for c in p_baseline.countries]
-                       ) for c in p_baseline.countries+['World']]
+        #args_list = [(p_baseline.copy(), c, local_path, sol_baseline.copy(), recap_path, True, 25, 500
+        #              # ) for c in p_baseline.countries]
+        #               ) for c in p_baseline.countries+['World']]
         
-        # Create a ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=12) as executor:
-            # returns = executor.map(lambda args: process_country(*args), args_list)
-            results = list(executor.map(process_country, args_list))
+        ## Create a ProcessPoolExecutor
+        #with ProcessPoolExecutor(max_workers=15) as executor:
+        #    # returns = executor.map(lambda args: process_country(*args), args_list)
+        #    results = list(executor.map(process_country, args_list))
         
         # make_counterfactual(p_baseline,'World',local_path,
         #                     # delta_factor_array=delta_factor_array,

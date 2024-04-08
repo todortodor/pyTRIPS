@@ -24,8 +24,8 @@ baseline_dics = [
     {'baseline':'1210','variation': '2.0'},
     {'baseline':'1210','variation': '10.2'},
     {'baseline':'1210','variation': '10.3'},
-    {'baseline':'1210','variation': '10.4'},
-    {'baseline':'1210','variation': '10.5'},
+    #{'baseline':'1210','variation': '10.4'},
+    #{'baseline':'1210','variation': '10.5'},
     {'baseline':'1210','variation': '99.0'},
     {'baseline':'1210','variation': '99.1'},
     {'baseline':'1210','variation': '99.2'},
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)
         temp_init = np.ones(p_baseline.N)*ub_delta
-        temp_init[0] = 0.01
+        # temp_init[0] = 0.01
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=lb_delta,ub_delta=ub_delta,method=method,
                          plot_convergence = False,solver_options=None,tol=5e-5,plot_history=False,
                          dynamics=True,
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                            delta_init=temp_init,
                           # delta_init=np.array([11.99413456, 12,12,11.99415313, 12,12,11.99414931,11.98829433,
                           #                      6.01085081,12,6.01085661]),
-                          max_workers=12,parallel=True
+                          max_workers=32,parallel=False
                          # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                          #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )

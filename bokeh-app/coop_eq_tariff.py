@@ -25,12 +25,12 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1050','variation': 'baseline'},
-    # {'baseline':'1030','variation': '99.0'},
-    # {'baseline':'1030','variation': '99.1'},
-    # {'baseline':'1030','variation': '99.2'},
-    # {'baseline':'1030','variation': '99.3'},
-    # {'baseline':'1030','variation': '99.4'},
+    {'baseline':'1210','variation': 'baseline'},
+    #{'baseline':'1030','variation': '99.0'},
+    #{'baseline':'1030','variation': '99.1'},
+    #{'baseline':'1030','variation': '99.2'},
+    #{'baseline':'1030','variation': '99.3'},
+    #{'baseline':'1030','variation': '99.4'},
     # {'baseline':'1030','variation': '99.5'},
     # {'baseline':'1030','variation': '99.6'},
     # {'baseline':'1030','variation': '99.7'},
@@ -44,7 +44,7 @@ baseline_dics = [
     # {'baseline':'1030','variation': '99.15'},
     ]
 
-lb_tariff = -0.1
+lb_tariff = 0
 ub_tariff = 1
 # ub_delta = 1
 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
                              static_eq_tariff = None,custom_weights=None,
                              # custom_x0 = np.ones(p_baseline.N)*12,
                              custom_x0 = None,
-                             max_workers=12)
+                             max_workers=15)
             
             print(time.perf_counter() - start)
             

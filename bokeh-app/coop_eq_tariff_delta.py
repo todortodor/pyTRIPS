@@ -25,10 +25,10 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1050','variation': 'baseline'},
+    {'baseline':'1210','variation': 'baseline'},
     ]
 
-lb_tariff = -0.1
+lb_tariff = 0
 ub_tariff = 1
 # ub_delta = 1
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                              lb_tariff=lb_tariff,ub_tariff=ub_tariff,dynamics=False,
                              solver_options=None,tol=1e-8,
                              static_eq_tariff = None,custom_weights=None,
-                             custom_x0 = None,max_workers=12,
+                             custom_x0 = None,max_workers=15,
                              custom_dyn_sol_options=None, displays = False,
                              parallel=True)
             

@@ -84,7 +84,7 @@ if __name__ == '__main__':
                              static_eq_deltas = None,custom_weights=None,
                              # custom_x0 = np.ones(p_baseline.N)*12,
                              custom_x0 = None,
-                             max_workers=12)
+                             max_workers=15)
             
             print(time.perf_counter() - start)
             
