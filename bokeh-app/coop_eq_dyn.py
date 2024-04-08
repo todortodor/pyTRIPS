@@ -107,7 +107,7 @@ if __name__ == '__main__':
                               #     accel_max_weight_norm=1e6,
                               #     damping_post_acceleration=10),
                                custom_dyn_sol_options = None,
-                             custom_weights=None,max_workers=12)
+                             custom_weights=None,max_workers=22)
             
             write = True
             if write:
