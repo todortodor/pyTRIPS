@@ -18,7 +18,6 @@ df = pd.DataFrame()
 p_init = parameters()
 
 p_init.load_run('calibration_results_matched_economy/1210/')
-# p_init.load_run('calibration_results_matched_economy/baseline_1210_variations/10.2/')
 # p_init.delta[:,1] = 12
 # p_init.delta[:,1] = np.array([0.01000,
 # 0.01000,
