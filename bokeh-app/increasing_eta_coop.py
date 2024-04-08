@@ -36,7 +36,7 @@ save_to_tex_options = dict(position_float='centering',
                              clines='all;index',
                             hrules=True)
 
-baseline = '1060'
+baseline = '1210'
 variation = 'baseline'
 
 baseline_pre_trips_variation = baseline
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     for coop in ['pop_weighted']:
         for i,country in enumerate(p_baseline.countries):
             
-            if country in ['CHN','IND']:
+            if country in ['CHN','IND','ZAF','RUS']:
                 print(country)
                 
                 dynamics = True
@@ -173,7 +173,7 @@ if __name__ == '__main__':
                                                                 damping_post_acceleration=20
                                                                 ),
                                       custom_weights=None,
-                                      max_workers=12)
+                                      max_workers=12,parallel=False)
                     if dynamics:
                         p_opti, sol_opti = find_coop_eq(p,coop,
                                          lb_delta=lb_delta,ub_delta=ub_delta,dynamics=True,
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                                             custom_dyn_sol_options = None,
                                             solver_options=None,
                                          custom_weights=None,max_workers=12,displays=True,
-                                         parallel=True)
+                                         parallel=False)
                         if p_opti.delta[i,1]<p_baseline.delta[i,1]:
                             ub = x
                             # df.loc[it,'eta_china'] = x
@@ -236,7 +236,7 @@ if __name__ == '__main__':
                     # plt.scatter(df['eta_china'],df['delta_opti_CHN'])
                     # plt.scatter(df['eta_china'].iloc[-1],df['delta_opti_CHN'].iloc[-1],
                     #             color='red')
-                    df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_1060/{coop}_{country}.csv')
+                    df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv')
                     # plt.scatter(df[f'eta_{country}'],df[f'delta_opti_{country}'])
                     # plt.scatter(df[f'eta_{country}'].iloc[-1],df[f'delta_opti_{country}'].iloc[-1],
                     #             color='red')

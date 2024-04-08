@@ -3758,6 +3758,8 @@ def make_counterfactual(p_baseline,country,local_path,
                                     accel_max_weight_norm=1e6,
                                     damping_post_acceleration=5
                                     )
+            sol_c.scale_P(p)
+            sol_c.compute_non_solver_quantities(p)
             if sol.status == 'successful':
                 p.guess = sol_c.vector_from_var()
             else:

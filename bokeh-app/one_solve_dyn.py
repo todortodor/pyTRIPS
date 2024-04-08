@@ -57,7 +57,11 @@ sol_init.compute_non_solver_quantities(p_init)
 
 p = p_init.copy()
 # p_guess = sol_init.vector_from_var()
+<<<<<<< HEAD
 p.delta[9,1] = 1
+=======
+p.delta[11,1] = 1
+>>>>>>> 7634d94c846555e737545ddc0955abf198e49a75
 # p.delta[0,1] = 0.01
 # p.delta[:,1] = np.array([0.01000,
 # 0.01000,
@@ -108,7 +112,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         plot_live = False,
                         safe_convergence=1e-8,
                         disp_summary=True,
-                        damping = 10,
+                        damping = 20,
                         max_count = 50000,
                         accel_memory =5, 
                         accel_type1=True, 
@@ -116,7 +120,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         accel_relaxation=1, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=1
+                        damping_post_acceleration=5
                         )
 dyn_sol.compute_non_solver_quantities(p)
 
