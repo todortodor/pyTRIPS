@@ -17,7 +17,8 @@ warnings.simplefilter('ignore', np.RankWarning)
 df = pd.DataFrame()
 p_init = parameters()
 
-p_init.load_run('calibration_results_matched_economy/1050/')
+p_init.load_run('calibration_results_matched_economy/1210/')
+# p_init.load_run('calibration_results_matched_economy/baseline_1210_variations/10.2/')
 # p_init.delta[:,1] = 12
 # p_init.delta[:,1] = np.array([0.01000,
 # 0.01000,
@@ -41,7 +42,7 @@ sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                         plot_convergence=False,
                         plot_cobweb=False,
                         safe_convergence=0.001,
-                        disp_summary=True,
+                        disp_summary=False,
                         damping = 10,
                         max_count = 1000,
                         accel_memory =50, 
@@ -57,7 +58,7 @@ sol_init.compute_non_solver_quantities(p_init)
 
 p = p_init.copy()
 # p_guess = sol_init.vector_from_var()
-# p.delta[0,1] = 0.05
+p.delta[11,1] = 1
 # p.delta[0,1] = 0.01
 # p.delta[:,1] = np.array([0.01000,
 # 0.01000,
@@ -82,7 +83,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         plot_convergence=False,
                         plot_cobweb=False,
                         safe_convergence=0.001,
-                        disp_summary=True,
+                        disp_summary=False,
                         damping = 10,
                         max_count = 1000,
                         accel_memory =50, 
@@ -108,7 +109,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         plot_live = False,
                         safe_convergence=1e-8,
                         disp_summary=True,
-                        damping = 10,
+                        damping = 20,
                         max_count = 50000,
                         accel_memory =5, 
                         accel_type1=True, 
@@ -116,7 +117,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         accel_relaxation=1, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=1
+                        damping_post_acceleration=5
                         )
 dyn_sol.compute_non_solver_quantities(p)
 
