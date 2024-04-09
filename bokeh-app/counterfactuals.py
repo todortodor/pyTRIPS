@@ -19,27 +19,27 @@ recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
     {'baseline':'1210','variation': 'baseline'},
-    {'baseline':'1210','variation': '2.0'},
-    {'baseline':'1210','variation': '10.2'},
-    {'baseline':'1210','variation': '10.3'},
-    {'baseline':'1210','variation': '10.4'},
-    {'baseline':'1210','variation': '10.5'},
-    {'baseline':'1210','variation': '99.0'},
-    {'baseline':'1210','variation': '99.1'},
-    {'baseline':'1210','variation': '99.2'},
-    {'baseline':'1210','variation': '99.3'},
-    {'baseline':'1210','variation': '99.4'},
-    {'baseline':'1210','variation': '99.5'},
-    {'baseline':'1210','variation': '99.6'},
-    {'baseline':'1210','variation': '99.7'},
-    {'baseline':'1210','variation': '99.8'},
-    {'baseline':'1210','variation': '99.9'},
-    {'baseline':'1210','variation': '99.10'},
-    {'baseline':'1210','variation': '99.11'},
-    {'baseline':'1210','variation': '99.12'},
-    {'baseline':'1210','variation': '99.13'},
-    {'baseline':'1210','variation': '99.14'},
-    {'baseline':'1210','variation': '99.15'},
+    # {'baseline':'1210','variation': '2.0'},
+    # {'baseline':'1210','variation': '10.2'},
+    # {'baseline':'1210','variation': '10.3'},
+    # {'baseline':'1210','variation': '10.4'},
+    # {'baseline':'1210','variation': '10.5'},
+    # {'baseline':'1210','variation': '99.0'},
+    # {'baseline':'1210','variation': '99.1'},
+    # {'baseline':'1210','variation': '99.2'},
+    # {'baseline':'1210','variation': '99.3'},
+    # {'baseline':'1210','variation': '99.4'},
+    # {'baseline':'1210','variation': '99.5'},
+    # {'baseline':'1210','variation': '99.6'},
+    # {'baseline':'1210','variation': '99.7'},
+    # {'baseline':'1210','variation': '99.8'},
+    # {'baseline':'1210','variation': '99.9'},
+    # {'baseline':'1210','variation': '99.10'},
+    # {'baseline':'1210','variation': '99.11'},
+    # {'baseline':'1210','variation': '99.12'},
+    # {'baseline':'1210','variation': '99.13'},
+    # {'baseline':'1210','variation': '99.14'},
+    # {'baseline':'1210','variation': '99.15'},
     ]
 
 # baseline_dics = [
@@ -115,12 +115,12 @@ if __name__ == '__main__':
         
         # start = time.perf_counter()
         
-        # parallel processes
-        args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
-        # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
-        with ProcessPoolExecutor(max_workers=12) as executor:
-            # returns = executor.map(lambda args: process_country(*args), args_list)
-            results = list(executor.map(process_country, args_list))
+        # # parallel processes
+        # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
+        # # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
+        # with ProcessPoolExecutor(max_workers=12) as executor:
+        #     # returns = executor.map(lambda args: process_country(*args), args_list)
+        #     results = list(executor.map(process_country, args_list))
         
         # print(time.perf_counter() - start)
         
@@ -144,22 +144,22 @@ if __name__ == '__main__':
         # make_counterfactual_recap(p_baseline, sol_baseline, 'Upper_uniform_delta',
         #                               local_path,recap_path)
     
-        # p_pre = parameters()
-        # p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/9.2/')
+        p_pre = parameters()
+        p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/9.2/')
         
-        # alt_delta = p_pre.delta[...,1]
-        # for country_idx in [0,1,2,6,7,10]:
-        #     alt_delta[country_idx] = p_baseline.delta[country_idx,1]
+        alt_delta = p_pre.delta[...,1]
+        for country_idx in [0,1,2,6,7,11]:
+            alt_delta[country_idx] = p_baseline.delta[country_idx,1]
         
         # make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_all_sectors',
         #                     local_path,dynamics=False,alt_delta=alt_delta)
         # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_all_sectors',
         #                               local_path,recap_path)
     
-        # make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_pat_sectors',
-        #                     local_path,dynamics=False,alt_delta=alt_delta)
-        # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_pat_sectors',
-        #                               local_path,recap_path)
+        make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_pat_sectors',
+                            local_path,dynamics=False,alt_delta=alt_delta)
+        make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_pat_sectors',
+                                      local_path,recap_path)
         
         # make_counterfactual(p_baseline,'trade_cost_all_countries_all_sectors',
         #                     local_path,dynamics=False)
@@ -177,8 +177,8 @@ if __name__ == '__main__':
         #     make_counterfactual_recap(p_baseline, sol_baseline,c+'_trade_cost_eq_trips_exp_imp_pat_sect',
         #                                   local_path,recap_path)
         
-        # for c in ['CHN','IND','RUS']:
-        #     make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect',local_path,
-        #                         sol_baseline=sol_baseline,dynamics=False,alt_delta=alt_delta)
-        #     make_counterfactual_recap(p_baseline, sol_baseline,c+'_tariff_eq_trips_exp_pat_sect',
-        #                                   local_path,recap_path)
+        for c in ['CHN','IND','RUS']:
+            make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect',local_path,
+                                sol_baseline=sol_baseline,dynamics=False,alt_delta=alt_delta)
+            make_counterfactual_recap(p_baseline, sol_baseline,c+'_tariff_eq_trips_exp_pat_sect',
+                                          local_path,recap_path)

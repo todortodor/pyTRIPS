@@ -1131,7 +1131,7 @@ def minimize_delta(args):
     return delta_min.x
 
 def compute_new_deltas_fixed_point(p, sol_it_baseline, lb_delta, ub_delta, hist_nash = None, 
-                                    dynamics=False,max_workers=6,parallel=True):
+                                    dynamics=False,max_workers=12,parallel=True):
     
     bounds=(lb_delta, ub_delta)
     
@@ -1344,6 +1344,8 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
         condition = np.linalg.norm((new_deltas-x_old)/x_old)> tol
         
         convergence.append(np.linalg.norm((new_deltas - x_old)/x_old))
+        
+        print(np.linalg.norm((new_deltas-x_old)/x_old))
         
         it += 1
         

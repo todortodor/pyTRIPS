@@ -20,25 +20,25 @@ import matplotlib.pylab as pylab
 import time
 
 baseline_dics = [
-    {'baseline':'1210','variation': 'baseline'},
-    {'baseline':'1210','variation': '2.0'},
-    {'baseline':'1210','variation': '10.2'},
-    {'baseline':'1210','variation': '10.3'},
+    # {'baseline':'1210','variation': 'baseline'},
+    # {'baseline':'1210','variation': '2.0'},
+    # {'baseline':'1210','variation': '10.2'},
+    # {'baseline':'1210','variation': '10.3'},
     #{'baseline':'1210','variation': '10.4'},
     #{'baseline':'1210','variation': '10.5'},
-    {'baseline':'1210','variation': '99.0'},
-    {'baseline':'1210','variation': '99.1'},
-    {'baseline':'1210','variation': '99.2'},
-    {'baseline':'1210','variation': '99.3'},
-    {'baseline':'1210','variation': '99.4'},
-    {'baseline':'1210','variation': '99.5'},
-    {'baseline':'1210','variation': '99.6'},
-    {'baseline':'1210','variation': '99.7'},
-    {'baseline':'1210','variation': '99.8'},
-    {'baseline':'1210','variation': '99.9'},
-    {'baseline':'1210','variation': '99.10'},
-    {'baseline':'1210','variation': '99.11'},
-    {'baseline':'1210','variation': '99.12'},
+    # {'baseline':'1210','variation': '99.0'},
+    # {'baseline':'1210','variation': '99.1'},
+    # {'baseline':'1210','variation': '99.2'},
+    # {'baseline':'1210','variation': '99.3'},
+    # {'baseline':'1210','variation': '99.4'},
+    # {'baseline':'1210','variation': '99.5'},
+    # {'baseline':'1210','variation': '99.6'},
+    # {'baseline':'1210','variation': '99.7'},
+    # {'baseline':'1210','variation': '99.8'},
+    # {'baseline':'1210','variation': '99.9'},
+    # {'baseline':'1210','variation': '99.10'},
+    # {'baseline':'1210','variation': '99.11'},
+    # {'baseline':'1210','variation': '99.12'},
     {'baseline':'1210','variation': '99.13'},
     {'baseline':'1210','variation': '99.14'},
     {'baseline':'1210','variation': '99.15'},
@@ -67,18 +67,14 @@ if __name__ == '__main__':
         temp_init = np.ones(p_baseline.N)*ub_delta
         # temp_init[0] = 0.01
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=lb_delta,ub_delta=ub_delta,method=method,
-                         plot_convergence = False,solver_options=None,tol=5e-5,plot_history=False,
+                         plot_convergence = True,solver_options=None,tol=5e-5,plot_history=False,
                          dynamics=True,
                            # delta_init=np.array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]),
                            # delta_init=np.ones(p_baseline.N)*ub_delta,
                            delta_init=temp_init,
                           # delta_init=np.array([11.99413456, 12,12,11.99415313, 12,12,11.99414931,11.98829433,
                           #                      6.01085081,12,6.01085661]),
-<<<<<<< HEAD
-                          max_workers=32,parallel=False
-=======
-                          max_workers=22,parallel=True
->>>>>>> 7634d94c846555e737545ddc0955abf198e49a75
+                          max_workers=12,parallel=True
                          # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                          #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )
