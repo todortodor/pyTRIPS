@@ -26,27 +26,27 @@ pylab.rcParams.update(params)
 
 baseline_dics = [
     {'baseline':'1210','variation': 'baseline'},
-    {'baseline':'1210','variation': '2.0'},
-    {'baseline':'1210','variation': '10.2'},
-    {'baseline':'1210','variation': '10.3'},
-    {'baseline':'1210','variation': '10.4'},
-    {'baseline':'1210','variation': '10.5'},
-    {'baseline':'1210','variation': '99.0'},
-    {'baseline':'1210','variation': '99.1'},
-    {'baseline':'1210','variation': '99.2'},
-    {'baseline':'1210','variation': '99.3'},
-    {'baseline':'1210','variation': '99.4'},
-    {'baseline':'1210','variation': '99.5'},
-    {'baseline':'1210','variation': '99.6'},
-    {'baseline':'1210','variation': '99.7'},
-    {'baseline':'1210','variation': '99.8'},
-    {'baseline':'1210','variation': '99.9'},
-    {'baseline':'1210','variation': '99.10'},
-    {'baseline':'1210','variation': '99.11'},
-    {'baseline':'1210','variation': '99.12'},
-    {'baseline':'1210','variation': '99.13'},
-    {'baseline':'1210','variation': '99.14'},
-    {'baseline':'1210','variation': '99.15'},
+    # {'baseline':'1210','variation': '2.0'},
+    # {'baseline':'1210','variation': '10.2'},
+    # {'baseline':'1210','variation': '10.3'},
+    # {'baseline':'1210','variation': '10.4'},
+    # {'baseline':'1210','variation': '10.5'},
+    # {'baseline':'1210','variation': '99.0'},
+    # {'baseline':'1210','variation': '99.1'},
+    # {'baseline':'1210','variation': '99.2'},
+    # {'baseline':'1210','variation': '99.3'},
+    # {'baseline':'1210','variation': '99.4'},
+    # {'baseline':'1210','variation': '99.5'},
+    # {'baseline':'1210','variation': '99.6'},
+    # {'baseline':'1210','variation': '99.7'},
+    # {'baseline':'1210','variation': '99.8'},
+    # {'baseline':'1210','variation': '99.9'},
+    # {'baseline':'1210','variation': '99.10'},
+    # {'baseline':'1210','variation': '99.11'},
+    # {'baseline':'1210','variation': '99.12'},
+    # {'baseline':'1210','variation': '99.13'},
+    # {'baseline':'1210','variation': '99.14'},
+    # {'baseline':'1210','variation': '99.15'},
     ]
 
 
@@ -72,8 +72,9 @@ if __name__ == '__main__':
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)  
         
-        for aggregation_method in ['pop_weighted','negishi']:
+        # for aggregation_method in ['pop_weighted','negishi']:
         # for aggregation_method in ['negishi']:
+        for aggregation_method in ['pop_weighted']:
             print(aggregation_method)
             
             start = time.perf_counter()
@@ -121,3 +122,4 @@ if __name__ == '__main__':
                 cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
 
+            # p_opti.write_params(f'opt_tariff_delta/{baseline_dic["baseline"]}/scenario_15/')

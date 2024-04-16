@@ -17,20 +17,21 @@ from solver_funcs import fixed_point_solver
 scenarios = []
 names = {
     '0':'Nash tariff, baseline delta',
-    # '1':'Nash delta and tariff',
+    '1':'Nash delta and tariff',
     # '2':'Nash tariff, cooperative delta Equal',
     # '3':'Nash tariff, cooperative delta Negishi',
     '6':'Cooperative tariff Equal, baseline delta',
     '7':'Cooperative tariff Equal and cooperative delta Equal',
-    '10':'Cooperative tariff Negishi, baseline delta',
-    '11':'Cooperative tariff Negishi and cooperative delta Negishi',
-    # '14':'Nash delta, baseline tariff',
-    # '15':'Cooperative delta Equal, baseline tariff',
+    # '10':'Cooperative tariff Negishi, baseline delta',
+    # '11':'Cooperative tariff Negishi and cooperative delta Negishi',
+    '14':'Nash delta, baseline tariff',
+    '15':'Cooperative delta Equal, baseline tariff',
     # '16':'Cooperative delta Negishi, baseline tariff'
     }
+baseline = 1210
 
 p_baseline = parameters()
-p_baseline.load_run('calibration_results_matched_economy/1040/')
+p_baseline.load_run(f'calibration_results_matched_economy/{baseline}/')
 sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
                                 context = 'counterfactual',
                         cobweb_anim=False,tol =1e-14,
@@ -55,7 +56,7 @@ sol, sol_baseline = fixed_point_solver(p_baseline,x0=p_baseline.guess,
 sol_baseline.scale_P(p_baseline)
 sol_baseline.compute_non_solver_quantities(p_baseline)
 
-path = 'opt_tariff_delta/1050/summary'
+path = f'opt_tariff_delta/{baseline}/summary_opt_tariff_delta_scenarii'
 
 writer = pd.ExcelWriter(path+'.xlsx', engine='xlsxwriter')
 workbook = writer.book
@@ -64,7 +65,7 @@ workbook = writer.book
 # for scenario in ['0','1','2','3','6','7','10','11','14','15','16']:
 for scenario in names:
     p = parameters()
-    p.load_run(f'opt_tariff_delta/1050/scenario_{scenario}/')
+    p.load_run(f'opt_tariff_delta/{baseline}/scenario_{scenario}/')
     p.delta[p.delta>2] = 12
     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                     context = 'counterfactual',
@@ -93,7 +94,6 @@ for scenario in names:
     sol_c.compute_world_welfare_changes(p,sol_baseline)
     
     p.guess = sol_c.vector_from_var()
-    # p.write_params(f'opt_tariff_delta/1040/scenario_{scenario}/')
     
     scenarios.append({
         'name':names[scenario],
@@ -117,7 +117,7 @@ for scenario in names:
     df_tariff = pd.DataFrame(index = p.countries, columns = p.countries, data = p.tariff[:,:,1]*100)
     df_tariff = df_tariff.round(2)
     
-    df_tariff.to_excel(writer,sheet_name=f'scenario_{scenario}',startrow = 15 , startcol=0)
+    df_tariff.to_excel(writer,sheet_name=f'scenario_{scenario}',startrow = 16 , startcol=0)
     
     print(names[scenario])
     print(p.tariff[:,:,1].mean())

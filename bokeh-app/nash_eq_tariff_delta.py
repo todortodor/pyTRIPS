@@ -30,7 +30,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1050','variation': 'baseline'},
+    {'baseline':'1210','variation': 'baseline'},
     # {'baseline':'1030','variation': '99.0'},
     # {'baseline':'1030','variation': '99.1'},
     # {'baseline':'1030','variation': '99.2'},
@@ -50,7 +50,7 @@ baseline_dics = [
     ]
 
 
-lb_tariff=-0.1
+lb_tariff=0
 ub_tariff=1
 
 if __name__ == '__main__':

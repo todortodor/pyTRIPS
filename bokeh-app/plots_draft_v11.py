@@ -4369,13 +4369,10 @@ write_calibration_results(doubled_nu_path+'dyn_Coop_negishi_weights_with_nu',p_c
 
 variations_of_robust_checks = {
     variation_with_doubled_nu:r'Doubled $\nu$',
-     variation_with_doubled_tau_in_pat_sect:r'Doubled trade costs',
-     'baseline':'Baseline',
+     # variation_with_doubled_tau_in_pat_sect:r'Doubled trade costs',
      variation_with_zero_trade_costs:r'Zero trade costs and tariffs',
-     'baseline':'Baseline',
-     variation_with_zero_tariffs:r'Zero tariffs',
-     'baseline':'Baseline',
-     variation_with_ten_times_tariffs:r'Ten times tariffs',
+     # variation_with_zero_tariffs:r'Zero tariffs',
+     # variation_with_ten_times_tariffs:r'Ten times tariffs',
      'baseline':'Baseline',
     }
 

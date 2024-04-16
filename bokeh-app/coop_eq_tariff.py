@@ -71,7 +71,7 @@ if __name__ == '__main__':
             start = time.perf_counter()
             
             p_opti, sol_opti = find_coop_eq_tariff(p_baseline,aggregation_method,
-                             lb_tariff=lb_tariff,ub_tariff=ub_tariff,dynamics=False,
+                             lb_tariff=lb_tariff,ub_tariff=ub_tariff,dynamics=True,
                              solver_options=None,tol=1e-8,
                              static_eq_tariff = None,custom_weights=None,
                              # custom_x0 = np.ones(p_baseline.N)*12,
