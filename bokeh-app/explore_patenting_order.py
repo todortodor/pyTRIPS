@@ -159,6 +159,14 @@ df = pd.merge(df.reset_index(),P_model.reset_index(),on=['destination', 'origin'
 
 df.columns = ['conditional probability model', 'conditional probability data','unconditional probability model']
 
+data = df.reset_index().copy()
+data = data.query('destination!=condition')
+data = data.query('destination!="IND"')
+data = data.query('origin!="IND"')
+data = data.query('condition!="IND"')
+data = data.loc[data["conditional probability model"] == 1]
+
+print(data.mean())
 
 # df = df.fillna(0)
 # test = df.loc[:,:,'USA']

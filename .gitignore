@@ -24,3 +24,7 @@ output/
 bokeh-app/.ipynb_checkpoints/exploring_counterfactuals-checkpoint.ipynb
 bokeh-app/exploring_counterfactuals.ipynb
 bokeh-app/tau_time_series.py
+bokeh-app/Untitled.ipynb
+bokeh-app/.ipynb_checkpoints/Untitled-checkpoint.ipynb
+*.xlsx
+bokeh-app/opt_tariff_delta/1210/~$summary_opt_tariff_delta_scenarii.xlsx

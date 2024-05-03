@@ -75,7 +75,7 @@ if __name__ == '__main__':
                              solver_options=None,tol=1e-8,
                              static_eq_tariff = None,custom_weights=None,
                              # custom_x0 = np.ones(p_baseline.N)*12,
-                             custom_x0 = None,
+                             custom_x0 = None,parallel=False,
                              max_workers=15)
             
             print(time.perf_counter() - start)
@@ -122,10 +122,12 @@ if __name__ == '__main__':
                 
                 if aggregation_method == 'pop_weighted':
                     try:
-                        os.mkdir(f'opt_tariff_delta/{baseline}/scenario_6')
+                        # os.mkdir(f'opt_tariff_delta/{baseline}/scenario_6')
+                        os.mkdir(f'opt_tariff_delta/{baseline}/dyn_scenario_6')
                     except:
                         pass
-                    p_opti.write_params(f'opt_tariff_delta/{baseline}/scenario_6/')
+                    # p_opti.write_params(f'opt_tariff_delta/{baseline}/scenario_6/')
+                    p_opti.write_params(f'opt_tariff_delta/{baseline}/dyn_scenario_6/')
                 if aggregation_method == 'negishi':
                     try:
                         os.mkdir(f'opt_tariff_delta/{baseline}/scenario_10')

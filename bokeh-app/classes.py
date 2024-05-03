@@ -1484,6 +1484,22 @@ class var:
         self.V_with_prod_patent[...,1] = (A1+A2+A3-B)*self.w[None,:]
         
         self.mult_val_all_innov = self.V_with_prod_patent[...,1]/self.V[...,1]
+
+    def compute_share_of_exports_patented(self,p):
+        A = np.einsum('ni,ni,ni,ni->ni',
+                        self.PSI_MPD[...,1]+self.PSI_MPND[...,1],
+                        1/self.PSI_M[...,1],
+                        1/(1+p.tariff[...,1]),
+                        self.X_M[...,1]
+                        )
+        B = np.einsum('ni,ni->ni',
+                        1/(1+p.tariff[...,1]),
+                        self.X[...,1]
+                        )
+        self.share_of_exports_patented = (A.sum(axis=0)-np.einsum('ii->i',
+                                                                  A)
+                                          )/(B.sum(axis=0)-np.einsum('ii->i',
+                                                                     B))
         
     def compute_non_solver_quantities(self,p):
         self.compute_tau(p)
@@ -3054,6 +3070,76 @@ class moments:
         self.SINNOVPATUS = var.share_innov_patented[0,0]
         
     def compute_TO(self,var,p):
+        # delt = 5
+        # self.delta_t = delt
+        # PHI = var.phi**p.theta[None,None,:]
+        
+        # num_brack_B = var.PSI_MNP*eps(p.nu*delt)[None,None,:]
+        # num_brack_C = var.PSI_MPND*(eps(p.delta*delt)*eps(p.nu*delt)[None,:])[:,None,:]
+        # num_brack_E = var.PSI_MPD*eps(p.nu*delt)[None,None,:]
+        
+        # num_brack = (num_brack_B + num_brack_C + num_brack_E)
+        
+        # num_sum = np.einsum('nis,njs->ns',
+        #                     num_brack,
+        #                     PHI
+        #                     ) - \
+        #           np.einsum('nis,ns->ns',
+        #                     num_brack,
+        #                     np.diagonal(PHI).transpose()
+        #                     ) - \
+        #           np.einsum('nis,nis->ns',
+        #                     num_brack,
+        #                     PHI
+        #                     ) + \
+        #           np.einsum('ns,ns->ns',
+        #                     np.diagonal(num_brack).transpose(),
+        #                     np.diagonal(PHI).transpose(),
+        #                     )
+                  
+        # num = np.einsum('ns,ns->ns',
+        #                 PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
+        #                 num_sum
+        #                 )
+        
+        # denom_A = np.einsum('nis,ns,ns->nis',
+        #                           PHI,
+        #                           var.PSI_CD,
+        #                           PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:]
+        #                           )
+        
+        # denom_B_a = var.PSI_MNP*np.exp(-delt*p.nu)[None,None,:]
+        # denom_B_b = var.PSI_MPND*(np.exp(-delt*p.nu)[None,:]
+        #                           +eps(p.nu*delt)[None,:]*np.exp(-delt*p.delta))[:,None,:]
+        # denom_B_c = var.PSI_MPD*np.exp(-delt*p.delta)[:,None,:]
+        # denom_B = np.einsum('nis,nis,s->nis',
+        #                     denom_B_a + denom_B_b + denom_B_c,
+        #                     var.phi**(p.sigma-1)[None,None,:],
+        #                     (p.sigma/(p.sigma-1))**(1-p.sigma)
+        #                     )
+        
+        # denom_D_sum = np.einsum('nis,njs->nis',
+        #                         num_brack,
+        #                         PHI
+        #                         ) - \
+        #               np.einsum('nis,ns->nis',
+        #                         num_brack,
+        #                         np.diagonal(PHI).transpose()
+        #                         )
+        
+        # denom_D = np.einsum('ns,nis->nis',
+        #                 PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
+        #                 denom_D_sum
+        #                 )
+        
+        # denom = np.einsum('nis->ns',
+        #                   denom_A + denom_B + denom_D
+        #                   )
+        
+        # self.turnover = num/denom
+        # self.TO = self.turnover[0,1]
+        
+        #!!! trying new version
         delt = 5
         self.delta_t = delt
         PHI = var.phi**p.theta[None,None,:]
@@ -3068,19 +3154,19 @@ class moments:
                             num_brack,
                             PHI
                             ) - \
+                  np.einsum('ns,njs->ns',
+                            np.diagonal(num_brack).transpose(),
+                            PHI
+                            ) - \
                   np.einsum('nis,ns->ns',
                             num_brack,
                             np.diagonal(PHI).transpose()
-                            ) - \
-                  np.einsum('nis,nis->ns',
-                            num_brack,
-                            PHI
                             ) + \
                   np.einsum('ns,ns->ns',
                             np.diagonal(num_brack).transpose(),
-                            np.diagonal(PHI).transpose(),
+                            np.diagonal(PHI).transpose()
                             )
-                  
+
         num = np.einsum('ns,ns->ns',
                         PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
                         num_sum
@@ -3101,15 +3187,6 @@ class moments:
                             var.phi**(p.sigma-1)[None,None,:],
                             (p.sigma/(p.sigma-1))**(1-p.sigma)
                             )
-
-        # denom_C_b = var.PSI_MNP*eps(delt*p.nu)[None,None,:]
-        # denom_C_c = var.PSI_MPND*(eps(p.delta*delt)
-        #                             *eps(p.nu*delt)[None,:])[:,None,:]
-        
-        # denom_C = np.einsum('nis,nis->nis',
-        #                     denom_C_b + denom_C_c,
-        #                     var.phi**(p.sigma-1)[None,None,:]
-        #                     )
         
         denom_D_sum = np.einsum('nis,njs->nis',
                                 num_brack,
@@ -3125,12 +3202,11 @@ class moments:
                         denom_D_sum
                         )
         
-        # denom = np.einsum('nis->ns',
-        #                   denom_A + denom_B + denom_C + denom_D
-        #                   )
         denom = np.einsum('nis->ns',
                           denom_A + denom_B + denom_D
-                          )
+                          ) - np.einsum('nns->ns',
+                                            denom_A + denom_B + denom_D
+                                            ) 
         
         self.turnover = num/denom
         self.TO = self.turnover[0,1]
@@ -3315,7 +3391,7 @@ class moments:
                 except:
                     pass
             if self.N == 12:
-                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7,9]])
+                    self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7]])
             if self.N == 11:
                     self.RD_deviation = np.array([self.RD_deviation[i] for i in [0,1,2,6,7]])
             if self.N == 13:

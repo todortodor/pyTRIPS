@@ -115,13 +115,13 @@ config_dics = [{
     'N': N}
     for y in range(1990,2019)
     # for y in range(1990,1991)
-    # for y in [1992]
+    # for y in [2015]
     # for y in range(2005,2006)
     # for N in [7,12,13]
     for N in [12]
     ]
 
-write = False
+write = True
 write_tariff = True
 
 for config_dic in config_dics:
@@ -371,31 +371,32 @@ for config_dic in config_dics:
         ['origin_code', 'destination_code', 'sector'], inplace=True)
     
     tariff_all = pd.read_csv(tariff_data_path+f'tariffs_{nbr_of_countries}_countries.csv').set_index(
-        ['origin_code', 'destination_code', 'sector', 'year', 'base_year']).sort_index().reset_index()
+        ['origin_code', 'destination_code', 'TRIPSsector', 'year']).sort_index().reset_index(
+            ).rename(columns={'TRIPSsector':'sector'})
     
-    tariff_all = tariff_all.loc[tariff_all['sector'].isin(['agri_fishing',
-                                                           'mining_quarrying',
-                                                           'patenting'])]
+    # tariff_all = tariff_all.loc[tariff_all['sector'].isin(['agri_fishing',
+    #                                                        'mining_quarrying',
+    #                                                        'patenting'])]
     
-    tariff_all = tariff_all.pivot(index=['origin_code','destination_code','year'],
-                                  columns = 'sector',values='tariff')
+    # tariff_all = tariff_all.pivot(index=['origin_code','destination_code','year'],
+    #                               columns = 'sector',values='tariff')
     
-    tariff_all['trade_agri_fishing'] = trade_weights.loc[:,:,'agri_fishing']['trade']
-    tariff_all['trade_mining_quarrying'] = trade_weights.loc[:,:,'mining_quarrying']['trade']
-    tariff_all['trade_non_patent'] = trade_weights_total.loc[:,:,0]['trade']
+    # tariff_all['trade_agri_fishing'] = trade_weights.loc[:,:,'agri_fishing']['trade']
+    # tariff_all['trade_mining_quarrying'] = trade_weights.loc[:,:,'mining_quarrying']['trade']
+    # tariff_all['trade_non_patent'] = trade_weights_total.loc[:,:,0]['trade']
     
-    tariff_all = tariff_all.fillna(0)
+    # # tariff_all = tariff_all.fillna(0)
     
-    tariff_all['non_patenting'] = (tariff_all['trade_agri_fishing']*tariff_all['agri_fishing']
-                                   +tariff_all['trade_mining_quarrying']*tariff_all['mining_quarrying']
-                                   )/tariff_all['trade_non_patent']
+    # tariff_all['non_patenting'] = (tariff_all['trade_agri_fishing']*tariff_all['agri_fishing']
+    #                                +tariff_all['trade_mining_quarrying']*tariff_all['mining_quarrying']
+    #                                )/tariff_all['trade_non_patent']
     
-    tariff_all = pd.melt(tariff_all[['patenting','non_patenting']].reset_index(),
-                         id_vars = ['origin_code', 'destination_code', 'year'],
-                         value_vars = ['patenting','non_patenting'],
-                         var_name='sector',
-                         value_name='tariff'
-                         )
+    # tariff_all = pd.melt(tariff_all[['patenting','non_patenting']].reset_index(),
+    #                      id_vars = ['origin_code', 'destination_code', 'year'],
+    #                      value_vars = ['patenting','non_patenting'],
+    #                      var_name='sector',
+    #                      value_name='tariff'
+    #                      )
     
     tariff_all['sector'] = tariff_all['sector'].map({
         'patenting':1,
@@ -416,25 +417,6 @@ for config_dic in config_dics:
     tariff = tariff_all[tariff_all.year == year].groupby(['origin_code',
                                                             'destination_code',
                                                             'sector'])[['tariff']].mean()/100
-    
-    # #%%
-    # import matplotlib.pyplot as plt
-    
-    # fig,ax= plt.subplots(figsize = (12,8))
-    
-    # for s in [0,1]:
-    #     if s==0:
-    #         ls='-'
-    #     else:
-    #         ls ='--'
-    #     x = tariff_all[(tariff_all['sector']==s)].groupby('year').mean().index.get_level_values(0)
-    #     y = tariff_all[(tariff_all['sector']==s)].groupby('year').mean()['tariff']
-    #     ax.plot(x,y,label=f'sector {s}',ls=ls)
-    # plt.legend()
-    # plt.show()
-    
-    # #%%
-    
     
     if write or write_tariff:
         tariff.to_csv(path+'tariff.csv')
@@ -677,7 +659,8 @@ for config_dic in config_dics:
     scalar_moments.loc['JUPCOST', 'value'] = pflows.loc[(1, 3), 'patent flows']*final_pat_fees.loc[1, 'fee']\
         * gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']/1e12
     # scalar_moments.loc['TO', 'value'] = 0.018546283
-    scalar_moments.loc['TO', 'value'] = 0.017496806
+    # scalar_moments.loc['TO', 'value'] = 0.017468078
+    scalar_moments.loc['TO', 'value'] = 0.017393184
     if write:
         scalar_moments.to_csv(path+'scalar_moments.csv')
         scalar_moments.to_csv(dropbox_path+'scalar_moments.csv')

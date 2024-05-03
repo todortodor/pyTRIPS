@@ -1074,6 +1074,12 @@ comments_dic['1200'] = {
     '9.2':'9.2:partial calib, 3-year smoothed data 1992'
     }
 
+comments_dic['1220'] = {
+    "baseline":"baseline : old compute, old target",
+    '1.0':'1.0:new compute, old target',
+    '1.1':'1.1:new compute, new target:6.896%'
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
@@ -1086,8 +1092,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['901','803','806','808']    
 # baseline_list = ['1030','1040','1050']    
 # baseline_list = ['1050']    
-baseline_list = ['1200']    
-baseline_mom = '1200'
+baseline_list = ['1220']    
+baseline_mom = '1220'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1615,111 +1621,111 @@ print(time.perf_counter() - start)
 
 #%% counterfactuals
 
-# baseline_cf = '101'
-baseline_cf = '1200'
-country_cf = 'USA'
+# # baseline_cf = '101'
+# baseline_cf = '1200'
+# country_cf = 'USA'
 
-def section_end(s):
-      return [int(_) for _ in s.split("_")[-1].split(".")]
+# def section_end(s):
+#       return [int(_) for _ in s.split("_")[-1].split(".")]
+# # cf_list = sorted([s for s in os.listdir(cf_path) 
+# #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 # cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
-cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1200') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+#                 if s[9:].startswith('1200') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
-country_cf_select = Select(value=country_cf, 
-                            title='Country', 
-                            options=countries+['World','Harmonizing','Upper_harmonizing',
-                                               'Uniform_delta','Upper_uniform_delta'])
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
+# country_cf_select = Select(value=country_cf, 
+#                             title='Country', 
+#                             options=countries+['World','Harmonizing','Upper_harmonizing',
+#                                                'Uniform_delta','Upper_uniform_delta'])
 
-def get_data_cf(baseline,country):
-    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-    df_cf.set_index('delt',inplace=True)
-    return df_cf
+# def get_data_cf(baseline,country):
+#     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+#     if country != 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+#     if country == 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+#     df_cf.set_index('delt',inplace=True)
+#     return df_cf
 
-def build_max(df_cf):
-    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+# def build_max(df_cf):
+#     df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category18[:len(df_max)]
+#     return df_max
 
-df_cf = get_data_cf(baseline_cf,country_cf)
-ds_cf = ColumnDataSource(df_cf)
-df_cf_max = build_max(df_cf)
-ds_cf_max = ColumnDataSource(df_cf_max)
+# df_cf = get_data_cf(baseline_cf,country_cf)
+# ds_cf = ColumnDataSource(df_cf)
+# df_cf_max = build_max(df_cf)
+# ds_cf_max = ColumnDataSource(df_cf_max)
 
-colors_cf = itertools.cycle(Category18)
-colors_cf_max = itertools.cycle(Category18)
+# colors_cf = itertools.cycle(Category18)
+# colors_cf_max = itertools.cycle(Category18)
 
-p_cf = figure(title="Patent protection counterfactual", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_cf = figure(title="Patent protection counterfactual", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-for col in df_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+# for col in df_cf.columns:
+#     if col not in [0,'delt','growth']:
+#         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
-p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+# p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
      
-p_cf.legend.click_policy="hide"
-p_cf.legend.label_text_font_size = '8pt'
-p_cf.add_layout(p_cf.legend[0], 'right')
+# p_cf.legend.click_policy="hide"
+# p_cf.legend.label_text_font_size = '8pt'
+# p_cf.add_layout(p_cf.legend[0], 'right')
 
-def update_baseline_cf(attrname, old, new):
-    country_cf = country_cf_select.value
-    ds_cf.data = get_data_cf(new,country_cf)
-    df_cf = get_data_cf(new,country_cf)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+# def update_baseline_cf(attrname, old, new):
+#     country_cf = country_cf_select.value
+#     ds_cf.data = get_data_cf(new,country_cf)
+#     df_cf = get_data_cf(new,country_cf)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
     
-def update_country_cf(attrname, old, new):
-    baseline_cf = baseline_cf_select.value
-    df_cf = get_data_cf(baseline_cf,new)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+# def update_country_cf(attrname, old, new):
+#     baseline_cf = baseline_cf_select.value
+#     df_cf = get_data_cf(baseline_cf,new)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
     
-controls_cf = row(baseline_cf_select, country_cf_select)
+# controls_cf = row(baseline_cf_select, country_cf_select)
 
-baseline_cf_select.on_change('value', update_baseline_cf)
-country_cf_select.on_change('value', update_country_cf)
+# baseline_cf_select.on_change('value', update_baseline_cf)
+# country_cf_select.on_change('value', update_country_cf)
 
-counterfactuals_report = column(controls_cf,p_cf)
+# counterfactuals_report = column(controls_cf,p_cf)
 
 #%% counterfactuals 805 TO target
 
@@ -1821,92 +1827,92 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1200'
-country_dyn_cf = 'USA'
+# baseline_dyn_cf = '1200'
+# country_dyn_cf = 'USA'
 
-# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1030',
-#                                                                                   '1030_99.0',
-#                                                                                   '1030_99.1',
-#                                                                                   '1030_99.2',
-#                                                                                   '1030_99.3',
-#                                                                                   '1030_99.4',
-#                                                                                   '1030_99.5',
-#                                                                                   '1030_99.6',
-#                                                                                   '1030_99.7',
-#                                                                                   '1030_99.8',
-#                                                                                   '1030_99.9',
-#                                                                                   '1030_99.10',
-#                                                                                   '1030_99.11',
-#                                                                                   '1030_99.12',
-#                                                                                   '1030_99.13'
+# # baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1030',
+# #                                                                                   '1030_99.0',
+# #                                                                                   '1030_99.1',
+# #                                                                                   '1030_99.2',
+# #                                                                                   '1030_99.3',
+# #                                                                                   '1030_99.4',
+# #                                                                                   '1030_99.5',
+# #                                                                                   '1030_99.6',
+# #                                                                                   '1030_99.7',
+# #                                                                                   '1030_99.8',
+# #                                                                                   '1030_99.9',
+# #                                                                                   '1030_99.10',
+# #                                                                                   '1030_99.11',
+# #                                                                                   '1030_99.12',
+# #                                                                                   '1030_99.13'
+# #                                                                                   ])
+# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1200',
 #                                                                                   ])
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1200',
-                                                                                  ])
-country_dyn_cf_select = Select(value=country_dyn_cf, 
-                            title='Country', 
-                            options=countries+['World'])
-                            # options=countries+['World','Harmonizing','Upper_harmonizing',
-                            #                    'Uniform_delta','Upper_uniform_delta'])
+# country_dyn_cf_select = Select(value=country_dyn_cf, 
+#                             title='Country', 
+#                             options=countries+['World'])
+#                             # options=countries+['World','Harmonizing','Upper_harmonizing',
+#                             #                    'Uniform_delta','Upper_uniform_delta'])
 
-def get_data_dyn_cf(baseline,country):
-    df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
-    df_dyn_cf.set_index('delt',inplace=True)
-    return df_dyn_cf
+# def get_data_dyn_cf(baseline,country):
+#     df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
+#     df_dyn_cf.set_index('delt',inplace=True)
+#     return df_dyn_cf
 
-def build_max(df_dyn_cf):
-    df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+# def build_max(df_dyn_cf):
+#     df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category18[:len(df_max)]
+#     return df_max
 
-df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
-ds_dyn_cf = ColumnDataSource(df_dyn_cf)
-df_dyn_cf_max = build_max(df_dyn_cf)
-ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
+# df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
+# ds_dyn_cf = ColumnDataSource(df_dyn_cf)
+# df_dyn_cf_max = build_max(df_dyn_cf)
+# ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
 
-colors_dyn_cf = itertools.cycle(Category18)
-colors_dyn_cf_max = itertools.cycle(Category18)
+# colors_dyn_cf = itertools.cycle(Category18)
+# colors_dyn_cf_max = itertools.cycle(Category18)
 
-p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-for col in df_dyn_cf.columns:
-    if col not in [0,'delt']:
-        p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
-                      color=next(colors_dyn_cf),line_width = 2, legend_label=col)
+# for col in df_dyn_cf.columns:
+#     if col not in [0,'delt']:
+#         p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
+#                       color=next(colors_dyn_cf),line_width = 2, legend_label=col)
 
-p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
+# p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
      
-p_dyn_cf.legend.click_policy="hide"
-p_dyn_cf.legend.label_text_font_size = '8pt'
-p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
+# p_dyn_cf.legend.click_policy="hide"
+# p_dyn_cf.legend.label_text_font_size = '8pt'
+# p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
 
-def update_baseline_dyn_cf(attrname, old, new):
-    country_dyn_cf = country_dyn_cf_select.value
-    ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
-    df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
-    ds_dyn_cf.data = df_dyn_cf
-    ds_dyn_cf_max.data = build_max(df_dyn_cf)
+# def update_baseline_dyn_cf(attrname, old, new):
+#     country_dyn_cf = country_dyn_cf_select.value
+#     ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
+#     df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
+#     ds_dyn_cf.data = df_dyn_cf
+#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-def update_country_dyn_cf(attrname, old, new):
-    baseline_dyn_cf = baseline_dyn_cf_select.value
-    df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
-    ds_dyn_cf.data = df_dyn_cf
-    ds_dyn_cf_max.data = build_max(df_dyn_cf)
+# def update_country_dyn_cf(attrname, old, new):
+#     baseline_dyn_cf = baseline_dyn_cf_select.value
+#     df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
+#     ds_dyn_cf.data = df_dyn_cf
+#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
+# controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
 
-baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
-country_dyn_cf_select.on_change('value', update_country_dyn_cf)
+# baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
+# country_dyn_cf_select.on_change('value', update_country_dyn_cf)
 
-counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
+# counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
 #%% counterfactuals 405 TO target with dynamics
 
@@ -1995,426 +2001,426 @@ counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
 # counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
-#!!! third panel
-# third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
-third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
+# #!!! third panel
+# # third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
+# third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
-baseline_dyn_nash_coop = '1200'
-variation_dyn_nash_coop = 'baseline'
-equilibrium_type ='Nash'
+# baseline_dyn_nash_coop = '1200'
+# variation_dyn_nash_coop = 'baseline'
+# equilibrium_type ='Nash'
 
-baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
-    # '607','501'
-    '1200'
-    ])
-dic_of_possible_variations_dyn_nash_coop = {
-    '1200':['baseline'],
-    # '1003':['baseline','0.4'],
-    # '1030':['baseline','99.0','99.1','99.2','99.3','99.4','99.5','99.6','99.7',     
-    #         '99.8',     '99.9',     '99.10',     '99.11',
-    #         '99.12',     '99.13'],
-    # '607':['baseline'],
-    # '501':['1.0','2.0']
-    }
-variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
-                            title='Variation', 
-                            options=dic_of_possible_variations_dyn_nash_coop[baseline_dyn_nash_coop])
-equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
+# baseline_dyn_nash_coop_select = Select(value=baseline_dyn_nash_coop, title='Baseline', options=[
+#     # '607','501'
+#     '1200'
+#     ])
+# dic_of_possible_variations_dyn_nash_coop = {
+#     '1200':['baseline'],
+#     # '1003':['baseline','0.4'],
+#     # '1030':['baseline','99.0','99.1','99.2','99.3','99.4','99.5','99.6','99.7',     
+#     #         '99.8',     '99.9',     '99.10',     '99.11',
+#     #         '99.12',     '99.13'],
+#     # '607':['baseline'],
+#     # '501':['1.0','2.0']
+#     }
+# variation_dyn_nash_coop_select = Select(value=variation_dyn_nash_coop, 
+#                             title='Variation', 
+#                             options=dic_of_possible_variations_dyn_nash_coop[baseline_dyn_nash_coop])
+# equilibrium_type_select = Select(value=equilibrium_type, title='Equilibrium', options=['Nash','Coop eq','Coop negishi'])
 
-def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
-    if equilibrium_type == 'Nash':
-        deltas = pd.read_csv(nash_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            ][countries].values.squeeze()
+# def get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
+#     if equilibrium_type == 'Nash':
+#         deltas = pd.read_csv(nash_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             ][countries].values.squeeze()
     
-    if equilibrium_type == 'Coop eq':
-        deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            & (deltas.aggregation_method == 'pop_weighted')
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            & (welfares.aggregation_method == 'pop_weighted')
-            ][countries].values.squeeze()
+#     if equilibrium_type == 'Coop eq':
+#         deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             & (deltas.aggregation_method == 'pop_weighted')
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             & (welfares.aggregation_method == 'pop_weighted')
+#             ][countries].values.squeeze()
     
-    if equilibrium_type == 'Coop negishi':
-        deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_deltas = deltas.loc[
-            (deltas.baseline == baseline_dyn_nash_coop)
-            & (deltas.variation == variation_dyn_nash_coop)
-            & (deltas.aggregation_method == 'negishi')
-            ][countries].values.squeeze()
-        welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
-                              ,index_col=0
-                              ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
-        eq_welfares = welfares.loc[
-            (welfares.baseline == baseline_dyn_nash_coop)
-            & (welfares.variation == variation_dyn_nash_coop)
-            & (welfares.aggregation_method == 'negishi')
-            ][countries].values.squeeze()
+#     if equilibrium_type == 'Coop negishi':
+#         deltas = pd.read_csv(coop_eq_path+'dyn_deltas.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_deltas = deltas.loc[
+#             (deltas.baseline == baseline_dyn_nash_coop)
+#             & (deltas.variation == variation_dyn_nash_coop)
+#             & (deltas.aggregation_method == 'negishi')
+#             ][countries].values.squeeze()
+#         welfares = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv'
+#                               ,index_col=0
+#                               ,dtype={'baseline':str,'variation':str}).drop_duplicates(['baseline','variation','aggregation_method'],keep='last')
+#         eq_welfares = welfares.loc[
+#             (welfares.baseline == baseline_dyn_nash_coop)
+#             & (welfares.variation == variation_dyn_nash_coop)
+#             & (welfares.aggregation_method == 'negishi')
+#             ][countries].values.squeeze()
         
-    df = pd.DataFrame(index = pd.Index(countries,name='country'))
-    df['deltas'] = eq_deltas
-    df['welfares'] = eq_welfares
-    df['colors'] = Category18[:len(df)]
+#     df = pd.DataFrame(index = pd.Index(countries,name='country'))
+#     df['deltas'] = eq_deltas
+#     df['welfares'] = eq_welfares
+#     df['colors'] = Category18[:len(df)]
     
-    return df
+#     return df
 
-def get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
-    if variation_dyn_nash_coop == 'baseline':
-        temp_run = baseline_dyn_nash_coop
-    else:
-        temp_run = baseline_dyn_nash_coop+'_'+variation_dyn_nash_coop
+# def get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type):
+#     if variation_dyn_nash_coop == 'baseline':
+#         temp_run = baseline_dyn_nash_coop
+#     else:
+#         temp_run = baseline_dyn_nash_coop+'_'+variation_dyn_nash_coop
     
-    if equilibrium_type == 'Nash':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_nash_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Nash':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_nash_eq/baseline_{temp_run}/all_countries.csv')
     
-    if equilibrium_type == 'Coop eq':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_equal_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Coop eq':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_equal_eq/baseline_{temp_run}/all_countries.csv')
     
-    if equilibrium_type == 'Coop negishi':
-        dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_negishi_eq/baseline_{temp_run}/all_countries.csv')
+#     if equilibrium_type == 'Coop negishi':
+#         dyn_deviation_recap = pd.read_csv(around_dyn_eq_path+f'around_dyn_coop_negishi_eq/baseline_{temp_run}/all_countries.csv')
 
-    return dyn_deviation_recap
+#     return dyn_deviation_recap
   
-ds_dyn_eq = ColumnDataSource(get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
-# ds_dyn_eq_dev = ColumnDataSource(get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
+# ds_dyn_eq = ColumnDataSource(get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
+# # ds_dyn_eq_dev = ColumnDataSource(get_dyn_deviation_recap(baseline_dyn_nash_coop,variation_dyn_nash_coop,equilibrium_type))
 
-colors_dyn_eq_dev = itertools.cycle(Category18)
+# colors_dyn_eq_dev = itertools.cycle(Category18)
 
-p_dyn_eq_dev = figure(title="With transitional dynamics Equilibria and unilateral deviations from it", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Delta',
-                y_axis_label='Normalized Consumption equivalent welfare change',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_dyn_eq_dev = figure(title="With transitional dynamics Equilibria and unilateral deviations from it", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare change',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-# for country_eq_dev in countries:
-#     color = next(colors_dyn_eq_dev)
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_welfare', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       legend_label=country_eq_dev+'_welfare')
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_world_negishi', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       line_dash='dashed',
-#                       legend_label=country_eq_dev+'_world_negishi')
-#     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
-#                       y=country_eq_dev+'_world_equal', 
-#                       source = ds_dyn_eq_dev, 
-#                       color=color,
-#                       line_width = 2, 
-#                       line_dash='dotted',
-#                       legend_label=country_eq_dev+'_world_equal')
+# # for country_eq_dev in countries:
+# #     color = next(colors_dyn_eq_dev)
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_welfare', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       legend_label=country_eq_dev+'_welfare')
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_world_negishi', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       line_dash='dashed',
+# #                       legend_label=country_eq_dev+'_world_negishi')
+# #     p_dyn_eq_dev.line(x=country_eq_dev+'_delta', 
+# #                       y=country_eq_dev+'_world_equal', 
+# #                       source = ds_dyn_eq_dev, 
+# #                       color=color,
+# #                       line_width = 2, 
+# #                       line_dash='dotted',
+# #                       legend_label=country_eq_dev+'_world_equal')
 
-p_dyn_eq_dev.circle(x = 'deltas', y = 'welfares', source = ds_dyn_eq, size=4,color = 'colors')
+# p_dyn_eq_dev.circle(x = 'deltas', y = 'welfares', source = ds_dyn_eq, size=4,color = 'colors')
 
-# p_dyn_eq_dev.legend.click_policy="hide"
-# p_dyn_eq_dev.legend.label_text_font_size = '8pt'
-# p_dyn_eq_dev.add_layout(p_dyn_eq_dev.legend[0], 'right')
+# # p_dyn_eq_dev.legend.click_policy="hide"
+# # p_dyn_eq_dev.legend.label_text_font_size = '8pt'
+# # p_dyn_eq_dev.add_layout(p_dyn_eq_dev.legend[0], 'right')
 
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("delta", "$x"),
-    ("welfare", "$y")
-    ] 
-p_dyn_eq_dev.add_tools(hover_tool_eq)
-
-
-labels_dyn_eq_dev = LabelSet(x='deltas', y='welfares', text='country',
-              x_offset=2, y_offset=2, source=ds_dyn_eq, text_font_size="7pt")
-
-p_dyn_eq_dev.add_layout(labels_dyn_eq_dev)
+# hover_tool_eq = HoverTool()
+# hover_tool_eq.tooltips = [
+#     ("delta", "$x"),
+#     ("welfare", "$y")
+#     ] 
+# p_dyn_eq_dev.add_tools(hover_tool_eq)
 
 
-def update_baseline_dyn_nash(attrname, old, new):
-    variation_dyn_nash_coop_select.value = dic_of_possible_variations_dyn_nash_coop[new][0]
-    variation_dyn_nash_coop_select.options = dic_of_possible_variations_dyn_nash_coop[new]
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(new,
-                                                variation_dyn_nash_coop_select.value,
-                                                equilibrium_type_select.value)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(new,
-    #                                               variation_dyn_nash_coop_select.value,
-    #                                               equilibrium_type_select.value)
+# labels_dyn_eq_dev = LabelSet(x='deltas', y='welfares', text='country',
+#               x_offset=2, y_offset=2, source=ds_dyn_eq, text_font_size="7pt")
+
+# p_dyn_eq_dev.add_layout(labels_dyn_eq_dev)
+
+
+# def update_baseline_dyn_nash(attrname, old, new):
+#     variation_dyn_nash_coop_select.value = dic_of_possible_variations_dyn_nash_coop[new][0]
+#     variation_dyn_nash_coop_select.options = dic_of_possible_variations_dyn_nash_coop[new]
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(new,
+#                                                 variation_dyn_nash_coop_select.value,
+#                                                 equilibrium_type_select.value)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(new,
+#     #                                               variation_dyn_nash_coop_select.value,
+#     #                                               equilibrium_type_select.value)
     
-def update_variation_dyn_nash_coop(attrname, old, new):
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
-                                                new,
-                                                equilibrium_type_select.value)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
-    #                                               new,
-    #                                               equilibrium_type_select.value)
+# def update_variation_dyn_nash_coop(attrname, old, new):
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
+#                                                 new,
+#                                                 equilibrium_type_select.value)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
+#     #                                               new,
+#     #                                               equilibrium_type_select.value)
     
-def update_equilibrium_type(attrname, old, new):
-    ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
-                                                variation_dyn_nash_coop_select.value,
-                                                new)
-    # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
-    #                                               variation_dyn_nash_coop_select.value,
-    #                                               new)
+# def update_equilibrium_type(attrname, old, new):
+#     ds_dyn_eq.data = get_dyn_eq_deltas_welfares(baseline_dyn_nash_coop_select.value,
+#                                                 variation_dyn_nash_coop_select.value,
+#                                                 new)
+#     # ds_dyn_eq_dev.data = get_dyn_deviation_recap(baseline_dyn_nash_coop_select.value,
+#     #                                               variation_dyn_nash_coop_select.value,
+#     #                                               new)
 
-controls_dyn_eq_dev = row(baseline_dyn_nash_coop_select, variation_dyn_nash_coop_select, equilibrium_type_select)
+# controls_dyn_eq_dev = row(baseline_dyn_nash_coop_select, variation_dyn_nash_coop_select, equilibrium_type_select)
 
-baseline_dyn_nash_coop_select.on_change('value', update_baseline_dyn_nash)
-variation_dyn_nash_coop_select.on_change('value', update_variation_dyn_nash_coop)
-equilibrium_type_select.on_change('value', update_equilibrium_type)
+# baseline_dyn_nash_coop_select.on_change('value', update_baseline_dyn_nash)
+# variation_dyn_nash_coop_select.on_change('value', update_variation_dyn_nash_coop)
+# equilibrium_type_select.on_change('value', update_equilibrium_type)
 
-dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
+# dyn_eq_dev_report = column(controls_dyn_eq_dev,p_dyn_eq_dev)
 
 
 #%% Nash / coop equilibrium
-def section_ser(s):
-      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
+# def section_ser(s):
+#       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1200'
+# baseline_nash_coop = '1200'
 
-# dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
+# # dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
-def get_data_nash_coop(baseline_nash_number):
+# def get_data_nash_coop(baseline_nash_number):
 
-    welf_coop = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    welf_nash = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation'],keep='last').sort_values(['baseline','variation'])
+#     welf_coop = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
+#     welf_nash = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation'],keep='last').sort_values(['baseline','variation'])
         
-    welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
-    welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+#     welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
+#     welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
-    # welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_405)
-    # welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_405)
+#     # welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_405)
+#     # welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_405)
     
-    welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
-    welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
+#     welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
+#     welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
-    welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
-    welf_coop = welf_coop[welf_coop['baseline'].isin([int(baseline_nash_number)])]
-    welf_nash = welf_nash[welf_nash['baseline'].isin([int(baseline_nash_number)])]
+#     welf_coop = welf_coop[welf_coop['baseline'].isin([int(baseline_nash_number)])]
+#     welf_nash = welf_nash[welf_nash['baseline'].isin([int(baseline_nash_number)])]
     
-    welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
-    welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
+#     welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
+#     welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
     
-    return welf_pop_weighted, welf_negishi, welf_nash
+#     return welf_pop_weighted, welf_negishi, welf_nash
 
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
-                                    # options=['404','405','501','601'])
-                                    # options=['501','607','618','619'])
-                                    # options=['802','803','804','805','806'])
-                                    options=['1200'])
+# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
+#                                     # options=['404','405','501','601'])
+#                                     # options=['501','607','618','619'])
+#                                     # options=['802','803','804','805','806'])
+#                                     options=['1200'])
 
-welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
+# welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
-ds_pop_weighted = ColumnDataSource(welf_pop_weighted)
-ds_negishi = ColumnDataSource(welf_negishi)
-ds_nash = ColumnDataSource(welf_nash)
+# ds_pop_weighted = ColumnDataSource(welf_pop_weighted)
+# ds_negishi = ColumnDataSource(welf_negishi)
+# ds_nash = ColumnDataSource(welf_nash)
 
-colors_pop_weighted = itertools.cycle(Category18)
-colors_negishi = itertools.cycle(Category18)
-colors_nash = itertools.cycle(Category18)
+# colors_pop_weighted = itertools.cycle(Category18)
+# colors_negishi = itertools.cycle(Category18)
+# colors_nash = itertools.cycle(Category18)
 
-x_range_nash = welf_nash['run'].to_list()
+# x_range_nash = welf_nash['run'].to_list()
 
-p_eq = figure(title="Cooperative and Nash equilibrium", 
-                width = 1200,
-                height = 900,
-                x_range = x_range_nash,
-                # x_axis_label='Run',
-                y_axis_label='Consumption eqivalent welfare change',
-                tools = TOOLS
-                ) 
-p_eq.xaxis.major_label_orientation = 3.14/3
+# p_eq = figure(title="Cooperative and Nash equilibrium", 
+#                 width = 1200,
+#                 height = 900,
+#                 x_range = x_range_nash,
+#                 # x_axis_label='Run',
+#                 y_axis_label='Consumption eqivalent welfare change',
+#                 tools = TOOLS
+#                 ) 
+# p_eq.xaxis.major_label_orientation = 3.14/3
 
-lines_nash = {}
-for col in p_baseline.countries+['Equal']+['Negishi']:
-    lines_nash[col+' Nash'] = p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
-    lines_nash[col+' coop equal'] = p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
-    lines_nash[col+' coop negishi'] = p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
-    if col != 'Negishi' and col != 'Equal':
-        lines_nash[col+' Nash'].visible = False
-        lines_nash[col+' coop equal'].visible = False
-        lines_nash[col+' coop negishi'].visible = False
+# lines_nash = {}
+# for col in p_baseline.countries+['Equal']+['Negishi']:
+#     lines_nash[col+' Nash'] = p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
+#     lines_nash[col+' coop equal'] = p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
+#     lines_nash[col+' coop negishi'] = p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
+#     if col != 'Negishi' and col != 'Equal':
+#         lines_nash[col+' Nash'].visible = False
+#         lines_nash[col+' coop equal'].visible = False
+#         lines_nash[col+' coop negishi'].visible = False
         
         
-p_eq.legend.click_policy="hide"
-p_eq.legend.label_text_font_size = '8pt'
-p_eq.legend.spacing = 0
-p_eq.add_layout(p_eq.legend[0], 'right')    
+# p_eq.legend.click_policy="hide"
+# p_eq.legend.label_text_font_size = '8pt'
+# p_eq.legend.spacing = 0
+# p_eq.add_layout(p_eq.legend[0], 'right')    
 
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("run", "@run"),
-    ("value", "$y")
-    ] 
-p_eq.add_tools(hover_tool_eq)
+# hover_tool_eq = HoverTool()
+# hover_tool_eq.tooltips = [
+#     ("run", "@run"),
+#     ("value", "$y")
+#     ] 
+# p_eq.add_tools(hover_tool_eq)
 
-columns = [
-        TableColumn(field="runs", title="Runs"),
-        TableColumn(field="comments", title="Description"),
-    ]
+# columns = [
+#         TableColumn(field="runs", title="Runs"),
+#         TableColumn(field="comments", title="Description"),
+#     ]
 
-# explication = Div(text="In the legend, first is the quantity displayed and last\
-#                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
-#                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
-#                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
-#                           ")
+# # explication = Div(text="In the legend, first is the quantity displayed and last\
+# #                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
+# #                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
+# #                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
+# #                           ")
 
-data_table_welfares = pd.concat([welf_nash.set_index('run'),
-              welf_negishi.set_index('run'),
-              welf_pop_weighted.set_index('run')],
-            axis=0,
-            keys=['Nash','Coop Negishi','Coop equal'],
-            names=['type','run'],
-            sort=False
-            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# data_table_welfares = pd.concat([welf_nash.set_index('run'),
+#               welf_negishi.set_index('run'),
+#               welf_pop_weighted.set_index('run')],
+#             axis=0,
+#             keys=['Nash','Coop Negishi','Coop equal'],
+#             names=['type','run'],
+#             sort=False
+#             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-source_table_welfares = ColumnDataSource(data_table_welfares)
-columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# source_table_welfares = ColumnDataSource(data_table_welfares)
+# columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=1100, height=400,
-                          )
+# table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=1100, height=400,
+#                           )
 
-def get_delta_nash_coop(baseline_number):
-    deltas_coop = pd.read_csv(coop_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    deltas_nash = pd.read_csv(nash_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation'],keep='last').sort_values(['baseline','variation'])
+# def get_delta_nash_coop(baseline_number):
+#     deltas_coop = pd.read_csv(coop_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
+#     deltas_nash = pd.read_csv(nash_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation'],keep='last').sort_values(['baseline','variation'])
     
-    deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
-    deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
+#     deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
+#     deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
     
-    # deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_405)
-    # deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_405)
+#     # deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_405)
+#     # deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_405)
     
-    deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
-    deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
+#     deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
+#     deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
-    deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
-    deltas_coop = deltas_coop[deltas_coop['baseline'].isin([int(baseline_number)])]
-    deltas_nash = deltas_nash[deltas_nash['baseline'].isin([int(baseline_number)])]
+#     deltas_coop = deltas_coop[deltas_coop['baseline'].isin([int(baseline_number)])]
+#     deltas_nash = deltas_nash[deltas_nash['baseline'].isin([int(baseline_number)])]
     
-    deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
-    deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
+#     deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
+#     deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
     
-    return deltas_pop_weighted, deltas_negishi, deltas_nash
+#     return deltas_pop_weighted, deltas_negishi, deltas_nash
 
-deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_coop)
+# deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_coop)
 
-ds_deltas_negishi = ColumnDataSource(deltas_negishi)
-ds_deltas_pop_weighted = ColumnDataSource(deltas_pop_weighted)
-ds_deltas_nash = ColumnDataSource(deltas_nash)
+# ds_deltas_negishi = ColumnDataSource(deltas_negishi)
+# ds_deltas_pop_weighted = ColumnDataSource(deltas_pop_weighted)
+# ds_deltas_nash = ColumnDataSource(deltas_nash)
 
-colors_deltas_negishi = itertools.cycle(Category18)
-colors_deltas_pop_weighted = itertools.cycle(Category18)
-colors_deltas_nash = itertools.cycle(Category18)
+# colors_deltas_negishi = itertools.cycle(Category18)
+# colors_deltas_pop_weighted = itertools.cycle(Category18)
+# colors_deltas_nash = itertools.cycle(Category18)
 
-p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
-                width = 1200,
-                height = 900,
-                x_range = x_range_nash,
-                y_axis_type="log",
-                y_axis_label='Delta',
-                tools = TOOLS
-                ) 
-p_deltas_eq.xaxis.major_label_orientation = 3.14/3
+# p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
+#                 width = 1200,
+#                 height = 900,
+#                 x_range = x_range_nash,
+#                 y_axis_type="log",
+#                 y_axis_label='Delta',
+#                 tools = TOOLS
+#                 ) 
+# p_deltas_eq.xaxis.major_label_orientation = 3.14/3
 
-lines_delta={}
-for col in p_baseline.countries:
-    lines_delta[col+' Nash'] = p_deltas_eq.line(x='run', y=col, 
-                                            source = ds_deltas_nash, color=next(colors_deltas_nash),
-                                            line_width = 2, legend_label=col+' Nash')
-    lines_delta[col+' coop equal'] = p_deltas_eq.line(x='run', y=col, 
-                                                source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', 
-                                                line_width = 2, legend_label=col+' coop equal')
-    lines_delta[col+' coop negishi'] = p_deltas_eq.line(x='run', y=col, 
-                                                source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', 
-                                                line_width = 2, legend_label=col+' coop negishi')
-    lines_delta[col+' coop equal'].visible = False
-    lines_delta[col+' coop negishi'].visible = False
+# lines_delta={}
+# for col in p_baseline.countries:
+#     lines_delta[col+' Nash'] = p_deltas_eq.line(x='run', y=col, 
+#                                             source = ds_deltas_nash, color=next(colors_deltas_nash),
+#                                             line_width = 2, legend_label=col+' Nash')
+#     lines_delta[col+' coop equal'] = p_deltas_eq.line(x='run', y=col, 
+#                                                 source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', 
+#                                                 line_width = 2, legend_label=col+' coop equal')
+#     lines_delta[col+' coop negishi'] = p_deltas_eq.line(x='run', y=col, 
+#                                                 source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', 
+#                                                 line_width = 2, legend_label=col+' coop negishi')
+#     lines_delta[col+' coop equal'].visible = False
+#     lines_delta[col+' coop negishi'].visible = False
     
-p_deltas_eq.legend.click_policy="hide"
-p_deltas_eq.legend.label_text_font_size = '8pt'
-p_deltas_eq.legend.spacing = 0
-p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
-hover_tool_deltas_eq = HoverTool()
-hover_tool_deltas_eq.tooltips = [
-    ("run", "@run"),
-    ("value", "$y")
-    ] 
-p_deltas_eq.add_tools(hover_tool_deltas_eq)
+# p_deltas_eq.legend.click_policy="hide"
+# p_deltas_eq.legend.label_text_font_size = '8pt'
+# p_deltas_eq.legend.spacing = 0
+# p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
+# hover_tool_deltas_eq = HoverTool()
+# hover_tool_deltas_eq.tooltips = [
+#     ("run", "@run"),
+#     ("value", "$y")
+#     ] 
+# p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
-data_table_deltas = pd.concat([deltas_nash.set_index('run'),
-              deltas_negishi.set_index('run'),
-              deltas_pop_weighted.set_index('run')],
-            axis=0,
-            keys=['Nash','Coop Negishi','Coop equal'],
-            names=['type','run'],
-            sort=False
-            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
+# data_table_deltas = pd.concat([deltas_nash.set_index('run'),
+#               deltas_negishi.set_index('run'),
+#               deltas_pop_weighted.set_index('run')],
+#             axis=0,
+#             keys=['Nash','Coop Negishi','Coop equal'],
+#             names=['type','run'],
+#             sort=False
+#             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
 
-source_table_deltas = ColumnDataSource(data_table_deltas)
-columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# source_table_deltas = ColumnDataSource(data_table_deltas)
+# columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=1100, height=400,
-                          )
+# table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=1100, height=400,
+#                           )
 
-def update_baseline_nash(attrname, old, new):
-    baseline_nash_number = new
-    welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_number)
+# def update_baseline_nash(attrname, old, new):
+#     baseline_nash_number = new
+#     welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_number)
         
-    ds_pop_weighted.data = welf_pop_weighted
-    ds_negishi.data = welf_negishi
-    ds_nash.data = welf_nash
+#     ds_pop_weighted.data = welf_pop_weighted
+#     ds_negishi.data = welf_negishi
+#     ds_nash.data = welf_nash
     
-    deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_number)
+#     deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_number)
 
-    ds_deltas_negishi.data = deltas_negishi
-    ds_deltas_pop_weighted.data = deltas_pop_weighted
-    ds_deltas_nash.data = deltas_nash
+#     ds_deltas_negishi.data = deltas_negishi
+#     ds_deltas_pop_weighted.data = deltas_pop_weighted
+#     ds_deltas_nash.data = deltas_nash
     
-    p_eq.x_range.factors = welf_nash['run'].to_list()
-    p_deltas_eq.x_range.factors = welf_nash['run'].to_list()
+#     p_eq.x_range.factors = welf_nash['run'].to_list()
+#     p_deltas_eq.x_range.factors = welf_nash['run'].to_list()
 
-baseline_nash_coop_select.on_change('value', update_baseline_nash)
+# baseline_nash_coop_select.on_change('value', update_baseline_nash)
 
-nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
-nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
+# nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
+# nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
 
-#!!! fourth panel
-# fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
-fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
-# fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
+# #!!! fourth panel
+# # fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
+# fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
+# # fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 
 #%% dynamic solver
 
@@ -3198,8 +3204,8 @@ fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas
 print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
                             # second_panel, 
-                           third_panel, 
-                            fourth_panel, 
+                           # third_panel, 
+                            # fourth_panel, 
                            #  fifth_panel, 
                            #  sixth_panel,
                            # seventh_panel,

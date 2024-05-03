@@ -15,25 +15,26 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1210'
+baseline_number = '1220'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run('calibration_results_matched_economy/baseline_1020_all_targets_variations_20/RD_CHN/')
-    # p.load_run('calibration_results_matched_economy/baseline_1060_variations/99.8/')
+    # p.load_run('calibration_results_matched_economy/baseline_1220_variations/1.0/')
     # p.load_data('data/data_12_countries_2015/',keep_already_calib_params=True)
     start_time = time.perf_counter()
 
     m = moments()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run('calibration_results_matched_economy/baseline_'+baseline_number+'_variations/3.0/')
-    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{n}.0/')
-    # m.load_data('data/data_11_countries_2015/')
+    # m.load_run('calibration_results_matched_economy/baseline_1220_variations/1.0/')
+    # m.load_data('data/data_12_countries_2015/')
 
 
-p.kappa = 0.4
+# p.kappa = 0.4
+m.TO_target = np.float64(0.06896260072524432)
 # m.list_of_moments.remove('SPFLOW')
 # m.list_of_moments.remove('DOMPATINUS')
 # m.list_of_moments.append('SPFLOWDOM')
@@ -176,10 +177,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1210'
+baseline_number = '1220'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 99.8
+run_number = 1.1
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

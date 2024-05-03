@@ -52,26 +52,26 @@ for y in years:
         except:
             pass
         print(y,nbr_of_countries)
-        
+        # 
         moments_descriptions = pd.read_csv(
             f'data/data_{nbr_of_countries}_countries_{y}/moments_descriptions.csv', sep=';', index_col=0)
         moments_descriptions.to_csv(path+'moments_descriptions.csv', sep=';')
         
         data_to_average_list = [
-        # dict(name='country_country_moments.csv'
-        #      ,index_col=[0,1]),
-        # dict(name='country_country_sector_moments.csv'
-        #      ,index_col=[0,1,2]),
+        dict(name='country_country_moments.csv'
+             ,index_col=[0,1]),
+        dict(name='country_country_sector_moments.csv'
+             ,index_col=[0,1,2]),
         dict(name='tariff.csv'
              ,index_col=[0,1,2]),
-        # dict(name='country_moments.csv'
-        #      ,index_col=[0]),
-        # dict(name='final_pat_fees.csv'
-        #      ,index_col=[0,1]),
-        # dict(name='scalar_moments.csv'
-        #      ,index_col=[0]),
-        # dict(name='sector_moments.csv'
-        #      ,index_col=[0]),
+        dict(name='country_moments.csv'
+             ,index_col=[0]),
+        dict(name='final_pat_fees.csv'
+             ,index_col=[0,1]),
+        dict(name='scalar_moments.csv'
+             ,index_col=[0]),
+        dict(name='sector_moments.csv'
+             ,index_col=[0]),
         ]
         
         for data_to_average in data_to_average_list:
