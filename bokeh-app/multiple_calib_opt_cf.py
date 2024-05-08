@@ -20,25 +20,25 @@ import pandas as pd
 
 baseline = {
     "number": None,
-    "TO_target": 0.017496806,
+    "TO_target": 0.071287577,
     "TE_target": 5.0,
     "KM_target": 0.09277,
     "sigma": 2.9,
     "kappa": 0.5,
     "rho": 0.02,
     "GROWTH_target": 0.0168692,
-    "UUPCOST_target": 0.0047164777
+    "UUPCOST_target": 0.0047203001064472
 }
 
 possibilities = {
-    "TO_target": [0.014, 0.021],
+    "TO_target": [0.057, 0.0855],
     "TE_target": [4, 6],
     "KM_target": [0.074, 0.111],
     "sigma": [2.583, 3.375],
     "kappa": [0.4, 0.6],
     "GROWTH_target": [0.0135, 0.02024],
     "rho": [0.0093, 0.031],
-    "UUPCOST_target": [0.00377318216, 0.00565977324]
+    "UUPCOST_target": [0.0037762400851577603, 0.00566436012773664]
 }
 
 to_change = []
@@ -220,12 +220,12 @@ from solver_funcs import calibration_func
 
 write = True
 
-baseline_number = '1210'
+baseline_number = '1300'
 
 # for variation_number in [11]:
 for variation_number in [99]:
     
-    for run_params in runs_params[9:]:
+    for run_params in runs_params[:9]:
         print(run_params)
         baseline_dic = {'baseline':baseline_number,
                         'variation':str(variation_number)+'.'+str(run_params['number'])}

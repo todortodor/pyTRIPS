@@ -25,36 +25,33 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1210','variation': 'baseline'},
-    {'baseline':'1210','variation': '2.0'},
-    {'baseline':'1210','variation': '10.2'},
-    {'baseline':'1210','variation': '10.3'},
-    #{'baseline':'1210','variation': '10.4'},
-    #{'baseline':'1210','variation': '10.5'},
-    {'baseline':'1210','variation': '99.0'},
-    {'baseline':'1210','variation': '99.1'},
-    {'baseline':'1210','variation': '99.2'},
-    {'baseline':'1210','variation': '99.3'},
-    {'baseline':'1210','variation': '99.4'},
-    {'baseline':'1210','variation': '99.5'},
-    {'baseline':'1210','variation': '99.6'},
-    {'baseline':'1210','variation': '99.7'},
-    {'baseline':'1210','variation': '99.8'},
-    {'baseline':'1210','variation': '99.9'},
-    {'baseline':'1210','variation': '99.10'},
-    {'baseline':'1210','variation': '99.11'},
-    {'baseline':'1210','variation': '99.12'},
-    {'baseline':'1210','variation': '99.13'},
-    {'baseline':'1210','variation': '99.14'},
-    {'baseline':'1210','variation': '99.15'},
+    {'baseline':'1300','variation': 'baseline'},
+    {'baseline':'1300','variation': '2.0'},
+    # {'baseline':'1300','variation': '10.2'},
+    {'baseline':'1300','variation': '10.3'},
+    # {'baseline':'1300','variation': '10.4'},
+    # {'baseline':'1300','variation': '10.5'},
+    {'baseline':'1300','variation': '99.0'},
+    {'baseline':'1300','variation': '99.1'},
+    {'baseline':'1300','variation': '99.2'},
+    {'baseline':'1300','variation': '99.3'},
+    {'baseline':'1300','variation': '99.4'},
+    {'baseline':'1300','variation': '99.5'},
+    {'baseline':'1300','variation': '99.6'},
+    {'baseline':'1300','variation': '99.7'},
+    # {'baseline':'1300','variation': '99.8'},
+    {'baseline':'1300','variation': '99.9'},
+    {'baseline':'1300','variation': '99.10'},
+    {'baseline':'1300','variation': '99.11'},
+    {'baseline':'1300','variation': '99.12'},
+    {'baseline':'1300','variation': '99.13'},
+    {'baseline':'1300','variation': '99.14'},
+    {'baseline':'1300','variation': '99.15'},
     ]
-# baseline_dics = [
-#   {'baseline': '1030', 'variation': '2.0'},
-#   ]
 
 lb_delta = 0.01
 ub_delta = 12
-# ub_delta = 1
+
 if __name__ == '__main__':
     for baseline_dic in baseline_dics:    
         if baseline_dic['variation'] == 'baseline':
@@ -107,11 +104,7 @@ if __name__ == '__main__':
                               #     accel_max_weight_norm=1e6,
                               #     damping_post_acceleration=10),
                                custom_dyn_sol_options = None,
-<<<<<<< HEAD
-                             custom_weights=None,max_workers=15,parallel=False)
-=======
-                             custom_weights=None,max_workers=22)
->>>>>>> 7634d94c846555e737545ddc0955abf198e49a75
+                             custom_weights=None,max_workers=12,parallel=False)
             
             write = True
             if write:

@@ -36,7 +36,7 @@ save_to_tex_options = dict(position_float='centering',
                              clines='all;index',
                             hrules=True)
 
-baseline = '1210'
+baseline = '1300'
 variation = 'baseline'
 
 baseline_pre_trips_variation = baseline

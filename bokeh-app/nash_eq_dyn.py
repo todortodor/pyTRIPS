@@ -20,28 +20,28 @@ import matplotlib.pylab as pylab
 import time
 
 baseline_dics = [
-    # {'baseline':'1210','variation': 'baseline'},
-    # {'baseline':'1210','variation': '2.0'},
-    # {'baseline':'1210','variation': '10.2'},
-    # {'baseline':'1210','variation': '10.3'},
-    #{'baseline':'1210','variation': '10.4'},
-    #{'baseline':'1210','variation': '10.5'},
-    # {'baseline':'1210','variation': '99.0'},
-    # {'baseline':'1210','variation': '99.1'},
-    # {'baseline':'1210','variation': '99.2'},
-    # {'baseline':'1210','variation': '99.3'},
-    # {'baseline':'1210','variation': '99.4'},
-    # {'baseline':'1210','variation': '99.5'},
-    # {'baseline':'1210','variation': '99.6'},
-    # {'baseline':'1210','variation': '99.7'},
-    # {'baseline':'1210','variation': '99.8'},
-    # {'baseline':'1210','variation': '99.9'},
-    # {'baseline':'1210','variation': '99.10'},
-    # {'baseline':'1210','variation': '99.11'},
-    # {'baseline':'1210','variation': '99.12'},
-    {'baseline':'1210','variation': '99.13'},
-    {'baseline':'1210','variation': '99.14'},
-    {'baseline':'1210','variation': '99.15'},
+    {'baseline':'1300','variation': 'baseline'},
+    {'baseline':'1300','variation': '2.0'},
+    # {'baseline':'1300','variation': '10.2'},
+    {'baseline':'1300','variation': '10.3'},
+    # {'baseline':'1300','variation': '10.4'},
+    # {'baseline':'1300','variation': '10.5'},
+    {'baseline':'1300','variation': '99.0'},
+    {'baseline':'1300','variation': '99.1'},
+    {'baseline':'1300','variation': '99.2'},
+    {'baseline':'1300','variation': '99.3'},
+    {'baseline':'1300','variation': '99.4'},
+    {'baseline':'1300','variation': '99.5'},
+    {'baseline':'1300','variation': '99.6'},
+    {'baseline':'1300','variation': '99.7'},
+    # {'baseline':'1300','variation': '99.8'},
+    {'baseline':'1300','variation': '99.9'},
+    {'baseline':'1300','variation': '99.10'},
+    {'baseline':'1300','variation': '99.11'},
+    {'baseline':'1300','variation': '99.12'},
+    {'baseline':'1300','variation': '99.13'},
+    {'baseline':'1300','variation': '99.14'},
+    {'baseline':'1300','variation': '99.15'},
     ]
 
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                            delta_init=temp_init,
                           # delta_init=np.array([11.99413456, 12,12,11.99415313, 12,12,11.99414931,11.98829433,
                           #                      6.01085081,12,6.01085661]),
-                          max_workers=12,parallel=True
+                          max_workers=12,parallel=False
                          # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                          #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )

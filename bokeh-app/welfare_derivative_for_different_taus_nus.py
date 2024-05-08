@@ -12,7 +12,7 @@ from classes import moments, parameters, var, dynamic_var
 from solver_funcs import fixed_point_solver,dyn_fixed_point_solver,compute_deriv_welfare_to_patent_protec
 from concurrent.futures import ProcessPoolExecutor
 
-baseline = '1210'
+baseline = '1300'
 variation = 'baseline'
 
 run_path = 'calibration_results_matched_economy/'+baseline+'/'
@@ -69,81 +69,81 @@ def process_country(args):
 
 if __name__ == '__main__':
 
-    # for t,tau_factor in enumerate(np.linspace(0.5,2,76)):
-    #     print(tau_factor)
-    #     p = p_baseline.copy()
-    #     p.tau[...,1] = p.tau[...,1]*tau_factor
-    #     for j,_ in enumerate(p.countries):
-    #          p.tau[j,j,:] = 1
-    #     sol, sol_c = fixed_point_solver(p,x0=p.guess,tol=1e-14,
-    #                                      context = 'counterfactual',
-    #                                    accelerate=False,
-    #                                    accelerate_when_stable=True,
-    #                                    plot_cobweb=False,
-    #                                    plot_convergence=False,
-    #                                    cobweb_qty='phi',
-    #                                    disp_summary=False,
-    #                                    safe_convergence=0.1,
-    #                                    max_count=2e3,
-    #                                    accel_memory = 50, 
-    #                                    accel_type1=True, 
-    #                                    accel_regularization=1e-10,
-    #                                    accel_relaxation=0.5, 
-    #                                    accel_safeguard_factor=1, 
-    #                                    accel_max_weight_norm=1e6,
-    #                                    damping_post_acceleration=5
-    #                                    )
-    #     sol_c.scale_P(p)
-    #     sol_c.compute_non_solver_quantities(p)
-    #     p.guess = sol_c.vector_from_var()
+    for t,tau_factor in enumerate(np.linspace(0.5,2,76)):
+        print(tau_factor)
+        p = p_baseline.copy()
+        p.tau[...,1] = p.tau[...,1]*tau_factor
+        for j,_ in enumerate(p.countries):
+             p.tau[j,j,:] = 1
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,tol=1e-14,
+                                         context = 'counterfactual',
+                                       accelerate=False,
+                                       accelerate_when_stable=True,
+                                       plot_cobweb=False,
+                                       plot_convergence=False,
+                                       cobweb_qty='phi',
+                                       disp_summary=False,
+                                       safe_convergence=0.1,
+                                       max_count=2e3,
+                                       accel_memory = 50, 
+                                       accel_type1=True, 
+                                       accel_regularization=1e-10,
+                                       accel_relaxation=0.5, 
+                                       accel_safeguard_factor=1, 
+                                       accel_max_weight_norm=1e6,
+                                       damping_post_acceleration=5
+                                       )
+        sol_c.scale_P(p)
+        sol_c.compute_non_solver_quantities(p)
+        p.guess = sol_c.vector_from_var()
         
-    #     for country in p_baseline.countries:
-    #         process_country((t,'tau_factor',tau_factor,'tau_pat_sector',sol_c,p,country,dynamics))
+        for country in p_baseline.countries:
+            process_country((t,'tau_factor',tau_factor,'tau_pat_sector',sol_c,p,country,dynamics))
         
-    #     # args_list = [(t,'tau_factor',tau_factor,'tau_pat_sector',sol_c,p,country,dynamics) for country in p_baseline.countries]
+        # args_list = [(t,'tau_factor',tau_factor,'tau_pat_sector',sol_c,p,country,dynamics) for country in p_baseline.countries]
         
-    #     #  # Create a ProcessPoolExecutor
-    #     # with ProcessPoolExecutor(max_workers=22) as executor:
-    #     #      # returns = executor.map(lambda args: process_country(*args), args_list)
-    #     #     results = list(executor.map(process_country, args_list))
+        #  # Create a ProcessPoolExecutor
+        # with ProcessPoolExecutor(max_workers=22) as executor:
+        #      # returns = executor.map(lambda args: process_country(*args), args_list)
+        #     results = list(executor.map(process_country, args_list))
         
-    # for t,tariff_factor in enumerate(np.linspace(0,2,76)):
-    #     print(tariff_factor)
-    #     p = p_baseline.copy()
-    #     p.tariff[...,1] = p.tariff[...,1]*tariff_factor
-    #     for j,_ in enumerate(p.countries):
-    #         p.tariff[j,j,:] = 0
-    #     sol, sol_c = fixed_point_solver(p,x0=p.guess,tol=1e-14,
-    #                                     context = 'counterfactual',
-    #                                   accelerate=False,
-    #                                   accelerate_when_stable=True,
-    #                                   plot_cobweb=False,
-    #                                   plot_convergence=False,
-    #                                   cobweb_qty='phi',
-    #                                   disp_summary=False,
-    #                                   safe_convergence=0.1,
-    #                                   max_count=2e3,
-    #                                   accel_memory = 50, 
-    #                                   accel_type1=True, 
-    #                                   accel_regularization=1e-10,
-    #                                   accel_relaxation=0.5, 
-    #                                   accel_safeguard_factor=1, 
-    #                                   accel_max_weight_norm=1e6,
-    #                                   damping_post_acceleration=5
-    #                                   )
-    #     sol_c.scale_P(p)
-    #     sol_c.compute_non_solver_quantities(p)
-    #     p.guess = sol_c.vector_from_var()
+    for t,tariff_factor in enumerate(np.linspace(0,2,76)):
+        print(tariff_factor)
+        p = p_baseline.copy()
+        p.tariff[...,1] = p.tariff[...,1]*tariff_factor
+        for j,_ in enumerate(p.countries):
+            p.tariff[j,j,:] = 0
+        sol, sol_c = fixed_point_solver(p,x0=p.guess,tol=1e-14,
+                                        context = 'counterfactual',
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.1,
+                                      max_count=2e3,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
+        sol_c.scale_P(p)
+        sol_c.compute_non_solver_quantities(p)
+        p.guess = sol_c.vector_from_var()
         
-    #     for country in p_baseline.countries:
-    #         process_country((t,'tariff_factor',tariff_factor,'tariff_pat_sector',sol_c,p,country,dynamics))
+        for country in p_baseline.countries:
+            process_country((t,'tariff_factor',tariff_factor,'tariff_pat_sector',sol_c,p,country,dynamics))
         
-    #     # args_list = [(t,'tariff_factor',tariff_factor,'tariff_pat_sector',sol_c,p,country,dynamics) for country in p_baseline.countries]
+        # args_list = [(t,'tariff_factor',tariff_factor,'tariff_pat_sector',sol_c,p,country,dynamics) for country in p_baseline.countries]
         
-    #     # # Create a ProcessPoolExecutor
-    #     # with ProcessPoolExecutor(max_workers=22) as executor:
-    #     #     # returns = executor.map(lambda args: process_country(*args), args_list)
-    #     #     results = list(executor.map(process_country, args_list))
+        # # Create a ProcessPoolExecutor
+        # with ProcessPoolExecutor(max_workers=22) as executor:
+        #     # returns = executor.map(lambda args: process_country(*args), args_list)
+        #     results = list(executor.map(process_country, args_list))
     
     for n,nu_factor in enumerate(np.linspace(0.5,2,76)):
         print(nu_factor)
@@ -171,15 +171,15 @@ if __name__ == '__main__':
         sol_c.compute_non_solver_quantities(p)
         p.guess = sol_c.vector_from_var()
         
-        # for country in p_baseline.countries:
-        #     process_country((n,'nu_factor',nu_factor,'nu',sol_c,p,country,dynamics))
+        for country in p_baseline.countries:
+            process_country((n,'nu_factor',nu_factor,'nu',sol_c,p,country,dynamics))
         
-        args_list = [(n,'nu_factor',nu_factor,'nu',sol_c,p,country,dynamics) for country in p_baseline.countries]
+        # args_list = [(n,'nu_factor',nu_factor,'nu',sol_c,p,country,dynamics) for country in p_baseline.countries]
         
-         # Create a ProcessPoolExecutor
-        with ProcessPoolExecutor(max_workers=22) as executor:
-             # returns = executor.map(lambda args: process_country(*args), args_list)
-            results = list(executor.map(process_country, args_list))
+        #  # Create a ProcessPoolExecutor
+        # with ProcessPoolExecutor(max_workers=22) as executor:
+        #      # returns = executor.map(lambda args: process_country(*args), args_list)
+        #     results = list(executor.map(process_country, args_list))
 
         
 # #%%

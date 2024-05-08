@@ -660,7 +660,7 @@ for config_dic in config_dics:
         * gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']/1e12
     # scalar_moments.loc['TO', 'value'] = 0.018546283
     # scalar_moments.loc['TO', 'value'] = 0.017468078
-    scalar_moments.loc['TO', 'value'] = 0.017393184
+    scalar_moments.loc['TO', 'value'] = 0.071287577
     if write:
         scalar_moments.to_csv(path+'scalar_moments.csv')
         scalar_moments.to_csv(dropbox_path+'scalar_moments.csv')
