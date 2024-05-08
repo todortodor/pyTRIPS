@@ -15,7 +15,7 @@ from solver_funcs import find_nash_eq
 from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver, find_nash_eq
 # from random import random
-from tqdm import tqdm
+# from tqdm import tqdm
 import matplotlib.pylab as pylab
 import time
 

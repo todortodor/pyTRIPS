@@ -13,7 +13,7 @@ import pandas as pd
 import os
 from classes import moments, parameters, var
 from solver_funcs import fixed_point_solver, dyn_fixed_point_solver, find_coop_eq
-from tqdm import tqdm
+# from tqdm import tqdm
 import matplotlib.pylab as pylab
 
 params = {'legend.fontsize': 'x-large',
