@@ -72,9 +72,9 @@ if __name__ == '__main__':
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)  
         
-        # for aggregation_method in ['pop_weighted','negishi']:
+        for aggregation_method in ['pop_weighted','negishi']:
         # for aggregation_method in ['negishi']:
-        for aggregation_method in ['pop_weighted']:
+        # for aggregation_method in ['pop_weighted']:
             print(aggregation_method)
             
             start = time.perf_counter()
