@@ -236,6 +236,10 @@ if __name__ == '__main__':
                     # plt.scatter(df['eta_china'],df['delta_opti_CHN'])
                     # plt.scatter(df['eta_china'].iloc[-1],df['delta_opti_CHN'].iloc[-1],
                     #             color='red')
+                    try:
+                        os.mkdir(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/')
+                    except:
+                        pass
                     df.to_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv')
                     # plt.scatter(df[f'eta_{country}'],df[f'delta_opti_{country}'])
                     # plt.scatter(df[f'eta_{country}'].iloc[-1],df[f'delta_opti_{country}'].iloc[-1],
