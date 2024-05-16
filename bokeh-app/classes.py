@@ -1593,6 +1593,10 @@ class dynamic_var:
     def elements(self): 
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
+    
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
             
     def vector_from_var(self):
         price_indices = self.price_indices.ravel()

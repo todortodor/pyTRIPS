@@ -3623,66 +3623,66 @@ if save_dynamics:
 
 #%% Table of solving for the eta where countries will join the patenting club
 
-df_chn = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_CHN.csv')
-df_ind = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_IND.csv')
+# df_chn = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_CHN.csv')
+# df_ind = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_IND.csv')
 
-df = pd.DataFrame(index = p_baseline.countries)
-df['baseline eta'] = p_baseline.eta[:,1]
+# df = pd.DataFrame(index = p_baseline.countries)
+# df['baseline eta'] = p_baseline.eta[:,1]
 
-df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_CHN'].iloc[-1]
-df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_IND'].iloc[-1]
+# df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_CHN'].iloc[-1]
+# df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_IND'].iloc[-1]
 
-df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
-df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
+# df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
+# df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
 
-df.to_csv(china_save_path+'china_india_ex.csv')
+# df.to_csv(china_save_path+'china_india_ex.csv')
 
-markers = {'pop_weighted':'o',
-      'negishi':'^'}
-label_coop = {'pop_weighted':'Equal',
-      'negishi':'Negishi'}
+# markers = {'pop_weighted':'o',
+#       'negishi':'^'}
+# label_coop = {'pop_weighted':'Equal',
+#       'negishi':'Negishi'}
 
-run_countries = []
+# run_countries = []
 
-markers = {'pop_weighted':'o',
-      'negishi':'^'}
-label_coop = {'pop_weighted':'Equal',
-      'negishi':'Negishi'}
+# markers = {'pop_weighted':'o',
+#       'negishi':'^'}
+# label_coop = {'pop_weighted':'Equal',
+#       'negishi':'Negishi'}
 
-fig,ax = plt.subplots()
+# fig,ax = plt.subplots()
 
-for i, country in enumerate(p_baseline.countries):
+# for i, country in enumerate(p_baseline.countries):
     
-    for j,coop in enumerate(['pop_weighted','negishi']):
-        try:
-            df = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv',index_col=0)
-            if df[f'eta_{country}'].iloc[-1] > p_baseline.eta[i,1]:
-                ax.scatter([country],[df[f'eta_{country}'].iloc[-1]],
-                            # label = f'{country} {label_coop[coop]}',
-                            marker = markers[coop],
-                            color = Category18[i])
+#     for j,coop in enumerate(['pop_weighted','negishi']):
+#         try:
+#             df = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv',index_col=0)
+#             if df[f'eta_{country}'].iloc[-1] > p_baseline.eta[i,1]:
+#                 ax.scatter([country],[df[f'eta_{country}'].iloc[-1]],
+#                             # label = f'{country} {label_coop[coop]}',
+#                             marker = markers[coop],
+#                             color = Category18[i])
                 
-                run_countries.append(country)
-            # print(coop,country,df[f'eta_{country}'].iloc[-1])
-        except:
-            pass
-    if country in run_countries:
-        print(run_countries)
-        ax.scatter([country],[p_baseline.eta[i,1]],
-                    # label = f'{country} baseline',
-                    marker = '*',
-                    color = Category18[i])
-ax.scatter([],[],marker = 'o', label = 'Equal', color = 'grey')
-ax.scatter([],[],marker = '^', label = 'Negishi', color = 'grey')
-ax.scatter([],[],marker = '*', label = 'Baseline', color = 'grey')
-# ax.set_xscale('log')
-ax.set_yscale('log')
-plt.axhline(y=p_baseline.eta[0,1],color='grey',label='Baseline USA')
-ax.set_ylabel(r'$\eta$')
-plt.legend()
-for save_format in save_formats:
-    plt.savefig(china_save_path+'all_countries.'+save_format,format=save_format)
-plt.show()
+#                 run_countries.append(country)
+#             # print(coop,country,df[f'eta_{country}'].iloc[-1])
+#         except:
+#             pass
+#     if country in run_countries:
+#         print(run_countries)
+#         ax.scatter([country],[p_baseline.eta[i,1]],
+#                     # label = f'{country} baseline',
+#                     marker = '*',
+#                     color = Category18[i])
+# ax.scatter([],[],marker = 'o', label = 'Equal', color = 'grey')
+# ax.scatter([],[],marker = '^', label = 'Negishi', color = 'grey')
+# ax.scatter([],[],marker = '*', label = 'Baseline', color = 'grey')
+# # ax.set_xscale('log')
+# ax.set_yscale('log')
+# plt.axhline(y=p_baseline.eta[0,1],color='grey',label='Baseline USA')
+# ax.set_ylabel(r'$\eta$')
+# plt.legend()
+# for save_format in save_formats:
+#     plt.savefig(china_save_path+'all_countries.'+save_format,format=save_format)
+# plt.show()
 
 #%% Sensitivity graphs of the calibration
 

@@ -2659,7 +2659,7 @@ def find_coop_eq(p_baseline,aggregation_method,
     corner_corrected_deltas = p.delta[...,1].copy()
     for i,c in enumerate(p_baseline.countries):
         if p.delta[i,1] > 1 or c=='MEX':
-        # if True:
+            print('checking on ',c)
             p_corner = p.copy()
             p_corner.delta[i,1] = ub_delta
             
@@ -2735,7 +2735,7 @@ def find_coop_eq(p_baseline,aggregation_method,
     # corner_corrected_deltas = p.delta[...,1].copy()
     for i,c in enumerate(p_baseline.countries):
         if p.delta[i,1] < 2*lb_delta or c=='MEX':
-        # if True:
+            print('checking on ',c)
             p_corner = p.copy()
             p_corner.delta[i,1] = lb_delta
             
@@ -2772,6 +2772,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                 # if aggregation_method == 'custom_weights':
                 #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
             
+            # print(corner_welfare,solution_welfare)
             if corner_welfare > 1.001*solution_welfare:
                 print('lower corner was better for ',c)
                 corner_corrected_deltas[i] = lb_delta

@@ -25,7 +25,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'1300','variation': 'baseline'},
+    {'baseline':'1300','variation': 'baseline'},
     # {'baseline':'1300','variation': '2.0'},
     # # {'baseline':'1300','variation': '10.2'},
     # {'baseline':'1300','variation': '10.3'},
@@ -39,7 +39,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.5'},
     # {'baseline':'1300','variation': '99.6'},
     # {'baseline':'1300','variation': '99.7'},
-    {'baseline':'1300','variation': '99.8'},
+    # {'baseline':'1300','variation': '99.8'},
     # {'baseline':'1300','variation': '99.9'},
     # {'baseline':'1300','variation': '99.10'},
     # {'baseline':'1300','variation': '99.11'},
@@ -66,8 +66,8 @@ if __name__ == '__main__':
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)
         
-        for aggregation_method in ['negishi','pop_weighted']:
-        # for aggregation_method in ['pop_weighted']:
+        # for aggregation_method in ['negishi','pop_weighted']:
+        for aggregation_method in ['pop_weighted']:
             print(aggregation_method)
             static_eq_deltas = pd.read_csv('coop_eq_recaps/deltas.csv',index_col=0).drop_duplicates(
                 ['baseline','variation','aggregation_method'],keep='last')
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                               #     accel_max_weight_norm=1e6,
                               #     damping_post_acceleration=10),
                                custom_dyn_sol_options = None,
-                             custom_weights=None,max_workers=12,parallel=True)
+                             custom_weights=None,max_workers=12,parallel=False)
             
             write = True
             if write:
