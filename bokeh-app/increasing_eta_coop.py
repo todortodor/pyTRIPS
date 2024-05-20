@@ -438,6 +438,7 @@ if __name__ == '__main__':
                     x = (ub+lb)/2
                     p = p_baseline.copy()
                     p.tau[i,:,1] = p_baseline.tau[i,:,1]*x
+                    p.tau[i,i,1] = 1
                     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                                     context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
@@ -541,6 +542,7 @@ if __name__ == '__main__':
                     x = (ub+lb)/2
                     p = p_baseline.copy()
                     p.tau[:,i,1] = p_baseline.tau[:,i,1]*x
+                    p.tau[i,i,1] = 1
                     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                                     context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
