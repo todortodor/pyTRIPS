@@ -235,9 +235,9 @@ try:
 except:
     pass
 
-china_save_path = save_path+'china_india_ex/'
+solve_to_join_pat_club_save_path = save_path+'solve_to_join_pat_club/'
 try:
-    os.mkdir(china_save_path)
+    os.mkdir(solve_to_join_pat_club_save_path)
 except:
     pass
 
@@ -3621,68 +3621,109 @@ if save_dynamics:
     
     df.to_csv(dyn_save_path+'welfare_table.csv',float_format='%.5f')
 
-#%% Table of solving for the eta where countries will join the patenting club
+#%% Solving for where countries will join the patenting club
 
-# df_chn = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_CHN.csv')
-# df_ind = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/pop_weighted_IND.csv')
+qties_dic = {
+    'eta':{
+        'column_name':'eta',
+        'title':r'$\eta$'
+        },
+    'T_pat':{
+        'column_name':'T_pat',
+        'title':r'$T$'
+        },
+    'labor':{
+        'column_name':'labor',
+        'title':'Labor'
+        },
+    # 'iceberg_trade_cost_in':{
+    #     'column_name':'tau_in_factor',
+    #     },
+    # 'iceberg_trade_cost_out':{
+    #     'column_name':'tau_out_factor',
+    #     },
+    }
 
-# df = pd.DataFrame(index = p_baseline.countries)
-# df['baseline eta'] = p_baseline.eta[:,1]
+df = pd.DataFrame()
 
-# df.loc['CHN','eta for which delta_opti = delta_baseline'] = df_chn['eta_CHN'].iloc[-1]
-# df.loc['IND','eta for which delta_opti = delta_baseline'] = df_ind['eta_IND'].iloc[-1]
+# for qty in ['eta','T_pat','labor','iceberg_trade_cost_in','iceberg_trade_cost_out']:
+for qty in ['eta','T_pat','labor']:
+    for c,country in enumerate(p_baseline.countries):
+        if country in ['CHN','IND','RUS']:
 
-# df['as ratio to baseline'] = df['eta for which delta_opti = delta_baseline']/df['baseline eta']
-# df['as ratio to baseline US'] = df['eta for which delta_opti = delta_baseline']/df.loc['USA','baseline eta']
-
-# df.to_csv(china_save_path+'china_india_ex.csv')
-
-# markers = {'pop_weighted':'o',
-#       'negishi':'^'}
-# label_coop = {'pop_weighted':'Equal',
-#       'negishi':'Negishi'}
-
-# run_countries = []
-
-# markers = {'pop_weighted':'o',
-#       'negishi':'^'}
-# label_coop = {'pop_weighted':'Equal',
-#       'negishi':'Negishi'}
-
-# fig,ax = plt.subplots()
-
-# for i, country in enumerate(p_baseline.countries):
-    
-#     for j,coop in enumerate(['pop_weighted','negishi']):
-#         try:
-#             df = pd.read_csv(f'solve_for_eta_to_join_pat_club/baseline_{baseline}/{coop}_{country}.csv',index_col=0)
-#             if df[f'eta_{country}'].iloc[-1] > p_baseline.eta[i,1]:
-#                 ax.scatter([country],[df[f'eta_{country}'].iloc[-1]],
-#                             # label = f'{country} {label_coop[coop]}',
-#                             marker = markers[coop],
-#                             color = Category18[i])
+            df_c = pd.read_csv(f'solve_to_join_pat_club/{qty}/baseline_{baseline}/pop_weighted_{country}.csv')
+            df.loc[country,qty] = df_c[f'{qties_dic[qty]["column_name"]}_{country}'].iloc[-1]
+            
+            if np.allclose(df_c[f'{qties_dic[qty]["column_name"]}_{country}'],
+                           df_c[f'{qties_dic[qty]["column_name"]}_{country}'].sort_values()):
+                df.loc[country,qty] = np.nan
                 
-#                 run_countries.append(country)
-#             # print(coop,country,df[f'eta_{country}'].iloc[-1])
-#         except:
-#             pass
-#     if country in run_countries:
-#         print(run_countries)
-#         ax.scatter([country],[p_baseline.eta[i,1]],
-#                     # label = f'{country} baseline',
-#                     marker = '*',
-#                     color = Category18[i])
-# ax.scatter([],[],marker = 'o', label = 'Equal', color = 'grey')
-# ax.scatter([],[],marker = '^', label = 'Negishi', color = 'grey')
-# ax.scatter([],[],marker = '*', label = 'Baseline', color = 'grey')
-# # ax.set_xscale('log')
-# ax.set_yscale('log')
-# plt.axhline(y=p_baseline.eta[0,1],color='grey',label='Baseline USA')
-# ax.set_ylabel(r'$\eta$')
-# plt.legend()
-# for save_format in save_formats:
-#     plt.savefig(china_save_path+'all_countries.'+save_format,format=save_format)
-# plt.show()
+            if qty == 'eta':
+                df.loc[country,qty+'_baseline'] = p_baseline.eta[c,1]
+                df.loc[country,'eta_US_baseline'] = p_baseline.eta[0,1]
+                df[qty+'_as_ratio_to_baseline'] = df[qty] / df[qty+'_baseline']
+                df[qty+'_as_ratio_to_US_baseline'] = df[qty] / df[qty+'_US_baseline']
+            if qty == 'T_pat':
+                df.loc[country,qty+'_baseline'] = p_baseline.T[c,1]
+                df.loc[country,'T_pat_US_baseline'] = p_baseline.T[0,1]
+                df[qty+'_as_ratio_to_baseline'] = df[qty] / df[qty+'_baseline']
+                df[qty+'_as_ratio_to_US_baseline'] = df[qty] / df[qty+'_US_baseline']
+            if qty == 'labor':
+                df.loc[country,qty+'_baseline'] = p_baseline.labor[c]
+                df.loc[country,'labor_world_baseline'] = p_baseline.labor.sum()
+                df[qty+'_as_ratio_to_baseline'] = df[qty] / df[qty+'_baseline']
+                df[qty+'_as_ratio_to_world_baseline'] = df[qty] / df[qty+'_world_baseline']
+                
+df = df.T
+
+for qty in ['eta','T_pat','labor']:
+    if qty in ['eta','T_pat']:
+        fig,ax = plt.subplots()
+        
+        plt.axhline(y=df.loc[qty+'_US_baseline'].iloc[0],
+                    color='grey',
+                    label='Baseline USA')
+        
+        ax.scatter(df.columns,df.loc[qty+'_baseline'],
+                                    label = 'Baseline',
+                                    marker = 'o',
+                                    )
+        
+        ax.scatter(df.columns,df.loc[qty],
+                                    label = 'Threshold to join patenting club',
+                                    marker = 'x',
+                                    )
+        
+    if qty in ['labor']:
+        fig,ax = plt.subplots()
+        
+        plt.axhline(y=df.loc[qty+'_world_baseline'].iloc[0],
+                    color='grey',
+                    label='Baseline World')
+        
+        ax.scatter(df.columns,df.loc[qty+'_baseline'],
+                                    label = 'Baseline',
+                                    marker = 'o',
+                                    )
+        
+        if not df.loc[qty].isna().all():
+            ax.scatter(df.columns,df.loc[qty],
+                                        label = 'Threshold to join patenting club',
+                                        marker = 'x',
+                                        )
+
+
+    if qty == 'T_pat':
+        ax.set_yscale('log')
+    
+    plt.title(qties_dic[qty]["title"])
+    plt.legend()
+    
+    for save_format in save_formats:
+        plt.savefig(solve_to_join_pat_club_save_path+qty+'.'+save_format,format=save_format)
+    plt.show()
+
+df.to_csv(solve_to_join_pat_club_save_path+'summary.csv')
 
 #%% Sensitivity graphs of the calibration
 

@@ -2696,7 +2696,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                 # if aggregation_method == 'custom_weights':
                 #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
             
-            if corner_welfare > 1.001*solution_welfare:
+            if corner_welfare > solution_welfare:
                 print('upper corner was better for ',c)
                 corner_corrected_deltas[i] = ub_delta
     
@@ -2773,7 +2773,7 @@ def find_coop_eq(p_baseline,aggregation_method,
                 #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
             
             # print(corner_welfare,solution_welfare)
-            if corner_welfare > 1.001*solution_welfare:
+            if corner_welfare > solution_welfare:
                 print('lower corner was better for ',c)
                 corner_corrected_deltas[i] = lb_delta
             
