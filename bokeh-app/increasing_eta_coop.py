@@ -21,38 +21,12 @@ from adjustText import adjust_text
 import time
 # Category18 = list(Category10[10])+['#e8ba02']+list(Dark2[8])
 
-params = {'legend.fontsize': 'x-large',
-          'figure.figsize': (16, 12),
-         'axes.labelsize': 'x-large',
-         'axes.titlesize':'x-large',
-         'xtick.labelsize':'x-large',
-         'ytick.labelsize':'x-large'}
-pylab.rcParams.update(params)
-sns.set()
-sns.set_context('talk')
-sns.set_style('whitegrid')
-
-save_to_tex_options = dict(position_float='centering',
-                             clines='all;index',
-                            hrules=True)
-
 baseline = '1300'
 variation = 'baseline'
 
-baseline_pre_trips_variation = baseline
-pre_trips_cf = True
-pre_trips_variation = '9.2'
-
 baseline_pre_trips_full_variation = baseline
 
-data_path = 'data/'
 results_path = 'calibration_results_matched_economy/'
-
-save_formats = ['eps','png','pdf']
-
-countries_names = {'USA':'USA','EUR':'Europe','JAP':'Japan','CHN':'China','KOR':'Korea',
-                   'CAN':'Canada','MEX':'Mexico','RUS':'Russia',
-                  'BRA':'Brazil','IND':'India','ROW':'Rest of the world'}
 
 if variation == 'baseline':
     run_path = results_path+baseline+'/'
@@ -314,109 +288,6 @@ if __name__ == '__main__':
     #                 df.to_csv(f'solve_to_join_pat_club/T_pat/baseline_{baseline}/{coop}_{country}.csv')
                     
     #%% L
-    # p = p_baseline.copy()
-    # for coop in ['pop_weighted']:
-    #     for i,country in enumerate(p_baseline.countries):
-            
-    #         if country in ['CHN','IND','RUS']:
-    #             print(country)
-                
-    #             lb = p_baseline.labor[i]
-    #             ub = p_baseline.labor.sum()
-    #             it = 0
-                
-    #             lb_delta = 0.01
-    #             ub_delta = 12
-                
-    #             df = pd.DataFrame()
-            
-    #             while (ub-lb)/lb>1e-2:
-    #                 it = it+1
-    #                 x = (ub+lb)/2
-    #                 p = p_baseline.copy()
-    #                 p.labor[i] = x
-    #                 p.r_hjort = ((p.data.gdp.iloc[0]*np.array(p.labor)*p.data.price_level
-    #                                 /(p.labor[0]*p.data.price_level.iloc[0]*np.array(p.data.gdp))
-    #                                 )**(1-p.khi)).values
-    #                 sol, sol_c = fixed_point_solver(p,x0=p.guess,
-    #                                                 context = 'counterfactual',
-    #                                         cobweb_anim=False,tol =1e-14,
-    #                                         accelerate=False,
-    #                                         accelerate_when_stable=True,
-    #                                         cobweb_qty='phi',
-    #                                         plot_convergence=False,
-    #                                         plot_cobweb=False,
-    #                                         # plot_live=True,
-    #                                         safe_convergence=0.001,
-    #                                         disp_summary=False,
-    #                                         damping = 500,
-    #                                         max_count = 1e4,
-    #                                         accel_memory = 50, 
-    #                                         accel_type1=True, 
-    #                                         accel_regularization=1e-10,
-    #                                         accel_relaxation=0.5, 
-    #                                         accel_safeguard_factor=1, 
-    #                                         accel_max_weight_norm=1e6,
-    #                                         damping_post_acceleration=5
-    #                                         ) 
-    #                 sol_c.scale_P(p)
-    #                 sol_c.compute_non_solver_quantities(p)
-    #                 print(lb,ub,x)
-    #                 p.guess = sol.x 
-    #                 p_opti, sol_opti = find_coop_eq(p,coop,
-    #                                   lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
-    #                                     # solver_options=None,
-    #                                   tol=1e-6,
-    #                                   custom_dyn_sol_options = None,
-    #                                     solver_options = dict(cobweb_anim=False,tol =1e-14,
-    #                                                             accelerate=False,
-    #                                                             accelerate_when_stable=True,
-    #                                                             cobweb_qty='phi',
-    #                                                             plot_convergence=False,
-    #                                                             plot_cobweb=False,
-    #                                                             safe_convergence=0.001,
-    #                                                             disp_summary=False,
-    #                                                             damping = 50,
-    #                                                             max_count = 1e4,
-    #                                                             accel_memory = 50, 
-    #                                                             accel_type1=True, 
-    #                                                             accel_regularization=1e-10,
-    #                                                             accel_relaxation=0.5, 
-    #                                                             accel_safeguard_factor=1, 
-    #                                                             accel_max_weight_norm=1e6,
-    #                                                             damping_post_acceleration=20
-    #                                                             ),
-    #                                   custom_weights=None,
-    #                                   max_workers=12,parallel=False)
-    #                 if dynamics:
-    #                     p_opti, sol_opti = find_coop_eq(p,coop,
-    #                                      lb_delta=lb_delta,ub_delta=ub_delta,dynamics=True,
-    #                                      tol=1e-6,
-    #                                         static_eq_deltas = p_opti.delta[...,1],
-    #                                         custom_dyn_sol_options = None,
-    #                                         solver_options=None,
-    #                                      custom_weights=None,max_workers=12,displays=True,
-    #                                      parallel=False)
-    #                 if p_opti.delta[i,1]<p_baseline.delta[i,1]:
-    #                     ub = x
-    #                 else:
-    #                     lb = x
-    #                 df.loc[it,f'labor_{country}'] = x
-    #                 for j,c in enumerate(p_baseline.countries):
-    #                     df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
-    #                 print(x,lb,ub)
-    #                 print(df)
-    #                 try:
-    #                     os.mkdir('solve_to_join_pat_club/labor/')
-    #                 except:
-    #                     pass
-    #                 try:
-    #                     os.mkdir(f'solve_to_join_pat_club/labor/baseline_{baseline}/')
-    #                 except:
-    #                     pass
-    #                 df.to_csv(f'solve_to_join_pat_club/labor/baseline_{baseline}/{coop}_{country}.csv')
-                    
-    #%% tau in
     p = p_baseline.copy()
     for coop in ['pop_weighted']:
         for i,country in enumerate(p_baseline.countries):
@@ -424,8 +295,8 @@ if __name__ == '__main__':
             if country in ['CHN','IND','RUS']:
                 print(country)
                 
-                lb = 0.1
-                ub = 2
+                lb = p_baseline.labor[i]
+                ub = p_baseline.labor.sum()
                 it = 0
                 
                 lb_delta = 0.01
@@ -437,8 +308,112 @@ if __name__ == '__main__':
                     it = it+1
                     x = (ub+lb)/2
                     p = p_baseline.copy()
-                    p.tau[i,:,1] = p_baseline.tau[i,:,1]*x
+                    p.labor[i] = x
+                    # p.r_hjort = ((p.data.gdp.iloc[0]*np.array(p.labor)*p.data.price_level
+                    #                 /(p.labor[0]*p.data.price_level.iloc[0]*np.array(p.data.gdp))
+                    #                 )**(1-p.khi)).values
+                    sol, sol_c = fixed_point_solver(p,x0=p.guess,
+                                                    context = 'counterfactual',
+                                            cobweb_anim=False,tol =1e-14,
+                                            accelerate=False,
+                                            accelerate_when_stable=True,
+                                            cobweb_qty='phi',
+                                            plot_convergence=False,
+                                            plot_cobweb=False,
+                                            # plot_live=True,
+                                            safe_convergence=0.001,
+                                            disp_summary=False,
+                                            damping = 500,
+                                            max_count = 1e4,
+                                            accel_memory = 50, 
+                                            accel_type1=True, 
+                                            accel_regularization=1e-10,
+                                            accel_relaxation=0.5, 
+                                            accel_safeguard_factor=1, 
+                                            accel_max_weight_norm=1e6,
+                                            damping_post_acceleration=5
+                                            ) 
+                    sol_c.scale_P(p)
+                    sol_c.compute_non_solver_quantities(p)
+                    print(lb,ub,x)
+                    p.guess = sol.x 
+                    p_opti, sol_opti = find_coop_eq(p,coop,
+                                      lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
+                                        # solver_options=None,
+                                      tol=1e-6,
+                                      custom_dyn_sol_options = None,
+                                        solver_options = dict(cobweb_anim=False,tol =1e-14,
+                                                                accelerate=False,
+                                                                accelerate_when_stable=True,
+                                                                cobweb_qty='phi',
+                                                                plot_convergence=False,
+                                                                plot_cobweb=False,
+                                                                safe_convergence=0.001,
+                                                                disp_summary=False,
+                                                                damping = 50,
+                                                                max_count = 1e4,
+                                                                accel_memory = 50, 
+                                                                accel_type1=True, 
+                                                                accel_regularization=1e-10,
+                                                                accel_relaxation=0.5, 
+                                                                accel_safeguard_factor=1, 
+                                                                accel_max_weight_norm=1e6,
+                                                                damping_post_acceleration=20
+                                                                ),
+                                      custom_weights=None,
+                                      max_workers=12,parallel=False)
+                    if dynamics:
+                        p_opti, sol_opti = find_coop_eq(p,coop,
+                                         lb_delta=lb_delta,ub_delta=ub_delta,dynamics=True,
+                                         tol=1e-6,
+                                            static_eq_deltas = p_opti.delta[...,1],
+                                            custom_dyn_sol_options = None,
+                                            solver_options=None,
+                                         custom_weights=None,max_workers=12,displays=True,
+                                         parallel=False)
+                    if p_opti.delta[i,1]<p_baseline.delta[i,1]:
+                        ub = x
+                    else:
+                        lb = x
+                    df.loc[it,f'labor_{country}'] = x
+                    for j,c in enumerate(p_baseline.countries):
+                        df.loc[it,'delta_opti_'+c] = p_opti.delta[j,1]
+                    print(x,lb,ub)
+                    print(df)
+                    try:
+                        os.mkdir('solve_to_join_pat_club/labor/')
+                    except:
+                        pass
+                    try:
+                        os.mkdir(f'solve_to_join_pat_club/labor/baseline_{baseline}/')
+                    except:
+                        pass
+                    df.to_csv(f'solve_to_join_pat_club/labor/baseline_{baseline}/{coop}_{country}.csv')
+                    
+    #%% tau in
+    p = p_baseline.copy()
+    for coop in ['pop_weighted']:
+        for i,country in enumerate(p_baseline.countries):
+            
+            if country in ['CHN','IND','RUS']:
+                print(country)
+                
+                lb = 0
+                ub = 1
+                it = 0
+                
+                lb_delta = 0.01
+                ub_delta = 12
+                
+                df = pd.DataFrame()
+            
+                while (ub-lb)/lb>1e-2:
+                    it = it+1
+                    x = (ub+lb)/2
+                    p = p_baseline.copy()
+                    p.tau[i,:,1] = 1+(p_baseline.tau[i,:,1]-1)*x
                     p.tau[i,i,1] = 1
+                    p.tau[p_baseline.tau<1] = p_baseline.tau[p_baseline.tau<1]
                     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                                     context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
@@ -528,8 +503,8 @@ if __name__ == '__main__':
             if country in ['CHN','IND','RUS']:
                 print(country)
                 
-                lb = 0.1
-                ub = 2
+                lb = 0
+                ub = 1
                 it = 0
                 
                 lb_delta = 0.01
@@ -541,8 +516,9 @@ if __name__ == '__main__':
                     it = it+1
                     x = (ub+lb)/2
                     p = p_baseline.copy()
-                    p.tau[:,i,1] = p_baseline.tau[:,i,1]*x
+                    p.tau[:,i,1] = 1+(p_baseline.tau[:,i,1]-1)*x
                     p.tau[i,i,1] = 1
+                    p.tau[p_baseline.tau<1] = p_baseline.tau[p_baseline.tau<1]
                     sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                                     context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
