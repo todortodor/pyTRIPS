@@ -17,20 +17,12 @@ warnings.simplefilter('ignore', np.RankWarning)
 df = pd.DataFrame()
 p_init = parameters()
 
-p_init.load_run('calibration_results_matched_economy/1210/')
-# p_init.delta[:,1] = 12
-# p_init.delta[:,1] = np.array([0.01000,
-# 0.01000,
-# 0.01000,
-# 12.00000,
-# 12.00000,
-# 12.00000,
-# 0.01000,
-# 0.01000,
-# 12.00000,
-# 0.01000,
-# 12.00000])
-# p_init.tariff[...] = 0
+p_init.load_run('calibration_results_matched_economy/1300/')
+p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
+       1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
+p_init.tau[3,:,1] = np.array([1.06800713, 1.04042852, 1.06321504, 1.        , 1.12498533,
+       1.24024972, 1.0039714 , 1.0376111 , 1.21034042, 1.19033989,
+       1.20639476, 1.05774921])
 
 sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                                 context = 'counterfactual',
@@ -56,26 +48,6 @@ sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
 p = p_init.copy()
-# p_guess = sol_init.vector_from_var()
-<<<<<<< HEAD
-p.delta[9,1] = 1
-=======
-p.delta[11,1] = 1
->>>>>>> 7634d94c846555e737545ddc0955abf198e49a75
-# p.delta[0,1] = 0.01
-# p.delta[:,1] = np.array([0.01000,
-# 0.01000,
-# 0.01000,
-# 12.00000,
-# 12.00000,
-# 12.00000,
-# 0.01000,
-# 0.01000,
-# 12.00000,
-# 0.01000,
-# 12.00000])
-# p.tau[:,i,1] = p_init.tau[:,i,1]/1.01
-# p.tau[i,i,1] = 1
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
@@ -123,12 +95,6 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         damping_post_acceleration=5
                         )
 dyn_sol.compute_non_solver_quantities(p)
-
-# plt.plot(dyn_sol.t_real,dyn_sol.PSI_CD[0,1,:])
-# plt.plot(dyn_sol.t_real,dyn_sol.V_NP_dot[0,0,0,:])
-# plt.plot(dyn_sol.t_real,dyn_sol.r[0,:])
-# plt.scatter(dyn_sol.t_real[-10:],dyn_sol.g[-10:])
-# plt.show()
 
 #%%
 

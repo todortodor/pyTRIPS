@@ -13,9 +13,9 @@ p = parameters()
 # p.load_run('calibration_results_matched_economy/1020/')
 p.load_run('calibration_results_matched_economy/1060/')
 p_bu = p.copy()
-p.load_data(f'data_smooth_3_years/data_11_countries_1992/',
-# p.load_data(f'data_smooth_3_years/data_12_countries_{run_params["year"]}/',
-            keep_already_calib_params=True)
+# p.load_data(f'data_smooth_3_years/data_11_countries_1992/',
+# # p.load_data(f'data_smooth_3_years/data_12_countries_{run_params["year"]}/',
+#             keep_already_calib_params=True)
 p.tau = p_bu.tau.copy()
 # for c in p.countries:
     # p_US = p.make_one_country_parameters(c)
@@ -34,6 +34,7 @@ p.tau = p_bu.tau.copy()
 
 # for kappa in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
 #     p.kappa = kappa
+p.delta[0,1] = 0.05
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 # context = 'counterfactual',
                                 context = 'calibration',
@@ -53,7 +54,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         accel_relaxation=0.5, 
                         accel_safeguard_factor=1, 
                         accel_max_weight_norm=1e6,
-                        damping_post_acceleration=100
+                        damping_post_acceleration=2
                         # damping=10
                           # apply_bound_psi_star=True
                         )

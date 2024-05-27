@@ -320,7 +320,8 @@ def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=Non
                        accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
                        accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
                        disp_summary=True,damping_post_acceleration=5):  
-    
+    print('called')
+    print(p.delta[:,1])
     if sol_fin is None:
         sol, sol_fin = fixed_point_solver(p,x0=p.guess,
                                         context = 'counterfactual',

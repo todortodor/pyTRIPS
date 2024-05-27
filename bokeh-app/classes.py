@@ -425,7 +425,232 @@ class cobweb:
             plt.title(self.name+''+str(count))
         plt.show()
         time.sleep(pause)
+
+class var_with_entry_costs:
+    def __init__(self, context, N = 7, S = 2):
+        self.off_diag_mask = np.ones((N,N,S),bool).ravel()
+        self.off_diag_mask[np.s_[::(N+1)*S]] = False
+        self.off_diag_mask[np.s_[1::(N+1)*S]] = False
+        self.off_diag_mask = self.off_diag_mask.reshape((N,N,S))
+        self.diag_mask = np.invert(self.off_diag_mask)
+        self.context = context
+
+    def guess_profit(self, profit_init):
+        self.profit = profit_init    
+
+    def guess_wage(self, w_init):
+        self.w = w_init
+
+    def guess_Z(self, Z_init):
+        self.Z = Z_init
+
+    def guess_labor_research(self, l_R_init):
+        self.l_R = l_R_init
+    
+    def guess_phi(self, phi_init):
+        self.phi = phi_init
         
+    def guess_price_indices(self, price_indices_init):
+        self.price_indices = price_indices_init
+
+    def elements(self):
+        for key, item in sorted(self.__dict__.items()):
+            print(key, ',', str(type(item))[8:-2])
+
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
+    
+    @staticmethod
+    def var_from_vector(vec,p,context,compute = True):
+        init = var_with_entry_costs(context=context)    
+        init.guess_wage(vec[0:p.N])
+        init.guess_Z(vec[p.N:p.N+p.N])
+        init.guess_labor_research(
+            np.insert(vec[p.N+p.N:p.N+p.N+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+        init.guess_profit(
+            np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
+        init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2:p.N+p.N+p.N*(p.S-1)+p.N**2+p.N**2*p.S].reshape((p.N, p.N, p.S)))
+        init.guess_price_indices(vec[p.N+p.N+p.N*(p.S-1)+p.N**2+p.N**2*p.S:])
+        if compute:
+            init.compute_solver_quantities(p)
+        return init
+
+    def vector_from_var(self):
+        w = self.w
+        l_R = self.l_R[...,1:].ravel()
+        profit = self.profit[...,1:].ravel()
+        Z = self.Z
+        phi = self.phi.ravel()
+        price_indices = self.price_indices
+        vec = np.concatenate((w,Z,l_R,profit,phi,price_indices), axis=0)
+        return vec
+    
+    def compute_growth(self, p):
+        self.g_s = p.k*np.einsum('is,is -> s',
+                                 p.eta,
+                                 self.l_R**(1-p.kappa)
+                                 )/(p.k-1) - p.zeta
+        self.g_s[0] = p.g_0
+        self.g = (p.beta*self.g_s/(p.sigma-1)).sum() / (p.beta*p.alpha).sum()
+        self.r = p.rho + self.g/p.gamma
+        self.G = self.r+p.zeta-self.g+self.g_s+p.nu
+        
+    def compute_entry_costs(self,p):
+        if self.context == 'calibration':
+            self.a = p.a * np.maximum(
+                np.einsum('is,nis,nis,is,is->nis',
+                                p.T**(1/p.theta[None,:]),
+                                1/self.phi,
+                                1/(1+p.tariff),
+                                self.w[:,None]**-p.alpha[None,:],
+                                self.price_indices[:,None]**(p.alpha[None,:]-1),
+                                ) - 1,
+                0
+                )
+        
+        elif self.context == 'counterfactual':
+            self.a = p.a * np.maximum(p.tau-1,0)
+        
+    def compute_V(self,p):
+        self.V_NP = np.einsum('nis,i,s->nis',
+                              self.profit,
+                              self.w,
+                              1/self.G
+                              )
+        
+        self.V_P = np.einsum('nis,i,ns->nis',
+                             self.profit,
+                             self.w,
+                             1/(self.G[None,:]-p.nu[None,:]+p.delta)-1/(self.G[None,:]+p.delta)+1/(self.G[None,:])
+                             )
+        
+    def compute_patenting_thresholds(self, p):
+        self.psi_star = np.full((p.N,p.N,p.S),np.inf)
+        self.psi_star[...,1:] = np.maximum(
+            np.einsum('n,s,n,nis->nis',
+                      self.w,
+                      p.fe[1:],
+                      p.r_hjort,
+                      1/(self.V_P[...,1:] - self.V_NP[...,1:])
+                      ),
+            1
+            )
+        
+        self.a_NP_star = np.ones((p.N,p.N,p.S))
+        self.a_NP_star[...,1:] = np.maximum(
+            np.einsum('i,nis,nis->nis',
+                      self.w,
+                      self.a[...,1:],
+                      1/self.V_NP[...,1:]
+                      ),
+            1
+            )
+        
+        self.a_P_star = np.ones((p.N,p.N,p.S))
+        self.a_P_star[...,1:] = np.maximum(
+            np.einsum('i,nis,nis->nis',
+                      self.w,
+                      self.a[...,1:],
+                      1/(self.V_P[...,1:]-np.einsum('n,s,n->ns',
+                                                    self.w,
+                                                    p.fe[1:],
+                                                    p.r_hjort)[:,None,:])
+                      ),
+            1
+            )
+        
+        def aleph_P_star(psi_o_star):
+            res = np.maximum(
+                            np.einsum('i,nis,nis->nis',
+                                      self.w,
+                                      self.a[...,1:],
+                                      1/(psi_o_star[None,...]*self.V_P[...,1:]-np.einsum('n,s,n->ns',
+                                                                    self.w,
+                                                                    p.fe[1:],
+                                                                    p.r_hjort)[:,None,:])
+                                      ),
+                            1
+                            )
+            return res
+        
+        def aleph_NP_star(psi_o_star):
+            res = np.maximum(
+                            np.einsum('i,nis,is,nis->nis',
+                                      self.w,
+                                      self.a[...,1:],
+                                      1/psi_o_star,
+                                      1/self.V_P[...,1:]
+                                      ),
+                            1
+                            )
+            return res
+        
+        self.psi_o_star = np.full((p.N,p.S),np.inf)
+        
+        signature = np.isclose(self.psi_star,1)
+        # print(self.psi_star)
+        # bracket = 
+        
+        def func_to_solve(psi_o_star):
+            signature = psi_o_star[None,...] >= self.psi_star[...,1:]
+            
+            A = np.einsum('nis,nis->nis',
+                          np.einsum('is,nis->nis',
+                                    psi_o_star,
+                                    self.V_P[...,1:],
+                                    ) - np.einsum('n,s,n->ns',
+                                                self.w,
+                                                p.fe[1:],
+                                                p.r_hjort)[:,None,:] ,
+                          aleph_P_star(psi_o_star)**(-p.d)
+                )
+                                                  
+            B = np.einsum('i,nis,,nis->nis',
+                          self.w,
+                          self.a[...,1:],
+                          p.d/(p.d+1),
+                          aleph_P_star(psi_o_star)**(-p.d-1)
+                          )
+            
+            C = np.einsum('nis,nis->nis',
+                          np.einsum('is,nis->nis',
+                                    psi_o_star,
+                                    self.V_P[...,1:],
+                                    ),
+                          aleph_NP_star(psi_o_star)**(-p.d)
+                )
+            
+            D = np.einsum('i,nis,,nis->nis',
+                          self.w,
+                          self.a[...,1:],
+                          p.d/(p.d+1),
+                          aleph_NP_star(psi_o_star)**(-p.d-1)
+                          )
+            
+            to_sum = A - B - (C - D)
+            # to_sum = (C - D)
+            # print(A - B)
+            # print(C - D)
+            
+            res = (signature * to_sum).sum(axis=0) - self.w[:,None]*p.fo[None,1:]*p.r_hjort[:,None]
+            
+            return res
+        
+        
+        x = np.linspace(1,10)
+        l_y = [func_to_solve( np.ones((p.N,p.S))[...,1:]*x ) for x in np.linspace(1,100)]
+        y = np.array([[l[i,0] for l in l_y] for i,c in enumerate(p.countries)]).T
+        
+        plt.plot(x, 
+                 y)
+        plt.xscale('log')
+        plt.legend(p.countries,loc=(1.01,0))
+        plt.show()
+        
+        # self.integral_result = integrate.quad_vec(lambda x: integrand(x), 0, upper_bound_integral,full_output=1)
+        # integral_calculated = self.integral_result[0]
+
 class var:
     def __init__(self, context, N = 7, S = 2):
         self.off_diag_mask = np.ones((N,N,S),bool).ravel()
@@ -537,8 +762,6 @@ class var:
         self.psi_m_star = np.full((p.N,p.N,p.S),np.inf)
         self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],self.psi_star[...,1:])
 
-            
-    
     def compute_aggregate_qualities(self, p):
         prefact = p.k * p.eta * self.l_R**(1-p.kappa) /(p.k-1)
         A = (self.g_s[1:] + p.nu[1:] + p.zeta[1:])

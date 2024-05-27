@@ -3034,7 +3034,7 @@ df = pd.DataFrame()
 
 for i,country in enumerate(p_baseline.countries):
 # for i,country in enumerate(['USA']):
-    print(country)
+    # print(country)
     p = p_baseline.copy()
     # if (sol_baseline.psi_m_star[:,i,1]==np.min(sol_baseline.psi_m_star[:,i,1])).sum() == 1 and (
     #         sol_baseline.psi_m_star[:,i,1] == np.min(sol_baseline.psi_m_star[:,i,1]))[i]:
@@ -3048,9 +3048,17 @@ for i,country in enumerate(p_baseline.countries):
     mask = np.ones(p_baseline.N, dtype=bool)
     mask[i] = False
     x = sol_baseline.pflow[:,i].sum()/sol_baseline.pflow[:,i][mask].sum()
-                
-    p.tariff[:,i,1] = (1+p_baseline.tariff[:,i,1])*(1-0.01*x/1.032)-1
+    # print(x)
+    # p.tariff[:,i,1] = (1+p_baseline.tariff[:,i,1])*(1-0.01*x/1.032)-1
+    p.tariff[:,i,1] = p_baseline.tariff[:,i,1]-0.01*x
     p.tariff[i,i,1] = 0
+
+    try:
+        print('for '+country+' following cf exports tariffs are negative :'
+              +str([p_baseline.countries[index[0]]+str(round(p.tariff[index[0],i,1]*100,1)) for index in np.argwhere(p.tariff[:,i,1]<0)]))
+    except:
+        pass
+    #%%
 
     sol, dyn_sol = dyn_fixed_point_solver(p, sol_baseline, Nt=25,
                                           t_inf=500,
