@@ -170,7 +170,7 @@ if __name__ == '__main__':
                                             solver_options=None,
                                          custom_weights=None,max_workers=12,displays=True,
                                          parallel=False)
-                    if p_opti.delta[i,1]>p_baseline.delta[i,1]:
+                    if p_opti.delta[i,1]<p_baseline.delta[i,1]:
                         ub = x
                         df.loc[it,f'eta_{country}'] = x
                         for j,c in enumerate(p_baseline.countries):
@@ -269,7 +269,7 @@ if __name__ == '__main__':
                                             solver_options=None,
                                          custom_weights=None,max_workers=12,displays=True,
                                          parallel=False)
-                    if p_opti.delta[i,1]>p_baseline.delta[i,1]:
+                    if p_opti.delta[i,1]<p_baseline.delta[i,1]:
                         ub = x
                     else:
                         lb = x
@@ -372,7 +372,7 @@ if __name__ == '__main__':
                                             solver_options=None,
                                          custom_weights=None,max_workers=12,displays=True,
                                          parallel=False)
-                    if p_opti.delta[i,1]>p_baseline.delta[i,1]:
+                    if p_opti.delta[i,1]<p_baseline.delta[i,1]:
                         ub = x
                     else:
                         lb = x
