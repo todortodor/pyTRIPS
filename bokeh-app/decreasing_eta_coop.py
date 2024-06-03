@@ -47,9 +47,10 @@ m_baseline.compute_moments(sol_baseline,p_baseline)
 m_baseline.compute_moments_deviations()
 
 list_of_countries_to_run = ['USA','EUR','JAP','CAN','KOR','MEX']
+# list_of_countries_to_run = ['CAN']
+dynamics = True
 
 #%%
-dynamics = True
 
 if __name__ == '__main__':
     
@@ -75,8 +76,9 @@ if __name__ == '__main__':
                     x = (ub+lb)/2
                     p = p_baseline.copy()
                     p.eta[i,1] = x
-                    sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                                    context = 'counterfactual',
+                    sol, sol_c = fixed_point_solver(p,
+                                            x0=p.guess,
+                                            context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
                                             accelerate=False,
                                             accelerate_when_stable=True,
@@ -94,7 +96,7 @@ if __name__ == '__main__':
                                             accel_relaxation=0.5, 
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
-                                            damping_post_acceleration=5
+                                            damping_post_acceleration=20
                                             ) 
                     sol_c.scale_P(p)
                     sol_c.compute_non_solver_quantities(p)
@@ -210,8 +212,9 @@ if __name__ == '__main__':
                     x = np.sqrt(ub*lb)
                     p = p_baseline.copy()
                     p.T[i,1] = x
-                    sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                                    context = 'counterfactual',
+                    sol, sol_c = fixed_point_solver(p,
+                                            x0=p.guess,
+                                            context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
                                             accelerate=False,
                                             accelerate_when_stable=True,
@@ -222,14 +225,14 @@ if __name__ == '__main__':
                                             safe_convergence=0.001,
                                             disp_summary=False,
                                             damping = 500,
-                                            max_count = 1e4,
+                                            max_count = 1e5,
                                             accel_memory = 50, 
                                             accel_type1=True, 
                                             accel_regularization=1e-10,
                                             accel_relaxation=0.5, 
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
-                                            damping_post_acceleration=5
+                                            damping_post_acceleration=20
                                             ) 
                     sol_c.scale_P(p)
                     sol_c.compute_non_solver_quantities(p)
@@ -313,8 +316,9 @@ if __name__ == '__main__':
                     # p.r_hjort = ((p.data.gdp.iloc[0]*np.array(p.labor)*p.data.price_level
                     #                 /(p.labor[0]*p.data.price_level.iloc[0]*np.array(p.data.gdp))
                     #                 )**(1-p.khi)).values
-                    sol, sol_c = fixed_point_solver(p,x0=p.guess,
-                                                    context = 'counterfactual',
+                    sol, sol_c = fixed_point_solver(p,
+                                            x0=p.guess,
+                                            context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
                                             accelerate=False,
                                             accelerate_when_stable=True,
@@ -325,14 +329,14 @@ if __name__ == '__main__':
                                             safe_convergence=0.001,
                                             disp_summary=False,
                                             damping = 500,
-                                            max_count = 1e4,
+                                            max_count = 1e5,
                                             accel_memory = 50, 
                                             accel_type1=True, 
                                             accel_regularization=1e-10,
                                             accel_relaxation=0.5, 
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
-                                            damping_post_acceleration=5
+                                            damping_post_acceleration=20
                                             ) 
                     sol_c.scale_P(p)
                     sol_c.compute_non_solver_quantities(p)
