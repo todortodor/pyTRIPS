@@ -442,11 +442,10 @@ df_stats.to_csv(calibration_path+'patenting_thresholds_with_production_patents_s
 
 #%% Gains from trade
 
-
 p_cf = p_baseline.copy()
 p_cf.tau[:,:,1] = 1e5
 
-for i in range(11):
+for i in range(p_baseline.N):
     p_cf.tau[i,i,1] = 1
 
 # static gains only
@@ -454,7 +453,7 @@ for i in range(11):
 from solver_funcs import fixed_point_solver_with_exog_pat_and_rd 
 
 sol, sol_cf = fixed_point_solver_with_exog_pat_and_rd(p_cf,p_baseline,x0=p_baseline.guess,
-                                context = 'counterfactual',
+                        context = 'counterfactual',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=False,
@@ -464,7 +463,7 @@ sol, sol_cf = fixed_point_solver_with_exog_pat_and_rd(p_cf,p_baseline,x0=p_basel
                         safe_convergence=0.1,
                         disp_summary=False,
                         damping = 10,
-                        max_count = 1000,
+                        max_count = 10000,
                         accel_memory =50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
@@ -2319,12 +2318,15 @@ def find_zeros(df_welfare,country):
     return (y2*x1-x2*y1)/(y2-y1)
 
 countries = ['CHN','IND','RUS']
-exercises = ['tariff_eq_trips_exp_pat_sect','dyn_tariff_eq_trips_exp_pat_sect']
+exercises = ['tariff_eq_trips_exp_pat_sect','dyn_tariff_eq_trips_exp_pat_sect',
+             'tariff_eq_trips_exp_pat_sect_additive',
+             'dyn_tariff_eq_trips_exp_pat_sect_additive']
 
 df = pd.DataFrame(index = [countries_names[c] for c in countries])
-data_for_plot = {}
 
 for country in countries:
+    df_tariffs = pd.DataFrame(index = pd.Index(p_baseline.countries,name='destination'))
+    df_tariffs['baseline'] = p_baseline.tariff[:,p_baseline.countries.index(country),1]
     for i,exercise in enumerate(exercises):
         if variation == 'baseline':
             local_path = cf_path+'baseline_'+baseline+'/'
@@ -2335,13 +2337,20 @@ for country in countries:
             df_welfare = pd.read_csv(local_path+country+'_tariff_eq_trips_exp_pat_sect'+'.csv')
         if exercise == 'dyn_tariff_eq_trips_exp_pat_sect':
             df_welfare = pd.read_csv(local_path+'dyn_'+country+'_tariff_eq_trips_exp_pat_sect'+'.csv')
-        if i == 0:
-            data_for_plot['delt'] = df_welfare['delt'] 
+        if exercise == 'tariff_eq_trips_exp_pat_sect_additive':
+            df_welfare = pd.read_csv(local_path+country+'_tariff_eq_trips_exp_pat_sect_additive'+'.csv')
+        if exercise == 'dyn_tariff_eq_trips_exp_pat_sect_additive':
+            df_welfare = pd.read_csv(local_path+'dyn_'+country+'_tariff_eq_trips_exp_pat_sect_additive'+'.csv')
                 
         df.loc[countries_names[country],exercise] = find_zeros(df_welfare,country)
-        if exercise == 'dyn_tariff_eq_trips_exp_pat_sect':
-            data_for_plot[country] = df_welfare[country]
 
+        df_tariffs[exercise] = df.loc[countries_names[country],exercise] * df_tariffs['baseline']
+        if exercise.endswith('_additive'):
+            df_tariffs[exercise] = df.loc[countries_names[country],exercise] + df_tariffs['baseline']
+            df_tariffs.loc[country,exercise] = 0
+    
+    df_tariffs.to_csv(pre_TRIPS_plots_path+country+'_equivalent_tariff_exercise.csv')
+    
 caption = 'Tariff equivalent of TRIPS when changing country-specific trade costs (exports in patenting sector)'
 
 df.style.format(precision=5).to_latex(pre_TRIPS_plots_path+'tariff_eq_trips_exp_pat_sect.tex',
@@ -3731,7 +3740,7 @@ for qty in ['eta','T_pat','labor']:
         plt.savefig(solve_to_join_pat_club_save_path+qty+'.'+save_format,format=save_format)
     plt.show()
 
-df.to_csv(solve_to_join_pat_club_save_path+'summary.csv')
+# df.to_csv(solve_to_join_pat_club_save_path+'summary.csv')
 
 #%% Sensitivity graphs of the calibration
 

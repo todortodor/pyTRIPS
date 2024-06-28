@@ -6,8 +6,8 @@ Created on Sun Nov 13 21:57:06 2022
 @author: simonl
 """
 
-from classes import moments, parameters, var
-from solver_funcs import fixed_point_solver
+from classes import moments, parameters, var, var_with_entry_costs
+from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
 
 p = parameters()
 # p.load_run('calibration_results_matched_economy/1020/')
@@ -34,7 +34,7 @@ p.tau = p_bu.tau.copy()
 
 # for kappa in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
 #     p.kappa = kappa
-p.delta[0,1] = 0.05
+# p.delta[:,1] = 0.05
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 # context = 'counterfactual',
                                 context = 'calibration',
@@ -47,7 +47,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         safe_convergence=0.001,
                         disp_summary=True,
                         damping = 100,
-                        max_count = 1000,
+                        max_count = 10000,
                         accel_memory =50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
@@ -58,6 +58,41 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
+
+
+#%%
+
+from classes import moments, parameters, var, var_with_entry_costs
+from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs_cf
+
+p = parameters()
+p.load_run('calibration_results_matched_economy/baseline_1300_variations/11.0/')
+
+p.delta[0,1] = 0.011
+
+sol, sol_c = fixed_point_solver_with_entry_costs_cf(p,x0=p.guess[:-12],
+                        # context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=True,
+                        safe_convergence=0.1,
+                        disp_summary=True,
+                        damping = 2,
+                        max_count = 1000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=2
+                        )
+
+
+
 
 #%%
 

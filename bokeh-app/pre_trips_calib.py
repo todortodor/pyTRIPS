@@ -72,11 +72,17 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
     #   'year':1992
     #   },
+    # {
+    #   'number': 9.2,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':1992
+    #   },
     {
-      'number': 9.2,
+      'number': 9.3,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':1992
+      'year':2015
       },
     ]
 

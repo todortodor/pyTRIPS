@@ -19,27 +19,27 @@ recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
     {'baseline':'1300','variation': 'baseline'},
-    {'baseline':'1300','variation': '2.0'},
+    # {'baseline':'1300','variation': '2.0'},
     # {'baseline':'1300','variation': '10.2'},
-    {'baseline':'1300','variation': '10.3'},
+    # {'baseline':'1300','variation': '10.3'},
     # {'baseline':'1300','variation': '10.4'},
     # {'baseline':'1300','variation': '10.5'},
-    {'baseline':'1300','variation': '99.0'},
-    {'baseline':'1300','variation': '99.1'},
-    {'baseline':'1300','variation': '99.2'},
-    {'baseline':'1300','variation': '99.3'},
-    {'baseline':'1300','variation': '99.4'},
-    {'baseline':'1300','variation': '99.5'},
-    {'baseline':'1300','variation': '99.6'},
-    {'baseline':'1300','variation': '99.7'},
+    # {'baseline':'1300','variation': '99.0'},
+    # {'baseline':'1300','variation': '99.1'},
+    # {'baseline':'1300','variation': '99.2'},
+    # {'baseline':'1300','variation': '99.3'},
+    # {'baseline':'1300','variation': '99.4'},
+    # {'baseline':'1300','variation': '99.5'},
+    # {'baseline':'1300','variation': '99.6'},
+    # {'baseline':'1300','variation': '99.7'},
     # {'baseline':'1300','variation': '99.8'},
-    {'baseline':'1300','variation': '99.9'},
-    {'baseline':'1300','variation': '99.10'},
-    {'baseline':'1300','variation': '99.11'},
-    {'baseline':'1300','variation': '99.12'},
-    {'baseline':'1300','variation': '99.13'},
-    {'baseline':'1300','variation': '99.14'},
-    {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'1300','variation': '99.9'},
+    # {'baseline':'1300','variation': '99.10'},
+    # {'baseline':'1300','variation': '99.11'},
+    # {'baseline':'1300','variation': '99.12'},
+    # {'baseline':'1300','variation': '99.13'},
+    # {'baseline':'1300','variation': '99.14'},
+    # {'baseline':'1300','variation': '99.15'},
     ]
 
 def process_country(args):
@@ -157,6 +157,11 @@ if __name__ == '__main__':
                 make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect',local_path,
                                     sol_baseline=sol_baseline,dynamics=False,alt_delta=alt_delta)
                 make_counterfactual_recap(p_baseline, sol_baseline,c+'_tariff_eq_trips_exp_pat_sect',
+                                              local_path,recap_path)
+                
+                make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect_additive',local_path,
+                                    sol_baseline=sol_baseline,dynamics=False,alt_delta=alt_delta)
+                make_counterfactual_recap(p_baseline, sol_baseline,c+'_tariff_eq_trips_exp_pat_sect_additive',
                                               local_path,recap_path)
             
             # make_counterfactual(p_baseline,'trade_cost_all_countries_all_sectors',

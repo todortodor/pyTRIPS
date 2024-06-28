@@ -96,9 +96,9 @@ sns.set()
 sns.set_context('talk')
 sns.set_style('whitegrid')
 
-p = parameters()
-m = moments()
-m.load_data()
+# p = parameters()
+# m = moments()
+# m.load_data()
 
 # config_dics = [
 #     {'year': 2005, 'N': 7},
@@ -134,6 +134,15 @@ for config_dic in config_dics:
     dropbox_path = f'/Users/slepot/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
     # dropbox_path = f'/Users/slepot/Library/CloudStorage/Dropbox/TRIPS/Calibration data/calibration_data_folders/data_{nbr_of_countries}_countries_{year}/'
     
+    # scalar_moments = pd.read_csv(path+'scalar_moments.csv',index_col=0)
+    
+    # scalar_moments.loc['PROBINNOVENT', 'value'] = 0.7
+    # scalar_moments.loc['SHAREEXPMON', 'value'] = 0.3
+    
+    # if write:
+    #     scalar_moments.to_csv(path+'scalar_moments.csv')
+    #     scalar_moments.to_csv(dropbox_path+'scalar_moments.csv')
+
     if write:
         try:
             os.mkdir(path)
@@ -661,6 +670,9 @@ for config_dic in config_dics:
     # scalar_moments.loc['TO', 'value'] = 0.018546283
     # scalar_moments.loc['TO', 'value'] = 0.017468078
     scalar_moments.loc['TO', 'value'] = 0.071287577
+    scalar_moments.loc['PROBINNOVENT', 'value'] = 0.7
+    scalar_moments.loc['SHAREEXPMON', 'value'] = 0.3
+    
     if write:
         scalar_moments.to_csv(path+'scalar_moments.csv')
         scalar_moments.to_csv(dropbox_path+'scalar_moments.csv')

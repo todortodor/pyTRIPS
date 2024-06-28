@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import os
-from classes import moments, parameters, var, dynamic_var
+from classes import moments, parameters, var, dynamic_var, var_with_entry_costs
 
 def write_calibration_results(path,p,m,sol_c,commentary = None):
     writer = pd.ExcelWriter(path+'.xlsx', engine='xlsxwriter')
@@ -348,7 +348,8 @@ def rough_dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, 
     return dyn_var, sol_fin, convergence[-1]
 
 def make_counterfactual_recap(p_baseline, sol_baseline, country,
-                              local_path,recap_path,harmonizing_country='USA',
+                              local_path,recap_path,with_entry_costs=False,
+                              harmonizing_country='USA',
                               dynamics=False,Nt=25,t_inf=500):
     try:
         os.mkdir(recap_path)
@@ -364,6 +365,8 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         idx_country = p_baseline.countries.index(country[:3])
     if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
         idx_country = p_baseline.countries.index(country[:3])
+    if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect_additive':
+        idx_country = p_baseline.countries.index(country[:3])
     country_path = local_path+country+'/'
     files_in_dir = next(os.walk(country_path))[1]
     run_list = [f for f in files_in_dir if f[0].isnumeric()]
@@ -374,15 +377,17 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         p = parameters()
         p.load_run(country_path+run+'/')
         
-        sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+        if not with_entry_costs:
+            sol_c = var.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+        if with_entry_costs:
+            sol_c = var_with_entry_costs.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+            
         sol_c.scale_P(p)
         sol_c.compute_non_solver_quantities(p)
         sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
         if country in p_baseline.countries:
             recap.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
             recap_dyn.loc[run, 'delt'] = p.delta[idx_country,1]/p_baseline.delta[idx_country,1]
-            # print(p.delta[idx_country,1])
-            # print(idx_country)
         if country == 'World':
             recap.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
             recap_dyn.loc[run, 'delt'] = p.delta[0,1]/p_baseline.delta[0,1]
@@ -432,6 +437,9 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
         if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
             recap.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]/p_baseline.tariff[idx_country-1,idx_country,1]
             recap_dyn.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]/p_baseline.tariff[idx_country-1,idx_country,1]
+        if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect_additive':
+            recap.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]-p_baseline.tariff[idx_country-1,idx_country,1]
+            recap_dyn.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]-p_baseline.tariff[idx_country-1,idx_country,1]
         recap.loc[run, 'growth'] = sol_c.g
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         

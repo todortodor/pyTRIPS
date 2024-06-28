@@ -1,0 +1,122 @@
+"File_ccode","Rep_ccode","FileCountry","RepCountry","Year","FileToRep_Flow","FileToRep_Stock"
+1,1,"United States","United States",2015,0,0
+1,2,"United States","Europe",2015,155219.855297546,2175922.80257381
+1,3,"United States","Japan",2015,4181.08077411996,79191.1906224066
+1,4,"United States","China",2015,6029,92150
+1,5,"United States","Brazil",2015,448,56847
+1,6,"United States","India",2015,3820,35361
+1,7,"United States","Canada",2015,21238.7030161324,314460.38150289
+1,8,"United States","Korea, Republic of",2015,1622.2,36416.2
+1,9,"United States","Russian Federation",2015,539,10259
+1,10,"United States","Mexico",2015,7255,101326
+1,11,"United States","South Africa",2015,-205,6926
+2,1,"Europe","United States",2015,243980.61447377,2002756.02072627
+2,2,"Europe","Europe",2015,0,0
+2,3,"Europe","Japan",2015,-1099.77422293856,82527.5950155268
+2,4,"Europe","China",2015,13162.4824441919,186723.03217112
+2,5,"Europe","Brazil",2015,9189.2770100216,213116.648152244
+2,6,"Europe","India",2015,7550.78197876051,75736.1522692463
+2,7,"Europe","Canada",2015,-1805.67953489414,176291.553264501
+2,8,"Europe","Korea, Republic of",2015,1203.79801157083,56110.1006402342
+2,9,"Europe","Russian Federation",2015,11663.3537557709,169896.348785935
+2,10,"Europe","Mexico",2015,14906.3393129018,128363.36438321
+2,11,"Europe","South Africa",2015,26140.6925505763,102650.979699265
+3,1,"Japan","United States",2015,40990.874345104,407588.488506224
+3,2,"Japan","Europe",2015,22545.6508529282,215802.176490822
+3,3,"Japan","Japan",2015,0,0
+3,4,"Japan","China",2015,9451.51289163125,107575.648547718
+3,5,"Japan","Brazil",2015,-204.669490928218,24763.532033195
+3,6,"Japan","India",2015,-1054.84252300588,14089.413526971
+3,7,"Japan","Canada",2015,857.777996559096,17594.1438171875
+3,8,"Japan","Korea, Republic of",2015,1003.64723545639,38326.1821576763
+3,9,"Japan","Russian Federation",2015,465.213691249374,1805.95950207469
+3,10,"Japan","Mexico",2015,1222.01169276998,7357.89253112033
+3,11,"Japan","South Africa",2015,1037.52824488742,7154.50622406639
+4,1,"China","United States",2015,5127,14714
+4,2,"China","Europe",2015,5977.08316220191,20432.0747801688
+4,3,"China","Japan",2015,83.6973124572934,655.942572614108
+4,4,"China","China",2015,0,0
+4,5,"China","Brazil",2015,168.71772885,2073.579
+4,6,"China","India",2015,583.305,2187.7483432
+4,7,"China","Canada",2015,-4805.32378263828,9944.36416184971
+4,8,"China","Korea, Republic of",2015,1245.5,6610.8
+4,9,"China","Russian Federation",2015,1803.08524935,7680.08
+4,10,"China","Mexico",2015,24.214762,579.362
+4,11,"China","South Africa",2015,233.1708654,4217.80536024445
+5,1,"Brazil","United States",2015,-750,142
+5,2,"Brazil","Europe",2015,-3303.08003711282,-18373.4551726243
+5,3,"Brazil","Japan",2015,44.5646926990121,68.7890456431535
+5,4,"Brazil","China",2015,46.142,555.5978188
+5,5,"Brazil","Brazil",2015,0,0
+5,6,"Brazil","India",2015,5.42,47.53067785
+5,7,"Brazil","Canada",2015,1092.43894619132,13840.3179190751
+5,8,"Brazil","Korea, Republic of",2015,-0.8125187,50.5342992
+5,9,"Brazil","Russian Federation",2015,0.1942755,4.35
+5,10,"Brazil","Mexico",2015,553.505,-905.9435
+5,11,"Brazil","South Africa",2015,-0.82325,73.7160839498231
+6,1,"India","United States",2015,298,9639
+6,2,"India","Europe",2015,687.200226003043,9491.28073495191
+6,3,"India","Japan",2015,24.7286875693085,71.6507053941909
+6,4,"India","China",2015,80.8,487.66051335
+6,5,"India","Brazil",2015,-0.049,91.5212891
+6,6,"India","India",2015,0,0
+6,7,"India","Canada",2015,38.97,2619.94219653179
+6,8,"India","Korea, Republic of",2015,308.171758,832.9782883
+6,9,"India","Russian Federation",2015,-16.6763,537.70280495
+6,10,"India","Mexico",2015,23.47505,145.58258235
+6,11,"India","South Africa",2015,10.311,323.426536408717
+7,1,"Canada","United States",2015,52995.8424487211,323573.875722543
+7,2,"Canada","Europe",2015,15002.4166349723,119608.310431321
+7,3,"Canada","Japan",2015,-362.779794805883,2220.43111361619
+7,4,"Canada","China",2015,2302.95826523511,7407.51445086705
+7,5,"Canada","Brazil",2015,453.553750029325,8565.0289017341
+7,6,"Canada","India",2015,52.31,919.797687861272
+7,7,"Canada","Canada",2015,0,0
+7,8,"Canada","Korea, Republic of",2015,191.045371,1260.50369016272
+7,9,"Canada","Russian Federation",2015,12.79841,1253.61271676301
+7,10,"Canada","Mexico",2015,927.43921988755,12130.0578034682
+7,11,"Canada","South Africa",2015,0,1406.79190751445
+8,1,"Korea, Republic of","United States",2015,3743.7,48514.5
+8,2,"Korea, Republic of","Europe",2015,1212.95466387992,30285.1648196572
+8,3,"Korea, Republic of","Japan",2015,614.642029602782,4217.42174273859
+8,4,"Korea, Republic of","China",2015,6344.5,69855.5
+8,5,"Korea, Republic of","Brazil",2015,-1314.940089,3025.537667
+8,6,"Korea, Republic of","India",2015,664.160437,4280.5868405
+8,7,"Korea, Republic of","Canada",2015,-1354.64687,2478.62626526272
+8,8,"Korea, Republic of","Korea, Republic of",2015,0,0
+8,9,"Korea, Republic of","Russian Federation",2015,17.974493,1373.9435051
+8,10,"Korea, Republic of","Mexico",2015,220.221178,2968.659521
+8,11,"Korea, Republic of","South Africa",2015,42.716588,172.071941
+9,1,"Russian Federation","United States",2015,-376,4360
+9,2,"Russian Federation","Europe",2015,2319.5459088098,108601.698251432
+9,3,"Russian Federation","Japan",2015,-0.498496290977754,46.5922821576764
+9,4,"Russian Federation","China",2015,12.049225,252.1974788
+9,5,"Russian Federation","Brazil",2015,31.59456,41.345
+9,6,"Russian Federation","India",2015,25.9025745,220.5310026
+9,7,"Russian Federation","Canada",2015,41.38222,674.132947976879
+9,8,"Russian Federation","Korea, Republic of",2015,10.44723,48.2501115
+9,9,"Russian Federation","Russian Federation",2015,0,0
+9,10,"Russian Federation","Mexico",2015,3.2264275,12.9505
+9,11,"Russian Federation","South Africa",2015,2.448634,34.7430459954969
+10,1,"Mexico","United States",2015,1116,15262
+10,2,"Mexico","Europe",2015,2905.08503962043,17368.8150368291
+10,3,"Mexico","Japan",2015,-2.70554442048897,2.64954356846473
+10,4,"Mexico","China",2015,7.31,77.2165955
+10,5,"Mexico","Brazil",2015,443.3753,12710.4825
+10,6,"Mexico","India",2015,20.01,127.69277855
+10,7,"Mexico","Canada",2015,-100.094620696127,1282.51445086705
+10,8,"Mexico","Korea, Republic of",2015,29.20053,155.4822113
+10,9,"Mexico","Russian Federation",2015,13.56991,16.98
+10,10,"Mexico","Mexico",2015,0,0
+10,11,"Mexico","South Africa",2015,0,6.3686073
+11,1,"South Africa","United States",2015,1893,2936
+11,2,"South Africa","Europe",2015,1099.13798081511,13090.4009217758
+11,3,"South Africa","Japan",2015,-0.53823389720253,0.920995850622407
+11,4,"South Africa","China",2015,1.98,31908.0889099101
+11,5,"South Africa","Brazil",2015,-18.064,593.047910823416
+11,6,"South Africa","India",2015,82.05,296.295760458588
+11,7,"South Africa","Canada",2015,0,1034.68208092486
+11,8,"South Africa","Korea, Republic of",2015,-9.5298247,2.4657888
+11,9,"South Africa","Russian Federation",2015,-0.20852,897.4522081055
+11,10,"South Africa","Mexico",2015,3.00552,16.9625378
+11,11,"South Africa","South Africa",2015,0,0
