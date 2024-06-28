@@ -26,7 +26,7 @@ def load(path, data_path=None,
     p = parameters()
     # p.load_data(path)
     p.load_run(path,dir_path=dir_path)
-    if path.endswith('11.0/'):
+    if path.endswith('11.0/') or path.endswith('11.01/'):
         sol = var_with_entry_costs.var_from_vector(p.guess, p, compute=True, context = context)
     else:
         sol = var.var_from_vector(p.guess, p, compute=True, context = context)
@@ -47,6 +47,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     params = p_baseline.calib_parameters
     params.append('kappa')
     params.append('a')
+    params.append('d')
     params.append('r_hjort')
     if 'theta' not in params:
         params.append('theta')
@@ -610,7 +611,8 @@ comments_dic['1300'] = {
     '2.0':'2.0 : doubled nu',
     '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
     '10.3':'10.3 : No trade costs',
-    "11.0" : "11.0 : With entry costs",
+    "11.0" : "11.0 : With entry costs d=1.5",
+    "11.01" : "11.01 : With entry costs d=1.1",
     '99.0':'99.0: Low TO',
     '99.1':'99.1: High TO',
     '99.2':'99.2: Low TE',

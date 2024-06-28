@@ -79,7 +79,7 @@ class parameters:
         self.k = 1.33350683
         self.a = np.float64(0.0)
         self.rho = 0.02
-        self.d = 1.5
+        self.d = np.float64(1.0)
         self.data_path = None
         self.unit = 1e6
     
