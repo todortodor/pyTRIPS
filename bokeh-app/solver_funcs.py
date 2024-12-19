@@ -340,6 +340,7 @@ def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, dampin
         init = var_with_entry_costs.var_from_vector(x_old,p,context=context,compute=False)
         if count == 0 and keep_l_R_fixed:
             l_R_0 = init.l_R[...,1:].ravel().copy()
+        
         init.compute_solver_quantities(p)
         
         w = init.compute_wage(p)#/init.price_indices[0]
@@ -358,6 +359,8 @@ def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, dampin
         x_old_decomp = get_vec_qty(x_old,p)
         conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
                       for qty in ['w','Z','profit','l_R','phi']]
+        # print([np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty])
+        #               for qty in ['w','Z','profit','l_R','phi']])
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
         if plot_live and count>500 and count%500 == 0:
@@ -465,6 +468,7 @@ def fixed_point_solver_with_entry_costs_cf(p, x0=None, tol = 1e-15, damping = 10
         init = var_with_entry_costs.var_from_vector_no_price_indices(x_old,p,context='counterfactual',compute=False)
         if count == 0 and keep_l_R_fixed:
             l_R_0 = init.l_R[...,1:].ravel().copy()
+            
         init.compute_solver_quantities(p)
         init.price_indices = init.compute_price_indices(p)
         
@@ -498,18 +502,41 @@ def fixed_point_solver_with_entry_costs_cf(p, x0=None, tol = 1e-15, damping = 10
                 damping = damping_post_acceleration
                 
         if plot_convergence:
-            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
-            if count%10==0:
-                plt.plot(convergence)
-                plt.yscale('log')
-                plt.show()
+            # norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+            if count%1000==0:
+                # plt.plot(convergence)
+                # plt.yscale('log')
+                # plt.show()
+                # print(['w','Z','profit','l_R','phi'][np.argmax(np.array(conditions))],
+                #       np.max(np.array([np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty])
+                #                        for qty in ['w','Z','profit','l_R','phi']])
+                #              )
+                #       )
+                # conv_bottleneck = ['w','Z','profit','l_R','phi'][np.argmax(np.array(conditions))]
+                conv_bottleneck = 'l_R'
+                conv_bottlneck_old =  x_old_decomp[conv_bottleneck]
+                conv_bottlneck_new =  x_new_decomp[conv_bottleneck]
+                max_index = np.argmax(np.abs(conv_bottlneck_new-conv_bottlneck_old)/conv_bottlneck_old)
+                print(conv_bottleneck, conv_bottlneck_old[max_index],(conv_bottlneck_new-conv_bottlneck_old)[max_index] )
         if plot_cobweb:
             history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
             history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
         
         # if count>100:
-        #     plt.plot(np.abs(x_new/x_old - 1))
-        #     plt.show()
+        #     conv_bottleneck = 'l_R'
+        #     conv_bottlneck_old =  x_old_decomp[conv_bottleneck]
+        #     conv_bottlneck_new =  x_new_decomp[conv_bottleneck]
+        #     max_index = np.argmax(np.abs(conv_bottlneck_new-conv_bottlneck_old)/conv_bottlneck_old)
+        #     max_index = 5
+        #     print(conv_bottleneck, conv_bottlneck_old[max_index],(conv_bottlneck_new-conv_bottlneck_old)[max_index] )
+        #     norm.append( conv_bottlneck_old[max_index] )
+        #     # plt.plot((l_R.squeeze()/init.l_R[...,1:].squeeze() - 1))
+        #     # plt.plot((Z.squeeze()/init.Z.squeeze() - 1))
+        #     # plt.plot((Z.squeeze()/init.Z.squeeze() - 1))
+        #     plt.plot(np.arange(len(norm)),norm)
+        #     plt.yscale('log')
+        #     # plt.xlim(len(norm)-100,len(norm)+1)
+            # plt.show()
         
     
     finish = time.perf_counter()
@@ -1267,7 +1294,7 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
     except:
         pass
     sol, sol_c = fixed_point_solver_with_entry_costs(p,context = 'calibration', x0=v0,
-                            cobweb_anim=False,tol =1e-14,
+                            cobweb_anim=False,tol =1e-12,
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='l_R',
@@ -1328,7 +1355,8 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
                                   )
     if sol.status == 'failed': 
         print('trying less precise')
-        sol, sol_c = fixed_point_solver_with_entry_costs(p,context = 'calibration',x0=v0,tol=1e-12,
+        sol, sol_c = fixed_point_solver_with_entry_costs(p,context = 'calibration',
+                                                         x0=v0,tol=1e-6,
                                       accelerate=False,
                                       accelerate_when_stable=True,
                                       plot_cobweb=False,
@@ -1405,6 +1433,7 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
+    m.compute_PROBINNOVENT(sol_c, p)
     m.compute_moments_deviations()
     if hist is not None:
         if hist.count%1 == 0:
@@ -4665,7 +4694,9 @@ def make_counterfactual_with_entry_costs(p_baseline,country,local_path,
     print(country)
     p = p_baseline.copy()
     if delta_factor_array is None:
-        delta_factor_array = np.logspace(-np.log10(2),np.log10(2),51)
+        delta_factor_array = np.logspace(-1,1,11)
+        # delta_factor_array = np.logspace(-np.log10(2),np.log10(2),51)
+        # delta_factor_array = np.logspace(-np.log10(2),np.log10(2),51)
         if country == 'Harmonizing' or country == 'Upper_harmonizing':
             delta_factor_array = np.linspace(0,1,101)
         if country == 'Uniform_delta' or country == 'Upper_uniform_delta':
@@ -4696,132 +4727,183 @@ def make_counterfactual_with_entry_costs(p_baseline,country,local_path,
         idx_country = p_baseline.countries.index(country[:3])
         
     for i,delt in enumerate(delta_factor_array):
-        # print(delt)
-        if country in p_baseline.countries:
-            p.delta[idx_country,1] = p_baseline.delta[idx_country,1] * delt
-        if country == 'World':
-            p.delta[:,1] = p_baseline.delta[:,1] * delt
-        if country == 'Harmonizing' or country == 'Upper_harmonizing':
-            p.delta[:,1] = p_baseline.delta[:,1]**(1-delt) * p_baseline.delta[
-                p_baseline.countries.index(harmonizing_country),1
-                ]**delt
-            if country == 'Upper_harmonizing':
-                p.delta[:,1][p_baseline.delta[:,1]<p_baseline.delta[p_baseline.countries.index(harmonizing_country),1]
-                             ] = p_baseline.delta[:,1][
-                                 p_baseline.delta[:,1]<p_baseline.delta[p_baseline.countries.index(harmonizing_country),1]
-                                 ]
-        if country == 'trade_cost_eq_trips_all_countries_all_sectors':
-            p.delta[:,1] = alt_delta
-            p.tau = p_baseline.tau * delt
-            for n in range(p.N):
-                p.tau[n,n,:] = 1
-        if country == 'trade_cost_eq_trips_all_countries_pat_sectors':
-            p.delta[:,1] = alt_delta
-            p.tau[:,:,1] = p_baseline.tau[:,:,1] * delt
-            for n in range(p.N):
-                p.tau[n,n,:] = 1
-        if country == 'trade_cost_all_countries_all_sectors':
-            p.tau = p_baseline.tau * delt
-            for n in range(p.N):
-                p.tau[n,n,:] = 1
-        if country == 'trade_cost_all_countries_pat_sectors':
-            p.tau[:,:,1] = p_baseline.tau[:,:,1] * delt
-            for n in range(p.N):
-                p.tau[n,n,:] = 1
-        if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
-            p.delta[:,1] = alt_delta
-            p.tau[:,idx_country,1] = p_baseline.tau[:,idx_country,1] * delt
-            p.tau[idx_country,:,1] = p_baseline.tau[idx_country,:,1] * delt
-            p.tau[idx_country,idx_country,:] = 1
-        if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
-            p.delta[:,1] = alt_delta
-            p.tariff[:,idx_country,1] = p_baseline.tariff[:,idx_country,1] * delt
-            p.tariff[idx_country,idx_country,:] = 0
-        if country == 'Uniform_delta':
-            p.delta[:,1] = delt
-        if country == 'Upper_uniform_delta':
-            p.delta[:,1] = np.minimum(p_baseline.delta[:,1], delt)
-            
-        sol, sol_c = fixed_point_solver_with_entry_costs(p,x0=p.guess,
-                                context = 'counterfactual',
-                                cobweb_anim=False,tol =1e-14,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='phi',
-                                plot_convergence=False,
-                                plot_cobweb=False,
-                                safe_convergence=0.001,
-                                disp_summary=False,
-                                damping = 10,
-                                max_count = 1e4,
-                                accel_memory = 50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=5
-                                )
-        sol_c.scale_P(p)
-        sol_c.compute_non_solver_quantities(p)
-        if sol.status == 'successful':
-            p.guess = sol_c.vector_from_var()
-        else:
-            print(country,delt,'failed')
-            sol, sol_c = fixed_point_solver_with_entry_costs(p,x0=p.guess,
-                                    context = 'counterfactual',
-                                    cobweb_anim=False,tol =1e-14,
-                                    accelerate=False,
-                                    accelerate_when_stable=False,
-                                    cobweb_qty='phi',
-                                    plot_convergence=False,
-                                    plot_cobweb=False,
-                                    safe_convergence=0.001,
-                                    disp_summary=False,
-                                    damping = 10,
-                                    max_count = 1e4,
-                                    accel_memory = 50, 
-                                    accel_type1=True, 
-                                    accel_regularization=1e-10,
-                                    accel_relaxation=0.5, 
-                                    accel_safeguard_factor=1, 
-                                    accel_max_weight_norm=1e6,
-                                    damping_post_acceleration=5
-                                    )
+        print(i)
+        if i>-1:
+            if country in p_baseline.countries:
+                p.delta[idx_country,1] = p_baseline.delta[idx_country,1] * delt
+            if country == 'World':
+                p.delta[:,1] = p_baseline.delta[:,1] * delt
+            if country == 'Harmonizing' or country == 'Upper_harmonizing':
+                p.delta[:,1] = p_baseline.delta[:,1]**(1-delt) * p_baseline.delta[
+                    p_baseline.countries.index(harmonizing_country),1
+                    ]**delt
+                if country == 'Upper_harmonizing':
+                    p.delta[:,1][p_baseline.delta[:,1]<p_baseline.delta[p_baseline.countries.index(harmonizing_country),1]
+                                 ] = p_baseline.delta[:,1][
+                                     p_baseline.delta[:,1]<p_baseline.delta[p_baseline.countries.index(harmonizing_country),1]
+                                     ]
+            if country == 'trade_cost_eq_trips_all_countries_all_sectors':
+                p.delta[:,1] = alt_delta
+                p.tau = p_baseline.tau * delt
+                for n in range(p.N):
+                    p.tau[n,n,:] = 1
+            if country == 'trade_cost_eq_trips_all_countries_pat_sectors':
+                p.delta[:,1] = alt_delta
+                p.tau[:,:,1] = p_baseline.tau[:,:,1] * delt
+                for n in range(p.N):
+                    p.tau[n,n,:] = 1
+            if country == 'trade_cost_all_countries_all_sectors':
+                p.tau = p_baseline.tau * delt
+                for n in range(p.N):
+                    p.tau[n,n,:] = 1
+            if country == 'trade_cost_all_countries_pat_sectors':
+                p.tau[:,:,1] = p_baseline.tau[:,:,1] * delt
+                for n in range(p.N):
+                    p.tau[n,n,:] = 1
+            if country[:3] in p_baseline.countries and country[3:] == '_trade_cost_eq_trips_exp_imp_pat_sect':
+                p.delta[:,1] = alt_delta
+                p.tau[:,idx_country,1] = p_baseline.tau[:,idx_country,1] * delt
+                p.tau[idx_country,:,1] = p_baseline.tau[idx_country,:,1] * delt
+                p.tau[idx_country,idx_country,:] = 1
+            if country[:3] in p_baseline.countries and country[3:] == '_tariff_eq_trips_exp_pat_sect':
+                p.delta[:,1] = alt_delta
+                p.tariff[:,idx_country,1] = p_baseline.tariff[:,idx_country,1] * delt
+                p.tariff[idx_country,idx_country,:] = 0
+            if country == 'Uniform_delta':
+                p.delta[:,1] = delt
+            if country == 'Upper_uniform_delta':
+                p.delta[:,1] = np.minimum(p_baseline.delta[:,1], delt)
+                
+            sol, sol_c = fixed_point_solver_with_entry_costs(p,
+                                                             x0=p.guess,
+                                    # context = 'counterfactual',
+                                    # cobweb_anim=False,tol =1e-10,
+                                    # accelerate=False,
+                                    # accelerate_when_stable=True,
+                                    # cobweb_qty='phi',
+                                    # plot_convergence=True,
+                                    # plot_cobweb=False,
+                                    # safe_convergence=0.001,
+                                    # disp_summary=False,
+                                    # damping = 10,
+                                    # max_count = 1e3,
+                                    # accel_memory = 50, 
+                                    # accel_type1=True, 
+                                    # accel_regularization=1e-10,
+                                    # accel_relaxation=0.5, 
+                                    # accel_safeguard_factor=1, 
+                                    # accel_max_weight_norm=1e6,
+                                    # damping_post_acceleration=4
+                                    # )
+            context = 'counterfactual',
+            # context = 'calibration',
+            cobweb_anim=False,tol =1e-10,
+            accelerate=True,
+            accelerate_when_stable=True,
+            cobweb_qty='phi',
+            plot_convergence=True,
+            plot_cobweb=False,
+            safe_convergence=0.001,
+            disp_summary=True,
+            damping = 10,
+            max_count = 1000,
+            accel_memory =50, 
+            accel_type1=True, 
+            accel_regularization=1e-10,
+            accel_relaxation=0.5, 
+            accel_safeguard_factor=1, 
+            accel_max_weight_norm=1e6,
+            damping_post_acceleration=5
+            )
             sol_c.scale_P(p)
-            sol_c.compute_non_solver_quantities(p)
-            if sol.status == 'successful':
-                p.guess = sol_c.vector_from_var()
-            else:
-                print(country,delt,'failed2')
-                p.guess = None
+            # sol_c.compute_non_solver_quantities(p)
+            # if sol.status != 'successful':
+            #     sol, sol_c = fixed_point_solver_with_entry_costs(p,x0=p.guess,
+            #                             context = 'counterfactual',
+            #                             cobweb_anim=False,tol =1e-4,
+            #                             accelerate=False,
+            #                             accelerate_when_stable=True,
+            #                             cobweb_qty='phi',
+            #                             plot_convergence=True,
+            #                             plot_cobweb=False,
+            #                             safe_convergence=0.01,
+            #                             disp_summary=False,
+            #                             damping = 10,
+            #                             max_count = 1e3,
+            #                             accel_memory = 50, 
+            #                             accel_type1=True, 
+            #                             accel_regularization=1e-10,
+            #                             accel_relaxation=0.5, 
+            #                             accel_safeguard_factor=1, 
+            #                             accel_max_weight_norm=1e6,
+            #                             damping_post_acceleration=4
+            #                             )
+            # sol_c.scale_P(p)
+            # sol_c.compute_non_solver_quantities(p)
+            # if sol.status == 'successful':
+            #     p.guess = sol_c.vector_from_var()
+            # else:
+            #     print(country,delt,'failed')
+            #     sol, sol_c = fixed_point_solver_with_entry_costs(p,x0=p.guess,
+            #                             context = 'counterfactual',
+            #                             cobweb_anim=False,tol =1e-10,
+            #                             accelerate=False,
+            #                             accelerate_when_stable=False,
+            #                             cobweb_qty='phi',
+            #                             plot_convergence=False,
+            #                             plot_cobweb=False,
+            #                             safe_convergence=0.001,
+            #                             disp_summary=False,
+            #                             damping = 10,
+            #                             max_count = 1.5e3,
+            #                             accel_memory = 50, 
+            #                             accel_type1=True, 
+            #                             accel_regularization=1e-10,
+            #                             accel_relaxation=0.5, 
+            #                             accel_safeguard_factor=1, 
+            #                             accel_max_weight_norm=1e6,
+            #                             damping_post_acceleration=5
+            #                             )
+            #     sol_c.scale_P(p)
+            #     sol_c.compute_non_solver_quantities(p)
+            # if sol.status == 'successful':
+            #     p.guess = sol_c.vector_from_var()
+            # else:
+            #     print(country,delt,'failed2')
+            #     sol, sol_c = fixed_point_solver_with_entry_costs(p,x0=p.guess,
+            #                             context = 'counterfactual',
+            #                             cobweb_anim=False,tol =1e-4,
+            #                             accelerate=False,
+            #                             accelerate_when_stable=False,
+            #                             cobweb_qty='phi',
+            #                             plot_convergence=False,
+            #                             plot_cobweb=False,
+            #                             safe_convergence=0.001,
+            #                             disp_summary=False,
+            #                             damping = 10,
+            #                             max_count = 1e3,
+            #                             accel_memory = 50, 
+            #                             accel_type1=True, 
+            #                             accel_regularization=1e-10,
+            #                             accel_relaxation=0.5, 
+            #                             accel_safeguard_factor=1, 
+            #                             accel_max_weight_norm=1e6,
+            #                             damping_post_acceleration=5
+            #                             )
+            #     sol_c.scale_P(p)
+            #     sol_c.compute_non_solver_quantities(p)
+            #     if sol.status == 'successful':
+            #         p.guess = sol_c.vector_from_var()
+            #     else:
+            #         print(country,delt,'failed3')
+            #         p.guess = None
+            p.guess = sol_c.vector_from_var()
             
-        # if dynamics:
-        #     sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_baseline,sol_fin=sol_c,
-        #                             Nt=Nt,t_inf=t_inf,x0=p.dyn_guess,
-        #                             cobweb_anim=False,tol =1e-14,
-        #                             accelerate=False,
-        #                             accelerate_when_stable=False,
-        #                             cobweb_qty='l_R',
-        #                             plot_convergence=False,
-        #                             plot_cobweb=False,
-        #                             plot_live = False,
-        #                             safe_convergence=1e-8,
-        #                             disp_summary=True,
-        #                             damping = 20,
-        #                             max_count = 50000,
-        #                             accel_memory =5, 
-        #                             accel_type1=True, 
-        #                             accel_regularization=1e-10,
-        #                             accel_relaxation=1, 
-        #                             accel_safeguard_factor=1, 
-        #                             accel_max_weight_norm=1e6,
-        #                             damping_post_acceleration=5
-        #                             )
-        #     if sol.status == 'successful':
-        #         p.dyn_guess = dyn_sol_c.vector_from_var()
-        #     else:
-        #         p.dyn_guess = None
-        #         print('failed',country_path+'/'+str(i)+'/')
-        
+            if sol_baseline is not None:
+                sol_c.compute_non_solver_quantities(p)
+                sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
+                print(sol_c.g)
+                print(sol_c.cons)
+                print(sol_c.price_indices)
+                print(sol_c.cons_eq_welfare)
         p.write_params(country_path+'/'+str(i)+'/') 

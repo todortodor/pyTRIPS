@@ -42,9 +42,11 @@ else:
 
 p_baseline = parameters()
 p_baseline.load_run(run_path)
+p_baseline.load_data('data_smooth_5_years/data_12_countries_2015/')
 
 m_baseline = moments()
 m_baseline.load_run(run_path)
+m_baseline.load_data('data_smooth_5_years/data_12_countries_2015/')
 
 sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True, context = 'counterfactual')
 sol_baseline.scale_P(p_baseline)
@@ -53,7 +55,6 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 m_baseline.compute_moments(sol_baseline,p_baseline)
 m_baseline.compute_moments_deviations()
 
-#%%
 
 # fdi = pd.read_csv('data/fdi_longformat_2015.csv').set_index(
 fdi = pd.read_csv('data/fdi_longformat_2015_South_imputed.csv').set_index(
@@ -94,6 +95,181 @@ etas = pd.DataFrame(index=pd.Index(p_baseline.countries,name='origin'),
 
 flows = pd.merge(flows,deltas,on='destination')
 flows = pd.merge(flows,etas,on='origin')
+
+flows_bu=flows.copy()
+
+flows['ln_Patent_flows'] = np.log(flows['Patent flows data'])
+flows['ln_Trade_flows'] = np.log(flows['Trade flows data'])
+flows['ln_FDI_stock'] = np.log(flows['FDI stocks'])
+
+stats = flows[flows['FDI stocks']>0][['Patent flows data', 'Trade flows data',
+       'FDI stocks', 'Patent flows over trade flows data',
+       'FDI stock over trade flows','ln_Patent_flows',
+       'ln_Trade_flows','ln_FDI_stock']].describe()
+
+# stats.round(2).to_csv('../misc/stats.csv')
+
+#%% without fixed effects
+
+import statsmodels.api as sm
+import warnings
+warnings.simplefilter(action='ignore', category=RuntimeWarning)
+
+# Prepare the MultiIndex for the DataFrame columns
+arrays = [
+    ['Log Regression'],
+    ['Value']
+]
+tuples = list(zip(*arrays))
+index = pd.MultiIndex.from_tuples(tuples, names=["Regression", "Variable"])
+
+# Prepare the DataFrame to store the regression results
+df = pd.DataFrame(
+    columns=index,
+    index=pd.Index(['Slope_ln_Trade_flows', 
+                    'Slope_ln_FDI_stock', 
+                    'Intercept', 
+                    'R value', 
+                    'P value_ln_Trade_flows', 
+                    'P value_ln_FDI_stock', 
+                    'Standard error_ln_Trade_flows', 
+                    'Standard error_ln_FDI_stock',
+                    # 'Standard deviation_ln_Trade_flows', 
+                    # 'Standard deviation_ln_FDI_stock',
+                    ])
+)
+
+# OLS regression of ln(Patent flows) on ln(Trade flows), ln(FDI stock), and a constant
+flows['ln_Patent_flows'] = np.log(flows['Patent flows data'])
+flows['ln_Trade_flows'] = np.log(flows['Trade flows data'])
+flows['ln_FDI_stock'] = np.log(flows['FDI stocks'])
+
+X = flows[flows['FDI stocks']>0][['ln_Trade_flows', 'ln_FDI_stock']]
+X = sm.add_constant(X)  # Adds a constant term to the predictor
+y = flows[flows['FDI stocks']>0]['ln_Patent_flows']
+model = sm.OLS(y, X).fit()
+
+# Storing the results for the log regression
+df[('Log Regression', 'Value')] = [
+    model.params['ln_Trade_flows'],    # Slope for ln(Trade flows)
+    model.params['ln_FDI_stock'],      # Slope for ln(FDI stock)
+    model.params['const'],             # Intercept
+    model.rsquared,                    # R value
+    model.pvalues['ln_Trade_flows'],   # P value for ln(Trade flows)
+    model.pvalues['ln_FDI_stock'],     # P value for ln(FDI stock)
+    model.bse['ln_Trade_flows'],       # Standard error for ln(Trade flows)
+    model.bse['ln_FDI_stock'],          # Standard error for ln(FDI stock)
+    # model.bse['ln_Trade_flows']*y.shape[0]**(1/2),       # Standard deviation for ln(Trade flows)
+    # model.bse['ln_FDI_stock']*y.shape[0]**(1/2)         # Standard deviation for ln(FDI stock)
+]
+
+# # Display the results
+# import ace_tools as tools
+
+# tools.display_dataframe_to_user(name="Regression Results", dataframe=df)
+
+# print(df)
+
+# df.to_csv('../misc/fdi_fits.csv')
+
+print('Without fixed effects')
+
+print('the coefficient for trade flows is :',df.loc['Slope_ln_Trade_flows'].iloc[0])
+print('the coefficient for FDI stock is :',df.loc['Slope_ln_FDI_stock'].iloc[0])
+print('the standard deviation for trade flows is :',stats.loc['std','ln_Trade_flows'])
+print('the standard deviation for FDI stock is :',stats.loc['std','ln_FDI_stock'])
+print('the coefficient times the standard deviation for trade flows is :',df.loc['Slope_ln_Trade_flows'].iloc[0]*stats.loc['std','ln_Trade_flows'])
+print('the coefficient times the standard deviation for FDI stock is :',df.loc['Slope_ln_FDI_stock'].iloc[0]*stats.loc['std','ln_FDI_stock'])
+
+#%%  with fixed effects
+
+flows=flows_bu.copy()
+arrays = [
+    ['Log Regression'],
+    ['Value']
+]
+tuples = list(zip(*arrays))
+index = pd.MultiIndex.from_tuples(tuples, names=["Regression", "Variable"])
+
+# OLS regression of ln(Patent flows) on ln(Trade flows), ln(FDI stock), and a constant
+flows['ln_Patent_flows'] = np.log(flows['Patent flows data'])
+flows['ln_Trade_flows'] = np.log(flows['Trade flows data'])
+flows['ln_FDI_stock'] = np.log(flows['FDI stocks'])
+
+# Generate dummy variables for 'destination' and 'origin'
+flows = pd.get_dummies(flows, columns=['destination', 'origin'], drop_first=True, dtype=float)
+
+# OLS regression of ln(Patent flows) on ln(Trade flows), ln(FDI stock), fixed effects for destination and origin, and a constant
+X = flows[flows['FDI stocks']>0][['ln_Trade_flows', 'ln_FDI_stock'] + 
+                                 [col for col in flows.columns if col.startswith('destination_') or col.startswith('origin_')]]
+X = sm.add_constant(X)  # Adds a constant term to the predictor
+y = flows[flows['FDI stocks']>0]['ln_Patent_flows']
+model = sm.OLS(y, X).fit()
+
+# Prepare the DataFrame to store the regression results
+df = pd.DataFrame(
+    columns=index,
+    index=pd.Index(['Slope_ln_Trade_flows', 
+                    'Slope_ln_FDI_stock', 
+                    'Intercept', 
+                    'R value', 
+                    'P value_ln_Trade_flows', 
+                    'P value_ln_FDI_stock', 
+                    'Standard error_ln_Trade_flows', 
+                    'Standard error_ln_FDI_stock',
+                    'Standard deviation_ln_Trade_flows', 
+                    'Standard deviation_ln_FDI_stock',
+                    ])
+)
+
+# Storing the results for the log regression
+df[('Log Regression', 'Value')] = [
+    model.params['ln_Trade_flows'],    # Slope for ln(Trade flows)
+    model.params['ln_FDI_stock'],      # Slope for ln(FDI stock)
+    model.params['const'],             # Intercept
+    model.rsquared,                    # R value
+    model.pvalues['ln_Trade_flows'],   # P value for ln(Trade flows)
+    model.pvalues['ln_FDI_stock'],     # P value for ln(FDI stock)
+    model.bse['ln_Trade_flows'],       # Standard error for ln(Trade flows)
+    model.bse['ln_FDI_stock'],         # Standard error for ln(FDI stock)
+    model.bse['ln_Trade_flows']*y.shape[0]**(1/2),       # Standard deviation for ln(Trade flows)
+    model.bse['ln_FDI_stock']*y.shape[0]**(1/2)         # Standard deviation for ln(FDI stock)
+
+]
+
+# # Prepare the MultiIndex for the DataFrame columns
+# arrays = [
+#     ['Log Regression', 'Log Regression', 'Log Regression'],
+#     ['Slope', 'P value', 'Standard error']
+# ]
+# tuples = list(zip(*arrays))
+# index = pd.MultiIndex.from_tuples(tuples, names=["Regression", "Variable"])
+
+# # Prepare the DataFrame to store the regression results
+# variables = ['ln_Trade_flows', 'ln_FDI_stock', 'const'] + [col for col in flows.columns if col.startswith('destination_') or col.startswith('origin_')]
+# df = pd.DataFrame(index=variables, columns=index)
+
+# # Add R-squared value as a separate row
+# df.loc['R squared', ('Log Regression', 'Slope')] = model.rsquared
+
+# # Storing the results for the log regression
+# for var in variables:
+#     df.loc[var, ('Log Regression', 'Slope')] = model.params[var]
+#     df.loc[var, ('Log Regression', 'P value')] = model.pvalues[var]
+#     df.loc[var, ('Log Regression', 'Standard error')] = model.bse[var]
+
+# print(df)
+
+# df.to_csv('../misc/fdi_fits_with_fixed_effects_dest_orig.csv')
+
+print('With fixed effects')
+
+print('the coefficient for trade flows is :',df.loc['Slope_ln_Trade_flows'].iloc[0])
+print('the coefficient for FDI stock is :',df.loc['Slope_ln_FDI_stock'].iloc[0])
+print('the standard deviation for trade flows is :',stats.loc['std','ln_Trade_flows'])
+print('the standard deviation for FDI stock is :',stats.loc['std','ln_FDI_stock'])
+print('the coefficient times the standard deviation for trade flows is :',df.loc['Slope_ln_Trade_flows'].iloc[0]*stats.loc['std','ln_Trade_flows'])
+print('the coefficient times the standard deviation for FDI stock is :',df.loc['Slope_ln_FDI_stock'].iloc[0]*stats.loc['std','ln_FDI_stock'])
 
 #%% Comparing fdi stocks with patent flows
 import seaborn as sns
@@ -137,9 +313,112 @@ poly1d_fn = np.poly1d(coef)
 ax[1].plot(np.sort(x), poly1d_fn(np.sort(x)), ls='--',color='grey',label='Affine fit')
 
 ax[1].legend()
-plt.savefig('../misc/summary.png',format='png')
+# plt.savefig('../misc/summary.png',format='png')
 
 plt.show()
+
+#%% Comparing fdi stocks with patent flows
+import seaborn as sns
+from scipy.stats import linregress
+
+fig,ax = plt.subplots()
+
+x = flows['Patent flows over trade flows data'].values.ravel()
+y_fdi = flows['FDI stock over trade flows'].values.ravel()
+
+ax.scatter(x,
+        y_fdi,
+        label = 'FDI stock',
+        marker='+'
+        )
+
+ax.set_xlabel('Ratio patent flow to trade flow\n(#patents / Mio.$)')
+ax.set_ylabel('Ratio FDI stock to trade flow\n(Mio.\$ / Mio.\$)')
+
+coef = np.polyfit(x,y_fdi,1)
+poly1d_fn = np.poly1d(coef) 
+
+ax.plot(np.sort(x), poly1d_fn(np.sort(x)), ls='--',color='grey',label='Affine fit')
+
+slope, intercept, r_value, p_value, std_err = linregress(x, 
+                                                         y_fdi)
+
+df = pd.DataFrame(
+    index=pd.Index(['Slope', 
+                    'Intercept', 
+                    'R value', 
+                    'P value', 
+                    'Standard error'])
+)
+
+df['Regression'] = [slope, intercept, r_value, p_value, std_err]
+
+# ax.legend()
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.savefig('../misc/fi_stock_to_patent_flow.png',format='png')
+df.to_csv('../misc/graph_fit.csv')
+plt.show()
+
+
+#%%
+
+import statsmodels.api as sm
+from scipy.stats import linregress
+
+# Assuming you have a DataFrame 'flows' with the necessary columns
+
+# Prepare the MultiIndex for the DataFrame columns
+arrays = [
+    ['Stock', 'Flow', 'Delta and Eta', 'Delta and Eta'],
+    ['Value', 'Value', 'Delta', 'Eta']
+]
+tuples = list(zip(*arrays))
+index = pd.MultiIndex.from_tuples(tuples, names=["Regression", "Variable"])
+
+# Prepare the DataFrame to store the regression results
+df = pd.DataFrame(
+    columns=index,
+    index=pd.Index(['Slope', 'Intercept', 'R value', 'P value', 'Standard error'])
+)
+
+# Linear regression for 'Stock'
+slope, intercept, r_value, p_value, std_err = linregress(flows['FDI stock over trade flows'], flows['Patent flows over trade flows data'])
+df[('Stock', 'Value')] = [slope, intercept, r_value, p_value, std_err]
+
+# Linear regression for 'Flow'
+slope, intercept, r_value, p_value, std_err = linregress(flows['FDI flow over trade flows'], flows['Patent flows over trade flows data'])
+df[('Flow', 'Value')] = [slope, intercept, r_value, p_value, std_err]
+
+# Multiple linear regression for 'Delta' and 'Eta' using statsmodels
+X = flows[['FDI stocks', 'eta']]
+X = sm.add_constant(X)  # Adds a constant term to the predictor
+y = flows['Patent flows data']
+model = sm.OLS(y, X).fit()
+
+# Storing the results for delta
+df[('Delta and Eta', 'Delta')] = [
+    model.params['delta'],  # Slope for delta
+    model.params['const'],  # Intercept
+    model.rsquared,         # R value
+    model.pvalues['delta'], # P value for delta
+    model.bse['delta']      # Standard error for delta
+]
+
+# Storing the results for eta
+df[('Delta and Eta', 'Eta')] = [
+    model.params['eta'],    # Slope for eta
+    model.params['const'],  # Intercept (same as for delta)
+    model.rsquared,         # R value (same as for delta)
+    model.pvalues['eta'],   # P value for eta
+    model.bse['eta']        # Standard error for eta
+]
+
+print(df)
+
+df.to_csv('../misc/fdi_fits.csv')
+
+
 
 #%%
 

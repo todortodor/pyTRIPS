@@ -21,42 +21,52 @@ if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
     # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/11.0/')
+    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/11.02/')
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/11.0/')
+    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/11.02/')
+
+m.load_data('data_smooth_3_years/data_12_countries_1992/')
+p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
-p.d=1.1
+# p.d = 1.1
+# p.d = 0.191473
 # p.a=0.1
 
+
+p.calib_parameters = ['delta','T','eta']
+m.list_of_moments=['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
 # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
 # p.calib_parameters.append('a')
 # p.calib_parameters.append('d')
+# m.list_of_moments.append('PROBINNOVENT')
 
-# sol, sol_c = fixed_point_solver_with_entry_costs(p,
-#                         context = 'calibration',x0=p.guess,
-#                         cobweb_anim=False,tol =1e-14,
-#                         accelerate=False,
-#                         accelerate_when_stable=True,
-#                         cobweb_qty='phi',
-#                         plot_convergence=False,
-#                         plot_cobweb=False,
-#                         safe_convergence=0.001,
-#                         disp_summary=True,
-#                         damping = 10,
-#                         max_count = 3e3,
-#                         accel_memory = 50, 
-#                         accel_type1=True, 
-#                         accel_regularization=1e-10,
-#                         accel_relaxation=0.5, 
-#                         accel_safeguard_factor=1, 
-#                         accel_max_weight_norm=1e6,
-#                         damping_post_acceleration=5
-#                         )
+
+sol, sol_c = fixed_point_solver_with_entry_costs(p,
+                        context = 'calibration',x0=p.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+m.compute_PROBINNOVENT(sol_c, p)
 
 # sol_c.compute_non_solver_quantities(p)
 # p.guess = sol_c.vector_from_var()
@@ -102,7 +112,7 @@ sol, sol_c = fixed_point_solver_with_entry_costs(p_sol,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
-                        plot_convergence=False,
+                            plot_convergence=False,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=True,
@@ -131,7 +141,7 @@ commentary = ''
 baseline_number = '1300'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 11.01
+run_number = 11.92
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
     
 try:

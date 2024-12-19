@@ -9,7 +9,7 @@ Created on Fri May 26 08:06:54 2023
 import pandas as pd
 import os
 
-delta_t = 3
+delta_t = 5
 
 data_path = 'data/'
 smooth_data_path = f'data_smooth_{delta_t}_years/'

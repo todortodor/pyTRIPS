@@ -108,7 +108,7 @@ variation = 'baseline'
 baseline_pre_trips_variation = baseline
 pre_trips_cf = True
 pre_trips_variation = '9.2'
-# variation_with_doubled_tau_in_pat_sect = '10.2'
+variation_with_doubled_tau_in_pat_sect = '10.2'
 variation_with_zero_trade_costs = '10.3'
 # variation_with_zero_tariffs = '10.4'
 # variation_with_ten_times_tariffs = '10.5'
@@ -2362,6 +2362,93 @@ df.to_csv(pre_TRIPS_plots_path+'tariff_eq_trips_exp_pat_sect.csv',float_format='
 
 #%% Coop and Nash equilibria with doubled trade costs in patenting sector
 
+#%% Check that the US deviates in Nash for doubled trade costs
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_tau_in_pat_sect}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+p_nash = p_pre.copy()
+p_nash.delta[:,1] = 12.0
+
+sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_pre)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_pre)
+
+p_nash_dev = p_pre.copy()
+p_nash_dev.delta[:,1] = 12.0
+p_nash_dev.delta[0,1] = 0.01
+
+sol, dyn_sol_nash_dev = dyn_fixed_point_solver(p_nash_dev, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash_dev.compute_non_solver_quantities(p_nash_dev)
+dyn_sol_nash_dev.sol_fin.compute_consumption_equivalent_welfare(p_nash_dev,sol_pre)
+dyn_sol_nash_dev.sol_fin.compute_world_welfare_changes(p_nash_dev,sol_pre)
+
+df = pd.DataFrame(columns = ['welfare_US'])
+df.loc['no protection','welfare_US'] = dyn_sol_nash.cons_eq_welfare[0]
+df.loc['full protection','welfare_US'] = dyn_sol_nash_dev.cons_eq_welfare[0]
+
 #%% Nash table with transitional dynamics with doubled trade costs in patenting sector
 
 # all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
@@ -3301,7 +3388,7 @@ def fit_and_eval(vec,dyn_sol,time,time_truncated,
 def add_graph(dyn_sol,qty,norm_start,norm_end,
                ax,time,time_truncated,normalize_start,
                normalize_end,label=None,color=sns.color_palette()[0],
-               return_data = False):
+               return_data = False,ls='-'):
     ax.plot(time_truncated,fit_and_eval(qty,
                                         dyn_sol,
                                         time,time_truncated,
@@ -3310,7 +3397,8 @@ def add_graph(dyn_sol,qty,norm_start,norm_end,
                       normalize_start=normalize_start,
                       normalize_end=normalize_end)
             ,label=label,
-            color=color)
+            color=color,
+            ls=ls)
     if not normalize_start and not normalize_end:
         ax.scatter(x=[0,60],
                     y=[norm_start,norm_end],
@@ -3359,6 +3447,9 @@ plt.show()
 # Real final consumption
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty = dyn_sol.nominal_final_consumption[i,:]/dyn_sol.price_indices[i,:]
     norm_start = dyn_sol.sol_init.nominal_final_consumption[i]/dyn_sol.sol_init.price_indices[i]
     norm_end = dyn_sol.sol_fin.nominal_final_consumption[i]/dyn_sol.sol_fin.price_indices[i]
@@ -3367,7 +3458,8 @@ for i,country in enumerate(p_baseline.countries):
                    normalize_start=True,
                    normalize_end=False,
                    label=country,
-                   color=Category18[i])
+                   color=Category18[i],
+                   ls=ls)
 # ax.set_ylabel('Real final consumption')
 # plt.legend(loc=[1.02,0.02])
 plt.legend(fontsize=4.8)
@@ -3382,6 +3474,9 @@ plt.show()
 # Real profit
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty = (dyn_sol.profit[:,i,1,:]/dyn_sol.price_indices[i,:]).sum(axis=0)
     norm_start = (dyn_sol.sol_init.profit[:,i,1]*dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
                   ).sum()
@@ -3392,7 +3487,8 @@ for i,country in enumerate(p_baseline.countries):
                    normalize_start=True,
                    normalize_end=False,
                    label=country,
-                   color=Category18[i])
+                   color=Category18[i],
+                   ls=ls)
 # ax.set_ylabel('Real profit')
 # plt.legend(loc=[1.02,0.02])
 plt.legend(fontsize=4.8)
@@ -3407,6 +3503,9 @@ plt.show()
 # Research Labor
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty =dyn_sol.l_R[i,1,:]
     norm_start = dyn_sol.sol_init.l_R[i,1]
     norm_end = dyn_sol.sol_fin.l_R[i,1]
@@ -3415,7 +3514,8 @@ for i,country in enumerate(p_baseline.countries):
                    normalize_start=True,
                    normalize_end=False,
                    label=country,
-                   color=Category18[i])
+                   color=Category18[i],
+                   ls=ls)
 # ax.set_ylabel('Labor allocated to research')
 # plt.legend(loc=[1.02,0.02])
 plt.legend(fontsize=4.7,ncol=4)
@@ -3430,6 +3530,9 @@ plt.show()
 # Real wage
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty = dyn_sol.w[i,:]/dyn_sol.price_indices[i,:]
     norm_start = dyn_sol.sol_init.w[i]/dyn_sol.sol_init.price_indices[i]
     norm_end = dyn_sol.sol_fin.w[i]/dyn_sol.sol_fin.price_indices[i]
@@ -3438,7 +3541,8 @@ for i,country in enumerate(p_baseline.countries):
                    normalize_start=True,
                    normalize_end=False,
                    label=country,
-                   color=Category18[i])
+                   color=Category18[i],
+                   ls=ls)
 # ax.set_ylabel('Real wage')
 plt.legend(fontsize=4.8)
 if save_dynamics:
@@ -3449,6 +3553,9 @@ plt.show()
 # PSI CD
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty = dyn_sol.PSI_CD[i,1,:]+dyn_sol.PSI_CD_0[i,1,None]
     norm_start = dyn_sol.sol_init.PSI_CD[i,1]
     norm_end = dyn_sol.sol_fin.PSI_CD[i,1]
@@ -3457,7 +3564,8 @@ for i,country in enumerate(p_baseline.countries):
                    normalize_start=True,
                    normalize_end=False,
                    label=country,
-                   color=Category18[i])
+                   color=Category18[i],
+                   ls=ls)
 # ax.set_ylabel(r'$\Psi^{CD}_n$')
 # plt.legend(loc=[1.02,0.02])
 plt.legend(fontsize=4.8)
@@ -3472,6 +3580,9 @@ plt.show()
 # Interest rate
 fig,ax = plt.subplots()
 for i,country in enumerate(p_baseline.countries):
+    ls = '-'
+    if i == 0:
+        ls = '-.'
     qty = dyn_sol.r[i,:]
     norm_start = dyn_sol.sol_init.r
     norm_end = dyn_sol.sol_fin.r
@@ -3480,7 +3591,8 @@ for i,country in enumerate(p_baseline.countries):
                     normalize_start=True,
                     normalize_end=False,
                     label=country,
-                    color=Category18[i])
+                    color=Category18[i],
+                    ls=ls)
 # ax.set_ylabel('Interest rate')
 # plt.legend(loc=[1.02,0.02])
 plt.legend(fontsize=4.8)
@@ -4428,7 +4540,7 @@ write_calibration_results(doubled_nu_path+'dyn_Coop_negishi_weights_with_nu',p_c
 variations_of_robust_checks = {
     variation_with_doubled_nu:r'Doubled $\nu$',
      # variation_with_doubled_tau_in_pat_sect:r'Doubled trade costs',
-     variation_with_zero_trade_costs:r'Zero trade costs and tariffs',
+     variation_with_zero_trade_costs:r'No trade costs or tariffs',
      # variation_with_zero_tariffs:r'Zero tariffs',
      # variation_with_ten_times_tariffs:r'Ten times tariffs',
      'baseline':'Baseline',

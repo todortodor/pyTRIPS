@@ -44,7 +44,7 @@ class parameters:
                          'eta':co,
                          'khi':0,
                          'r_hjort':co,
-                         'd':1+co}
+                         'd':co}
         self.ub_dict = {'sigma':5,
                         'theta':12,
                         'rho':0.5,
@@ -524,27 +524,49 @@ class var_with_entry_costs:
     @staticmethod
     def hypergeometric_integral(lb, ub, alpha, beta, y, z):
         
-        # def integrand(psi, alpha, beta, y, z):
+        # self.hypergeometric_integral(
+        #                             lb = self.psi_m_star[...,1],
+        #                             ub = self.psi_MP_star[...,1],
+        #                             alpha = self.V_P[...,1],
+        #                             # b = self.w[:,None]*p.fe[1]*p.r_hjort[:,None],
+        #                             beta = self.w*p.fe[1]*p.r_hjort,
+        #                             y = p.k,
+        #                             z = p.d)
+        
+        # def integrand(psi, alpha, beta, z, y):
+        #     # print((alpha * psi - beta[:, None]).shape)
         #     res = (alpha * psi - beta) ** z * (psi) ** (-y)
         #     return res
         
-        # # Define a vectorized integration function
-        # vec_integrand = np.vectorize(integrand, excluded=['alpha', 'beta', 'y', 'z'])
-        
-        # def integrate_func(lb, ub, alpha, beta):
-        #     return integrate.quad(integrand, lb, ub, args=(alpha, beta, y, z))[0]
-        
-        # vec_integrate_func = np.vectorize(integrate_func)
+        # def integrate_func():
+        #     res = np.zeros_like(lb)
+        #     for i in range(lb.shape[0]):
+        #         for j in range(lb.shape[0]):
+        #             # print(lb[i,j], ub[i,j])
+        #             res[i,j] = integrate.quad(integrand, 
+        #                                           lb[i,j], 
+        #                                           ub[i,j],
+        #                                           args=(alpha[i,j],beta[i],z,y)
+        #                                           )[0]
+        #     return res
         
         # # Perform the integration
-        # integral = vec_integrate_func(lb, ub, alpha, beta[:, None])
+        # integral_0 = integrate_func()
         
         # Calculate t_ub and t_lb
         t_ub = 1 - beta[:, None] / ub / alpha
         t_lb = 1 - beta[:, None] / lb / alpha
-
+        
+        # print(alpha)
+        # print(beta)
+        
         # Calculate the second integral using the betainc function
-        integral = (beta[:, None] ** (1 - y + z) / alpha ** (1 - y)) * np.vectorize(lambda a, b, x1, x2: float(betainc(a, b, x1, x2, regularized=False)))(z + 1, y - z - 1, t_lb, t_ub)
+        integral = (beta[:, None] ** (1 - y + z) / alpha ** (1 - y)
+                    ) * np.vectorize(
+                        lambda a, b, x1, x2: float(betainc(a, b, x1, x2, regularized=False))
+                        )(z + 1, y - z - 1, t_lb, t_ub)
+        
+        # print((integral - integral_0)[integral>0])
         
         return integral
 
@@ -706,11 +728,14 @@ class var_with_entry_costs:
             res = (signature * to_sum).sum(axis=0) - self.w[:,None]*p.fo[None,1:]*p.r_hjort[:,None]
             
             return res.ravel()/psi_o_star.ravel()
+            # print(res)
+            # return res.ravel()
         
         x0 = np.min(self.psi_star[...,1],axis=0)
         roots = root(func_to_solve,x0=x0,tol=1e-15)
         
         self.psi_o_star[:,1] = roots.x
+        # print(roots.x)
         
         # check where the equality condition is satisfied and will replace in psi_o_star
         signature = np.isclose(self.psi_star[...,1:],1)
@@ -765,27 +790,32 @@ class var_with_entry_costs:
             (self.w[None,:,None]*self.a[...,1:]) / self.V_NP[...,1:]
             )
         
-        # x = np.linspace(1,roots.x.max()*1.1,100)
+        # x = np.linspace(1,100,100)
         # l_y = [func_to_solve( np.ones((p.N,p.S))[...,1]*x_i ) for x_i in x]
+        # print(x)
         # y = np.array([[l[i] for l in l_y] for i,c in enumerate(p.countries)]).T
+        # print(y)
         # fig = plt.figure(dpi=188)
         # plt.axhline(0,color='grey',label='Zero')
         # plt.plot(x,y,label=p.countries)
         # plt.scatter(y=np.zeros_like(roots.x),x=roots.x,color='red',marker='+',zorder=100,label='roots')
-        # if thresholds_to_compare is not None:
-        #     plt.scatter(y=np.zeros_like(roots.x),
-        #                 x=thresholds_to_compare,
-        #                 color='green',
-        #                 marker='+',
-        #                 zorder=100,
-        #                 label='Original thresholds')
-        # plt.xscale('log')
-        # plt.yscale('symlog')
+        # # if thresholds_to_compare is not None:
+        # #     plt.scatter(y=np.zeros_like(roots.x),
+        # #                 x=thresholds_to_compare,
+        # #                 color='green',
+        # #                 marker='+',
+        # #                 zorder=100,
+        # #                 label='Original thresholds')
+        # # plt.xscale('log')
+        # # plt.yscale('symlog')
         # plt.legend(loc=(1.01,0))
         # plt.show()
         
     def compute_mass_innovations(self,p):
         # this would have to be updated for additional sectors
+        
+        # print(self.psi_m_star[...,1].max())
+        # print(self.psi_MP_star[...,1].max())
         
         # second way
         integral_k_d = self.hypergeometric_integral(
@@ -796,6 +826,8 @@ class var_with_entry_costs:
                                     beta = self.w*p.fe[1]*p.r_hjort,
                                     y = p.k,
                                     z = p.d)
+        
+        # print(integral_k_d)
         
         self.integral_k_d = integral_k_d
         
@@ -813,6 +845,7 @@ class var_with_entry_costs:
             - self.psi_MP_star[...,1:]**(1-p.k)
             )/(p.k-1)
         
+        
         B = p.k*np.einsum('nis,nis->nis',
                       temp_w_a_power_minus_d/self.V_NP[...,1:]**(-p.d),
                       np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k+1) - 1
@@ -825,6 +858,8 @@ class var_with_entry_costs:
         
         self.mu_MNE = np.zeros((p.N,p.N,p.S))
         self.mu_MNE[...,1:] = A - B - C
+        
+        # print('mu_MNE')
         
         self.mu_MPND = np.zeros((p.N,p.N,p.S))
         self.mu_MPND[...,1:] = C + (p.k*self.psi_MP_star[...,1:]**(1-p.k))/(p.k-1)
@@ -991,10 +1026,14 @@ class var_with_entry_costs:
             
     def compute_solver_quantities(self,p):
         self.compute_growth(p)
+        # print('growth done')
         self.compute_entry_costs(p)
+        # print('entry costs done')
         self.compute_V(p)
         self.compute_patenting_thresholds(p)
+        # print('patenting thresholds done')
         self.compute_mass_innovations(p)
+        # print('mass innovations done')
         self.compute_aggregate_qualities(p)
         self.compute_sectoral_prices(p)
         self.compute_labor_allocations(p)
@@ -1046,18 +1085,31 @@ class var_with_entry_costs:
             1/self.V_NP[...,1:]
             )  > 1
         
+        # C = p.k*np.einsum('nis,i,nis,nis,nis->nis',
+        #               temp_w_a_power_minus_d,
+        #               1/self.w,
+        #               self.V_NP[...,1:]**(p.d+1),
+        #               signature_C,
+        #               np.maximum(
+        #                   np.einsum('i,nis,nis->nis',
+        #                   self.w,
+        #                   self.a[...,1:],
+        #                   1/self.V_NP[...,1:]),
+        #                   0)**(p.d-p.k+1)-1,
+        #               )/((p.d+1)*(p.d-p.k+1))
+        
         C = p.k*np.einsum('nis,i,nis,nis,nis->nis',
                       temp_w_a_power_minus_d,
                       1/self.w,
                       self.V_NP[...,1:]**(p.d+1),
                       signature_C,
-                      np.maximum(
-                          np.einsum('i,nis,nis->nis',
-                          self.w,
-                          self.a[...,1:],
-                          1/self.V_NP[...,1:]),
-                          0)**(p.d-p.k+1)-1,
+                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k+1) - 1
                       )/((p.d+1)*(p.d-p.k+1))
+        
+        # print(C)
+        
+        # C[np.isnan(C)] = 0
+        # C[C < 0] = 0
         
         D_1 = p.k*np.einsum('nis,i,nis->nis',
                         self.V_P[...,1:],
@@ -1073,7 +1125,7 @@ class var_with_entry_costs:
         
         signature_E = np.einsum('nis,nis->nis',
             self.w[None,:,None]*self.a[...,1:]+self.w[:,None,None]*p.fe[None,None,1:]*p.r_hjort[:,None,None],
-            1/self.V_NP[...,1:]
+            1/self.V_P[...,1:]
             )  > self.psi_o_star[None,:,1:]
         
         integral_k_plus_un_d_plus_un = self.integral_k_plus_un_d_plus_un
@@ -1295,6 +1347,44 @@ class var_with_entry_costs:
         self.compute_semi_elast_patenting_delta(p)
         self.compute_share_of_innovations_patented(p)
         
+    def compute_average_ratio_entry_costs_exports(self,p):
+        self.total_entry_costs_by_innovator = np.einsum('i,nis->i',
+            self.w,
+            self.l_Aa[...,1:]
+            )
+        
+        self.ratio_total_entry_costs_by_innovator_over_exports = (
+            self.total_entry_costs_by_innovator
+            / np.einsum('nis->i',
+                        self.X_M[..., 1:]
+                        )
+        )
+        
+        self.mass_enters = p.k/(p.k-1) - self.mu_MNE
+        self.sales_innovators = np.einsum('is,is,nis,nis,nis->i',
+                                          p.eta[...,1:],
+                                          self.l_R[...,1:]**(1-p.kappa),
+                                          self.mass_enters[...,1:],
+                                          1/self.PSI_M[...,1:],
+                                          self.X_M[...,1:]
+                                          )
+        self.ratio_total_entry_costs_by_innovator_over_sales_innovators = (
+            self.total_entry_costs_by_innovator
+            / self.sales_innovators
+            )
+        
+        df = pd.DataFrame(index=p.countries)
+        df['Total entry costs by innovator'] = self.total_entry_costs_by_innovator
+        df['GDP'] = self.gdp
+        df['Ratio to exports'] = self.ratio_total_entry_costs_by_innovator_over_exports
+        df['Ratio to exports at entry'] = self.ratio_total_entry_costs_by_innovator_over_sales_innovators
+        
+        self.summary_entry_costs_quantities = df
+        #!!!
+        # df = pd.DataFrame(index=pd.MultiIndex.from_product([self.countries,self.countries]
+        #                                   , names=['destination','origin']))
+        # df['Ratio total entry costs by innovator over sales innovators'] = 
+
     def compute_consumption_equivalent_welfare(self,p,baseline):
         self.cons_eq_welfare = self.cons*\
             ((p.rho-baseline.g*(1-1/p.gamma))/(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))\
@@ -4112,6 +4202,16 @@ class moments:
             return res
         
         self.PROBINNOVENT = integrate.quad(integrand_US,1,np.inf)[0]
+        
+        def integrand_JAP(psi):
+            inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
+            mask = np.ones(p.N)
+            mask = (mask == 1)
+            mask[2]=False
+            res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
+            return res
+        
+        self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]
         
         # def integrand_JAP(psi):
         #     # signature_NP = (psi <= var.psi_m_star[...,1])

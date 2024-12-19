@@ -26,7 +26,7 @@ def load(path, data_path=None,
     p = parameters()
     # p.load_data(path)
     p.load_run(path,dir_path=dir_path)
-    if path.endswith('11.0/') or path.endswith('11.01/'):
+    if path.endswith('11.0/') or path.endswith('11.01/') or path.endswith('11.02/'):
         sol = var_with_entry_costs.var_from_vector(p.guess, p, compute=True, context = context)
     else:
         sol = var.var_from_vector(p.guess, p, compute=True, context = context)
@@ -613,6 +613,7 @@ comments_dic['1300'] = {
     '10.3':'10.3 : No trade costs',
     "11.0" : "11.0 : With entry costs d=1.5",
     "11.01" : "11.01 : With entry costs d=1.1",
+    "11.02" : "11.02 : With entry costs d=0.19",
     '99.0':'99.0: Low TO',
     '99.1':'99.1: High TO',
     '99.2':'99.2: Low TE',

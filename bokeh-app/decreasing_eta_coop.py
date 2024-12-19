@@ -46,9 +46,11 @@ sol_baseline.compute_non_solver_quantities(p_baseline)
 m_baseline.compute_moments(sol_baseline,p_baseline)
 m_baseline.compute_moments_deviations()
 
-list_of_countries_to_run = ['USA','EUR','JAP','CAN','KOR','MEX']
+# list_of_countries_to_run = ['JAP','CAN','KOR','MEX']
+list_of_countries_to_run = ['USA']
+
 # list_of_countries_to_run = ['CAN']
-dynamics = True
+dynamics = False
 
 #%%
 
@@ -62,8 +64,8 @@ if __name__ == '__main__':
             if country in list_of_countries_to_run:
                 print(country)
 
-                lb = p_baseline.eta[:,1].min()/6
-                ub = p_baseline.eta[i,1]
+                lb = p_baseline.eta[:,1].min()/50000
+                ub = p_baseline.eta[i,1]/1000
                 it = 0
                 
                 lb_delta = 0.01
@@ -74,6 +76,7 @@ if __name__ == '__main__':
                 while (ub-lb)/lb>1e-2:
                     it = it+1
                     x = (ub+lb)/2
+                    # x = np.sqrt(ub+lb)
                     p = p_baseline.copy()
                     p.eta[i,1] = x
                     sol, sol_c = fixed_point_solver(p,

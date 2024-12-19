@@ -18,7 +18,7 @@ import time
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1300','variation': '11.0'},
+    {'baseline':'1300','variation': '11.02'},
     ]
 
 def process_country(args):
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         
         sol, sol_baseline = fixed_point_solver_with_entry_costs(p_baseline,x0=p_baseline.guess,
                                 context = 'counterfactual',
-                                cobweb_anim=False,tol =1e-14,
+                                cobweb_anim=False,tol =1e-10,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -84,6 +84,7 @@ if __name__ == '__main__':
         sol_baseline.scale_P(p_baseline)
         sol_baseline.compute_non_solver_quantities(p_baseline)
         
+        # print('working')
         if parallel:
             args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
             with ProcessPoolExecutor(max_workers=12) as executor:
@@ -91,7 +92,12 @@ if __name__ == '__main__':
         
         else:
             # sequential processes
-            for c in p_baseline.countries+['World']:
-                make_counterfactual_with_entry_costs(p_baseline,c,local_path,dynamics=False)
+            for c in p_baseline.countries[3:4]:
+            # for c in p_baseline.countries[1:]:
+                make_counterfactual_with_entry_costs(p_baseline,c,local_path,dynamics=False,
+                                                     sol_baseline=sol_baseline)
                 make_counterfactual_recap(p_baseline, sol_baseline, c,
                                          local_path,recap_path,with_entry_costs=True)
+                
+                
+                

@@ -52,6 +52,7 @@ baseline_dics = [
     {'baseline':'1300','variation': '99.13'},
     {'baseline':'1300','variation': '99.14'},
     {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'1300','variation': '11.01'},
     ]
 
 
@@ -85,6 +86,7 @@ if __name__ == '__main__':
         
         write = True
         if write:
+            # baseline_dic = {'baseline':'1300','variation': '11.02'}
             if not os.path.exists('nash_eq_recaps/deltas.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',
                                                 'variation',

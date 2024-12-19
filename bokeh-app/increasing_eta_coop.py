@@ -39,16 +39,19 @@ p_baseline.load_run(run_path)
 m_baseline = moments()
 m_baseline.load_run(run_path)
 
-sol_baseline = var.var_from_vector(p_baseline.guess, p_baseline, compute=True, context = 'counterfactual')
+sol_baseline = var.var_from_vector(p_baseline.guess, 
+                                   p_baseline, 
+                                   compute=True, 
+                                   context = 'counterfactual')
 sol_baseline.scale_P(p_baseline)
 sol_baseline.compute_non_solver_quantities(p_baseline)
 
 m_baseline.compute_moments(sol_baseline,p_baseline)
 m_baseline.compute_moments_deviations()
 
-list_of_countries_to_run = ['BRA','ZAF']
-# list_of_countries_to_run = ['ZAF']
-dynamics = True
+list_of_countries_to_run = ['ZAF']
+# list_of_countries_to_run = ['KOR','MEX']
+dynamics = False
 
 #%%
 
@@ -62,8 +65,9 @@ if __name__ == '__main__':
             if country in list_of_countries_to_run:
                 print(country)
 
-                lb = p_baseline.eta[i,1]
-                ub = p_baseline.eta[:,1].max()*6
+                lb = p_baseline.eta[i,1].min()
+                # ub = p_baseline.eta[:,1].max()*6
+                ub = p_baseline.eta[:,1].max()
                 it = 0
                 
                 lb_delta = 0.01
@@ -77,7 +81,7 @@ if __name__ == '__main__':
                     p = p_baseline.copy()
                     p.eta[i,1] = x
                     sol, sol_c = fixed_point_solver(p,
-                                                    # x0=p.guess,
+                                                    x0=p.guess,
                                                     context = 'counterfactual',
                                             cobweb_anim=False,tol =1e-14,
                                             accelerate=False,
@@ -97,7 +101,7 @@ if __name__ == '__main__':
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
                                             damping_post_acceleration=5
-                                            ) 
+                                            )
                     
                     sol_c.scale_P(p)
                     sol_c.compute_non_solver_quantities(p)
@@ -192,6 +196,7 @@ if __name__ == '__main__':
                     df.to_csv(f'solve_to_join_pat_club/eta/baseline_{baseline}/{coop}_{country}.csv')
     
     #%% T pat
+    from solver_funcs import fixed_point_solver
     p = p_baseline.copy()
     for coop in ['pop_weighted']:
         for i,country in enumerate(p_baseline.countries):
@@ -200,6 +205,7 @@ if __name__ == '__main__':
                 print(country)
                 
                 lb = p_baseline.T[i,1]
+                # ub = p_baseline.T[i,1]
                 ub = p_baseline.T[:,1].max()*25000
                 it = 0
                 
@@ -214,9 +220,9 @@ if __name__ == '__main__':
                     p = p_baseline.copy()
                     p.T[i,1] = x
                     sol, sol_c = fixed_point_solver(p,
-                                            # x0=p.guess,
+                                            x0=p.guess,
                                             context = 'counterfactual',
-                                            cobweb_anim=False,tol =1e-14,
+                                            cobweb_anim=False,tol =1e-13,
                                             accelerate=False,
                                             accelerate_when_stable=True,
                                             cobweb_qty='phi',
@@ -225,7 +231,7 @@ if __name__ == '__main__':
                                             # plot_live=True,
                                             safe_convergence=0.001,
                                             disp_summary=False,
-                                            damping = 500,
+                                            damping = 100,
                                             max_count = 1e5,
                                             accel_memory = 50, 
                                             accel_type1=True, 
@@ -233,14 +239,17 @@ if __name__ == '__main__':
                                             accel_relaxation=0.5, 
                                             accel_safeguard_factor=1, 
                                             accel_max_weight_norm=1e6,
-                                            damping_post_acceleration=5
-                                            ) 
+                                            damping_post_acceleration=50
+                                            )
+                    print('solving eq')
                     sol_c.scale_P(p)
                     sol_c.compute_non_solver_quantities(p)
                     print(lb,ub,x)
                     p.guess = sol.x 
                     p_opti, sol_opti = find_coop_eq(p,coop,
-                                      lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
+                                      lb_delta=lb_delta,
+                                      ub_delta=ub_delta,
+                                      dynamics=False,
                                         # solver_options=None,
                                       tol=1e-6,
                                       custom_dyn_sol_options = None,
@@ -264,6 +273,7 @@ if __name__ == '__main__':
                                                                 ),
                                       custom_weights=None,
                                       max_workers=12,parallel=False)
+                    
                     if dynamics:
                         p_opti, sol_opti = find_coop_eq(p,coop,
                                          lb_delta=lb_delta,ub_delta=ub_delta,dynamics=True,

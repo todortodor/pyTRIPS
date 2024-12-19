@@ -25,7 +25,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1300','variation': '11.0'},
+    {'baseline':'1300','variation': '11.01'},
     ]
 
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         p_baseline.load_run(baseline_path)  
         
         # for aggregation_method in ['pop_weighted','negishi']:
-        for aggregation_method in ['negishi']:
+        for aggregation_method in ['pop_weighted']:
             print(aggregation_method)
             
             start = time.perf_counter()
