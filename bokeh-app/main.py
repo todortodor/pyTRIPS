@@ -14,7 +14,8 @@ from bokeh.palettes import Category10, Dark2
 Category18 = Category10[10]+Dark2[8]
 import time
 import warnings
-warnings.simplefilter('ignore', np.RankWarning)
+# np.warnings = warnings
+# warnings.simplefilter('ignore', np.RankWarning)
 # warnings.simplefilter('ignore', np.RuntimeWarning)
 warnings.filterwarnings('ignore')
 
@@ -614,6 +615,7 @@ comments_dic['1300'] = {
     "11.0" : "11.0 : With entry costs d=1.5",
     "11.01" : "11.01 : With entry costs d=1.1",
     "11.02" : "11.02 : With entry costs d=0.19",
+    "12.0" : "12.0 : no obsolescence",
     '99.0':'99.0: Low TO',
     '99.1':'99.1: High TO',
     '99.2':'99.2: Low TE',

@@ -18,7 +18,7 @@ import os
 import seaborn as sns
 import warnings
 from mpmath import betainc
-warnings.simplefilter('ignore', np.RankWarning)
+# warnings.simplefilter('ignore', np.RankWarning)
 
 class parameters:     
     def __init__(self):   
@@ -4169,70 +4169,74 @@ class moments:
         self.SHAREEXPMON = numerator[0] / denominator[0]
         
     def compute_PROBINNOVENT(self,var,p):
-        # to be updated for other sectors
-        def aleph_P_star(psi):
-            res = np.maximum(
-                            np.einsum('i,ni,ni->ni',
-                                      var.w,
-                                      var.a[...,1],
-                                      1/(psi*var.V_P[...,1]-np.einsum('n,,n->n',
-                                                                    var.w,
-                                                                    p.fe[1],
-                                                                    p.r_hjort)[:,None])
-                                      ),
-                            1
-                            )
-            return res
-        
-        def aleph_NP_star(psi):
-            res = np.maximum(
-                            np.einsum('i,ni,,ni->ni',
-                                      var.w,
-                                      var.a[...,1],
-                                      1/psi,
-                                      1/var.V_NP[...,1]
-                                      ),
-                            1
-                            )
-            return res
-        
-        def integrand_US(psi):
-            inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
-            res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,0] )**(-p.d) )
-            return res
-        
-        self.PROBINNOVENT = integrate.quad(integrand_US,1,np.inf)[0]
-        
-        def integrand_JAP(psi):
-            inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
-            mask = np.ones(p.N)
-            mask = (mask == 1)
-            mask[2]=False
-            res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
-            return res
-        
-        self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]
-        
-        # def integrand_JAP(psi):
-        #     # signature_NP = (psi <= var.psi_m_star[...,1])
-        #     term_1 = np.zeros_like(var.psi_m_star[...,1])
-        #     term_1[psi <= var.psi_m_star[...,1]] = aleph_NP_star(psi)[psi <= var.psi_m_star[...,1]]
-        #     term_2 = np.zeros_like(var.psi_m_star[...,1])
-        #     term_2[psi >= var.psi_m_star[...,1]] = aleph_P_star(psi)[psi >= var.psi_m_star[...,1]]
-        #     # signature_P = (psi >= var.psi_m_star[...,1])
-        #     inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
-        #     # inside_min = np.maximum(aleph_P_star(psi) * (psi >= var.psi_m_star[...,1]),1)
-        #     # res = p.k*psi**(-p.k-1)*np.min(inside_min[:,0])
-        #     # res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,2] )**(-p.d) )
-        #     mask = np.ones(p.N)
-        #     mask = (mask == 1)
-        #     mask[2]=False
-        #     res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
-        #     # res = ( p.k*psi**(-p.k-1)*np.min( (term_1[1:,0] + term_2[1:,0]) )**(-p.d) )
-        #     # res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,0] )**(-p.d) )
-        #     return res
-        
-        # self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]
+        self.PROBINNOVENT = np.nan
+        try:
+            # to be updated for other sectors
+            def aleph_P_star(psi):
+                res = np.maximum(
+                                np.einsum('i,ni,ni->ni',
+                                          var.w,
+                                          var.a[...,1],
+                                          1/(psi*var.V_P[...,1]-np.einsum('n,,n->n',
+                                                                        var.w,
+                                                                        p.fe[1],
+                                                                        p.r_hjort)[:,None])
+                                          ),
+                                1
+                                )
+                return res
+            
+            def aleph_NP_star(psi):
+                res = np.maximum(
+                                np.einsum('i,ni,,ni->ni',
+                                          var.w,
+                                          var.a[...,1],
+                                          1/psi,
+                                          1/var.V_NP[...,1]
+                                          ),
+                                1
+                                )
+                return res
+            
+            def integrand_US(psi):
+                inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
+                res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,0] )**(-p.d) )
+                return res
+            
+            self.PROBINNOVENT = integrate.quad(integrand_US,1,np.inf)[0]
+            
+            def integrand_JAP(psi):
+                inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
+                mask = np.ones(p.N)
+                mask = (mask == 1)
+                mask[2]=False
+                res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
+                return res
+            
+            self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]
+            
+            # def integrand_JAP(psi):
+            #     # signature_NP = (psi <= var.psi_m_star[...,1])
+            #     term_1 = np.zeros_like(var.psi_m_star[...,1])
+            #     term_1[psi <= var.psi_m_star[...,1]] = aleph_NP_star(psi)[psi <= var.psi_m_star[...,1]]
+            #     term_2 = np.zeros_like(var.psi_m_star[...,1])
+            #     term_2[psi >= var.psi_m_star[...,1]] = aleph_P_star(psi)[psi >= var.psi_m_star[...,1]]
+            #     # signature_P = (psi >= var.psi_m_star[...,1])
+            #     inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
+            #     # inside_min = np.maximum(aleph_P_star(psi) * (psi >= var.psi_m_star[...,1]),1)
+            #     # res = p.k*psi**(-p.k-1)*np.min(inside_min[:,0])
+            #     # res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,2] )**(-p.d) )
+            #     mask = np.ones(p.N)
+            #     mask = (mask == 1)
+            #     mask[2]=False
+            #     res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
+            #     # res = ( p.k*psi**(-p.k-1)*np.min( (term_1[1:,0] + term_2[1:,0]) )**(-p.d) )
+            #     # res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,0] )**(-p.d) )
+            #     return res
+            
+            # self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]
+        except:
+            pass
         
         
     def compute_moments(self,var,p):
@@ -4270,6 +4274,8 @@ class moments:
         self.compute_DOMPATINEU(var, p)
         self.compute_DOMPATINUS(var, p)
         self.compute_ERDUS(var, p)
+        # self.compute_PROBINNOVENT(var, p)
+        # self.compute_SHAREEXPMON(var, p)
         
     def compute_moments_deviations(self):
 

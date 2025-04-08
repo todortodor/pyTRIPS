@@ -92,7 +92,7 @@ parameters_description = {
 #%% create output folder
 
 output_path = 'output/'
-output_name = 'draft_v12'
+output_name = 'draft_v99'
 
 presentation_version_path = output_path+output_name+'/'
 try:
@@ -395,6 +395,7 @@ plt.show()
 
 #%% write excel spredsheet of the baseline
 
+from data_funcs import write_calibration_results
 write_calibration_results(calibration_path+'baseline',p_baseline,m_baseline,sol_baseline,commentary = '')
 
 #%% Compute patenting quantities with production patents
@@ -665,6 +666,9 @@ y = getattr(m_baseline, moment).ravel()
 
 fig, ax = plt.subplots()
 
+# plt.xscale('log')
+# plt.yscale('log')
+
 ax.scatter(x,y,s=6,lw=0.6
             ,marker='+'
            )
@@ -683,16 +687,15 @@ if annotate_with_labels:
 plt.xlabel('Data')
 plt.ylabel('Model')
 
-# plt.title(m_baseline.description.loc[moment,'description'])
+plt.title(m_baseline.description.loc[moment,'description'])
+if annotate_with_labels:
+    adjust_text(texts, precision=0.001,
+            expand_text=(1.01, 1.05), expand_points=(1.01, 1.05),
+            force_text=(0.01, 0.25), force_points=(0.01, 0.25),
+            arrowprops=dict(arrowstyle='-', color='k'#, alpha=.5
+                            ))
+    # adjust_text(texts)
 
-plt.xscale('log')
-plt.yscale('log')
-
-adjust_text(texts, precision=0.001,
-        expand_text=(1.01, 1.05), expand_points=(1.01, 1.05),
-        force_text=(0.01, 0.25), force_points=(0.01, 0.25),
-        arrowprops=dict(arrowstyle='-', color='k'#, alpha=.5
-                        ))
 
 for save_format in save_formats:
     plt.savefig(calibration_path+moment+'_cross_small.'+save_format,format=save_format)
