@@ -211,7 +211,7 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
- 'SRGDP','UUPCOST','SINNOVPATUS',
+ 'SRGDP','SGDP','RGDPPC','UUPCOST','SINNOVPATUS',
   'TO','TE','DOMPATINUS','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'PROBINNOVENTER',
  'objective']
@@ -609,13 +609,14 @@ comments_dic = {}
 
 comments_dic['1300'] = {
     "baseline":"baseline : 2015",
-    '2.0':'2.0 : doubled nu',
-    '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
-    '10.3':'10.3 : No trade costs',
-    "11.0" : "11.0 : With entry costs d=1.5",
-    "11.01" : "11.01 : With entry costs d=1.1",
-    "11.02" : "11.02 : With entry costs d=0.19",
-    "12.0" : "12.0 : no obsolescence",
+    # '2.0':'2.0 : doubled nu',
+    # '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
+    # '10.3':'10.3 : No trade costs',
+    # "11.0" : "11.0 : With entry costs d=1.5",
+    # "11.01" : "11.01 : With entry costs d=1.1",
+    # "11.02" : "11.02 : With entry costs d=0.19",
+    # "12.0" : "12.0 : no obsolescence",
+    "13.0" : "13.0 : target SGDP and RGDPpc",
     '99.0':'99.0: Low TO',
     '99.1':'99.1: High TO',
     '99.2':'99.2: Low TE',

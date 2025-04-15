@@ -3508,7 +3508,7 @@ class moments:
                                'UUPCOST','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
                                'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
-                               'PROBINNOVENT','SHAREEXPMON']
+                               'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC']
         else:
             self.list_of_moments = list_of_moments
         self.weights_dict = {'GPDIFF': 1,
@@ -3528,6 +3528,8 @@ class moments:
                              'SPFLOWDOM_RUS': 1,
                              'SRDUS': 1,
                              'SRGDP': 1,
+                             'SGDP': 1,
+                             'RGDPPC': 1,
                              'SRGDP_US': 1,
                              'SRGDP_RUS': 1,
                              'STFLOW': 1,
@@ -3594,7 +3596,7 @@ class moments:
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
-                'SHAREEXPMON']
+                'SHAREEXPMON','SGDP','RGDPPC']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -3656,6 +3658,11 @@ class moments:
         self.OUT_target = self.c_moments.expenditure.sum()/self.unit
         self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
                             /(self.c_moments.gdp/self.c_moments.price_level).sum()
+        self.SGDP_target = (self.c_moments.gdp).values \
+                            /(self.c_moments.gdp).sum()
+        self.RGDPPC_target = (self.c_moments.gdp/self.c_moments.price_level).values \
+            / (self.c_moments.labor.values)
+        self.RGDPPC_target = self.RGDPPC_target/self.RGDPPC_target[0]
         self.SRGDP_US_target = self.SRGDP_target[0]
         self.SRGDP_RUS_target = self.SRGDP_target/self.SRGDP_US_target
         self.RP_target = self.c_moments.price_level.values
@@ -3754,6 +3761,8 @@ class moments:
                     'PCOSTINTER':pd.Index(['scalar']), 
                     'JUPCOSTRD':pd.Index(['scalar']), 
                     'SRGDP':pd.Index(self.countries, name='country'), 
+                    'SGDP':pd.Index(self.countries, name='country'), 
+                    'RGDPPC':pd.Index(self.countries, name='country'), 
                     'SRGDP_US':pd.Index(['scalar']), 
                     'SRGDP_RUS':pd.Index(self.countries, name='country'), 
                     'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
@@ -3963,6 +3972,15 @@ class moments:
         self.SRGDP = numerator/numerator.sum()
         self.SRGDP_US = self.SRGDP[0]
         self.SRGDP_RUS = self.SRGDP/self.SRGDP_US
+        
+        
+    def compute_SGDP(self,var,p):
+        numerator = var.gdp
+        self.SGDP = numerator/numerator.sum()
+        
+    def compute_RGDPPC(self,var,p):
+        self.RGDPPC = var.gdp * var.price_indices / p.labor
+        self.RGDPPC = self.RGDPPC/self.RGDPPC[0]
         
     def compute_RP(self,var,p):
         self.RP = var.price_indices/var.price_indices[0]
@@ -4245,6 +4263,8 @@ class moments:
         self.compute_SPFLOW(var, p)
         self.compute_OUT(var, p)
         self.compute_SRGDP(var, p)
+        self.compute_SGDP(var, p)
+        self.compute_RGDPPC(var, p)
         self.compute_RP(var, p)
         self.compute_RD(var, p)
         self.compute_KM(var, p)

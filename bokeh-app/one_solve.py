@@ -10,8 +10,8 @@ from classes import moments, parameters, var, var_with_entry_costs
 from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
 
 p = parameters()
-# p.load_run('calibration_results_matched_economy/1020/')
-p.load_run('counterfactual_results/unilateral_patent_protection/baseline_1300_11.02/USA/0/')
+p.load_run('calibration_results_matched_economy/1300/')
+# p.load_run('counterfactual_results/unilateral_patent_protection/baseline_1300_11.02/USA/0/')
 sol_c = var_with_entry_costs.var_from_vector(p.guess, p, context='counterfactual')
 # p_bu = p.copy()
 # p.load_data(f'data_smooth_3_years/data_11_countries_1992/',
@@ -59,6 +59,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
+sol_c.compute_non_solver_quantities(p)
 
 
 #%%
