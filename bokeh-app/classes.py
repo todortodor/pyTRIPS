@@ -3973,13 +3973,12 @@ class moments:
         self.SRGDP_US = self.SRGDP[0]
         self.SRGDP_RUS = self.SRGDP/self.SRGDP_US
         
-        
     def compute_SGDP(self,var,p):
         numerator = var.gdp
         self.SGDP = numerator/numerator.sum()
         
     def compute_RGDPPC(self,var,p):
-        self.RGDPPC = var.gdp * var.price_indices / p.labor
+        self.RGDPPC = var.gdp / var.price_indices / p.labor
         self.RGDPPC = self.RGDPPC/self.RGDPPC[0]
         
     def compute_RP(self,var,p):
