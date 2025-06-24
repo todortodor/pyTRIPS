@@ -60,8 +60,8 @@ if new_run:
 # m.list_of_moments.append('KMPHARMA')
 # m.list_of_moments.append('KMCHEM')
 
-# m.weights_dict['KMPHARMA'] = 3
-# m.weights_dict['KMCHEM'] = 3
+m.weights_dict['KMPHARMA'] = 2
+m.weights_dict['KMCHEM'] = 2
 
 
 p.delta[p.delta<0.02] = 0.02
@@ -75,12 +75,12 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 2
+max_iter = 4
 # max_iter = 6
 
 while cond:
     # if iterations < max_iter - 4:
-    if iterations < max_iter - 1:
+    if iterations < max_iter - 2:
         test_ls = optimize.least_squares(fun = calibration_func,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time), 
