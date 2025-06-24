@@ -20,28 +20,31 @@ data_path = 'data/'
 results_path = 'calibration_results_matched_economy/'
 
 baseline_dics = [
-    {'baseline':'1300','variation': 'baseline'},
-    {'baseline':'1300','variation': '2.0'},
-    # {'baseline':'1300','variation': '10.2'},
-    {'baseline':'1300','variation': '10.3'},
-    # {'baseline':'1300','variation': '10.4'},
-    # {'baseline':'1300','variation': '10.5'},
-    {'baseline':'1300','variation': '99.0'},
-    {'baseline':'1300','variation': '99.1'},
-    {'baseline':'1300','variation': '99.2'},
-    {'baseline':'1300','variation': '99.3'},
-    {'baseline':'1300','variation': '99.4'},
-    {'baseline':'1300','variation': '99.5'},
-    {'baseline':'1300','variation': '99.6'},
-    {'baseline':'1300','variation': '99.7'},
-    {'baseline':'1300','variation': '99.8'},
-    {'baseline':'1300','variation': '99.9'},
-    {'baseline':'1300','variation': '99.10'},
-    {'baseline':'1300','variation': '99.11'},
-    {'baseline':'1300','variation': '99.12'},
-    {'baseline':'1300','variation': '99.13'},
-    {'baseline':'1300','variation': '99.14'},
-    {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'1300','variation': 'baseline'},
+    # {'baseline':'1300','variation': '2.0'},
+    # # {'baseline':'1300','variation': '10.2'},
+    # {'baseline':'1300','variation': '10.3'},
+    # # {'baseline':'1300','variation': '10.4'},
+    # # {'baseline':'1300','variation': '10.5'},
+    # {'baseline':'1300','variation': '99.0'},
+    # {'baseline':'1300','variation': '99.1'},
+    # {'baseline':'1300','variation': '99.2'},
+    # {'baseline':'1300','variation': '99.3'},
+    # {'baseline':'1300','variation': '99.4'},
+    # {'baseline':'1300','variation': '99.5'},
+    # {'baseline':'1300','variation': '99.6'},
+    # {'baseline':'1300','variation': '99.7'},
+    # {'baseline':'1300','variation': '99.8'},
+    # {'baseline':'1300','variation': '99.9'},
+    # {'baseline':'1300','variation': '99.10'},
+    # {'baseline':'1300','variation': '99.11'},
+    # {'baseline':'1300','variation': '99.12'},
+    # {'baseline':'1300','variation': '99.13'},
+    # {'baseline':'1300','variation': '99.14'},
+    # {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'4003','variation': 'baseline'},
+    # {'baseline':'4004','variation': 'baseline'},
+    {'baseline':'4013','variation': 'baseline'},
     ]
 
 lb_delta = 0.01
@@ -64,19 +67,25 @@ for baseline_dic in baseline_dics:
     sol_baseline.scale_P(p_baseline)
     sol_baseline.compute_non_solver_quantities(p_baseline)
     
-    # for aggregation_method in ['negishi','pop_weighted']:
-    for aggregation_method in ['pop_weighted']:
+    for aggregation_method in ['negishi','pop_weighted']:
+    # for aggregation_method in ['pop_weighted']:
 
-        deltas = pd.read_csv('coop_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(
-            ['baseline','variation','aggregation_method'],keep='last')
-        deltas = deltas.loc[
-            (deltas.baseline.astype('str') == baseline_dic['baseline'])
-            & (deltas.variation.astype('str') == baseline_dic['variation'])
-            & (deltas.aggregation_method == 'pop_weighted')][p_baseline.countries].values.squeeze()
-        deltas[deltas>0.9] = ub_delta
+        # deltas = pd.read_csv('coop_eq_recaps/dyn_deltas.csv',index_col=0).drop_duplicates(
+        #     ['baseline','variation','aggregation_method'],keep='last')
+        # deltas = deltas.loc[
+        #     (deltas.baseline.astype('str') == baseline_dic['baseline'])
+        #     & (deltas.variation.astype('str') == baseline_dic['variation'])
+        #     & (deltas.aggregation_method == 'pop_weighted')][p_baseline.countries].values.squeeze()
+        # deltas[deltas>0.9] = ub_delta
 
-        p_opti = p_baseline.copy()
-        p_opti.delta[...,1] = deltas
+        # p_opti = p_baseline.copy()
+        # p_opti.delta[...,1] = deltas
+        
+        direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
+        
+        p_opti = parameters()
+        # p_opti.load_run(f'coop_eq_direct_saves/dyn_{direct_save_path}_{aggregation_method}/')
+        p_opti.load_run(f'coop_eq_direct_saves/{direct_save_path}_{aggregation_method}/')
         
         solver_options = dict(cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -149,48 +158,55 @@ for baseline_dic in baseline_dics:
         if aggregation_method == 'pop_weighted':
             solution_welfare = sol_opti.cons_eq_pop_average_welfare_change
         
-        corner_corrected_deltas = p.delta[...,1].copy()
-        for i,c in enumerate(p_baseline.countries):
-            if p.delta[i,1] > 1 or c=='MEX':
-            # if False:
-                print('checking on ',c)
-            # if True:
-                p_corner = p.copy()
-                p_corner.delta[i,1] = ub_delta
-                
-                sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
-                                                context = 'counterfactual',
-                                                **solver_options
-                                                )
-                sol_corner.compute_non_solver_quantities(p_corner)
-                sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
-                sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
-                
-                if aggregation_method == 'negishi':
-                    corner_welfare = sol_corner.cons_eq_negishi_welfare_change
-                if aggregation_method == 'pop_weighted':
-                    corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
-                
-                sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
-                                                             sol_fin=sol_corner,
-                                                             Nt=23,
-                                                      t_inf=500,
-                                        **custom_dyn_sol_options
-                                        )
+        corner_corrected_deltas = p.delta[...,1:].copy()
+        for sector in range(1,p.S):
+            for i,c in enumerate(p_baseline.countries):
+                # if p.delta[i,sector] < 2*lb_delta or c=='MEX':
+                # if p.delta[i,sector] < 0.07 or c=='MEX':
+                if True:
+                    print(
+                        pd.DataFrame(index=p.countries,
+                                     columns=p.sectors[1:],
+                                     data=p.delta[:,1:])
+                                     )
+                    print('checking on ',c)
+                    p_corner = p.copy()
+                    p_corner.delta[i,sector] = lb_delta
+                    
+                    sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
+                                                    context = 'counterfactual',
+                                                    **solver_options
+                                                    )
+                    sol_corner.compute_non_solver_quantities(p_corner)
+                    sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+                    sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+                    
+                    if aggregation_method == 'negishi':
+                        corner_welfare = sol_corner.cons_eq_negishi_welfare_change
+                    if aggregation_method == 'pop_weighted':
+                        corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
+                    
+                    sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
+                                                                 sol_fin=sol_corner,
+                                                                 Nt=23,
+                                                          t_inf=500,
+                                            **custom_dyn_sol_options
+                                            )
+            
+                    dyn_sol_corner.compute_non_solver_quantities(p)
+                    
+                    if aggregation_method == 'negishi':
+                        corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
+                    if aggregation_method == 'pop_weighted':
+                        corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
+                    
+                    print(corner_welfare,solution_welfare)
+                    if corner_welfare > solution_welfare:
+                        print('lower corner was better for ',c)
+                        corner_corrected_deltas[i,sector-1] = lb_delta
+    
+        p.delta[...,1:] = corner_corrected_deltas
         
-                dyn_sol_corner.compute_non_solver_quantities(p)
-                
-                if aggregation_method == 'negishi':
-                    corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
-                if aggregation_method == 'pop_weighted':
-                    corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
-                
-                print(corner_welfare,solution_welfare)
-                if corner_welfare > solution_welfare:
-                    print('upper corner was better for ',c)
-                    corner_corrected_deltas[i] = ub_delta
-        
-        p.delta[...,1] = corner_corrected_deltas
         
         sol, sol_c = fixed_point_solver(p_corner,x0=p_corner.guess,
                                         context = 'counterfactual',
@@ -219,45 +235,53 @@ for baseline_dic in baseline_dics:
             solution_welfare = dyn_sol.cons_eq_pop_average_welfare_change
         
         # corner_corrected_deltas = p.delta[...,1].copy()
-        for i,c in enumerate(p_baseline.countries):
-            if p.delta[i,1] < 2*lb_delta or c=='MEX':
-                print('checking on ',c)
-                p_corner = p.copy()
-                p_corner.delta[i,1] = lb_delta
+        for sector in range(1,p.S):
+            print(sector)
+            for i,c in enumerate(p_baseline.countries):
+                # if p.delta[i,sector] > 0.1 or c=='MEX':
+                if True:
+                    p_corner = p.copy()
+                    print(
+                        pd.DataFrame(index=p.countries,
+                                     columns=p.sectors[1:],
+                                     data=p.delta[:,1:])
+                                     )
+                    print('checking on ',c)
+                    p_corner.delta[i,sector] = ub_delta
+                    
+                    sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
+                                                    context = 'counterfactual',
+                                                    **solver_options
+                                                    )
+                    sol_corner.compute_non_solver_quantities(p_corner)
+                    sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+                    sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+                    
+                    if aggregation_method == 'negishi':
+                        corner_welfare = sol_corner.cons_eq_negishi_welfare_change
+                    if aggregation_method == 'pop_weighted':
+                        corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
+                    
+                    sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
+                                                                 sol_fin=sol_corner,
+                                                                 Nt=23,
+                                                          t_inf=500,
+                                            **custom_dyn_sol_options
+                                            )
+            
+                    dyn_sol_corner.compute_non_solver_quantities(p)
+                    
+                    if aggregation_method == 'negishi':
+                        corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
+                    if aggregation_method == 'pop_weighted':
+                        corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
+                    
+                    print(corner_welfare,solution_welfare)
+                    if corner_welfare > solution_welfare:
+                        print('upper corner was better for ',c)
+                        corner_corrected_deltas[i,sector-1] = ub_delta
                 
-                sol, sol_corner = fixed_point_solver(p_corner,x0=p_corner.guess,
-                                                context = 'counterfactual',
-                                                **solver_options
-                                                )
-                sol_corner.compute_non_solver_quantities(p_corner)
-                sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
-                sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
-                
-                if aggregation_method == 'negishi':
-                    corner_welfare = sol_corner.cons_eq_negishi_welfare_change
-                if aggregation_method == 'pop_weighted':
-                    corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
-                
-                sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
-                                                             sol_fin=sol_corner,
-                                                             Nt=23,
-                                                      t_inf=500,
-                                        **custom_dyn_sol_options
-                                        )
-        
-                dyn_sol_corner.compute_non_solver_quantities(p)
-                
-                if aggregation_method == 'negishi':
-                    corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
-                if aggregation_method == 'pop_weighted':
-                    corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
-                
-                print(corner_welfare,solution_welfare)
-                if corner_welfare > solution_welfare:
-                    print('lower corner was better for ',c)
-                    corner_corrected_deltas[i] = lb_delta
-                
-        p.delta[...,1] = corner_corrected_deltas
+        p.delta[...,1:] = corner_corrected_deltas
         
         sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                         context = 'counterfactual',
@@ -277,7 +301,7 @@ for baseline_dic in baseline_dics:
         p_opti = p.copy()
         sol_opti = dyn_sol_c.copy()
         
-        write = True
+        write = False
         if write:
             if not os.path.exists('coop_eq_recaps/dyn_deltas.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',
@@ -310,6 +334,11 @@ for baseline_dic in baseline_dics:
                                      'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('coop_eq_recaps/dyn_cons_eq_welfares.csv')
+        
+        save_directly = True
+        if save_directly:
+            direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
+            p_opti.write_params(f'coop_eq_direct_saves/dyn_{direct_save_path}_{aggregation_method}/')
 
 #%%
 

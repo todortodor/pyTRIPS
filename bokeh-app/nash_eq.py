@@ -37,7 +37,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '10.4'},
     # {'baseline':'1300','variation': '10.5'},
     # {'baseline':'1300','variation': '12.0'},
-    {'baseline':'1300','variation': '13.0'},
+    # {'baseline':'1300','variation': '13.0'},
     # {'baseline':'1300','variation': '99.0'},
     # {'baseline':'1300','variation': '99.1'},
     # {'baseline':'1300','variation': '99.2'},
@@ -54,6 +54,9 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.13'},
     # {'baseline':'1300','variation': '99.14'},
     # {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'4003','variation': 'baseline'},
+    # {'baseline':'4004','variation': 'baseline'},
+    {'baseline':'4013','variation': 'baseline'},
     ]
 
 
@@ -80,13 +83,13 @@ if __name__ == '__main__':
         
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=lb_delta,ub_delta=ub_delta,method='fixed_point',
                          plot_convergence = False,solver_options=None,tol=1e-4,
-                            delta_init=np.ones(p_baseline.N)*ub_delta,
-                            max_workers=12,parallel=True
+                            # delta_init=np.ones(p_baseline.N)*ub_delta,
+                            max_workers=12,parallel=False
                             # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                             #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )
         
-        write = True
+        write = False
         if write:
             # baseline_dic = {'baseline':'1300','variation': '11.02'}
             if not os.path.exists('nash_eq_recaps/deltas.csv'):
@@ -121,3 +124,7 @@ if __name__ == '__main__':
             cons_eq_welfares.to_csv('nash_eq_recaps/cons_eq_welfares.csv')
             
         # p_nash.write_params(f'opt_tariff_delta/{baseline_dic["baseline"]}/scenario_14/')
+        save_directly = True
+        if save_directly:
+            direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
+            p_nash.write_params(f'coop_eq_direct_saves/{direct_save_path}_nash/')

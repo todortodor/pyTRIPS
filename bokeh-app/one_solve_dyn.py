@@ -12,17 +12,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import warnings
-warnings.simplefilter('ignore', np.RankWarning)
+# warnings.simplefilter('ignore', np.RankWarning)
 
 df = pd.DataFrame()
 p_init = parameters()
 
-p_init.load_run('calibration_results_matched_economy/1300/')
-p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
-       1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
-p_init.tau[3,:,1] = np.array([1.06800713, 1.04042852, 1.06321504, 1.        , 1.12498533,
-       1.24024972, 1.0039714 , 1.0376111 , 1.21034042, 1.19033989,
-       1.20639476, 1.05774921])
+# p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
+p_init.load_run('calibration_results_matched_economy/4003/')
+# p_init.delta[1,2] = 12
+# p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
+#        1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
+# p_init.tau[3,:,1] = np.array([1.06800713, 1.04042852, 1.06321504, 1.        , 1.12498533,
+#        1.24024972, 1.0039714 , 1.0376111 , 1.21034042, 1.19033989,
+#        1.20639476, 1.05774921])
 
 sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                                 context = 'counterfactual',
@@ -47,7 +49,12 @@ sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
 sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
-p = p_init.copy()
+# p = p_init.copy()
+# p.delta[1,2] = 0.01
+p = parameters()
+p.load_run('coop_eq_direct_saves/dyn_4003_baseline_nash/')
+
+p.delta[0,2] = 12
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
@@ -55,7 +62,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='l_R',
-                        plot_convergence=False,
+                        plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=False,
@@ -84,7 +91,7 @@ sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                         plot_live = False,
                         safe_convergence=1e-8,
                         disp_summary=True,
-                        damping = 20,
+                        damping = 60,
                         max_count = 50000,
                         accel_memory =5, 
                         accel_type1=True, 

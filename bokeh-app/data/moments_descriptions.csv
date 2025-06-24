@@ -2,9 +2,13 @@ moment;description
 GPDIFF;Price growth difference (non-patenting minus patenting)
 GROWTH;Aggregate growth rate
 KM;Value of patents relative toRD expenditure in US
+KMPHARMA;Value of patents relative toRD expenditure in US in pharma sector
+KMCHEM;Value of patents relative toRD expenditure in US in chemicals sector
 KM_GDP;Kogan Moment relative to GDP of the US
 OUT;World output
 RD;RD expenditures relative to GDP
+RDPHARMA;RD expenditures in pharma relative to total RD expenditure
+RDCHEM;RD expenditures in chemicals relative to total RD expenditure
 RD_US;US RD expenditures to GDP ratio 
 RD_RUS;RD expenditures to GDP ratio, ratio to the US
 RP;Price indices relative to US
@@ -19,8 +23,10 @@ SRGDP;World real GDP shares
 SRGDP_US;US share of world real GDP 
 SRGDP_RUS;Share of world real GDP, ratio with the US
 STFLOW;Ratio of bilateral trade flow to world output
+SDFLOW;Ratio of domestic trade in patenting sectors
 JUPCOST;Patenting cost in Japan for the US
 UUPCOST;Expenditure in domestic patent application in US
+UUPCOSTS;Expenditure in domestic patent application in US by sector
 PCOSTINTER;Patenting cost of all international patent flows
 PCOST;Patenting cost of all international patent flows plus domestic patent flows of the US and EU
 PCOSTINTERNOAGG;Patenting cost of all international patent flows excluding ones to EU and ROW
@@ -36,6 +42,8 @@ SINNOVPATUS; Share of innovations patented in US
 NUR; Ratio of diffusion : Nu_tilde/Nu
 RDGDPUS; RD spending as share of gdp in the US
 TO; Turnover in US imports
+TOCHEM; Turnover in US imports in the chemicals sector
+TOPHARMA; Turnover in US imports in the pharmaceuticals sector
 TE; Trade elasticity in patenting sector
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total

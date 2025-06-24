@@ -35,13 +35,13 @@ if new_run:
 
 # p.kappa = 0.4
 # m.TO_target = np.float64(0.055589733)
-m.list_of_moments.remove('SRGDP')
-m.list_of_moments.remove('RP')
-m.list_of_moments.append('SGDP')
-m.list_of_moments.append('RGDPPC')
-# p.calib_parameters.remove('zeta')
-# p.zeta[:] = 0
-m.drop_CHN_IND_BRA_ROW_from_RD = True
+# m.list_of_moments.remove('SRGDP')
+# m.list_of_moments.remove('RP')
+# m.list_of_moments.append('SGDP')
+# m.list_of_moments.append('RGDPPC')
+# # p.calib_parameters.remove('zeta')
+# # p.zeta[:] = 0
+# m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.sigma = np.array([2.7, 2.9])
 # m.weights_dict['RD'] = 10
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']

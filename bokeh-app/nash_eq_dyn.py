@@ -27,7 +27,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '10.4'},
     # {'baseline':'1300','variation': '10.5'},
     # {'baseline':'1300','variation': '12.0'},
-    {'baseline':'1300','variation': '13.0'},
+    # {'baseline':'1300','variation': '13.0'},
     # {'baseline':'1300','variation': '99.0'},
     # {'baseline':'1300','variation': '99.1'},
     # {'baseline':'1300','variation': '99.2'},
@@ -44,6 +44,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.13'},
     # {'baseline':'1300','variation': '99.14'},
     # {'baseline':'1300','variation': '99.15'},
+    {'baseline':'4003','variation': 'baseline'}
     ]
 
 
@@ -67,22 +68,23 @@ if __name__ == '__main__':
         
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)
-        temp_init = np.ones(p_baseline.N)*ub_delta
+        # temp_init = np.ones(p_baseline.N)*ub_delta
+        temp_init = np.ones((p_baseline.N,p_baseline.S-1))*ub_delta
         # temp_init[0] = 0.01
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=lb_delta,ub_delta=ub_delta,method=method,
                          plot_convergence = True,solver_options=None,tol=5e-5,plot_history=False,
                          dynamics=True,
                            # delta_init=np.array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]),
                            # delta_init=np.ones(p_baseline.N)*ub_delta,
-                           delta_init=temp_init,
+                           # delta_init=temp_init,
                           # delta_init=np.array([11.99413456, 12,12,11.99415313, 12,12,11.99414931,11.98829433,
                           #                      6.01085081,12,6.01085661]),
-                          max_workers=12,parallel=True
+                          max_workers=12,parallel=False
                          # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                          #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )
         
-        write = True
+        write = False
         if write:
             if not os.path.exists('nash_eq_recaps/dyn_deltas.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',
@@ -114,5 +116,10 @@ if __name__ == '__main__':
                                      'aggregation_method'] + p_baseline.countries + ['Equal','Negishi']).T
             cons_eq_welfares = pd.concat([cons_eq_welfares, run],ignore_index=True)
             cons_eq_welfares.to_csv('nash_eq_recaps/dyn_cons_eq_welfares.csv')
+        
+        save_directly = True
+        if save_directly:
+            direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
+            p_nash.write_params(f'coop_eq_direct_saves/dyn_{direct_save_path}_nash/')
 
 #%%

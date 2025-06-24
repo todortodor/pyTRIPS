@@ -32,7 +32,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '10.4'},
     # {'baseline':'1300','variation': '10.5'},
     # {'baseline':'1300','variation': '12.0'},
-    {'baseline':'1300','variation': '13.0'},
+    # {'baseline':'1300','variation': '13.0'},
     # {'baseline':'1300','variation': '99.0'},
     # {'baseline':'1300','variation': '99.1'},
     # {'baseline':'1300','variation': '99.2'},
@@ -49,6 +49,9 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.13'},
     # {'baseline':'1300','variation': '99.14'},
     # {'baseline':'1300','variation': '99.15'},
+    # {'baseline':'4003','variation': 'baseline'},
+    # {'baseline':'4004','variation': 'baseline'},
+    {'baseline':'4013','variation': 'baseline'},
     ]
 
 
@@ -86,12 +89,13 @@ if __name__ == '__main__':
                              solver_options=None,tol=1e-12,
                              static_eq_deltas = None,custom_weights=None,
                              # custom_x0 = np.ones(p_baseline.N)*12,
+                             parallel=False,
                              custom_x0 = None,
                              max_workers=12)
             
             print(time.perf_counter() - start)
             
-            write = True
+            write = False
             if write:
                 if not os.path.exists('coop_eq_recaps/deltas.csv'):
                     deltas_df = pd.DataFrame(columns = ['baseline',
@@ -125,3 +129,8 @@ if __name__ == '__main__':
                 cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
 
             # p_opti.write_params(f'opt_tariff_delta/{baseline_dic["baseline"]}/scenario_15/')
+            
+            save_directly = True
+            if save_directly:
+                direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
+                p_opti.write_params(f'coop_eq_direct_saves/{direct_save_path}_{aggregation_method}/')

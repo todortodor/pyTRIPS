@@ -72,6 +72,7 @@ class parameters:
         self.dyn_guess = None
         
         self.correct_eur_patent_cost = True
+        self.fix_fe_across_sectors = False
         
         self.g_0 = 0.01
         self.kappa = 0.5
@@ -83,7 +84,7 @@ class parameters:
         self.data_path = None
         self.unit = 1e6
     
-    def load_data(self,data_path=None,keep_already_calib_params=False,dir_path=None):
+    def load_data(self,data_path=None,keep_already_calib_params=False,dir_path=None,nbr_sectors=2):
         if dir_path is None:
             dir_path = './'
         if data_path is None:
@@ -97,7 +98,10 @@ class parameters:
         N = len(self.data.index)
         self.N = N
         
-        self.sectors = ['Non patent', 'Patent']
+        if nbr_sectors == 2:
+            self.sectors = ['Non patent', 'Patent']
+        if nbr_sectors == 4:
+            self.sectors = ['Non patent', 'Patent', 'Pharmaceuticals', 'Chemicals']
         S = len(self.sectors)
         self.S = S
         
@@ -214,6 +218,12 @@ class parameters:
                      'r_hjort':None,
                      'eta':[np.s_[::S]]}
         
+        # if nbr_sectors == 4:
+        #     sl_non_calib['delta'] = [np.s_[::S],np.s_[2::S],np.s_[3::S]]
+        
+        if self.fix_fe_across_sectors:
+            sl_non_calib['fe'] = [np.s_[0],np.s_[2:]]
+        
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
@@ -261,7 +271,8 @@ class parameters:
             setattr(self,'S',2)
             setattr(self,'data_path','data/data_leg/')
         
-        self.load_data(self.data_path,dir_path=dir_path)
+        
+        self.load_data(self.data_path,dir_path=dir_path,nbr_sectors=int(df.loc['nbr_of_sectors','run']))
         
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
@@ -298,10 +309,10 @@ class parameters:
             
     def guess_from_params(self,for_solver_with_entry_costs=False):
         Z_guess = self.data.expenditure.values/self.unit
-        w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)*100
+        w_guess = self.data.gdp.values*self.unit_labor/(self.data.labor.values*self.unit)/1e6
         l_R_guess = np.repeat(self.labor[:,None]/200, self.S-1, axis=1).ravel()
-        profit_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*0.01
-        phi_guess = np.ones((self.N,self.N,self.S)).ravel()#*0.01
+        profit_guess = np.ones((self.N,self.N,(self.S-1))).ravel()*0.001
+        phi_guess = np.ones((self.N,self.N,self.S)).ravel()*0.3
         vec = np.concatenate((w_guess,Z_guess,l_R_guess,profit_guess,phi_guess), axis=0)
         if for_solver_with_entry_costs:
             price_indices_guess = np.ones(self.N)
@@ -1308,7 +1319,7 @@ class var_with_entry_costs:
         
     def compute_share_of_innovations_patented(self,p):
         # this will only be valid for domestic quantities, we only use it as such
-        self.share_innov_patented = self.psi_m_star[...,1]**(-p.k)
+        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k)
         
     def compute_semi_elast_patenting_delta(self,p):
         # This is not updated with entry costs
@@ -1438,10 +1449,12 @@ class var:
         init.guess_wage(vec[0:p.N])
         init.guess_Z(vec[p.N:p.N+p.N])
         init.guess_labor_research(
-            np.insert(vec[p.N+p.N:p.N+p.N+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1))
+            np.insert(vec[p.N+p.N:p.N+p.N+p.N*(p.S-1)].reshape((p.N, p.S-1)), 0, np.zeros(p.N), axis=1)
+            )
         init.guess_profit(
-            np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2))
-        init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2:].reshape((p.N, p.N, p.S)))
+            np.insert(vec[p.N+p.N+p.N*(p.S-1):p.N+p.N+p.N*(p.S-1)+p.N**2*(p.S-1)].reshape((p.N, p.N, p.S-1)), 0, np.zeros(p.N), axis=2)
+            )
+        init.guess_phi(vec[p.N+p.N+p.N*(p.S-1)+p.N**2*(p.S-1):].reshape((p.N, p.N, p.S)))
         if compute:
             init.compute_solver_quantities(p)
         return init
@@ -1803,7 +1816,7 @@ class var:
                               ).squeeze()
         
     def compute_share_of_innovations_patented(self,p):
-        self.share_innov_patented = self.psi_m_star[...,1]**(-p.k)
+        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k)
     
     def compute_welfare(self,p):
         # exp = 1-1/p.gamma
@@ -2777,7 +2790,8 @@ class dynamic_var:
     
     def compute_sectoral_prices(self, p):
         power = p.sigma-1
-        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, 1:] \
+
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, 1:, None] \
             * ((self.PSI_M[...,1:,:]+self.PSI_M_0[...,1:,None])*self.phi[...,1:,:]**power[None, None, 1:,None]).sum(axis=1)
 
         B = (self.PSI_CD[...,1:,:]+self.PSI_CD_0[...,1:,None])*(
@@ -3502,21 +3516,25 @@ def eps(x):
 class moments:
     def __init__(self,list_of_moments = None):
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM', 'KM_GDP', 'RD','RD_US','RD_RUS', 'RP',
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM','KMCHEM','KMPHARMA', 'KM_GDP', 'RD','RDPHARMA','RDCHEM','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
                                'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
-                               'UUPCOST','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
-                               'JUPCOSTRD','SINNOVPATUS','TO','TE','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
+                               'UUPCOST','UUPCOSTS','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
+                               'JUPCOSTRD','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TE','TECHEM','TEPHARMA','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
-                               'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC']
+                               'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
         else:
             self.list_of_moments = list_of_moments
         self.weights_dict = {'GPDIFF': 1,
                              'GROWTH': 5,
                              'KM': 1,
+                             'KMCHEM': 1,
+                             'KMPHARMA': 1,
                              'KM_GDP': 5,
                              'OUT': 5,
                              'RD': 10,
+                             'RDPHARMA': 10,
+                             'RDCHEM': 10,
                              'RD_US': 3,
                              'RD_RUS': 3,
                              'RP': 1,
@@ -3536,6 +3554,7 @@ class moments:
                              'SDOMTFLOW': 1,
                              'JUPCOST': 1,
                              'UUPCOST': 1,
+                             'UUPCOSTS': 1,
                              'PCOSTNOAGG': 1,
                              'PCOSTINTERNOAGG': 1,
                              'PCOST': 1,
@@ -3544,11 +3563,16 @@ class moments:
                              'TP': 1,
                              'inter_TP': 3,
                              'Z': 1,
+                             'SDFLOW':1,
                              'STFLOWSDOM': 1,
                              'SINNOVPATEU': 1,
                              'SINNOVPATUS': 1,
                              'NUR': 1,
                              'TO': 5,
+                             'TOCHEM': 5,
+                             'TOPHARMA': 5,
+                             'TECHEM': 5,
+                             'TEPHARMA': 5,
                              'TE': 5,
                              'DOMPATRATUSEU': 2,
                              'DOMPATUS': 1,
@@ -3589,14 +3613,14 @@ class moments:
     
     @staticmethod
     def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM','KM_GDP', 'OUT', 'RD','RD_US','RD_RUS', 'RP', 
+        return ['GPDIFF', 'GROWTH', 'KM','KMCHEM','KMPHARMA','KM_GDP', 'OUT', 'RD','RDPHARMA','RDCHEM','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
-                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','PCOST','PCOSTINTER',
+                'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','UUPCOSTS','PCOST','PCOSTINTER',
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
-                'SINNOVPATEU','SINNOVPATUS','TO','TE','NUR','DOMPATRATUSEU',
+                'SINNOVPATEU','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TE','TECHEM','TEPHARMA','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
-                'SHAREEXPMON','SGDP','RGDPPC']
+                'SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -3617,15 +3641,21 @@ class moments:
         
         data_path = dir_path+data_path
         
-        self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
-        self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
         self.ccs_moments = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index()
-        self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
-        self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
-        self.pat_fees = pd.read_csv(data_path+'final_pat_fees.csv',index_col=[0])
         
         N = len(self.ccs_moments.index.get_level_values(0).drop_duplicates())
         S = len(self.ccs_moments.index.get_level_values(2).drop_duplicates())
+        
+        self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
+        if S == 2:
+            self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
+        if S == 4:
+            self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0,2]).sort_index()
+        self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
+        self.sector_moments = pd.read_csv(data_path+'sector_moments.csv',index_col=[0])
+        
+        self.description = pd.read_csv(data_path+'moments_descriptions.csv',sep=';',index_col=[0])
+        self.pat_fees = pd.read_csv(data_path+'final_pat_fees.csv',index_col=[0])
         
         if N==7:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
@@ -3639,22 +3669,39 @@ class moments:
             self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
                               'KOR', 'RUS', 'MEX', 'ROW']
         self.N = N
-        self.sectors = ['Non patent', 'Patent']
+        if S == 2:
+            self.sectors = ['Non patent', 'Patent']
+        if S == 4:
+            self.sectors = ['Non patent', 'Patent', 'Pharmaceuticals', 'Chemicals']
         
         self.unit = 1e6
         self.STFLOW_target = (self.ccs_moments.trade/
                               self.ccs_moments.trade.sum()).values.reshape(N,N,S)
         self.STFLOWSDOM_target = self.ccs_moments.trade.values.reshape(N,N,S)\
             /np.einsum('nns->ns',self.ccs_moments.trade.values.reshape(N,N,S))[:,None,:]
+        if S > 2:
+            self.SDFLOW_target = np.einsum('nns->ns',self.STFLOW_target[:,:,2:]
+                                           )/np.einsum('nn->n',
+                                                       self.STFLOW_target[:,:,1])[:,None]
+        if S == 2:
+            self.SDFLOW_target = np.array([np.nan])
         self.SPFLOW_target = self.cc_moments.query("destination_code != origin_code")['patent flows'].values
-        self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
-        self.SPFLOW_US_target = self.cc_moments.loc[1]['patent flows'].values/self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
-        self.SPFLOW_RUS_target = (pd.DataFrame(self.cc_moments['patent flows']/self.cc_moments.loc[1]['patent flows']))
-        self.SPFLOW_RUS_target = self.SPFLOW_RUS_target.query("destination_code != origin_code")['patent flows'].values.reshape((N,N-1))
+        if S == 2:
+            self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1))/self.SPFLOW_target.sum()
+        if S > 2:
+            self.SPFLOW_target = self.SPFLOW_target.reshape((N,N-1,S-1))/self.SPFLOW_target.sum()
+        if S == 2:
+            self.SPFLOW_US_target = self.cc_moments.loc[1]['patent flows'].values/self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
+            self.SPFLOW_RUS_target = (pd.DataFrame(self.cc_moments['patent flows']/self.cc_moments.loc[1]['patent flows']))
+            self.SPFLOW_RUS_target = self.SPFLOW_RUS_target.query("destination_code != origin_code")['patent flows'].values.reshape((N,N-1))
         self.SPFLOWDOM_target = self.cc_moments['patent flows'].values
-        self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N))/self.SPFLOWDOM_target.sum()
-        self.SPFLOWDOM_US_target = self.SPFLOWDOM_target[0,0]
-        self.SPFLOWDOM_RUS_target = self.SPFLOWDOM_target/self.SPFLOWDOM_US_target
+        if S == 2:
+            self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N))/self.SPFLOWDOM_target.sum()
+        if S > 2:
+            self.SPFLOWDOM_target = self.SPFLOWDOM_target.reshape((N,N,S-1))/self.SPFLOWDOM_target.sum()
+        if S == 2:
+            self.SPFLOWDOM_US_target = self.SPFLOWDOM_target[0,0]
+            self.SPFLOWDOM_RUS_target = self.SPFLOWDOM_target/self.SPFLOWDOM_US_target
         self.OUT_target = self.c_moments.expenditure.sum()/self.unit
         self.SRGDP_target = (self.c_moments.gdp/self.c_moments.price_level).values \
                             /(self.c_moments.gdp/self.c_moments.price_level).sum()
@@ -3667,19 +3714,38 @@ class moments:
         self.SRGDP_RUS_target = self.SRGDP_target/self.SRGDP_US_target
         self.RP_target = self.c_moments.price_level.values
         self.RD_target = self.c_moments.rnd_gdp.values
+        if S > 2:
+            self.country_sector_moments = pd.read_csv(data_path+'country_sector_moments.csv',index_col=[0])
+            self.RDPHARMA_target = self.country_sector_moments['RD ratio pharma'].loc[[1,2,3,7,8]].values
+            self.RDCHEM_target = self.country_sector_moments['RD ratio chemicals'].loc[[1,2,3,7,8]].values
         self.RD_US_target = self.RD_target[0]
         self.RD_RUS_target = self.RD_target/self.RD_US_target
         self.KM_target = self.moments.loc['KM'].value
+        if S > 2:
+            self.KMPHARMA_target = self.moments.loc['KMPHARMA'].value
+            self.KMCHEM_target = self.moments.loc['KMCHEM'].value
         self.KM_GDP_target = self.KM_target*self.RD_US_target
         self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
-        self.GPDIFF_target = self.moments.loc['GPDIFF'].value 
+        self.GPDIFF_target = self.moments.loc['GPDIFF'].value
+        if S > 2:
+            self.GPDIFF_target = 0.0242481 - np.array([0.0154756,0.0401137,0.0340597])
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.PROBINNOVENT_target = self.moments.loc['PROBINNOVENT'].value 
         self.SHAREEXPMON_target = self.moments.loc['SHAREEXPMON'].value 
         self.TE_target = self.moments.loc['TE'].value 
-        self.TO_target = self.moments.loc['TO'].value 
+        self.TO_target = self.moments.loc['TO'].value
+        if S > 2:
+            self.TOCHEM_target = self.moments.loc['TOCHEM'].value 
+            self.TOPHARMA_target = self.moments.loc['TOPHARMA'].value 
+            self.TECHEM_target = self.moments.loc['TECHEM'].value 
+            self.TEPHARMA_target = self.moments.loc['TEPHARMA'].value 
+        else:
+            self.TOCHEM_target = np.array([np.nan])
+            self.TOPHARMA_target = np.array([np.nan])
+            self.TECHEM_target = np.array([np.nan])
+            self.TEPHARMA_target = np.array([np.nan])
         try:
             self.PCOSTINTER_target = (self.pat_fees['fee'].values*self.cc_moments.query(
                 "destination_code != origin_code"
@@ -3703,6 +3769,8 @@ class moments:
         self.Z_target = self.c_moments.expenditure.values/self.unit
         self.JUPCOST_target = self.moments.loc['JUPCOST'].value
         self.UUPCOST_target = self.moments.loc['UUPCOST'].value
+        if S>2:
+            self.UUPCOSTS_target = self.sector_moments.UUPCOSTS.values[1:]
         self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
         self.inter_TP_target = np.array(0.00117416)
@@ -3713,7 +3781,7 @@ class moments:
         self.DOMPATINUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=0)['patent flows'].sum()
         self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
-        self.SINNOVPATUS_target = self.moments.loc['SINNOVPATUS'].value
+        self.SINNOVPATUS_target = np.array([self.moments.loc['SINNOVPATUS'].value])[0]#*(S-1))
         self.SDOMTFLOW_target = self.ccs_moments.query("destination_code == origin_code").trade.values/self.ccs_moments.trade.sum()
         self.SDOMTFLOW_target = self.SDOMTFLOW_target.reshape(N,S)#/self.unit
         self.sales_mark_up_US = self.moments.loc['sales_mark_up_US'].value
@@ -3724,17 +3792,22 @@ class moments:
             /self.cc_moments['patent flows'].sum()
         self.SPATDEST_target = self.cc_moments['patent flows'].groupby('destination_code').sum().values\
             /self.cc_moments['patent flows'].sum()
-        self.TWSPFLOW_target = self.SPFLOW_target*self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].values.reshape((N,N-1))\
-            /self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].sum()
-        self.TWSPFLOWDOM_target = self.SPFLOWDOM_target*self.ccs_moments.loc[:,:,1]['trade'].values.reshape((N,N))\
-            /self.ccs_moments.loc[:,:,1]['trade'].sum()
+        if S == 2:
+            self.TWSPFLOW_target = self.SPFLOW_target*self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].values.reshape((N,N-1))\
+                /self.ccs_moments.loc[:,:,1].query("destination_code != origin_code")['trade'].sum()
+            self.TWSPFLOWDOM_target = self.SPFLOWDOM_target*self.ccs_moments.loc[:,:,1]['trade'].values.reshape((N,N))\
+                /self.ccs_moments.loc[:,:,1]['trade'].sum()
             
         self.idx = {'GPDIFF':pd.Index(['scalar']), 
                     'GROWTH':pd.Index(['scalar']), 
                     'KM':pd.Index(['scalar']), 
+                    'KMCHEM':pd.Index(['scalar']), 
+                    'KMPHARMA':pd.Index(['scalar']), 
                     'KM_GDP':pd.Index(['scalar']), 
                     'OUT':pd.Index(['scalar']), 
                     'RD':pd.Index(self.countries, name='country'), 
+                    'RDCHEM':pd.Index(['USA', 'EUR', 'JAP', 'CAN', 'KOR'], name='country'), 
+                    'RDPHARMA':pd.Index(['USA', 'EUR', 'JAP', 'CAN', 'KOR'], name='country'), 
                     'RD_US':pd.Index(['scalar']), 
                     'RD_RUS':pd.Index(self.countries, name='country'), 
                     'RP':pd.Index(self.countries, name='country'), 
@@ -3755,6 +3828,7 @@ class moments:
                     'SRDUS':pd.Index(['scalar']), 
                     'JUPCOST':pd.Index(['scalar']), 
                     'UUPCOST':pd.Index(['scalar']), 
+                    'UUPCOSTS':pd.Index(self.sectors[1:],name='sector'), 
                     'PCOSTNOAGG':pd.Index(['scalar']), 
                     'PCOSTINTERNOAGG':pd.Index(['scalar']), 
                     'PCOST':pd.Index(['scalar']), 
@@ -3767,6 +3841,8 @@ class moments:
                     'SRGDP_RUS':pd.Index(self.countries, name='country'), 
                     'STFLOW':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                                                       , names=['destination','origin','sector']),
+                    'SDFLOW':pd.MultiIndex.from_product([self.countries,self.sectors[2:]]
+                                                      , names=['country','sector']),
                     'STFLOWSDOM':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                                                       , names=['destination','origin','sector']),
                     'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
@@ -3784,6 +3860,10 @@ class moments:
                     'SINNOVPATUS':pd.Index(['scalar']),
                     'TO':pd.Index(['scalar']),
                     'TE':pd.Index(['scalar']),
+                    'TOPHARMA':pd.Index(['scalar']),
+                    'TEPHARMA':pd.Index(['scalar']),
+                    'TOCHEM':pd.Index(['scalar']),
+                    'TECHEM':pd.Index(['scalar']),
                     'DOMPATUS':pd.Index(['scalar']),
                     'DOMPATEU':pd.Index(['scalar']),
                     'DOMPATINUS':pd.Index(['scalar']),
@@ -3794,6 +3874,22 @@ class moments:
                     'SHAREEXPMON':pd.Index(['scalar'])
                     }
         
+        if S>2:
+            # self.idx['SPFLOW'] = pd.MultiIndex.from_product([self.countries,self.countries,self.sectors[1:]]
+            #                                   , names=['destination','origin','sector'])
+            self.idx['SPFLOW'] = pd.MultiIndex.from_tuples(
+                                                                                [
+                                                                                    (dest, orig, sector)
+                                                                                    for dest in self.countries
+                                                                                    for orig in self.countries
+                                                                                    for sector in self.sectors[1:]
+                                                                                    if dest != orig
+                                                                                ],
+                                                                                names=['destination', 'origin', 'sector']
+                                                                            )
+            self.idx['GPDIFF'] = pd.Index(self.sectors[1:], name='sector')
+            self.idx['DOMPATINUS'] = pd.Index(self.sectors[1:], name='sector')
+        
         self.shapes = {'SPFLOW':(len(self.countries),len(self.countries)-1),
                        'SPFLOWDOM':(len(self.countries),len(self.countries)),
                        'SPFLOW_RUS':(len(self.countries),len(self.countries)-1),
@@ -3803,6 +3899,10 @@ class moments:
                        'TWSPFLOW':(len(self.countries),len(self.countries)-1),
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
                        }
+        
+        if S>2:
+            self.shapes['SPFLOW'] = (len(self.countries),len(self.countries)-1,len(self.sectors)-1)
+            self.shapes['SDFLOW'] = (len(self.countries),len(self.sectors)-2)
     
     def load_run(self,path,dir_path=None):
         if dir_path is None:
@@ -3941,21 +4041,35 @@ class moments:
     def compute_STFLOW(self,var,p):
         self.STFLOW = (var.X/(1+p.tariff))/(var.X/(1+p.tariff)).sum()
         
+    def compute_SDFLOW(self,var,p):
+        if p.S > 2:
+            self.SDFLOW = np.einsum('nns->ns',var.X[:,:,2:]/(1+p.tariff[:,:,2:])
+                                    )/np.einsum('nn->n',var.X[:,:,1]/(1+p.tariff[:,:,1]))[:,None]
+        if p.S == 2:
+            self.SDFLOW = np.nan
+        
     def compute_STFLOWSDOM(self,var,p):
         self.STFLOWSDOM = (var.X/(1+p.tariff))/np.einsum('nns->ns',var.X/(1+p.tariff))[:,None,:]
         
     def compute_SPFLOW(self,var,p):
-        pflow = var.pflow
-        self.SPFLOWDOM = pflow/(1+p.tariff[...,1])/(pflow/(1+p.tariff[...,1])).sum()
-        inter_pflow = remove_diag(var.pflow)
-        self.SPFLOW = inter_pflow/inter_pflow.sum()
-        
-        self.SPFLOW_US = pflow[0,:]/inter_pflow.sum()
-        RUS = pflow/pflow[0,:]
-        self.SPFLOW_RUS = remove_diag(RUS)
-        
-        self.SPFLOWDOM_US = self.SPFLOWDOM[0,0]
-        self.SPFLOWDOM_RUS = self.SPFLOWDOM/self.SPFLOWDOM_US
+        if p.S == 2:
+            pflow = var.pflow
+            self.SPFLOWDOM = pflow/(1+p.tariff[...,1])/(pflow/(1+p.tariff[...,1])).sum()
+            inter_pflow = remove_diag(var.pflow)
+            self.SPFLOW = inter_pflow/inter_pflow.sum()
+            
+            self.SPFLOW_US = pflow[0,:]/inter_pflow.sum()
+            RUS = pflow/pflow[0,:]
+            self.SPFLOW_RUS = remove_diag(RUS)
+            
+            self.SPFLOWDOM_US = self.SPFLOWDOM[0,0]
+            self.SPFLOWDOM_RUS = self.SPFLOWDOM/self.SPFLOWDOM_US
+            
+        if p.S > 2:
+            pflow = var.pflow
+            self.SPFLOWDOM = pflow/(1+p.tariff[...,1:])/(pflow/(1+p.tariff[...,1:])).sum()
+            inter_pflow = remove_diag(var.pflow)
+            self.SPFLOW = inter_pflow/inter_pflow.sum()
         
     def compute_TWSPFLOW(self,var,p):
         pflow = var.pflow/(1+p.tariff[...,1])
@@ -3992,6 +4106,20 @@ class moments:
                             1/var.gdp)
         self.RD_US = self.RD[0]
         self.RD_RUS = self.RD/self.RD_US
+        
+        if p.S > 2:
+            self.RDPHARMA = np.einsum('is,i->is',
+                                numerator,
+                                1/var.gdp)[:,2][[1,2,3,7,8]] / \
+                            np.einsum('is,i->i',
+                                numerator,
+                                1/var.gdp)[[1,2,3,7,8]]
+            self.RDCHEM = np.einsum('is,i->is',
+                                numerator,
+                                1/var.gdp)[:,3][[1,2,3,7,8]] / \
+                            np.einsum('is,i->i',
+                                numerator,
+                                1/var.gdp)[[1,2,3,7,8]]
     
     def compute_KM(self,var,p):
         # bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
@@ -4014,12 +4142,28 @@ class moments:
         self.KM = KM[0,0]
         self.KM_GDP = self.KM*self.RD_US
         
+        if p.S>2:
+            KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->nis',
+                p.eta[:,1:],
+                var.l_R[:,1:]**(1-p.kappa),
+                var.psi_m_star[:,:,1:]**(1-p.k),
+                var.profit[:,:,1:],
+                bracket,
+                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                )
+            self.KM = KM[0,0,0]
+            self.KMPHARMA = KM[0,0,1]
+            self.KMCHEM = KM[0,0,2]
+        
     def compute_SRDUS(self,var,p):
         self.SRDUS = (var.X_M[:,0,1]/(1+p.tariff[:,0,1])).sum()/(var.X[:,0,1]/(1+p.tariff[:,0,1])).sum()
     
     def compute_GPDIFF(self,var,p):
         price_index_growth_rate = var.g_s/(1-p.sigma)+p.alpha*var.g
-        self.GPDIFF = price_index_growth_rate[0] - price_index_growth_rate[1]
+        if p.S == 2:
+            self.GPDIFF = price_index_growth_rate[0] - price_index_growth_rate[1]
+        if p.S > 2:
+            self.GPDIFF = price_index_growth_rate[0] - price_index_growth_rate[1:]
         
     def compute_GROWTH(self,var,p):
         self.GROWTH = var.g    
@@ -4032,7 +4176,11 @@ class moments:
         self.JUPCOSTRD = self.JUPCOST/(self.RD[0]*var.gdp[0])
         
     def compute_UUPCOST(self,var,p):
-        self.UUPCOST = var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]
+        if p.S == 2:
+            self.UUPCOST = var.pflow[0,0]*p.r_hjort[0]*p.fe[1]*var.w[0]
+        if p.S > 2:
+            self.UUPCOST = var.pflow[0,0].sum()*p.r_hjort[0]*p.fe[1]*var.w[0]
+            self.UUPCOSTS = var.pflow[0,0,:]*p.r_hjort[0]*p.fe[1]*var.w[0]
         
     def compute_PCOSTINTER(self,var,p):
         off_diag_pflow = var.pflow.copy()
@@ -4068,7 +4216,8 @@ class moments:
         self.SINNOVPATEU = var.share_innov_patented[1,1]
         
     def compute_SINNOVPATUS(self,var,p):
-        self.SINNOVPATUS = var.share_innov_patented[0,0]
+        # self.SINNOVPATUS = var.share_innov_patented[0,0,:]
+        self.SINNOVPATUS = var.share_innov_patented[0,0,0]
         
     def compute_TO(self,var,p):
         delt = 5
@@ -4141,6 +4290,12 @@ class moments:
         
         self.turnover = num/denom
         self.TO = self.turnover[0,1]
+        if p.S>2:
+            self.TOPHARMA = self.turnover[0,2]
+            self.TOCHEM = self.turnover[0,3]
+        else:
+            self.TOPHARMA = np.nan
+            self.TOCHEM = np.nan
         
     def compute_TE(self,var,p):
         out_diag_trade_flows_shares = remove_diag(var.X_M/var.X)
@@ -4148,6 +4303,18 @@ class moments:
                                                     p.theta-(p.sigma-1),
                                                     out_diag_trade_flows_shares)
                     ).sum(axis=1).sum(axis=0) )[1]/(p.N*(p.N-1))
+        if p.S>2:
+            self.TEPHARMA = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
+                                                        p.theta-(p.sigma-1),
+                                                        out_diag_trade_flows_shares)
+                        ).sum(axis=1).sum(axis=0) )[2]/(p.N*(p.N-1))
+            self.TECHEM = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
+                                                        p.theta-(p.sigma-1),
+                                                        out_diag_trade_flows_shares)
+                        ).sum(axis=1).sum(axis=0) )[3]/(p.N*(p.N-1))
+        else:
+            self.TEPHARMA = np.nan
+            self.TECHEM = np.nan
         
     def compute_NUR(self,var,p):
         self.NUR = p.nu[1]
@@ -4257,49 +4424,68 @@ class moments:
         
         
     def compute_moments(self,var,p):
-        self.compute_STFLOW(var, p)
-        self.compute_STFLOWSDOM(var, p)
-        self.compute_SPFLOW(var, p)
-        self.compute_OUT(var, p)
-        self.compute_SRGDP(var, p)
-        self.compute_SGDP(var, p)
-        self.compute_RGDPPC(var, p)
-        self.compute_RP(var, p)
-        self.compute_RD(var, p)
-        self.compute_KM(var, p)
-        self.compute_SRDUS(var, p)
-        self.compute_GPDIFF(var, p)
-        self.compute_GROWTH(var, p)
-        self.compute_JUPCOST(var, p)
-        self.compute_UUPCOST(var, p)
-        self.compute_PCOSTINTER(var,p)
-        self.compute_PCOST(var,p)
-        self.compute_PCOSTINTERNOAGG(var,p)
-        self.compute_PCOSTNOAGG(var,p)
-        self.compute_TP(var,p)
-        self.compute_Z(var,p)
-        self.compute_SDOMTFLOW(var,p)
-        self.compute_SINNOVPATEU(var,p)
-        self.compute_SINNOVPATUS(var,p)
-        self.compute_NUR(var,p)
-        self.compute_TO(var,p)
-        self.compute_TE(var,p)
-        self.compute_DOMPATRATUSEU(var,p)
-        self.compute_SPATDEST(var,p)
-        self.compute_SPATORIG(var,p)
-        self.compute_TWSPFLOW(var, p)
-        self.compute_DOMPATEU(var, p)
-        self.compute_DOMPATUS(var, p)
-        self.compute_DOMPATINEU(var, p)
-        self.compute_DOMPATINUS(var, p)
-        self.compute_ERDUS(var, p)
-        # self.compute_PROBINNOVENT(var, p)
-        # self.compute_SHAREEXPMON(var, p)
+        if p.S == 2:
+            self.compute_STFLOW(var, p)
+            self.compute_STFLOWSDOM(var, p)
+            self.compute_SPFLOW(var, p)
+            self.compute_OUT(var, p)
+            self.compute_SRGDP(var, p)
+            self.compute_SGDP(var, p)
+            self.compute_RGDPPC(var, p)
+            self.compute_RP(var, p)
+            self.compute_RD(var, p)
+            self.compute_KM(var, p)
+            self.compute_SRDUS(var, p)
+            self.compute_GPDIFF(var, p)
+            self.compute_GROWTH(var, p)
+            self.compute_JUPCOST(var, p)
+            self.compute_UUPCOST(var, p)
+            self.compute_PCOSTINTER(var,p)
+            self.compute_PCOST(var,p)
+            self.compute_PCOSTINTERNOAGG(var,p)
+            self.compute_PCOSTNOAGG(var,p)
+            self.compute_TP(var,p)
+            self.compute_Z(var,p)
+            self.compute_SDOMTFLOW(var,p)
+            self.compute_SINNOVPATEU(var,p)
+            self.compute_SINNOVPATUS(var,p)
+            self.compute_NUR(var,p)
+            self.compute_TO(var,p)
+            self.compute_TE(var,p)
+            self.compute_DOMPATRATUSEU(var,p)
+            self.compute_SPATDEST(var,p)
+            self.compute_SPATORIG(var,p)
+            self.compute_TWSPFLOW(var, p)
+            self.compute_DOMPATEU(var, p)
+            self.compute_DOMPATUS(var, p)
+            self.compute_DOMPATINEU(var, p)
+            self.compute_DOMPATINUS(var, p)
+            self.compute_ERDUS(var, p)
+            self.compute_SDFLOW(var, p)
+            # self.compute_PROBINNOVENT(var, p)
+            # self.compute_SHAREEXPMON(var, p)
+        if p.S > 2:
+            self.compute_SPFLOW(var, p)
+            self.compute_OUT(var, p)
+            self.compute_SRGDP(var, p)
+            self.compute_RP(var, p)
+            self.compute_RD(var, p)
+            self.compute_KM(var, p)
+            self.compute_GPDIFF(var, p)
+            self.compute_GROWTH(var, p)
+            self.compute_UUPCOST(var, p)
+            self.compute_Z(var,p)
+            self.compute_SINNOVPATUS(var,p)
+            self.compute_TO(var,p)
+            self.compute_TE(var,p)
+            self.compute_DOMPATINUS(var, p)
+            self.compute_SDFLOW(var, p)
         
     def compute_moments_deviations(self):
 
         for mom in self.get_list_of_moments():
             if hasattr(self, mom):
+                # print(mom)
                 distort_for_large_pflows_fac = 6
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
                 if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW':
@@ -4504,7 +4690,7 @@ class history:
         ax.set_ylabel('Loss for each moment')
         ax2.set_xlabel('Time (min)')
         plt.yscale('log')
-        ax.legend()
+        ax.legend(loc='center left')
         ax2.legend(loc=(0.85,1.05))
         plt.show() 
     
