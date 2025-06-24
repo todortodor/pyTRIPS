@@ -55,17 +55,18 @@ if new_run:
 # m.list_of_moments.append('TECHEM')
 # m.list_of_moments.append('TOPHARMA')
 # m.list_of_moments.append('TOCHEM')
-m.list_of_moments.append('RDPHARMA')
-m.list_of_moments.append('RDCHEM')
-m.list_of_moments.append('KMPHARMA')
-m.list_of_moments.append('KMCHEM')
+# m.list_of_moments.append('RDPHARMA')
+# m.list_of_moments.append('RDCHEM')
+# m.list_of_moments.append('KMPHARMA')
+# m.list_of_moments.append('KMCHEM')
 
-m.weights_dict['KMPHARMA'] = 3
-m.weights_dict['KMCHEM'] = 3
+# m.weights_dict['KMPHARMA'] = 3
+# m.weights_dict['KMCHEM'] = 3
 
 
-p.delta = p.delta*2
-p.eta = p.eta*2
+p.delta[p.delta<0.02] = 0.02
+# p.eta[p.eta<1e-4] = 1e-4
+# p.eta[:,2:] = p.eta[:,2:]*2
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -152,7 +153,7 @@ m.compute_moments_deviations()
 
 baseline_number = '5001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 6.0
+run_number = 8.0
 
 new_baseline = False
 if new_baseline:
