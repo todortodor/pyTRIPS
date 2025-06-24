@@ -16,7 +16,7 @@ import numpy as np
 
 new_run = True
 baseline_number = '5001'
-variation_to_load = '11.0'
+variation_to_load = '4.0'
 # n = 4
 if new_run:
     p = parameters()
@@ -63,6 +63,9 @@ m.list_of_moments.append('KMCHEM')
 m.weights_dict['KMPHARMA'] = 3
 m.weights_dict['KMCHEM'] = 3
 
+
+p.delta = p.delta*2
+p.eta = p.eta*2
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -149,7 +152,7 @@ m.compute_moments_deviations()
 
 baseline_number = '5001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 14.0
+run_number = 6.0
 
 new_baseline = False
 if new_baseline:

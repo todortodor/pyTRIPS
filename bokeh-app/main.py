@@ -230,6 +230,7 @@ comments_dic['5001'] = {
     "3.0":"3.0:added TEPH/CH+TOPH/CH+RDPH/CH",
     "4.0":"4.0:added TEPH/CH+TOPH/CH+KMPH/CH",
     "5.0":"5.0:added TEPH/CH+TOPH/CH+KMPH/CH+RDPH/CH",
+    "6.0":"6.0:doubled eta and delta",
     "11.0":"11.0:added TOPH/CH",
     "12.0":"12.0:added TOPH/CH+RDPH/CH",
     "13.0":"13.0:added TOPH/CH+KMPH/CH",
