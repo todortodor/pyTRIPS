@@ -225,15 +225,15 @@ comments_dic = {}
 
 comments_dic['5001'] = {
     "baseline":"baseline : GPDIFF,RD,SINNOVPATUS,\nSPFLOW,SDFLOW,UUPCOSTS,DOMPATINUS",
-    "1.0":"1.0 : added TEPHARMA/CHEM",
-    "2.0":"2.0 : added TEPHARMA/CHEM\n+ TOPHARMA/CHEM",
-    "3.0":"3.0 : added TEPHARMA/CHEM\n+ TOPHARMA/CHEM\n+ RDPHARMA/CHEM",
-    "4.0":"4.0 : added TEPHARMA/CHEM\n+ TOPHARMA/CHEM\n+ KMPHARMA/CHEM",
-    "5.0":"5.0 : added TEPHARMA/CHEM\n+ TOPHARMA/CHEM\n+ KMPHARMA/CHEM\n+ RDPHARMA/CHEM",
-    "11.0":"11.0 : added TOPHARMA/CHEM",
-    "12.0":"12.0 : added TOPHARMA/CHEM\n+ RDPHARMA/CHEM",
-    "13.0":"13.0 : added TOPHARMA/CHEM\n+ KMPHARMA/CHEM",
-    "14.0":"14.0 : added TOPHARMA/CHEM\n+ KMPHARMA/CHEM\n+ RDPHARMA/CHEM",
+    "1.0":"1.0:added TEPH/CH",
+    "2.0":"2.0:added TEPH/CH+TOPH/CH",
+    "3.0":"3.0:added TEPH/CH+TOPH/CH+RDPH/CH",
+    "4.0":"4.0:added TEPH/CH+TOPH/CH+KMPH/CH",
+    "5.0":"5.0:added TEPH/CH+TOPH/CH+KMPH/CH+RDPH/CH",
+    "11.0":"11.0:added TOPH/CH",
+    "12.0":"12.0:added TOPH/CH+RDPH/CH",
+    "13.0":"13.0:added TOPH/CH+KMPH/CH",
+    "14.0":"14.0:added TOPH/CH+KMPH/CH+RDPH/CH",
     }
 
 baselines_dic_param = {}
