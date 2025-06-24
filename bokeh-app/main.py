@@ -224,7 +224,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMA','KMCHEM', 'OUT',
 comments_dic = {}
 
 comments_dic['5001'] = {
-    "baseline":"baseline : GPDIFF,RD,SINNOVPATUS,\nSPFLOW,SDFLOW,UUPCOSTS,DOMPATINUS",
+    "baseline":"bsline:GPDIFF,SDFLOW,UUPCOSTS,DOMPATINUS",
     "1.0":"1.0:added TEPH/CH",
     "2.0":"2.0:added TEPH/CH+TOPH/CH",
     "3.0":"3.0:added TEPH/CH+TOPH/CH+RDPH/CH",
