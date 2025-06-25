@@ -238,7 +238,7 @@ comments_dic['5001'] = {
     "13.0":"13.0:added TOPH/CH+KMPH/CH",
     "14.0":"14.0:added TOPH/CH+KMPH/CH+RDPH/CH",
     "20.0":"20.0:removed GPDIFF",
-    "21.0":"21.0:fixed fe/o acros sects,UUPCOST not sect-spec",
+    "21.0":"21.0:fixed fe acros sects,UUPCOST not sect-spec",
     }
 
 comments_dic['5002'] = {
