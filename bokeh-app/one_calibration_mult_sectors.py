@@ -16,22 +16,22 @@ import numpy as np
 
 new_run = True
 baseline_number = '5001'
-variation_to_load = '5.0'
+variation_to_load = '3.0'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.fix_fe_across_sectors = True
+    p.fix_fe_across_sectors = True
     # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # m.load_data('data/data_12_countries_4_sectors_2015/')
     # m.load_data('data/data_12_countries_4_sectors_1992/')
     # m.list_of_moments = ['GPDIFF',
@@ -59,14 +59,18 @@ if new_run:
 # m.list_of_moments.append('RDCHEM')
 # m.list_of_moments.append('KMPHARMA')
 # m.list_of_moments.append('KMCHEM')
+m.list_of_moments.append('UUPCOST')
+m.list_of_moments.remove('UUPCOSTS')
+# m.list_of_moments.remove('GPDIFF')
 
-m.weights_dict['KMPHARMA'] = 2
-m.weights_dict['KMCHEM'] = 2
+# m.weights_dict['RDPHARMA'] = 7.5
+# m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
 
 
-p.delta[p.delta<0.02] = 0.02
+# p.delta[p.delta<0.02] = 0.02
 # p.eta[p.eta<1e-4] = 1e-4
 # p.eta[:,2:] = p.eta[:,2:]*2
+# p.fix_fe_across_sectors = True
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -126,8 +130,9 @@ sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         accel_max_weight_norm=1e6,
                         damping_post_acceleration=5
                         )
-p_sol.guess = sol.x 
+
 sol_c.scale_P(p_sol)
+p_sol.guess = sol.x 
 
 sol_c.compute_non_solver_quantities(p_sol) 
 p_sol.tau = sol_c.tau
@@ -153,7 +158,7 @@ m.compute_moments_deviations()
 
 baseline_number = '5001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 8.0
+run_number = 21.0
 
 new_baseline = False
 if new_baseline:

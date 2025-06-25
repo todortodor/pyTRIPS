@@ -36,7 +36,7 @@ class parameters:
                         'a':co,
                         'fe':co,
                         'fo':co,
-                        'delta':0.02,
+                        'delta':co,
                         'g_0':0,
                         'alpha':co,
                          'beta':co,

@@ -237,13 +237,46 @@ comments_dic['5001'] = {
     "12.0":"12.0:added TOPH/CH+RDPH/CH",
     "13.0":"13.0:added TOPH/CH+KMPH/CH",
     "14.0":"14.0:added TOPH/CH+KMPH/CH+RDPH/CH",
+    "20.0":"20.0:removed GPDIFF",
+    "21.0":"21.0:fixed fe/o acros sects,UUPCOST not sect-spec",
+    }
+
+comments_dic['5002'] = {
+    "baseline":"bsline:same as 5001 variation 2.0",
+    "1.0":"1.0:added RDPH/CH, weight 0",
+    "2.0":"2.0:added RDPH/CH, weight 0.05",
+    "3.0":"3.0:added RDPH/CH, weight 0.1",
+    "4.0":"4.0:added RDPH/CH, weight 0.2",
+    "5.0":"5.0:added RDPH/CH, weight 0.4",
+    "6.0":"6.0:added RDPH/CH, weight 0.6",
+    "7.0":"7.0:added RDPH/CH, weight 0.8",
+    "8.0":"8.0:added RDPH/CH, weight 1",
+    # "9.0":"9.0:added RDPH/CH, weight 1.5",
+    # "10.0":"10.0:added RDPH/CH, weight 2",
+    "11.0":"11.0:added RDPH/CH, weight 2.5",
+    "12.0":"12.0:added RDPH/CH, weight 3",
+    "13.0":"13.0:added RDPH/CH, weight 3.5",
+    "14.0":"14.0:added RDPH/CH, weight 4",
+    "15.0":"15.0:added RDPH/CH, weight 4.5",
+    "16.0":"16.0:added RDPH/CH, weight 5",
+    "17.0":"17.0:added RDPH/CH, weight 5.5",
+    "18.0":"18.0:added RDPH/CH, weight 7.5",
+    "19.0":"19.0:added RDPH/CH, weight 10",
+    # "19.0":"19.0:added RDPH/CH, weight 6.5",
+    # "20.0":"20.0:added RDPH/CH, weight 7",
+    # "21.0":"21.0:added RDPH/CH, weight 7.5",
+    # "22.0":"22.0:added RDPH/CH, weight 8",
+    # "23.0":"23.0:added RDPH/CH, weight 8.5",
+    # "24.0":"24.0:added RDPH/CH, weight 9",
+    # "25.0":"25.0:added RDPH/CH, weight 9.5",
+    # "26.0":"26.0:added RDPH/CH, weight 10",
     }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-baseline_list = ['5001']    
+baseline_list = ['5001','5002']    
 baseline_mom = baseline_list[0]
 
 def section(s):
