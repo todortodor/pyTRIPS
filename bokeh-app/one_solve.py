@@ -9,11 +9,12 @@ Created on Sun Nov 13 21:57:06 2022
 
 from classes import moments, parameters, var, var_with_entry_costs
 from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
+# import numpy as np
 
 p = parameters()
-p.load_run('calibration_results_matched_economy/1300/')
+p.load_run('calibration_results_matched_economy/baseline_5001_variations/2.01/')
 # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p.delta[1,1] = 0.01
+# p.delta[1,1] = 0.01
 sol, sol_init = fixed_point_solver(p,x0=p.guess,
                                 # context = 'counterfactual',
                                 context = 'calibration',
@@ -39,6 +40,10 @@ sol, sol_init = fixed_point_solver(p,x0=p.guess,
                         )
 sol_init.scale_P(p)
 sol_init.compute_non_solver_quantities(p)
+
+# SDFLOW = np.einsum('nns->ns',var.X[:,:,2:]/(1+p.tariff[:,:,2:])
+#                         )/np.einsum('nn->n',var.X[:,:,1]/(1+p.tariff[:,:,1]))[:,None]
+# print(SDFLOW)
 #%%
 # p_bu = p.copy()
 # p.load_data(data_path='data/data_12_countries_4_sectors_2015/',

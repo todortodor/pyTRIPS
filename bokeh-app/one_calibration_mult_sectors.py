@@ -16,22 +16,23 @@ import numpy as np
 
 new_run = True
 baseline_number = '5001'
-variation_to_load = '3.0'
+variation_to_load = '2.01'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.fix_fe_across_sectors = True
+    # p.fix_fe_across_sectors = True
     # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    m.aggregate_moments = True
     # m.load_data('data/data_12_countries_4_sectors_2015/')
     # m.load_data('data/data_12_countries_4_sectors_1992/')
     # m.list_of_moments = ['GPDIFF',
@@ -43,28 +44,34 @@ if new_run:
     #  'SRGDP',
     #  'SINNOVPATUS',
     #  'TO',
-    #  'TOCHEM',
-    #  'TOPHARMA',
     #  'SPFLOW',
     #  'SDFLOW',
     #  'UUPCOSTS',
     #  'DOMPATINUS',
-    #  'TE']
+    #  'TE',
+    #  # 'RDPHARMA',
+    #  # 'RDCHEM'
+    #  ]
 
+# p.delta[:] = 0.05
+p.ub_dict['nu'] = 50
+# p.nu[1] = 0.1
 # m.list_of_moments.append('TEPHARMA')
 # m.list_of_moments.append('TECHEM')
 # m.list_of_moments.append('TOPHARMA')
 # m.list_of_moments.append('TOCHEM')
-# m.list_of_moments.append('RDPHARMA')
-# m.list_of_moments.append('RDCHEM')
+m.list_of_moments.append('RDPHARMA')
+m.list_of_moments.append('RDCHEM')
 # m.list_of_moments.append('KMPHARMA')
 # m.list_of_moments.append('KMCHEM')
-m.list_of_moments.append('UUPCOST')
-m.list_of_moments.remove('UUPCOSTS')
+# m.list_of_moments.append('UUPCOST')
+# m.list_of_moments.remove('UUPCOSTS')
 # m.list_of_moments.remove('GPDIFF')
 
-# m.weights_dict['RDPHARMA'] = 7.5
-# m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
+m.weights_dict['RDPHARMA'] = 3.0
+m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
+# m.weights_dict['KMPHARMA'] = 1.0
+# m.weights_dict['KMCHEM'] = m.weights_dict['KMPHARMA']
 
 
 # p.delta[p.delta<0.02] = 0.02
@@ -158,7 +165,7 @@ m.compute_moments_deviations()
 
 baseline_number = '5001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 21.0
+run_number = 2.02
 
 new_baseline = False
 if new_baseline:

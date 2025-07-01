@@ -3591,6 +3591,7 @@ class moments:
         self.drop_CHN_IND_BRA_ROW_from_RD = True
         self.add_domestic_US_to_SPFLOW = False
         self.add_domestic_EU_to_SPFLOW = False
+        self.aggregate_moments = False
         
         self.loss = 'log'
         self.dim_weight = 'lin'
@@ -3910,8 +3911,8 @@ class moments:
         try:
             # df = pd.read_csv(path+'data_path.csv',header=None)
             df = pd.read_csv(path+'data_path.csv',index_col=0)
-            setattr(self,'N',df.loc['nbr_of_countries','run'])
-            setattr(self,'S',df.loc['nbr_of_sectors','run'])
+            setattr(self,'N',int(df.loc['nbr_of_countries','run']))
+            setattr(self,'S',int(df.loc['nbr_of_sectors','run']))
             setattr(self,'data_path',df.loc['data_path','run'])
         except:
             setattr(self,'N',7)
@@ -4154,6 +4155,16 @@ class moments:
             self.KM = KM[0,0,0]
             self.KMPHARMA = KM[0,0,1]
             self.KMCHEM = KM[0,0,2]
+            
+            if self.aggregate_moments:
+                self.KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->ni',
+                    p.eta[:,1:],
+                    var.l_R[:,1:]**(1-p.kappa),
+                    var.psi_m_star[:,:,1:]**(1-p.k),
+                    var.profit[:,:,1:],
+                    bracket,
+                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                    )[0,0]
         
     def compute_SRDUS(self,var,p):
         self.SRDUS = (var.X_M[:,0,1]/(1+p.tariff[:,0,1])).sum()/(var.X[:,0,1]/(1+p.tariff[:,0,1])).sum()
@@ -4218,6 +4229,17 @@ class moments:
     def compute_SINNOVPATUS(self,var,p):
         # self.SINNOVPATUS = var.share_innov_patented[0,0,:]
         self.SINNOVPATUS = var.share_innov_patented[0,0,0]
+        if p.S > 2:
+            if self.aggregate_moments:
+                self.SINNOVPATUS = np.einsum('ns,ns,nns->n',
+                    p.eta[:,1:],
+                    var.l_R[:,1:]**(1-p.kappa),
+                    var.share_innov_patented
+                    )[0] / np.einsum('ns,ns->n',
+                        p.eta[:,1:],
+                        var.l_R[:,1:]**(1-p.kappa),
+                        )[0]
+                
         
     def compute_TO(self,var,p):
         delt = 5
@@ -4293,6 +4315,11 @@ class moments:
         if p.S>2:
             self.TOPHARMA = self.turnover[0,2]
             self.TOCHEM = self.turnover[0,3]
+            # if self.aggregate_moments:
+            #     weights = np.exp(-delt*p.zeta[None,:]
+            #                      ) * var.sectoral_price_indices**p.sigma[None,:] * var.sectoral_cons * gamma(
+            #                          (p.theta+1-p.sigma)/p.theta)[None,:]
+            #     self.TO = (weights*num).sum(axis=-1)/(weights*denom).sum(axis=-1)
         else:
             self.TOPHARMA = np.nan
             self.TOCHEM = np.nan
@@ -4312,6 +4339,17 @@ class moments:
                                                         p.theta-(p.sigma-1),
                                                         out_diag_trade_flows_shares)
                         ).sum(axis=1).sum(axis=0) )[3]/(p.N*(p.N-1))
+            # if self.aggregate_moments:
+            #     weights = remove_diag(var.X / var.X.sum(axis=-1)[:,:,None])
+            #     self.TE = ( 
+            #         (weights *
+            #         (p.theta[None,None,:] - np.einsum('s,nis->nis',
+            #                                                 p.theta-(p.sigma-1),
+            #                                                 out_diag_trade_flows_shares)
+            #                 )
+            #         ).sum(axis=1).sum(axis=0) 
+            #         )[1]/(p.N*(p.N-1))
+                
         else:
             self.TEPHARMA = np.nan
             self.TECHEM = np.nan
