@@ -15,8 +15,8 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '5001'
-variation_to_load = '2.01'
+baseline_number = '5003'
+variation_to_load = '6.0'
 # n = 4
 if new_run:
     p = parameters()
@@ -53,22 +53,25 @@ if new_run:
     #  # 'RDCHEM'
     #  ]
 
+# p.beta[2] = p.beta[2]*2
+# p.beta = p.beta/p.beta.sum()
+
 # p.delta[:] = 0.05
-p.ub_dict['nu'] = 50
+# p.ub_dict['nu'] = 50
 # p.nu[1] = 0.1
 # m.list_of_moments.append('TEPHARMA')
 # m.list_of_moments.append('TECHEM')
 # m.list_of_moments.append('TOPHARMA')
 # m.list_of_moments.append('TOCHEM')
-m.list_of_moments.append('RDPHARMA')
-m.list_of_moments.append('RDCHEM')
+# m.list_of_moments.append('RDPHARMA')
+# m.list_of_moments.append('RDCHEM')
 # m.list_of_moments.append('KMPHARMA')
 # m.list_of_moments.append('KMCHEM')
-# m.list_of_moments.append('UUPCOST')
-# m.list_of_moments.remove('UUPCOSTS')
-# m.list_of_moments.remove('GPDIFF')
+# # m.list_of_moments.append('UUPCOST')
+# # m.list_of_moments.remove('UUPCOSTS')
+# # m.list_of_moments.remove('GPDIFF')
 
-m.weights_dict['RDPHARMA'] = 3.0
+m.weights_dict['RDPHARMA'] = 5.0
 m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
 # m.weights_dict['KMPHARMA'] = 1.0
 # m.weights_dict['KMCHEM'] = m.weights_dict['KMPHARMA']
@@ -78,6 +81,7 @@ m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
 # p.eta[p.eta<1e-4] = 1e-4
 # p.eta[:,2:] = p.eta[:,2:]*2
 # p.fix_fe_across_sectors = True
+# p.calib_parameters.append('sigma')
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -163,9 +167,9 @@ m.compute_moments_deviations()
 # # p_sol.write_params(local_path+run_str+'/')
 # # m.write_moments(local_path+run_str+'/')
 
-baseline_number = '5001'
+baseline_number = '5003'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 2.02
+run_number = 6.01
 
 new_baseline = False
 if new_baseline:

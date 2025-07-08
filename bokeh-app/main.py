@@ -30,6 +30,7 @@ def load(path, data_path=None,
     m = moments()
     # m.load_data(data_path)
     m.load_run(path,dir_path=dir_path)
+    m.aggregate_moments = True
     m.compute_moments(sol, p)
     m.compute_moments_deviations()
     return p,m,sol
@@ -49,7 +50,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
                 else:
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])
-            if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 3:
+            if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 3 or len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 4 or len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 2:
                 df = pd.DataFrame(index = p_baseline.sectors[1:], columns = ['baseline'], data = getattr(p_baseline,param)[1:])
                 df.index.name='x'
                 dic_df_param[param] = df
@@ -172,7 +173,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_param[k][run_name] = getattr(p,'delta')[...,2]
         if k == 'delta chemicals':
             dic_df_param[k][run_name] = getattr(p,'delta')[...,3]
-        if k in ['fe','fo','nu','theta','zeta']:
+        if k in ['fe','fo','nu','theta','zeta','k','sigma']:
             dic_df_param[k][run_name] = getattr(p,k)[1:]
         
     for k in dic_df_mom.keys():
@@ -274,11 +275,24 @@ comments_dic['5002'] = {
     # "26.0":"26.0:added RDPH/CH, weight 10",
     }
 
+comments_dic['5003'] = {
+    "baseline":"bsline:same as 5001 variation 2.01",
+    "1.0":"1.0:calibrated k sector-specific",
+    "2.0":"2.0:calibrated k and sigma sector-specific",
+    "3.0":"3.0:calibrated k and sigma in new sectors only",
+    "4.0":"4.0:3.0 adding KMPH/CH",
+    "5.0":"5.0:3.0 adding RDPH/CH",
+    "6.0":"6.0:3.0 adding RDPH/CH and KMPH/CH",
+    "5.01":"5.01:5.0 higher weight RDPH/CH",
+    "6.01":"6.01:6.0 higher weight RDPH/CH",
+    "99.0":"99.0:increasing beta_pharma",
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-baseline_list = ['5001','5002']    
+baseline_list = ['5003','5001','5002']    
 baseline_mom = baseline_list[0]
 
 def section(s):
@@ -291,6 +305,8 @@ for baseline_nbr in baseline_list:
     baseline_variations_path = results_path+'baseline_'+baseline_nbr+'_variations/'
     p_baseline,m_baseline,sol_baseline = load(baseline_path,data_path = data_path,
                                               dir_path=dir_path)
+    if 'sigma' not in p_baseline.calib_parameters:
+        p_baseline.calib_parameters.append('sigma')
     # print(baseline_nbr)
     baselines_dic_param[baseline_nbr], baselines_dic_mom[baseline_nbr], baselines_dic_sol_qty[baseline_nbr]\
         = init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments)

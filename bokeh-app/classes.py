@@ -24,7 +24,7 @@ class parameters:
     def __init__(self):   
         co = 1e-6
         cou = 1e5
-        self.lb_dict = {'sigma':1,
+        self.lb_dict = {'sigma':1.5,
                         'theta':3,
                         'rho':0,
                         'gamma':co,
@@ -77,7 +77,7 @@ class parameters:
         self.g_0 = 0.01
         self.kappa = 0.5
         self.gamma = 0.5 
-        self.k = 1.33350683
+        self.k = np.array([1.3,1.3,1.3,1.3])
         self.a = np.float64(0.0)
         self.rho = 0.02
         self.d = np.float64(1.0)
@@ -177,7 +177,8 @@ class parameters:
                     'kappa':pd.Index(['scalar']),
                     'd':pd.Index(['scalar']),
                     'khi':pd.Index(['scalar']),
-                    'k':pd.Index(['scalar']),
+                    # 'k':pd.Index(['scalar']),
+                    'k':pd.Index(self.sectors, name='sector'),
                     'a':pd.Index(['scalar']),
                     'tau':pd.MultiIndex.from_product([self.countries,self.countries,self.sectors]
                                                       , names=['destination','origin','sector']),
@@ -196,7 +197,7 @@ class parameters:
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
-        sl_non_calib = {'sigma':[np.s_[0]],
+        sl_non_calib = {'sigma':[np.s_[0],np.s_[1]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,
@@ -287,6 +288,10 @@ class parameters:
                     self.tariff = np.zeros_like(self.trade_flows)
                 else:
                     pass
+            if pa_name == 'k' and self.k.shape != (self.S,):
+                setattr(self,pa_name,np.array([df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape)]*self.S))
+                
+                    
         
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -1529,7 +1534,7 @@ class var:
         A = (self.g_s[1:] + p.nu[1:] + p.zeta[1:])
         B = np.einsum('s,nis,ns -> nis',
                       p.nu[1:],
-                      self.psi_m_star[...,1:]**(1-p.k),
+                      self.psi_m_star[...,1:]**(1-p.k[None,None,1:]),
                       1/((self.g_s[None, 1:]+p.delta[...,1:]+p.zeta[None, 1:])
            *(self.g_s[None, 1:]+p.delta[...,1:]+p.nu[None,1:]+p.zeta[None,1:]))
                       )
@@ -1561,7 +1566,7 @@ class var:
                          p.fe[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:]**(1-p.kappa),
-                         self.psi_m_star[...,1:]**-p.k
+                         self.psi_m_star[...,1:]**-p.k[None,None,1:]
                          )
         self.l_Ao = np.zeros((p.N,p.S))
         self.l_Ao[...,1:] = np.einsum('i,s,is,is,is -> is',
@@ -1569,7 +1574,7 @@ class var:
                          p.fo[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:]**(1-p.kappa),
-                         self.psi_o_star[...,1:]**-p.k
+                         self.psi_o_star[...,1:]**-p.k[None,1:]
                          )
         self.l_P = p.labor-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
         
@@ -1627,16 +1632,16 @@ class var:
         return wage
             
     def compute_labor_research(self, p):
-        A1 = ((p.k/(p.k-1))*self.profit[...,1:]/self.G[None,None,1:]).sum(axis=0)
+        A1 = ((p.k[None,None,1:]/(p.k[None,None,1:]-1))*self.profit[...,1:]/self.G[None,None,1:]).sum(axis=0)
         A2 = np.einsum('nis,n,s,n,i,nis->is',
-                       self.psi_m_star[...,1:]**-p.k,
+                       self.psi_m_star[...,1:]**-p.k[None,None,1:],
                        self.w,
                        p.fe[1:],
                        p.r_hjort,
                        1/self.w,
-                       p.k*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k-1))-1
+                       p.k[None,None,1:]*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k[None,None,1:]-1))-1
                        )
-        B = self.psi_o_star[:,1:]**-p.k*p.fo[None,1:]*p.r_hjort[:,None]
+        B = self.psi_o_star[:,1:]**-p.k[None,1:]*p.fo[None,1:]*p.r_hjort[:,None]
         l_R = np.zeros((p.N,p.S))
         l_R[...,1:] = (p.eta[...,1:]*(A1+A2-B))**(1/p.kappa)
         # assert np.isnan(l_R).sum() == 0, 'nan in l_R'
@@ -1810,13 +1815,13 @@ class var:
 
     def compute_pflow(self,p):
         self.pflow = np.einsum('nis,is,is->nis',
-                              self.psi_m_star[...,1:]**(-p.k),
+                              self.psi_m_star[...,1:]**(-p.k[None,None,1:]),
                               p.eta[...,1:],
                               self.l_R[...,1:]**(1-p.kappa)
                               ).squeeze()
         
     def compute_share_of_innovations_patented(self,p):
-        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k)
+        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k[None,None,1:])
     
     def compute_welfare(self,p):
         # exp = 1-1/p.gamma
@@ -1855,17 +1860,17 @@ class var:
         # self.G = self.r+p.zeta-self.g+self.g_s+p.nu
         self.semi_elast_patenting_delta = np.zeros((p.N,p.S))
         A = (
-            (1-p.kappa)*p.k/(p.kappa*(p.k-1))
+            (1-p.kappa)*p.k[None,1:]/(p.kappa*(p.k[None,1:]-1))
               )*np.einsum('is,is,s,i,is,is->is',
                       p.eta[...,1:],
                       1/self.l_R[...,1:]**p.kappa,
                       p.fe[1:]+p.fo[1:],
                       p.r_hjort,
-                      self.psi_o_star[...,1:]**(-p.k),
+                      self.psi_o_star[...,1:]**(-p.k[None,1:]),
                       1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
                       )
                          
-        B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
+        B = p.k[None,1:]*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
         
         self.semi_elast_patenting_delta[...,1:] = p.delta[...,1:]**2*(A+B)
 
@@ -1873,11 +1878,11 @@ class var:
         self.PSI_MPND = np.zeros((p.N,p.N,p.S))
         self.PSI_MPD = np.zeros((p.N,p.N,p.S))
         self.PSI_MNP = np.zeros((p.N,p.N,p.S))
-        prefact = p.k * p.eta[...,1:] * self.l_R[...,1:]**(1-p.kappa)/(p.k-1)
+        prefact = p.k[None,1:] * p.eta[...,1:] * self.l_R[...,1:]**(1-p.kappa)/(p.k[None,1:]-1)
         A = (self.g_s[1:] + p.nu[1:] + p.zeta[1:])
         self.PSI_MPND[...,1:] = np.einsum('is,nis,ns->nis',
                                   prefact,
-                                  self.psi_m_star[...,1:]**(1-p.k),
+                                  self.psi_m_star[...,1:]**(1-p.k[None,None,1:]),
                                   1/(A[None,:]+p.delta[...,1:]))
         self.PSI_MPD[...,1:] = np.einsum('s,nis,ns->nis',
                                  p.nu[1:],
@@ -1885,7 +1890,7 @@ class var:
                                  1/(p.delta[...,1:]+self.g_s[None,1:]+p.zeta[None,1:]))
         numerator_A = np.einsum('is,nis->nis',
                                 prefact,
-                                1-self.psi_m_star[...,1:]**(1-p.k))
+                                1-self.psi_m_star[...,1:]**(1-p.k[None,None,1:]))
         numerator_B= np.einsum('ns,nis->nis',
                                p.delta[...,1:],
                                self.PSI_MPND[...,1:])
@@ -1911,15 +1916,15 @@ class var:
         
         self.V = np.zeros((p.N,p.S))
         
-        A1 = ((p.k/(p.k-1))*self.V_NP[...,1:]).sum(axis=0)
+        A1 = ((p.k[None,None,1:]/(p.k[None,None,1:]-1))*self.V_NP[...,1:]).sum(axis=0)
         A2 = np.einsum('nis,n,s,n,nis->is',
-                       self.psi_m_star[...,1:]**-p.k,
+                       self.psi_m_star[...,1:]**-p.k[None,None,1:],
                        self.w,
                        p.fe[1:],
                        p.r_hjort,
-                       p.k*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k-1))-1
+                       p.k[None,None,1:]*self.psi_m_star[...,1:]/(self.psi_C[...,1:]*(p.k[None,None,1:]-1))-1
                        )
-        B = self.psi_o_star[:,1:]**-p.k*p.fo[None,1:]*p.r_hjort[:,None]*self.w[:,None]
+        B = self.psi_o_star[:,1:]**-p.k[None,1:]*p.fo[None,1:]*p.r_hjort[:,None]*self.w[:,None]
         self.V[...,1:] = A1+A2-B
         
     def compute_quantities_with_prod_patents(self,p,upper_bound_integral = np.inf):
@@ -2853,15 +2858,15 @@ class dynamic_var:
         
     def compute_V(self,p):
         self.V = np.zeros((p.N,p.S,self.Nt))        
-        A1 = ((p.k/(p.k-1))*self.V_NP[...,1:,:]).sum(axis=0)
+        A1 = ((p.k[None,None,1:,None]/(p.k[None,None,1:,None]-1))*self.V_NP[...,1:,:]).sum(axis=0)
         A2 = np.einsum('nist,nt,s,n,nist->ist',
-                       self.psi_m_star[...,1:,:]**-p.k,
+                       self.psi_m_star[...,1:,:]**-p.k[None,None,1:,None],
                        self.w,
                        p.fe[1:],
                        p.r_hjort,
-                       p.k*self.psi_m_star[...,1:,:]/(self.psi_C[...,1:,:]*(p.k-1))-1
+                       p.k[None,None,1:,None]*self.psi_m_star[...,1:,:]/(self.psi_C[...,1:,:]*(p.k[None,None,1:,None]-1))-1
                        )
-        B = self.psi_o_star[:,1:,:]**-p.k*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None]
+        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None]
         self.V[...,1:,:] = A1+A2-B
         
     def compute_labor_research(self, p):
@@ -2872,10 +2877,10 @@ class dynamic_var:
                                      1/self.w)**(1/p.kappa)
     
     def compute_growth(self, p):
-        self.g_s = p.k*np.einsum('is,ist -> st',
+        self.g_s = p.k[:,None]*np.einsum('is,ist -> st',
                                  p.eta,
                                  self.l_R**(1-p.kappa)
-                                 )/(p.k-1) - p.zeta[:,None]
+                                 )/(p.k[:,None]-1) - p.zeta[:,None]
         self.g_s[0,:] = p.g_0
         self.g = (p.beta[:,None]*self.g_s/(p.sigma[:,None]-1)).sum(axis=0) / (p.beta*p.alpha).sum()
         
@@ -2886,7 +2891,7 @@ class dynamic_var:
                          p.fe[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:,:]**(1-p.kappa),
-                         self.psi_m_star[...,1:,:]**-p.k
+                         self.psi_m_star[...,1:,:]**-p.k[None,None,1:,None]
                          )
         self.l_Ao = np.zeros((p.N,p.S,self.Nt))
         self.l_Ao[...,1:,:] = np.einsum('i,s,is,ist,ist -> ist',
@@ -2894,7 +2899,7 @@ class dynamic_var:
                          p.fo[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:,:]**(1-p.kappa),
-                         self.psi_o_star[...,1:,:]**-p.k
+                         self.psi_o_star[...,1:,:]**-p.k[None,1:,None]
                          )
         self.l_P = p.labor[:,None]-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
         
@@ -3022,11 +3027,11 @@ class dynamic_var:
     def compute_PSI_MNP(self,p):
         self.PSI_MNP_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MNP[...,1:,:])/self.t_inf
         PSI_MNP = np.zeros((p.N,p.N,p.S,self.Nt))
-        numA = p.k*np.einsum('is,ist,nist->nist',
+        numA = p.k[None,None,1:,None]*np.einsum('is,ist,nist->nist',
             p.eta[:,1:],
             self.l_R[...,1:,:]**(1-p.kappa),
-            1-self.psi_m_star[...,1:,:]**(1-p.k),
-            )/(p.k-1)
+            1-self.psi_m_star[...,1:,:]**(1-p.k[None,None,1:,None]),
+            )/(p.k[None,None,1:,None]-1)
         numB = np.einsum('ns,nist->nist',
             p.delta[:,1:],
             self.PSI_MPND[...,1:,:]+self.PSI_MPND_0[...,1:,None],
@@ -3045,11 +3050,11 @@ class dynamic_var:
     def compute_PSI_MPND(self,p):
         self.PSI_MPND_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPND[...,1:,:])/self.t_inf
         PSI_MPND = np.zeros((p.N,p.N,p.S,self.Nt))
-        numA = p.k*np.einsum('is,ist,nist->nist',
+        numA = p.k[None,None,1:,None]*np.einsum('is,ist,nist->nist',
             p.eta[:,1:],
             self.l_R[...,1:,:]**(1-p.kappa),
-            self.psi_m_star[...,1:,:]**(1-p.k),
-            )/(p.k-1)
+            self.psi_m_star[...,1:,:]**(1-p.k[None,None,1:,None]),
+            )/(p.k[None,None,1:,None]-1)
         numB = self.PSI_MPND_dot
         PSI_MPND[...,1:,:] = np.einsum('nist,nst->nist',
                            numA-numB,
@@ -3132,7 +3137,7 @@ class dynamic_var:
             
     def compute_pflow(self,p):
         self.pflow = np.einsum('nist,is,ist->nist',
-                              self.psi_m_star[...,1:,:]**(-p.k),
+                              self.psi_m_star[...,1:,:]**(-p.k[None,None,1:,None]),
                               p.eta[...,1:],
                               self.l_R[...,1:,:]**(1-p.kappa)
                               ).squeeze()
@@ -4132,10 +4137,11 @@ class moments:
         #     bracket,
         #     )/(var.l_R[0,1:].sum()+var.l_Ao[0,1:].sum()+(var.w[:,None]*var.l_Ae[0,:,1:]/var.w[0]).sum())
         bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
-        KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->ni',
+        KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+            p.k[1:]/(p.k[1:]-1),
             p.eta[:,1:],
             var.l_R[:,1:]**(1-p.kappa),
-            var.psi_m_star[:,:,1:]**(1-p.k),
+            var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
             var.profit[:,:,1:],
             bracket,
             1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
@@ -4144,10 +4150,11 @@ class moments:
         self.KM_GDP = self.KM*self.RD_US
         
         if p.S>2:
-            KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->nis',
+            KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
+                p.k[1:]/(p.k[1:]-1),
                 p.eta[:,1:],
                 var.l_R[:,1:]**(1-p.kappa),
-                var.psi_m_star[:,:,1:]**(1-p.k),
+                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
                 var.profit[:,:,1:],
                 bracket,
                 1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
@@ -4157,10 +4164,11 @@ class moments:
             self.KMCHEM = KM[0,0,2]
             
             if self.aggregate_moments:
-                self.KM = p.k/(p.k-1)*np.einsum('is,is,nis,nis,ns,i->ni',
+                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+                    p.k[1:]/(p.k[1:]-1),
                     p.eta[:,1:],
                     var.l_R[:,1:]**(1-p.kappa),
-                    var.psi_m_star[:,:,1:]**(1-p.k),
+                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
                     var.profit[:,:,1:],
                     bracket,
                     1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
