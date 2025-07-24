@@ -50,7 +50,7 @@ class parameters:
                         'rho':0.5,
                         'gamma':cou,
                         'zeta':1,
-                        'nu':cou,
+                        'nu':100,
                         'nu_tilde':cou,
                         'kappa':1-co,
                         'k':2,
@@ -77,7 +77,7 @@ class parameters:
         self.g_0 = 0.01
         self.kappa = 0.5
         self.gamma = 0.5 
-        self.k = np.array([1.3,1.3,1.3,1.3])
+        self.k = np.array([1.3,1.3,1.3])
         self.a = np.float64(0.0)
         self.rho = 0.02
         self.d = np.float64(1.0)
@@ -100,6 +100,8 @@ class parameters:
         
         if nbr_sectors == 2:
             self.sectors = ['Non patent', 'Patent']
+        if nbr_sectors == 3:
+            self.sectors = ['Non patent', 'Patent', 'Pharma Chemicals']
         if nbr_sectors == 4:
             self.sectors = ['Non patent', 'Patent', 'Pharmaceuticals', 'Chemicals']
         S = len(self.sectors)
@@ -288,8 +290,8 @@ class parameters:
                     self.tariff = np.zeros_like(self.trade_flows)
                 else:
                     pass
-            if pa_name == 'k' and self.k.shape != (self.S,):
-                setattr(self,pa_name,np.array([df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape)]*self.S))
+            # if pa_name == 'k' and self.k.shape != (self.S,):
+            #     setattr(self,pa_name,np.array([df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape)]*self.S))
                 
                     
         
@@ -3521,11 +3523,13 @@ def eps(x):
 class moments:
     def __init__(self,list_of_moments = None):
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM','KMCHEM','KMPHARMA', 'KM_GDP', 'RD','RDPHARMA','RDCHEM','RD_US','RD_RUS', 'RP',
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM','KMCHEM','KMPHARMA','KMPHARMACHEM', 'KM_GDP', 
+                                    'RD','RDPHARMA','RDCHEM','RDPHARMACHEM','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
                                'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
                                'UUPCOST','UUPCOSTS','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
-                               'JUPCOSTRD','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TE','TECHEM','TEPHARMA','DOMPATRATUSEU','DOMPATUS','DOMPATEU',
+                               'JUPCOSTRD','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TOPHARMACHEM','TE','TECHEM','TEPHARMA','TEPHARMACHEM',
+                               'DOMPATRATUSEU','DOMPATUS','DOMPATEU',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
                                'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
         else:
@@ -3535,11 +3539,13 @@ class moments:
                              'KM': 1,
                              'KMCHEM': 1,
                              'KMPHARMA': 1,
+                             'KMPHARMACHEM': 1,
                              'KM_GDP': 5,
                              'OUT': 5,
                              'RD': 10,
-                             'RDPHARMA': 10,
-                             'RDCHEM': 10,
+                             'RDPHARMACHEM': 3,
+                             'RDPHARMA': 3,
+                             'RDCHEM': 3,
                              'RD_US': 3,
                              'RD_RUS': 3,
                              'RP': 1,
@@ -3576,8 +3582,10 @@ class moments:
                              'TO': 5,
                              'TOCHEM': 5,
                              'TOPHARMA': 5,
+                             'TOPHARMACHEM': 5,
                              'TECHEM': 5,
                              'TEPHARMA': 5,
+                             'TEPHARMACHEM': 5,
                              'TE': 5,
                              'DOMPATRATUSEU': 2,
                              'DOMPATUS': 1,
@@ -3619,12 +3627,14 @@ class moments:
     
     @staticmethod
     def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM','KMCHEM','KMPHARMA','KM_GDP', 'OUT', 'RD','RDPHARMA','RDCHEM','RD_US','RD_RUS', 'RP', 
+        return ['GPDIFF', 'GROWTH', 'KM','KMCHEM','KMPHARMA','KMPHARMACHEM','KM_GDP', 'OUT', 'RD',
+                'RDPHARMA','RDCHEM','RDPHARMACHEM','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','UUPCOSTS','PCOST','PCOSTINTER',
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
-                'SINNOVPATEU','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TE','TECHEM','TEPHARMA','NUR','DOMPATRATUSEU',
+                'SINNOVPATEU','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TOPHARMACHEM',
+                'TE','TECHEM','TEPHARMA','TEPHARMACHEM','NUR','DOMPATRATUSEU',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
                 'SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
     
@@ -3655,7 +3665,7 @@ class moments:
         self.c_moments = pd.read_csv(data_path+'country_moments.csv',index_col=[0])
         if S == 2:
             self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0]).sort_index()
-        if S == 4:
+        if S > 2:
             self.cc_moments = pd.read_csv(data_path+'country_country_moments.csv',index_col=[1,0,2]).sort_index()
         self.moments = pd.read_csv(data_path+'scalar_moments.csv',index_col=[0])
         self.sector_moments = pd.read_csv(data_path+'sector_moments.csv',index_col=[0])
@@ -3677,6 +3687,8 @@ class moments:
         self.N = N
         if S == 2:
             self.sectors = ['Non patent', 'Patent']
+        if S == 3:
+            self.sectors = ['Non patent', 'Patent', 'Pharma Chemicals']
         if S == 4:
             self.sectors = ['Non patent', 'Patent', 'Pharmaceuticals', 'Chemicals']
         
@@ -3720,34 +3732,53 @@ class moments:
         self.SRGDP_RUS_target = self.SRGDP_target/self.SRGDP_US_target
         self.RP_target = self.c_moments.price_level.values
         self.RD_target = self.c_moments.rnd_gdp.values
-        if S > 2:
+        if S == 4:
             self.country_sector_moments = pd.read_csv(data_path+'country_sector_moments.csv',index_col=[0])
             self.RDPHARMA_target = self.country_sector_moments['RD ratio pharma'].loc[[1,2,3,7,8]].values
             self.RDCHEM_target = self.country_sector_moments['RD ratio chemicals'].loc[[1,2,3,7,8]].values
+        if S == 3:
+            self.country_sector_moments = pd.read_csv(data_path+'country_sector_moments.csv',index_col=[0])
+            self.RDPHARMACHEM_target = self.country_sector_moments['RD ratio pharma'].loc[[1,2,3,7,8]].values \
+                                        + self.country_sector_moments['RD ratio chemicals'].loc[[1,2,3,7,8]].values
         self.RD_US_target = self.RD_target[0]
         self.RD_RUS_target = self.RD_target/self.RD_US_target
         self.KM_target = self.moments.loc['KM'].value
-        if S > 2:
+        if S == 4:
             self.KMPHARMA_target = self.moments.loc['KMPHARMA'].value
             self.KMCHEM_target = self.moments.loc['KMCHEM'].value
+        if S == 3:
+            self.KMPHARMACHEM_target = (self.moments.loc['KMPHARMA'].value + self.moments.loc['KMCHEM'].value)/2
         self.KM_GDP_target = self.KM_target*self.RD_US_target
         self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
         self.GPDIFF_target = self.moments.loc['GPDIFF'].value
-        if S > 2:
+        if S == 2:
             self.GPDIFF_target = 0.0242481 - np.array([0.0154756,0.0401137,0.0340597])
+        if S == 3:
+            self.GPDIFF_target = 0.0242481 - np.array([0.0154756,0.0370867])
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
         self.PROBINNOVENT_target = self.moments.loc['PROBINNOVENT'].value 
         self.SHAREEXPMON_target = self.moments.loc['SHAREEXPMON'].value 
         self.TE_target = self.moments.loc['TE'].value 
         self.TO_target = self.moments.loc['TO'].value
-        if S > 2:
+        if S == 4:
+            self.TOPHARMACHEM_target = np.array([np.nan])
+            self.TEPHARMACHEM_target = np.array([np.nan])
             self.TOCHEM_target = self.moments.loc['TOCHEM'].value 
             self.TOPHARMA_target = self.moments.loc['TOPHARMA'].value 
             self.TECHEM_target = self.moments.loc['TECHEM'].value 
             self.TEPHARMA_target = self.moments.loc['TEPHARMA'].value 
+        elif S == 3:
+            self.TOPHARMACHEM_target = (self.moments.loc['TOPHARMA'].value + self.moments.loc['TOCHEM'].value)/2
+            self.TEPHARMACHEM_target = (self.moments.loc['TEPHARMA'].value + self.moments.loc['TECHEM'].value)/2
+            self.TOCHEM_target = np.array([np.nan])
+            self.TOPHARMA_target = np.array([np.nan])
+            self.TECHEM_target = np.array([np.nan])
+            self.TEPHARMA_target = np.array([np.nan])
         else:
+            self.TOPHARMACHEM_target = np.array([np.nan])
+            self.TEPHARMACHEM_target = np.array([np.nan])
             self.TOCHEM_target = np.array([np.nan])
             self.TOPHARMA_target = np.array([np.nan])
             self.TECHEM_target = np.array([np.nan])
@@ -3777,6 +3808,9 @@ class moments:
         self.UUPCOST_target = self.moments.loc['UUPCOST'].value
         if S>2:
             self.UUPCOSTS_target = self.sector_moments.UUPCOSTS.values[1:]
+        if S==3:
+            self.UUPCOSTS_target = self.sector_moments.UUPCOSTS.values[1:S+1]
+            self.UUPCOSTS_target[1] = self.sector_moments.UUPCOSTS.values[2::].sum()
         self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
         self.inter_TP_target = np.array(0.00117416)
@@ -3809,11 +3843,13 @@ class moments:
                     'KM':pd.Index(['scalar']), 
                     'KMCHEM':pd.Index(['scalar']), 
                     'KMPHARMA':pd.Index(['scalar']), 
+                    'KMPHARMACHEM':pd.Index(['scalar']), 
                     'KM_GDP':pd.Index(['scalar']), 
                     'OUT':pd.Index(['scalar']), 
                     'RD':pd.Index(self.countries, name='country'), 
                     'RDCHEM':pd.Index(['USA', 'EUR', 'JAP', 'CAN', 'KOR'], name='country'), 
                     'RDPHARMA':pd.Index(['USA', 'EUR', 'JAP', 'CAN', 'KOR'], name='country'), 
+                    'RDPHARMACHEM':pd.Index(['USA', 'EUR', 'JAP', 'CAN', 'KOR'], name='country'), 
                     'RD_US':pd.Index(['scalar']), 
                     'RD_RUS':pd.Index(self.countries, name='country'), 
                     'RP':pd.Index(self.countries, name='country'), 
@@ -3866,6 +3902,8 @@ class moments:
                     'SINNOVPATUS':pd.Index(['scalar']),
                     'TO':pd.Index(['scalar']),
                     'TE':pd.Index(['scalar']),
+                    'TOPHARMACHEM':pd.Index(['scalar']),
+                    'TEPHARMACHEM':pd.Index(['scalar']),
                     'TOPHARMA':pd.Index(['scalar']),
                     'TEPHARMA':pd.Index(['scalar']),
                     'TOCHEM':pd.Index(['scalar']),
@@ -4113,7 +4151,7 @@ class moments:
         self.RD_US = self.RD[0]
         self.RD_RUS = self.RD/self.RD_US
         
-        if p.S > 2:
+        if p.S == 4:
             self.RDPHARMA = np.einsum('is,i->is',
                                 numerator,
                                 1/var.gdp)[:,2][[1,2,3,7,8]] / \
@@ -4123,6 +4161,13 @@ class moments:
             self.RDCHEM = np.einsum('is,i->is',
                                 numerator,
                                 1/var.gdp)[:,3][[1,2,3,7,8]] / \
+                            np.einsum('is,i->i',
+                                numerator,
+                                1/var.gdp)[[1,2,3,7,8]]
+        if p.S == 3:
+            self.RDPHARMACHEM = np.einsum('is,i->is',
+                                numerator,
+                                1/var.gdp)[:,2][[1,2,3,7,8]] / \
                             np.einsum('is,i->i',
                                 numerator,
                                 1/var.gdp)[[1,2,3,7,8]]
@@ -4149,7 +4194,7 @@ class moments:
         self.KM = KM[0,0]
         self.KM_GDP = self.KM*self.RD_US
         
-        if p.S>2:
+        if p.S==4:
             KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
                 p.k[1:]/(p.k[1:]-1),
                 p.eta[:,1:],
@@ -4162,6 +4207,29 @@ class moments:
             self.KM = KM[0,0,0]
             self.KMPHARMA = KM[0,0,1]
             self.KMCHEM = KM[0,0,2]
+            
+            if self.aggregate_moments:
+                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+                    p.k[1:]/(p.k[1:]-1),
+                    p.eta[:,1:],
+                    var.l_R[:,1:]**(1-p.kappa),
+                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                    var.profit[:,:,1:],
+                    bracket,
+                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                    )[0,0]
+        if p.S==3:
+            KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
+                p.k[1:]/(p.k[1:]-1),
+                p.eta[:,1:],
+                var.l_R[:,1:]**(1-p.kappa),
+                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                var.profit[:,:,1:],
+                bracket,
+                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                )
+            self.KM = KM[0,0,0]
+            self.KMPHARMACHEM = KM[0,0,1]
             
             if self.aggregate_moments:
                 self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
@@ -4320,17 +4388,18 @@ class moments:
         
         self.turnover = num/denom
         self.TO = self.turnover[0,1]
-        if p.S>2:
+        if p.S==4:
             self.TOPHARMA = self.turnover[0,2]
             self.TOCHEM = self.turnover[0,3]
-            # if self.aggregate_moments:
-            #     weights = np.exp(-delt*p.zeta[None,:]
-            #                      ) * var.sectoral_price_indices**p.sigma[None,:] * var.sectoral_cons * gamma(
-            #                          (p.theta+1-p.sigma)/p.theta)[None,:]
-            #     self.TO = (weights*num).sum(axis=-1)/(weights*denom).sum(axis=-1)
+            self.TOPHARMACHEM = np.nan
+        elif p.S==3:
+            self.TOPHARMA = np.nan
+            self.TOCHEM = np.nan
+            self.TOPHARMACHEM = self.turnover[0,2]
         else:
             self.TOPHARMA = np.nan
             self.TOCHEM = np.nan
+            self.TOPHARMACHEM = np.nan
         
     def compute_TE(self,var,p):
         out_diag_trade_flows_shares = remove_diag(var.X_M/var.X)
@@ -4338,7 +4407,7 @@ class moments:
                                                     p.theta-(p.sigma-1),
                                                     out_diag_trade_flows_shares)
                     ).sum(axis=1).sum(axis=0) )[1]/(p.N*(p.N-1))
-        if p.S>2:
+        if p.S==4:
             self.TEPHARMA = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
                                                         p.theta-(p.sigma-1),
                                                         out_diag_trade_flows_shares)
@@ -4347,6 +4416,14 @@ class moments:
                                                         p.theta-(p.sigma-1),
                                                         out_diag_trade_flows_shares)
                         ).sum(axis=1).sum(axis=0) )[3]/(p.N*(p.N-1))
+            self.TEPHARMACHEM = np.nan
+        if p.S==3:
+            self.TEPHARMA = np.nan
+            self.TECHEM = np.nan
+            self.TEPHARMACHEM = ( (p.theta[None,None,:] - np.einsum('s,nis->nis',
+                                                        p.theta-(p.sigma-1),
+                                                        out_diag_trade_flows_shares)
+                        ).sum(axis=1).sum(axis=0) )[2]/(p.N*(p.N-1))
             # if self.aggregate_moments:
             #     weights = remove_diag(var.X / var.X.sum(axis=-1)[:,:,None])
             #     self.TE = ( 
@@ -4359,6 +4436,7 @@ class moments:
             #         )[1]/(p.N*(p.N-1))
                 
         else:
+            self.TEPHARMACHEM = np.nan
             self.TEPHARMA = np.nan
             self.TECHEM = np.nan
         

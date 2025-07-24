@@ -122,11 +122,11 @@ config_dics = [{
     # for y in range(2005,2006)
     # for N in [7,12,13]
     for N in [12]
-    for n in [4]
+    for n in [3]
     ]
 
 write = True
-write_tariff = True
+write_tariff = False
 
 for config_dic in config_dics:
     print(config_dic)
@@ -166,7 +166,7 @@ for config_dic in config_dics:
     crosswalk_countries = pd.read_csv(
         'data/countries_wdi.csv')
     crosswalk_sectors = pd.read_csv(
-        'data/crosswalk_sectors_OECD_4_sectors.csv')
+        f'data/crosswalk_sectors_OECD_{nbr_of_sectors}_sectors.csv')
 
     crosswalk_sectors['Code'] = crosswalk_sectors['Code'].str.replace('D', '')
     crosswalk_sectors = crosswalk_sectors.set_index('Code')
@@ -312,68 +312,65 @@ for config_dic in config_dics:
     consumption_OECD_weights = pd.read_csv(
         '/Users/slepot/Documents/taff/datas/OECD/yearly_CSV/datas2010/consumption_2010.csv')
     
-    trade_weights = (iot_OECD_weights.groupby(['row_country', 'row_sector', 'col_country']
-        ).sum()+consumption_OECD_weights.set_index(['row_country', 'row_sector', 'col_country'])
-                       ).reset_index()
+    # trade_weights = (iot_OECD_weights.groupby(['row_country', 'row_sector', 'col_country']
+    #     ).sum()+consumption_OECD_weights.set_index(['row_country', 'row_sector', 'col_country'])
+    #                    ).reset_index()
     
-    trade_weights_total = trade_weights.copy()
-    trade_weights_total['row_country'] = trade_weights_total['row_country'].map(
-        crosswalk_countries['country_code'])
-    trade_weights_total['col_country'] = trade_weights_total['col_country'].map(
-        crosswalk_countries['country_code'])
-    trade_weights_total['row_sector'] = trade_weights_total['row_sector'].map(
-        crosswalk_sectors['Sectors'])
-    trade_weights_total = trade_weights_total.groupby(['row_country', 'row_sector', 'col_country']
-            ).sum().reset_index()
+    # trade_weights_total = trade_weights.copy()
+    # trade_weights_total['row_country'] = trade_weights_total['row_country'].map(
+    #     crosswalk_countries['country_code'])
+    # trade_weights_total['col_country'] = trade_weights_total['col_country'].map(
+    #     crosswalk_countries['country_code'])
+    # trade_weights_total['row_sector'] = trade_weights_total['row_sector'].map(
+    #     crosswalk_sectors['Sectors'])
+    # trade_weights_total = trade_weights_total.groupby(['row_country', 'row_sector', 'col_country']
+    #         ).sum().reset_index()
     
-    trade_weights_total['row_country'] = np.minimum(
-        trade_weights_total['row_country'], nbr_of_countries)
-    trade_weights_total['col_country'] = np.minimum(
-        trade_weights_total['col_country'], nbr_of_countries)
+    # trade_weights_total['row_country'] = np.minimum(
+    #     trade_weights_total['row_country'], nbr_of_countries)
+    # trade_weights_total['col_country'] = np.minimum(
+    #     trade_weights_total['col_country'], nbr_of_countries)
 
-    trade_weights_total = trade_weights_total.groupby(
-        ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
-    trade_weights_total = trade_weights_total.reorder_levels(
-        ['row_country', 'col_country', 'row_sector'])
+    # trade_weights_total = trade_weights_total.groupby(
+    #     ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
+    # trade_weights_total = trade_weights_total.reorder_levels(
+    #     ['row_country', 'col_country', 'row_sector'])
     
-    trade_weights_total.sort_index(inplace=True)
+    # trade_weights_total.sort_index(inplace=True)
 
-    trade_weights_total.columns = ['trade']
+    # trade_weights_total.columns = ['trade']
 
-    trade_weights_total.rename_axis(
-        ['origin_code', 'destination_code', 'sector'], inplace=True)
+    # trade_weights_total.rename_axis(
+    #     ['origin_code', 'destination_code', 'sector'], inplace=True)
     
-    trade_weights['row_sector'] = trade_weights['row_sector'].map({
-        '01T02':'agri_fishing',
-        '03':'agri_fishing',
-        '05T06':'mining_quarrying',
-        '07T08':'mining_quarrying',
-        '09':'mining_quarrying'
-        },na_action='ignore')
+    # trade_weights['row_sector'] = trade_weights['row_sector'].map({
+    #     'D21':'pharmaceuticals',
+    #     'D20':'chemicals'
+    #     },na_action='ignore')
     
-    trade_weights['row_country'] = trade_weights['row_country'].map(
-        crosswalk_countries['country_code'])
-    trade_weights['col_country'] = trade_weights['col_country'].map(
-        crosswalk_countries['country_code'])
+    # trade_weights['row_country'] = trade_weights['row_country'].map(
+    #     crosswalk_countries['country_code'])
+    # trade_weights['col_country'] = trade_weights['col_country'].map(
+    #     crosswalk_countries['country_code'])
     
-    trade_weights['row_country'] = np.minimum(
-        trade_weights['row_country'], nbr_of_countries)
-    trade_weights['col_country'] = np.minimum(
-        trade_weights['col_country'], nbr_of_countries)
+    # trade_weights['row_country'] = np.minimum(
+    #     trade_weights['row_country'], nbr_of_countries)
+    # trade_weights['col_country'] = np.minimum(
+    #     trade_weights['col_country'], nbr_of_countries)
 
-    trade_weights = trade_weights.groupby(
-        ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
-    trade_weights = trade_weights.reorder_levels(
-        ['row_country', 'col_country', 'row_sector'])
+    # trade_weights = trade_weights.groupby(
+    #     ['row_country', 'row_sector', 'col_country'])['value'].sum().to_frame()
+    # trade_weights = trade_weights.reorder_levels(
+    #     ['row_country', 'col_country', 'row_sector'])
     
-    trade_weights.sort_index(inplace=True)
+    # trade_weights.sort_index(inplace=True)
 
-    trade_weights.columns = ['trade']
+    # trade_weights.columns = ['trade']
 
-    trade_weights.rename_axis(
-        ['origin_code', 'destination_code', 'sector'], inplace=True)
+    # trade_weights.rename_axis(
+    #     ['origin_code', 'destination_code', 'sector'], inplace=True)
     
-    tariff_all = pd.read_csv(tariff_data_path+f'tariffs_TRIPS_final_4_sectors.csv').set_index(
+    tariff_all = pd.read_csv(tariff_data_path+'tariffs_TRIPS_final_4_sectors.csv').set_index(
         ['origin_code', 'destination_code', 'sector', 'year']).sort_index().reset_index(
             )
     
@@ -423,6 +420,23 @@ for config_dic in config_dics:
                                                             'destination_code',
                                                             'sector'])[['tariff']].mean()/100
     
+        
+    if nbr_of_sectors == 3:
+        trade_weights = pd.read_csv(
+            f'data/data_12_countries_4_sectors_{year}/country_country_sector_moments.csv',
+            index_col = [0,1]
+            )
+        
+        trade_weights = trade_weights.loc[trade_weights.sector.isin([2,3])]
+        trade_weights = trade_weights.groupby(['origin_code','destination_code','sector',]).sum() / trade_weights[['trade']].groupby(['origin_code','destination_code']).sum()
+    
+    tariff = tariff.join(trade_weights).fillna(1)
+    
+    tariff['tariff'] = tariff['tariff']*tariff['trade']
+    tariff.rename(index={3:2},level='sector',inplace=True)
+    tariff = tariff[['tariff']].groupby(['origin_code','destination_code','sector',]).sum()
+    
+
     if write or write_tariff:
         tariff.to_csv(path+'tariff.csv')
         tariff.to_csv(
@@ -704,11 +718,11 @@ for config_dic in config_dics:
         'sector').sum()/trade_OECD_reduced.sum()
     alpha_s = va_OECD.groupby('sector')['value'].sum()/trade_OECD_reduced.groupby(
         'sector')['trade'].sum()
-    sector_moments = pd.DataFrame(index=[0, 1, 2, 3])
+    sector_moments = pd.DataFrame(index=list(range(0,nbr_of_sectors)))
     sector_moments['beta'] = beta_s
     sector_moments['alpha'] = alpha_s
     sector_moments['UUPCOSTS'] = 0
-    sector_moments['UUPCOSTS'].loc[1:] = pflows.loc[(1, 1), 'patent flows'].values*final_pat_fees.loc[1, 'fee']\
+    sector_moments['UUPCOSTS'].loc[1:nbr_of_sectors] = pflows.loc[(1, 1), 'patent flows'].values*final_pat_fees.loc[1, 'fee']\
         * gdp_deflator.loc['USA', str(year)]/gdp_deflator.loc['USA', '2005']/1e12
     
     if write:

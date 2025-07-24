@@ -58,6 +58,19 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
             #     df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
             #     df.index.name='x'
             #     dic_df_param[param] = df
+            # if param in ['T','eta','delta']:
+            #     df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,0])
+            #     df.index.name='x'
+            #     dic_df_param[param+' non patent sector'] = df
+            #     df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
+            #     df.index.name='x'
+            #     dic_df_param[param+' patent sector'] = df
+            #     df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,2])
+            #     df.index.name='x'
+            #     dic_df_param[param+' pharma'] = df
+            #     df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,3])
+            #     df.index.name='x'
+            #     dic_df_param[param+' chemicals'] = df
             if param in ['T','eta','delta']:
                 df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,0])
                 df.index.name='x'
@@ -67,10 +80,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                 dic_df_param[param+' patent sector'] = df
                 df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,2])
                 df.index.name='x'
-                dic_df_param[param+' pharma'] = df
-                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,3])
-                df.index.name='x'
-                dic_df_param[param+' chemicals'] = df
+                dic_df_param[param+' pharma chem'] = df
     dic_df_param['scalars'] = df_scalar_params
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
@@ -153,30 +163,36 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_param[k][run_name] = getattr(p,'T')[...,0]
         if k == 'T patent sector':
             dic_df_param[k][run_name] = getattr(p,'T')[...,1]
-        if k == 'T pharma':
+        if k == 'T pharma chem':
             dic_df_param[k][run_name] = getattr(p,'T')[...,2]
-        if k == 'T chemicals':
-            dic_df_param[k][run_name] = getattr(p,'T')[...,3]
+        # if k == 'T pharma':
+        #     dic_df_param[k][run_name] = getattr(p,'T')[...,2]
+        # if k == 'T chemicals':
+        #     dic_df_param[k][run_name] = getattr(p,'T')[...,3]
         if k == 'eta non patent sector':
             dic_df_param[k][run_name] = getattr(p,'eta')[...,0]
         if k == 'eta patent sector':
             dic_df_param[k][run_name] = getattr(p,'eta')[...,1]
-        if k == 'eta pharma':
+        # if k == 'eta pharma':
+        #     dic_df_param[k][run_name] = getattr(p,'eta')[...,2]
+        # if k == 'eta chemicals':
+        #     dic_df_param[k][run_name] = getattr(p,'eta')[...,3]
+        if k == 'eta pharma chem':
             dic_df_param[k][run_name] = getattr(p,'eta')[...,2]
-        if k == 'eta chemicals':
-            dic_df_param[k][run_name] = getattr(p,'eta')[...,3]
         if k == 'delta non patent sector':
             dic_df_param[k][run_name] = getattr(p,'delta')[...,0]
         if k == 'delta patent sector':
             dic_df_param[k][run_name] = getattr(p,'delta')[...,1]
-        if k == 'delta pharma':
+        if k == 'delta pharma chem':
             dic_df_param[k][run_name] = getattr(p,'delta')[...,2]
-        if k == 'delta chemicals':
-            dic_df_param[k][run_name] = getattr(p,'delta')[...,3]
+        # if k == 'delta pharma':
+        #     dic_df_param[k][run_name] = getattr(p,'delta')[...,2]
+        # if k == 'delta chemicals':
+        #     dic_df_param[k][run_name] = getattr(p,'delta')[...,3]
         if k in ['fe','fo','nu','theta','zeta','k','sigma']:
             dic_df_param[k][run_name] = getattr(p,k)[1:]
         
-    for k in dic_df_mom.keys():
+    for k in dic_df_mom.keys():     
         if k == 'scalars':
             for i in dic_df_mom[k].index:
                 if i == 'objective':
@@ -216,10 +232,10 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 #%% moments / parameters for variations
 
-list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMA','KMCHEM', 'OUT',
- 'RD','RDPHARMA','RDCHEM', 'RP', 'SPFLOWDOM', 'SPFLOW','SDFLOW','STFLOW','STFLOWSDOM',
+list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMA','KMPHARMACHEM','KMCHEM', 'OUT',
+ 'RD','RDPHARMACHEM','RDPHARMA','RDCHEM', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRGDP','SGDP','RGDPPC','UUPCOSTS','SINNOVPATUS',
-  'TO','TE','TOPHARMA','TEPHARMA','TOCHEM','TECHEM','DOMPATINUS','DOMPATUS',
+  'TO','TE','TOPHARMA','TOPHARMACHEM','TEPHARMA','TEPHARMACHEM','TOCHEM','TECHEM','DOMPATINUS','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'UUPCOST',
  'objective']
 comments_dic = {}
@@ -281,18 +297,54 @@ comments_dic['5003'] = {
     "2.0":"2.0:calibrated k and sigma sector-specific",
     "3.0":"3.0:calibrated k and sigma in new sectors only",
     "4.0":"4.0:3.0 adding KMPH/CH",
+    "4.01":"4.01:4.0 higher weight KMPH/CH",
+    "4.02":"4.02:4.01 higher weight RD to try fix CHN",
+    "4.03":"4.03:4.0 KMPHARMA target data of 2007",
+    "4.04":"4.04:4.0 KMPHARMA and TOPHARMA target data of 2007,sigma=2",
+    "4.05":"4.05:4.0 KMPHARMA and TOPHARMA target data of 2007",
+    "4.06":"4.06:4.0 KMPH/CH and TOPH/CH all target data of 2007",
+    "4.07":"4.07:4.0 KMPH/CH and TOPH/CH all target data of 2007",
     "5.0":"5.0:3.0 adding RDPH/CH",
+    "5.03":"5.03:5.0 TOPH/CH taerget 2017 HS9",
+    "5.04":"5.04:5.03 with different bounds",
+    "5.05":"5.05:5.04 with higher eta",
+    "5.06":"5.06:5.05 with higher eta in pharma",
+    "5.06":"5.06:5.05 with huge eta in pharma",
     "6.0":"6.0:3.0 adding RDPH/CH and KMPH/CH",
     "5.01":"5.01:5.0 higher weight RDPH/CH",
+    "5.02":"5.02:5.0 sigma fixed, sector-specific k free",
     "6.01":"6.01:6.0 higher weight RDPH/CH",
+    "7.0":"7.0:adding RDPH/CH and KMPH/CH (KMP/C and TOP/C targets data of 2007)",
     "99.0":"99.0:increasing beta_pharma",
+    }
+
+comments_dic['6000'] = {
+    "baseline":"bsline:pharma and chemicals merged",
+    "1.0":"1.0:calibrated sigma",
+    "2.0":"2.0:targeted KMPHARMACHEM",
+    "3.0":"3.0:targeted RDPHARMACHEM",
+    "3.01":"3.01:more weights RD and RP",
+    "3.03":"3.03:more weights RDPHCH and RP",
+    "4.0":"4.0:both KMPHARMACHEM and RDPHARMACHEM",
+    "4.01":"4.01:higher RD and KMPHARMACHEM weights",
+    }
+
+comments_dic['6001'] = {
+    "baseline":"bsline:pharma and chemicals merged",
+    "1.0":"1.0:filler",
+    "2.0":"2.0:2017 updated KM/TO targets",
+    "2.01":"2.01:doubling TO target",
+    "2.02":"2.02:doubling KM target",
+    "3.0":"3.0:TO 00-05 target A0 rule, KM 95-07 average",
+    "3.01":"3.01:increase KM and RD weights",
     }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-baseline_list = ['5003','5001','5002']    
+# baseline_list = ['5003','5001','5002']    
+baseline_list = ['6001']    
 baseline_mom = baseline_list[0]
 
 def section(s):

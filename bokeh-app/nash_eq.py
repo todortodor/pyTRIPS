@@ -56,10 +56,8 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.15'},
     # {'baseline':'4003','variation': 'baseline'},
     # {'baseline':'4004','variation': 'baseline'},
-    {'baseline':'4013','variation': 'baseline'},
+    {'baseline':'6002','variation': 'baseline'},
     ]
-
-
 
 lb_delta=0.01
 ub_delta=12

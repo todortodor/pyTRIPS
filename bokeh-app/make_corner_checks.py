@@ -22,10 +22,12 @@ results_path = 'calibration_results_matched_economy/'
 baseline_dics = [
     # {'baseline':'1300','variation': 'baseline'},
     # {'baseline':'1300','variation': '2.0'},
-    # # {'baseline':'1300','variation': '10.2'},
+    # {'baseline':'1300','variation': '10.2'},
     # {'baseline':'1300','variation': '10.3'},
-    # # {'baseline':'1300','variation': '10.4'},
-    # # {'baseline':'1300','variation': '10.5'},
+    # {'baseline':'1300','variation': '10.4'},
+    # {'baseline':'1300','variation': '10.5'},
+    # {'baseline':'1300','variation': '12.0'},
+    # {'baseline':'1300','variation': '13.0'},
     # {'baseline':'1300','variation': '99.0'},
     # {'baseline':'1300','variation': '99.1'},
     # {'baseline':'1300','variation': '99.2'},
@@ -44,7 +46,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.15'},
     # {'baseline':'4003','variation': 'baseline'},
     # {'baseline':'4004','variation': 'baseline'},
-    {'baseline':'4013','variation': 'baseline'},
+    {'baseline':'6002','variation': 'baseline'},
     ]
 
 lb_delta = 0.01

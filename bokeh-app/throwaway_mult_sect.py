@@ -15,15 +15,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-baseline_number = 4013
+baseline_number = 6002
+variation = 'baseline'
 # pre_trips_number = 4096
-path = 'mult_sector_calib/all moments sectoral/'
+path = 'mult_sector_calib/merge_pharma_chem/'
 try:
     os.mkdir(path)
 except:
     pass
 
 p = parameters()
+# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
 p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
@@ -53,6 +55,7 @@ sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 # plt.show()
 m = moments()
+# m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
 m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 m.compute_moments(sol_c,p)
 m.compute_moments_deviations()
@@ -126,7 +129,7 @@ baseline_T.to_csv(path+'baseline_T.csv')
 #%%
 
 p_coop_negishi = parameters()
-p_coop_negishi.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_baseline_negishi/')
+p_coop_negishi.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_negishi/')
 
 recap_negishi = pd.DataFrame(index=p.countries,
                                columns=p.sectors[1:],
@@ -157,6 +160,8 @@ sol, dyn_sol = dyn_fixed_point_solver(p_coop_negishi, sol_c, Nt=25,
 dyn_sol.compute_non_solver_quantities(p)
 
 recap_negishi['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
+recap_negishi.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100
+recap_negishi.loc['Equal','welfare'] = dyn_sol.cons_eq_pop_average_welfare_change*100 - 100
 
 recap_negishi.to_csv(path+'negishi.csv')
 
@@ -164,7 +169,7 @@ recap_negishi.to_csv(path+'negishi.csv')
 
 
 p_coop_equal = parameters()
-p_coop_equal.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_baseline_pop_weighted/')
+p_coop_equal.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_pop_weighted/')
 
 
 recap_equal = pd.DataFrame(index=p.countries,
@@ -197,13 +202,15 @@ sol, dyn_sol = dyn_fixed_point_solver(p_coop_equal, sol_c, Nt=25,
 dyn_sol.compute_non_solver_quantities(p)
 
 recap_equal['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
+recap_equal.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100
+recap_equal.loc['Equal','welfare'] = dyn_sol.cons_eq_pop_average_welfare_change*100 - 100
 
 recap_equal.to_csv(path+'equal.csv')
 
 #%%
 
 p_nash = parameters()
-p_nash.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_baseline_nash/')
+p_nash.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_nash/')
 
 
 recap_nash = pd.DataFrame(index=p.countries,
@@ -234,6 +241,8 @@ sol, dyn_sol = dyn_fixed_point_solver(p_nash, sol_c, Nt=25,
 dyn_sol.compute_non_solver_quantities(p)
 
 recap_nash['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
+recap_nash.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100
+recap_nash.loc['Equal','welfare'] = dyn_sol.cons_eq_pop_average_welfare_change*100 - 100
 
 recap_nash.to_csv(path+'nash.csv')
 

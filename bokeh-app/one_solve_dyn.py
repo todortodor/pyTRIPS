@@ -18,7 +18,7 @@ df = pd.DataFrame()
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p_init.load_run('calibration_results_matched_economy/4003/')
+p_init.load_run('calibration_results_matched_economy/baseline_5003_variations/5.0/')
 # p_init.delta[1,2] = 12
 # p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
 #        1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
@@ -47,14 +47,15 @@ sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                         damping_post_acceleration=10
                         )
 sol_init.scale_P(p_init)
+
 sol_init.compute_non_solver_quantities(p_init) 
 
 # p = p_init.copy()
 # p.delta[1,2] = 0.01
 p = parameters()
-p.load_run('coop_eq_direct_saves/dyn_4003_baseline_nash/')
+p.load_run('coop_eq_direct_saves/dyn_5003_5.0_nash/')
 
-p.delta[0,2] = 12
+p.delta[0,3] = 0.01
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
