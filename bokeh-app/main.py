@@ -331,7 +331,12 @@ comments_dic['6000'] = {
 
 comments_dic['6001'] = {
     "baseline":"bsline:pharma and chemicals merged",
-    "1.0":"1.0:filler",
+    "1.0":"1.0:filler, same as baseline",
+    "1.01":"1.01:lower Sigma patent,increase Sigma ph/ch,recalibrate",
+    "1.02":"1.02:set high nu, remove TOPHARMACHEM",
+    "1.03":"1.03:drop KMPHARMACHEM",
+    "1.031":"1.031:higher RD weight",
+    "1.041":"1.041:set high nu, remove TOPHARMACHEM, drop KMPHARMACHEM",
     "2.0":"2.0:2017 updated KM/TO targets",
     "2.01":"2.01:doubling TO target",
     "2.02":"2.02:doubling KM target",

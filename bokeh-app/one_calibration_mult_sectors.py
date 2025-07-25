@@ -16,7 +16,7 @@ import numpy as np
 
 new_run = True
 baseline_number = '6001'
-variation_to_load = '3.0'
+variation_to_load = '1.03'
 # n = 4
 if new_run:
     p = parameters()
@@ -91,7 +91,7 @@ if new_run:
 # average 1995-2007
 # m.KMPHARMACHEM_target = 0.084591245
 # 2007 value
-m.weights_dict['KM'] = 5.0
+# m.weights_dict['KM'] = 5.0
 m.weights_dict['RD'] = 20.0
 # m.weights_dict['RDPHARMA'] = 1.0
 # m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
@@ -108,6 +108,15 @@ m.weights_dict['RD'] = 20.0
 # p.fix_fe_across_sectors = True
 # p.calib_parameters.remove('sigma')
 # p.sigma[:] = 2.9
+
+# p.sigma[1] = p.sigma[1]*0.8
+# p.sigma[2] = p.sigma[2]*1.2
+# p.calib_parameters.remove('sigma')
+
+# p.nu[2] = 10
+# p.calib_parameters.remove('nu')
+# m.list_of_moments.remove('TOPHARMACHEM')
+# m.list_of_moments.remove('KMPHARMACHEM')
 
 #%%
 
@@ -195,11 +204,11 @@ m.compute_moments_deviations()
 # # p_sol.write_params(local_path+run_str+'/')
 # # m.write_moments(local_path+run_str+'/')
 
-baseline_number = '6002'
+baseline_number = '6001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 6002
+run_number = 1.031
 
-new_baseline = True
+new_baseline = False
 if new_baseline:
     local_path = 'calibration_results_matched_economy/'
 

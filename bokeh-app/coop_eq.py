@@ -51,7 +51,7 @@ baseline_dics = [
     # {'baseline':'1300','variation': '99.15'},
     # {'baseline':'4003','variation': 'baseline'},
     # {'baseline':'4004','variation': 'baseline'},
-    {'baseline':'6002','variation': 'baseline'},
+    {'baseline':'6001','variation': 'baseline'},
     ]
 
 
