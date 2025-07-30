@@ -345,6 +345,8 @@ comments_dic['6001'] = {
     "4.0":"4.0:targeting AGGAVMARKUP",
     "4.01":"4.01:also targeting AVMARKUPPHARCHEM",
     "4.02":"4.02:letting both sigmas free",
+    "4.03":"4.03:higher weight on AVMARKUPPHARCHEM",
+    "4.1":"4.1:4.0 with both sigmas free",
     }
 
 baselines_dic_param = {}
