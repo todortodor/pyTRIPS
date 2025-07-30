@@ -199,7 +199,9 @@ class parameters:
                      'eta':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector'])}
         
-        sl_non_calib = {'sigma':[np.s_[0],np.s_[1]],
+        sl_non_calib = {
+                    # 'sigma':[np.s_[0],np.s_[1]],
+                    'sigma':[np.s_[0]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,

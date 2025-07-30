@@ -344,6 +344,7 @@ comments_dic['6001'] = {
     "3.01":"3.01:increase KM and RD weights",
     "4.0":"4.0:targeting AGGAVMARKUP",
     "4.01":"4.01:also targeting AVMARKUPPHARCHEM",
+    "4.02":"4.02:letting both sigmas free",
     }
 
 baselines_dic_param = {}
