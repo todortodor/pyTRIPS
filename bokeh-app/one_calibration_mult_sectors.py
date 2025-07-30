@@ -23,16 +23,16 @@ if new_run:
     p.correct_eur_patent_cost = True
     # p.fix_fe_across_sectors = True
     # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     # p.load_data('data/data_12_countries_3_sectors_2015/',keep_already_calib_params=True,nbr_sectors=3)
     start_time = time.perf_counter()
 
     m = moments()
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     m.aggregate_moments = True
     # m.load_data('data/data_12_countries_3_sectors_2015/')
     # m.load_data('data/data_12_countries_4_sectors_1992/')
@@ -63,6 +63,8 @@ if new_run:
 #     m.weights_dict[mm] = np.minimum(m.weights_dict[mm],2.0)
 # p.ub_dict['nu'] = 50
 # p.nu[1] = 0.1
+m.list_of_moments.append('AGGAVMARKUP')
+m.list_of_moments.append('AVMARKUPPHARCHEM')
 # m.list_of_moments.append('TEPHARMA')
 # m.list_of_moments.append('TECHEM')
 # m.list_of_moments.append('TOPHARMA')
@@ -78,7 +80,6 @@ if new_run:
 # m.list_of_moments.remove('SDFLOW')
 # m.list_of_moments.remove('KMPHARMACHEM')
 
-#%%
 # m.TOPHARMA_target = np.float64(0.24055165)
 # m.KMPHARMA_target = np.float64(0.156020318914251)
 # m.TOCHEM_target = np.float64(0.05290285)
@@ -92,7 +93,7 @@ if new_run:
 # m.KMPHARMACHEM_target = 0.084591245
 # 2007 value
 # m.weights_dict['KM'] = 5.0
-m.weights_dict['RD'] = 20.0
+# m.weights_dict['RD'] = 20.0
 # m.weights_dict['RDPHARMA'] = 1.0
 # m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
 # m.weights_dict['KMPHARMA'] = 4.0
@@ -206,7 +207,7 @@ m.compute_moments_deviations()
 
 baseline_number = '6001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1.031
+run_number = 4.01
 
 new_baseline = False
 if new_baseline:

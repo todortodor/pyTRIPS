@@ -43,6 +43,8 @@ SINNOVPATEU; Share of innovations patented in Europe
 SINNOVPATUS; Share of innovations patented in US
 NUR; Ratio of diffusion : Nu_tilde/Nu
 RDGDPUS; RD spending as share of gdp in the US
+AGGAVMARKUP; aggregate cost weighted average markup in the US
+AVMARKUPPHARCHEM; ratio of average markup in pharma/chem to aggregate markup
 TO; Turnover in US imports
 TOCHEM; Turnover in US imports in the chemicals sector
 TOPHARMA; Turnover in US imports in the pharmaceuticals sector

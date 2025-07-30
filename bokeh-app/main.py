@@ -234,7 +234,7 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMA','KMPHARMACHEM','KMCHEM', 'OUT',
  'RD','RDPHARMACHEM','RDPHARMA','RDCHEM', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
- 'SRGDP','SGDP','RGDPPC','UUPCOSTS','SINNOVPATUS',
+ 'SRGDP','SGDP','RGDPPC','UUPCOSTS','SINNOVPATUS','AGGAVMARKUP','AVMARKUPPHARCHEM',
   'TO','TE','TOPHARMA','TOPHARMACHEM','TEPHARMA','TEPHARMACHEM','TOCHEM','TECHEM','DOMPATINUS','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'UUPCOST',
  'objective']
@@ -342,6 +342,8 @@ comments_dic['6001'] = {
     "2.02":"2.02:doubling KM target",
     "3.0":"3.0:TO 00-05 target A0 rule, KM 95-07 average",
     "3.01":"3.01:increase KM and RD weights",
+    "4.0":"4.0:targeting AGGAVMARKUP",
+    "4.01":"4.01:also targeting AVMARKUPPHARCHEM",
     }
 
 baselines_dic_param = {}

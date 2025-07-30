@@ -12,7 +12,7 @@ from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
 import numpy as np
 
 p = parameters()
-p.load_run('calibration_results_matched_economy/baseline_5001_variations/2.01/')
+p.load_run('calibration_results_matched_economy/baseline_6001_variations/1.031/')
 # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
 # p.k = np.array([p.k]*p.S)
 sol, sol_init = fixed_point_solver(p,x0=p.guess,
@@ -41,11 +41,13 @@ sol, sol_init = fixed_point_solver(p,x0=p.guess,
 sol_init.scale_P(p)
 sol_init.compute_non_solver_quantities(p)
 
+sol_init.compute_average_mark_up(p)
+
 # SDFLOW = np.einsum('nns->ns',sol_init.X[:,:,2:]/(1+p.tariff[:,:,2:])
 #                         )/np.einsum('nn->n',sol_init.X[:,:,1]/(1+p.tariff[:,:,1]))[:,None]
-SDFLOW = np.einsum('nns->ns',sol_init.X[:,:,2:]
-                        )/np.einsum('nn->n',sol_init.X[:,:,1])[:,None]
-print(SDFLOW)
+# SDFLOW = np.einsum('nns->ns',sol_init.X[:,:,2:]
+#                         )/np.einsum('nn->n',sol_init.X[:,:,1])[:,None]
+# print(SDFLOW)
 # #%%
 # # p_bu = p.copy()
 # # p.load_data(data_path='data/data_12_countries_4_sectors_2015/',

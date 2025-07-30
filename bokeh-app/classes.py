@@ -276,7 +276,10 @@ class parameters:
         
         
         self.load_data(self.data_path,dir_path=dir_path,nbr_sectors=int(df.loc['nbr_of_sectors','run']))
-        
+
+        if int(df.loc['nbr_of_sectors','run']) == 2:
+            self.k = np.array([1.0])
+
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
         for pa_name in list_of_params:
@@ -289,10 +292,10 @@ class parameters:
                 if pa_name == 'tariff':
                     self.tariff = np.zeros_like(self.trade_flows)
                 else:
-                    pass
-            # if pa_name == 'k' and self.k.shape != (self.S,):
-            #     setattr(self,pa_name,np.array([df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape)]*self.S))
-                
+                    pass   
+        
+        if self.k.shape == (1,):
+            self.k = np.repeat(self.k,self.S)
                     
         
     def elements(self):
@@ -2492,7 +2495,36 @@ class var:
                                                                   A)
                                           )/(B.sum(axis=0)-np.einsum('ii->i',
                                                                      B))
+    
+    def compute_average_mark_up(self,p):
+        prefactor = p.sigma[1:]/(p.sigma[1:]-1)
+        A = self.X_M[:,:,1:]/(1+p.tariff[:,:,1:])
+        B = self.X_CD[:,:,1:]/(1+p.tariff[:,:,1:])
         
+        self.sectoral_average_markup = np.einsum(
+            's,is,is->is',
+            prefactor,
+            np.einsum('nis->is',A),
+            1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
+            ) / np.einsum(
+                's,is,is->is',
+                prefactor,
+                np.einsum('nis->is',B),
+                1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
+                )
+        
+        self.aggregate_average_markup = np.einsum(
+            's,is,i->i',
+            prefactor,
+            np.einsum('nis->is',A),
+            1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
+            ) / np.einsum(
+                's,is,i->i',
+                prefactor,
+                np.einsum('nis->is',B),
+                1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
+                )                                                                 
+                                                                     
     def compute_non_solver_quantities(self,p):
         self.compute_tau(p)
         self.compute_nominal_value_added(p)
@@ -2505,6 +2537,7 @@ class var:
         self.compute_non_solver_aggregate_qualities(p)
         self.compute_semi_elast_patenting_delta(p)
         self.compute_V(p)
+        self.compute_average_mark_up(p)
         
     def compute_consumption_equivalent_welfare(self,p,baseline):
         self.cons_eq_welfare = self.cons*\
@@ -2585,7 +2618,7 @@ class dynamic_var:
     def elements(self): 
         for key, item in sorted(self.__dict__.items()):
             print(key, ',', str(type(item))[8:-2])
-    
+
     def copy(self):
         frame = deepcopy(self)
         return frame
@@ -3529,7 +3562,7 @@ class moments:
                                'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
                                'UUPCOST','UUPCOSTS','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
                                'JUPCOSTRD','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TOPHARMACHEM','TE','TECHEM','TEPHARMA','TEPHARMACHEM',
-                               'DOMPATRATUSEU','DOMPATUS','DOMPATEU',
+                               'DOMPATRATUSEU','DOMPATUS','DOMPATEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                                'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
                                'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
         else:
@@ -3555,6 +3588,8 @@ class moments:
                              'SPFLOWDOM': 1,
                              'SPFLOWDOM_US': 1,
                              'SPFLOWDOM_RUS': 1,
+                             'AGGAVMARKUP':5,
+                             'AVMARKUPPHARCHEM':5,
                              'SRDUS': 1,
                              'SRGDP': 1,
                              'SGDP': 1,
@@ -3634,7 +3669,7 @@ class moments:
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','UUPCOSTS','PCOST','PCOSTINTER',
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TOCHEM','TOPHARMA','TOPHARMACHEM',
-                'TE','TECHEM','TEPHARMA','TEPHARMACHEM','NUR','DOMPATRATUSEU',
+                'TE','TECHEM','TEPHARMA','TEPHARMACHEM','NUR','DOMPATRATUSEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
                 'SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
     
@@ -3813,6 +3848,8 @@ class moments:
             self.UUPCOSTS_target[1] = self.sector_moments.UUPCOSTS.values[2::].sum()
         self.JUPCOSTRD_target = self.moments.loc['JUPCOST'].value/(self.c_moments.loc[1,'rnd_gdp']*self.c_moments.loc[1,'gdp']/self.unit)
         self.TP_target = self.moments.loc['TP'].value
+        self.AGGAVMARKUP_target = self.moments.loc['AGGAVMARKUP'].value
+        self.AVMARKUPPHARCHEM_target = self.moments.loc['AVMARKUPPHARCHEM'].value
         self.inter_TP_target = np.array(0.00117416)
         self.TP_data = self.cc_moments['patent flows'].sum()
         self.DOMPATEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=1)['patent flows'].sum()
@@ -3870,6 +3907,8 @@ class moments:
                     'SRDUS':pd.Index(['scalar']), 
                     'JUPCOST':pd.Index(['scalar']), 
                     'UUPCOST':pd.Index(['scalar']), 
+                    'AGGAVMARKUP':pd.Index(['scalar']), 
+                    'AVMARKUPPHARCHEM':pd.Index(['scalar']), 
                     'UUPCOSTS':pd.Index(self.sectors[1:],name='sector'), 
                     'PCOSTNOAGG':pd.Index(['scalar']), 
                     'PCOSTINTERNOAGG':pd.Index(['scalar']), 
@@ -4476,6 +4515,10 @@ class moments:
         denominator = (var.X_M[...,1]/(1+p.tariff[...,1])).sum(axis=0)
         self.SHAREEXPMON = numerator[0] / denominator[0]
         
+    def compute_AGGAVMARKUP(self,var,p):
+        self.AGGAVMARKUP = var.aggregate_average_markup[0]
+        self.AVMARKUPPHARCHEM = var.sectoral_average_markup[0,1] / var.aggregate_average_markup[0]
+        
     def compute_PROBINNOVENT(self,var,p):
         self.PROBINNOVENT = np.nan
         try:
@@ -4604,6 +4647,7 @@ class moments:
             self.compute_TE(var,p)
             self.compute_DOMPATINUS(var, p)
             self.compute_SDFLOW(var, p)
+            self.compute_AGGAVMARKUP(var, p)
         
     def compute_moments_deviations(self):
 

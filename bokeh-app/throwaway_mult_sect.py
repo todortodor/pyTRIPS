@@ -15,18 +15,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-baseline_number = 6002
-variation = 'baseline'
+baseline_number = 6001
+variation = '1.03'
 # pre_trips_number = 4096
-path = 'mult_sector_calib/merge_pharma_chem/'
+path = 'mult_sector_calib/merge_pharma_chem_v1.03/'
 try:
     os.mkdir(path)
 except:
     pass
 
 p = parameters()
-# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 # context = 'counterfactual',
