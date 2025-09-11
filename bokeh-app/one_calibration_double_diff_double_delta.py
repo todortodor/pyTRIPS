@@ -15,20 +15,20 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1310'
+baseline_number = '1300'
 
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # print(p.k)
     # p.mask['k'] = np.array([ True,  True])
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
     start_time = time.perf_counter()
 
     m = moments()
-    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
+    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
 # m.load_data('data_smooth_3_years/data_12_countries_1992/')
 # p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
 # sol = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'calibration')
@@ -170,7 +170,7 @@ commentary = ''
 baseline_number = '1310'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 4.0
+run_number = 99.0
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False
