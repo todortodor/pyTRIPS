@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import os
 
 baseline_number = 6001
-variation = '1.03'
+variation = '4.02'
 # pre_trips_number = 4096
-path = 'mult_sector_calib/merge_pharma_chem_v1.03/'
+path = 'mult_sector_calib/merge_pharma_chem_v2/'
 try:
     os.mkdir(path)
 except:
@@ -246,7 +246,7 @@ recap_nash.loc['Equal','welfare'] = dyn_sol.cons_eq_pop_average_welfare_change*1
 
 recap_nash.to_csv(path+'nash.csv')
 
-# #%%
+#%%
 
 # recap_pre_trips = pd.DataFrame(index=p.countries,
 #                                columns=p.sectors[1:],

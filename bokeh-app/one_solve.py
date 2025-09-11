@@ -8,25 +8,27 @@ Created on Sun Nov 13 21:57:06 2022
 
 
 from classes import moments, parameters, var, var_with_entry_costs
-from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
+from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs, fixed_point_solver_double_diff_double_delta
 import numpy as np
 
 p = parameters()
-p.load_run('calibration_results_matched_economy/baseline_6001_variations/1.031/')
+p.load_run('calibration_results_matched_economy/1300/')
+p.delta_dom = p.delta_dom/2
+p.update_delta_eff()
 # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
 # p.k = np.array([p.k]*p.S)
-sol, sol_init = fixed_point_solver(p,x0=p.guess,
+sol, sol_init_dd = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 # context = 'counterfactual',
                                 context = 'calibration',
                         cobweb_anim=False,tol =1e-14,
-                        accelerate=True,
+                        accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='l_R',
                         plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=True,
-                        damping = 100,
+                        damping = 10,
                         max_count = 10000,
                         accel_memory =50, 
                         accel_type1=True, 
@@ -38,10 +40,37 @@ sol, sol_init = fixed_point_solver(p,x0=p.guess,
                         # damping=10
                           # apply_bound_psi_star=True
                         )
-sol_init.scale_P(p)
-sol_init.compute_non_solver_quantities(p)
+sol_init_dd.scale_P(p)
+# sol_init_dd.compute_non_solver_quantities(p)
 
-sol_init.compute_average_mark_up(p)
+
+# sol, sol_init = fixed_point_solver(p,x0=p.guess,
+#                                 # context = 'counterfactual',
+#                                 context = 'calibration',
+#                         cobweb_anim=False,tol =1e-14,
+#                         accelerate=True,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='l_R',
+#                         plot_convergence=True,
+#                         plot_cobweb=False,
+#                         safe_convergence=0.001,
+#                         disp_summary=True,
+#                         damping = 100,
+#                         max_count = 10000,
+#                         accel_memory =50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=2
+#                         # damping=10
+#                           # apply_bound_psi_star=True
+#                         )
+# sol_init.scale_P(p)
+# sol_init.compute_non_solver_quantities(p)
+
+# sol_init.compute_average_mark_up(p)
 
 # SDFLOW = np.einsum('nns->ns',sol_init.X[:,:,2:]/(1+p.tariff[:,:,2:])
 #                         )/np.einsum('nn->n',sol_init.X[:,:,1]/(1+p.tariff[:,:,1]))[:,None]

@@ -16,13 +16,12 @@ import numpy as np
 
 new_run = True
 baseline_number = '6001'
+# baseline_number = '1300'
 variation_to_load = '4.02'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.fix_fe_across_sectors = True
-    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
     p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
@@ -30,7 +29,6 @@ if new_run:
     start_time = time.perf_counter()
 
     m = moments()
-    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
     m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     m.aggregate_moments = True
@@ -92,7 +90,7 @@ if new_run:
 # average 1995-2007
 # m.KMPHARMACHEM_target = 0.084591245
 # 2007 value
-m.weights_dict['AVMARKUPPHARCHEM'] = 10.0
+# m.weights_dict['AVMARKUPPHARCHEM'] = 10.0
 # m.weights_dict['RD'] = 20.0
 # m.weights_dict['RDPHARMA'] = 1.0
 # m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
@@ -205,9 +203,9 @@ m.compute_moments_deviations()
 # # p_sol.write_params(local_path+run_str+'/')
 # # m.write_moments(local_path+run_str+'/')
 
-baseline_number = '6001'
+baseline_number = '1300'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 4.03
+run_number = 14.0
 
 new_baseline = False
 if new_baseline:

@@ -10,7 +10,7 @@ import numpy as np
 import aa
 import matplotlib.pyplot as plt
 import time
-from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs, history_nash, dynamic_var
+from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs,var_double_diff_double_delta, history_nash, dynamic_var
 from scipy import optimize
 import os
 from optimparallel import minimize_parallel
@@ -420,6 +420,124 @@ def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, dampin
         plt.legend()
         plt.show()
     return sol_inst, init
+
+def fixed_point_solver_double_diff_double_delta(p, context, x0=None, tol = 1e-15, damping = 10, max_count=1e4,
+                       accelerate = False, safe_convergence=0.001,accelerate_when_stable=True, 
+                       plot_cobweb = False, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = False, apply_bound_zero = False, 
+                        apply_bound_research_labor = False, keep_l_R_fixed=False,
+                       accel_memory = 50, accel_type1=True, accel_regularization=1e-10,
+                       accel_relaxation=0.5, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=False,damping_post_acceleration=5):   
+    if x0 is None:
+        x0 = p.guess_from_params()
+    x_old = x0 
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+        if apply_bound_zero:
+            x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+        init = var_double_diff_double_delta.var_from_vector(x_old,p,context=context,compute=False)
+        if count == 0 and keep_l_R_fixed:
+            l_R_0 = init.l_R[...,1:].ravel().copy()
+        init.compute_solver_quantities(p)
+        
+        w = init.compute_wage(p)#/init.price_indices[0]
+        Z = init.compute_expenditure(p)#/init.price_indices[0]
+        l_R = init.compute_labor_research(p)[...,1:].ravel()
+        profit = init.compute_profit(p)[...,1:].ravel()
+        phi = init.compute_phi(p).ravel()#*init.price_indices[0]
+        
+        if keep_l_R_fixed:
+            l_R = l_R_0.copy()
+        
+        # x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
+        x_new = np.concatenate((w/init.price_indices[0],Z/init.price_indices[0],l_R,profit,phi*init.price_indices[0]), axis=0)
+
+        x_new_decomp = get_vec_qty(x_new,p)
+        x_old_decomp = get_vec_qty(x_old,p)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['w','Z','profit','l_R','phi']]
+        condition = np.any(conditions)
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        if plot_live and count>500 and count%500 == 0:
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+            # if count%5==0:
+            #     plt.plot(convergence)
+            #     plt.yscale('log')
+            #     plt.show()
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+        
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40) and np.all(x_new > 0):
+        status = 'successful'
+    else:
+        status = 'failed'
+    
+    x_sol = x_new
+        
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+    return sol_inst, init
+
 
 def fixed_point_solver_with_entry_costs_cf(p, x0=None, tol = 1e-15, damping = 10, max_count=1e4,
                        accelerate = False, safe_convergence=0.001,accelerate_when_stable=True, 
@@ -1091,6 +1209,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
         v0 = p.guess
     except:
         pass
+    
     # sol, sol_c = fixed_point_solver(p,context = 'calibration', x0=v0,
     #                         cobweb_anim=False,tol =1e-14,
     #                         accelerate=False,
@@ -1462,6 +1581,182 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
     hist.count += 1
     print(hist.count)
     p.guess = sol_c.vector_from_var()
+    if np.any(np.isnan(p.guess)) or sol.status == 'failed':
+        print('failed')
+        p.guess = None
+        return np.full_like(m.deviation_vector(),1e10)
+    else:
+        return m.deviation_vector() 
+    
+def calibration_func_double_diff_double_delta(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+    p.update_parameters(vec_parameters)
+    p.update_delta_eff()
+    p.nu_tilde = p.nu.copy()
+    if 'khi' in p.calib_parameters:
+        p.update_khi_and_r_hjort(p.khi)
+    try:
+        v0 = p.guess
+    except:
+        pass
+    sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration', x0=v0,
+                            cobweb_anim=False,tol =1e-12,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.1,
+                            disp_summary=False,
+                            damping =2,
+                            max_count = 1000,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=1
+                            )
+    
+    if sol.status == 'failed': 
+        print('trying safer')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',x0=v0,tol=1e-14,
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.001,
+                                  max_count=2e3,
+                                  damping = 10,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=2
+                                  )
+    if sol.status == 'failed': 
+        print('trying strong damp')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',x0=v0,tol=1e-14,
+                                  accelerate=False,
+                                  accelerate_when_stable=True,
+                                  plot_cobweb=False,
+                                  plot_convergence=False,
+                                  cobweb_qty='phi',
+                                  disp_summary=False,
+                                  safe_convergence=0.1,
+                                  max_count=5e3,
+                                  damping = 10,
+                                  accel_memory = 50, 
+                                  accel_type1=True, 
+                                  accel_regularization=1e-10,
+                                  accel_relaxation=0.5, 
+                                  accel_safeguard_factor=1, 
+                                  accel_max_weight_norm=1e6,
+                                  damping_post_acceleration=10
+                                  )
+    if sol.status == 'failed': 
+        print('trying less precise')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',
+                                                         x0=v0,tol=1e-6,
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=2e3,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
+    if sol.status == 'failed':
+        print('trying with standard guess')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',x0=None,tol=1e-12,
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.001,
+                                      max_count=2e3,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
+    if sol.status == 'failed':
+        print('trying longer convergence')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',x0=v0,tol=1e-13,
+                                      accelerate=False,
+                                      accelerate_when_stable=True,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.1,
+                                      max_count=5e4,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
+    if sol.status == 'failed':
+        print('trying with no acceleration')
+        sol, sol_c = fixed_point_solver_double_diff_double_delta(p,context = 'calibration',x0=v0,tol=1e-13,
+                                      accelerate=False,
+                                      accelerate_when_stable=False,
+                                      plot_cobweb=False,
+                                      plot_convergence=False,
+                                      cobweb_qty='phi',
+                                      disp_summary=False,
+                                      safe_convergence=0.1,
+                                      max_count=5e4,
+                                      accel_memory = 50, 
+                                      accel_type1=True, 
+                                      accel_regularization=1e-10,
+                                      accel_relaxation=0.5, 
+                                      accel_safeguard_factor=1, 
+                                      accel_max_weight_norm=1e6,
+                                      damping_post_acceleration=5
+                                      )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    m.compute_moments(sol_c,p)
+    m.compute_moments_deviations()
+    if hist is not None:
+        if hist.count%1 == 0:
+            hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
+            hist_dic['objective'] = np.linalg.norm(m.deviation_vector())
+            hist.append(**hist_dic)
+            hist.time = time.perf_counter() - start_time
+        if hist.count%100 == 0:
+            hist.plot()
+        if hist.count%200==0:
+            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta_dom : ', p.delta_dom[:,1], 'delta_int : ', p.delta_int[:,1]
+                  , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
+                  , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
+                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
+                  'a :', p.a)
+    hist.count += 1
+    # print(hist.count)
+    p.guess = sol_c.vector_from_var()
+    
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None

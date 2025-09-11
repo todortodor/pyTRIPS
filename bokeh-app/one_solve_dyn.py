@@ -18,7 +18,7 @@ df = pd.DataFrame()
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p_init.load_run('calibration_results_matched_economy/baseline_6001_variations/1.03/')
+p_init.load_run('calibration_results_matched_economy/baseline_6001_variations/4.02/')
 # p_init.delta[1,2] = 12
 # p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
 #        1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
@@ -53,13 +53,13 @@ sol_init.compute_non_solver_quantities(p_init)
 # p = p_init.copy()
 # p.delta[1,2] = 0.01
 p = parameters()
-p.load_run('coop_eq_direct_saves/dyn_6001_1.03_negishi/')
+p.load_run('coop_eq_direct_saves/dyn_6001_4.02_nash/')
 
-p.delta[0,-1] = 0.01
+p.delta[0,2] = 1.0
 
 sol, sol_c = fixed_point_solver(p,x0=p.guess,
                                 context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-14,
+                        cobweb_anim=False,tol =1e-13,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='l_R',
@@ -80,6 +80,7 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
 sol_c.compute_consumption_equivalent_welfare(p, sol_init)
+p.guess = sol_c.vector_from_var()
 
 sol, dyn_sol = dyn_fixed_point_solver(p, sol_init, Nt=25,
                                       t_inf=500,
