@@ -1591,7 +1591,7 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
 def calibration_func_double_diff_double_delta(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
     p.update_delta_eff()
-    p.nu_tilde = p.nu.copy()
+    # p.nu_tilde = p.nu.copy()
     if 'khi' in p.calib_parameters:
         p.update_khi_and_r_hjort(p.khi)
     try:

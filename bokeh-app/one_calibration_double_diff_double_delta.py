@@ -38,8 +38,8 @@ if new_run:
 # print(m.SPFLOWDOM[8,8])
 # m.compute_moments_deviations()
 #%%
-p.delta_dom[p.delta_dom<0.05] = 0.05
-p.delta_int[p.delta_int<0.05] = 0.05
+# p.delta_dom[p.delta_dom<0.05] = 0.05
+# p.delta_int[p.delta_int<0.05] = 0.05
 # p.update_delta_eff()
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.weights_dict['SPFLOWDOM'] = 5
@@ -49,23 +49,23 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.a=0.1
 
 
-# p.nu_tilde = p.nu.copy()*2
-# p.calib_parameters = ['eta', 'k', 'fe', 'T', 
-#                       'nu',
-#                       'zeta', 'g_0', 'delta_int', 'delta_dom', 'fo', 'theta']
-# m.list_of_moments=['GPDIFF',
-#  'GROWTH',
-#  'KM_DD_DD',
-#  'OUT',
-#  'RD',
-#  'TO_DD_DD',
-#  'RP',
-#  'SRGDP',
-#  'SINNOVPATUS',
-#  'SPFLOWDOM',
-#  'UUPCOST',
-#  'DOMPATINUS',
-#  'TE']
+p.nu[:] = 1e-6
+p.calib_parameters = ['eta', 'k', 'fe', 'T', 
+                      'nu_tilde',
+                      'zeta', 'g_0', 'delta_int', 'delta_dom', 'fo', 'theta']
+m.list_of_moments=['GPDIFF',
+ 'GROWTH',
+ 'KM_DD_DD',
+ 'OUT',
+ 'RD',
+ 'TO_DD_DD',
+ 'RP',
+ 'SRGDP',
+ 'SINNOVPATUS',
+ 'SPFLOWDOM',
+ 'UUPCOST',
+ 'DOMPATINUS',
+ 'TE']
 # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
 # p.calib_parameters.append('a')
 # p.calib_parameters.append('d')
@@ -170,7 +170,7 @@ commentary = ''
 baseline_number = '1310'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 3.1
+run_number = 4.0
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False

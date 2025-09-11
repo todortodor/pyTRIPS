@@ -230,6 +230,7 @@ comments_dic['1310'] = {
     '2.2':'2.2 : 2.0 with doubled nu_tilde',
     '3.0':'3.0 : calibrat nu. nu_tilde=nu. target TO_DD_DD',
     '3.1':'3.1 : 3.0 with bounded delta',
+    '4.0':'4.0 : 3.0 with nu=1e-6',
     }
 
 baselines_dic_param = {}
