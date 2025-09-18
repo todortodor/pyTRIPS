@@ -56,8 +56,8 @@ p.update_delta_eff()
 p.calib_parameters = ['eta', 'k', 'fe', 'T', 
                       'nu_tilde',
                       'zeta', 'g_0', 
-                      # 'delta_int', 
-                      # 'delta_dom', 
+                      'delta_int', 
+                      'delta_dom', 
                       'fo', 
                       'theta']
 m.list_of_moments=['GPDIFF',

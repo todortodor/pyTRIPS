@@ -42,7 +42,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     dic_df_param = {}
     dic_df_mom = {}
     dic_df_sol = {}
-    params = p_baseline.calib_parameters+['nu']+['nu_tilde']
+    params = p_baseline.calib_parameters+['nu']+['nu_tilde']+['delta_dom']+['delta_int']
     params.append('kappa')
     params.append('a')
     params.append('d')
@@ -309,6 +309,8 @@ for baseline_nbr in baseline_list:
         baselines_dic_param[baseline_nbr][df_name] = baselines_dic_param[baseline_nbr][df_name].reindex(columns=full_run_list[1:])
     for df_name in baselines_dic_sol_qty[baseline_nbr].keys():
         baselines_dic_sol_qty[baseline_nbr][df_name] = baselines_dic_sol_qty[baseline_nbr][df_name].reindex(columns=full_run_list[1:])
+
+#%%
 
 countries = p_baseline.countries
 
@@ -788,7 +790,7 @@ def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1300') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1311') and s.startswith('baseline')], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
