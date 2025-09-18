@@ -848,7 +848,7 @@ p_cf_int = figure(title="Delta international",
                 x_axis_label='Change in delta',
                 y_axis_label='Normalized Consumption equivalent welfare',
                 x_axis_type="log",
-                tools = TOOLS) 
+                tools = TOOLS)
 
 for col in df_cf_int.columns:
     if col not in [0,'delt_dom','delt_int','growth']:

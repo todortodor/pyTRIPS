@@ -2132,8 +2132,9 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
 def minus_welfare_of_delta_double_delta(delta,p,c,sol_it_baseline,sector=1, hist = None,
                            dynamics=False):
     back_up_delta_value = np.array([p.delta_dom[p.countries.index(c),sector],p.delta_int[p.countries.index(c),sector]])
-    p.delta_dom[p.countries.index(c),sector] = delta[p.countries.index(c)]
-    p.delta_int[p.countries.index(c),sector] = delta[p.countries.index(c)+12]
+    # print('here',delta)
+    p.delta_dom[p.countries.index(c),sector] = delta[0]
+    p.delta_int[p.countries.index(c),sector] = delta[1]
     p.update_delta_eff()
     sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                     context = 'counterfactual',
@@ -2207,6 +2208,7 @@ def minus_welfare_of_delta_double_delta(delta,p,c,sol_it_baseline,sector=1, hist
             hist.make_a_pause = False
     p.delta_dom[p.countries.index(c),sector] = back_up_delta_value[0]
     p.delta_int[p.countries.index(c),sector] = back_up_delta_value[1]
+    p.update_delta_eff()
     p.guess = sol_c.vector_from_var()
     
     print(delta,c,welfare)
@@ -2233,7 +2235,7 @@ def minimize_delta_double_delta(args):
 def compute_new_deltas_fixed_point_double_delta(p, sol_it_baseline, lb_delta, ub_delta, hist_nash = None, 
                                     dynamics=False,max_workers=12,parallel=True):
     
-    bounds=(lb_delta, ub_delta)*2
+    bounds=(lb_delta, ub_delta)
     
     if not parallel:
     # monoprocess
@@ -2246,19 +2248,28 @@ def compute_new_deltas_fixed_point_double_delta(p, sol_it_baseline, lb_delta, ub
                     # print('doing that')
                     delta_min = optimize.shgo(func=minus_welfare_of_delta_double_delta,
                                                           # sampling_method='halton',
-                                                          bounds=[bounds],
+                                                          bounds=[bounds,bounds],
                                                           args = (p,c,sol_it_baseline, sector, hist_nash, dynamics),
                                                           options={'disp':True,'f_tol':1e-4,'minimize_every_iter':False},
                                                           minimizer_kwargs={'f_tol':1e-4,'eps':1e-4,'finite_diff_rel_step':1e-2}
                                                           # options = dict(ftol=1e-8)
                                                           )
                 else:
-                    delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta_double_delta,
-                                                          method='bounded',
-                                                            bounds=bounds,
+                    # delta_min = optimize.minimize_scalar(fun=minus_welfare_of_delta_double_delta,
+                    #                                       method='bounded',
+                    #                                       bounds=[bounds,bounds],
+                    #                                       args = (p,c,sol_it_baseline, sector, hist_nash, dynamics),
+                    #                                       # options={'disp':3},
+                    #                                       tol=1e-15
+                    #                                       )
+                    delta_min = optimize.shgo(func=minus_welfare_of_delta_double_delta,
+                                                          # method='bounded',
+                                                          bounds=[bounds,bounds],
                                                           args = (p,c,sol_it_baseline, sector, hist_nash, dynamics),
                                                           # options={'disp':3},
-                                                          tol=1e-15
+                                                          options={'disp':True,'f_tol':1e-4,'minimize_every_iter':False},
+                                                          minimizer_kwargs={'f_tol':1e-4,'eps':1e-4,'finite_diff_rel_step':1e-2},
+                                                          # tol=1e-15
                                                           )
         
                 new_deltas_dom[i,sector-1] = delta_min.x[0]
@@ -2268,7 +2279,7 @@ def compute_new_deltas_fixed_point_double_delta(p, sol_it_baseline, lb_delta, ub
                 hist_nash.expected_welfare[i] = delta_min.fun
             print(c,new_deltas_dom,new_deltas_int)
                 
-    return new_deltas_dom.ravel(), new_deltas_int.ravel()
+    return np.concatenate([new_deltas_dom.ravel(), new_deltas_int.ravel()])
 
 def find_nash_eq_double_delta(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dynamics=False,
                  plot_convergence = False,solver_options=None,tol=5e-5,
@@ -2333,6 +2344,7 @@ def find_nash_eq_double_delta(p_baseline,lb_delta=0.01,ub_delta=100,method='fixe
             x_old = (new_deltas+(damping-1)*x_old)/damping
             p_it_baseline.delta_dom[...,1:] = x_old[:p_baseline.N].reshape(p_baseline.N,p_baseline.S-1)
             p_it_baseline.delta_int[...,1:] = x_old[p_baseline.N:].reshape(p_baseline.N,p_baseline.S-1)
+            p_it_baseline.update_delta_eff()
         
         sol, sol_it_baseline = fixed_point_solver_double_diff_double_delta(p_it_baseline,x0=p_it_baseline.guess,
                                                   context = 'counterfactual',
@@ -2368,7 +2380,8 @@ def find_nash_eq_double_delta(p_baseline,lb_delta=0.01,ub_delta=100,method='fixe
         # p_it_baseline.delta[...,1:] = new_deltas.reshape(p_baseline.N,p_baseline.S-1)
         p_it_baseline.delta_dom[...,1:] = new_deltas[:p_baseline.N].reshape(p_baseline.N,p_baseline.S-1)
         p_it_baseline.delta_int[...,1:] = new_deltas[p_baseline.N:].reshape(p_baseline.N,p_baseline.S-1)
-        sol, sol_it= fixed_point_solver(p_it_baseline,x0=p_it_baseline.guess,
+        p_it_baseline.update_delta_eff()
+        sol, sol_it= fixed_point_solver_double_diff_double_delta(p_it_baseline,x0=p_it_baseline.guess,
                                                   context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -5927,6 +5940,6 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
             damping_post_acceleration=5
             )
             sol_c.scale_P(p)
-            # p.guess = sol_c.vector_from_var()
+            p.guess = sol_c.vector_from_var()
             
         p.write_params(country_path+'/'+str(i)+'/') 
