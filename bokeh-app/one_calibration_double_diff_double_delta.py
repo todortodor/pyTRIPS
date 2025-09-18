@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1300'
+baseline_number = '1311'
 
 if new_run:
     p = parameters()
@@ -48,11 +48,18 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.d = 0.191473
 # p.a=0.1
 
-
-p.nu[:] = 1e-6
+# p.delta_dom[0,1] = p.delta_dom[0,1]/2
+p.delta_dom[3,1] = p.delta_dom[3,1]/2
+p.update_delta_eff()
+# p.nu_tilde[:] = p.nu.copy()
+# p.nu[:] = 1e-6
 p.calib_parameters = ['eta', 'k', 'fe', 'T', 
                       'nu_tilde',
-                      'zeta', 'g_0', 'delta_int', 'delta_dom', 'fo', 'theta']
+                      'zeta', 'g_0', 
+                      # 'delta_int', 
+                      # 'delta_dom', 
+                      'fo', 
+                      'theta']
 m.list_of_moments=['GPDIFF',
  'GROWTH',
  'KM_DD_DD',
@@ -62,7 +69,7 @@ m.list_of_moments=['GPDIFF',
  'RP',
  'SRGDP',
  'SINNOVPATUS',
- 'SPFLOWDOM',
+ 'SPFLOW',
  'UUPCOST',
  'DOMPATINUS',
  'TE']
@@ -167,10 +174,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1310'
+baseline_number = '1311'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 99.0
+run_number = 3.0
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False

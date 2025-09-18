@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import os
-from classes import moments, parameters, var, dynamic_var, var_with_entry_costs
+from classes import moments, parameters, var, dynamic_var, var_with_entry_costs, var_double_diff_double_delta
 
 def write_calibration_results(path,p,m,sol_c,commentary = None):
     with pd.ExcelWriter(path + '.xlsx', engine='xlsxwriter') as writer:
@@ -447,6 +447,61 @@ def make_counterfactual_recap(p_baseline, sol_baseline, country,
             recap.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]-p_baseline.tariff[idx_country-1,idx_country,1]
             recap_dyn.loc[run, 'delt'] = p.tariff[idx_country-1,idx_country,1]-p_baseline.tariff[idx_country-1,idx_country,1]
         recap.loc[run, 'growth'] = sol_c.g
+        recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
+        
+        if dynamics:
+            dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+                                                    Nt=Nt,t_inf=t_inf,
+                                                    sol_init = sol_baseline,
+                                                    sol_fin = sol_c)
+            dyn_sol_c.compute_non_solver_quantities(p)
+            recap_dyn.loc[run,p_baseline.countries] = dyn_sol_c.cons_eq_welfare
+        
+            
+    if not dynamics:
+        recap.to_csv(recap_path+country+'.csv', index=False)
+    if dynamics:
+        recap_dyn.to_csv(recap_path+'dyn_'+country+'.csv', index=False)
+        # print(country,recap_dyn)
+        
+def make_counterfactual_recap_double_delta(p_baseline, sol_baseline, country,
+                              local_path,recap_path,
+                              dynamics=False,Nt=25,t_inf=500):
+    try:
+        os.mkdir(recap_path)
+    except:
+        pass
+    recap = pd.DataFrame(columns = ['delt_dom','delt_int','growth','World Equal','World Negishi']+p_baseline.countries)
+    recap_dyn = pd.DataFrame(columns = ['delt_dom','delt_int','growth','World Equal','World Negishi']+p_baseline.countries)
+    country_path = local_path+country+'/'
+    files_in_dir = next(os.walk(country_path))[1]
+    run_list = [f for f in files_in_dir if f[0].isnumeric()]
+    run_list.sort(key=float)
+    
+    idx_country = p_baseline.countries.index(country)
+    
+    for i,run in enumerate(run_list):
+        # print(run)
+        p = parameters()
+        p.load_run(country_path+run+'/')
+        
+        sol_c = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+        
+        sol_c.scale_P(p)
+        sol_c.compute_non_solver_quantities(p)
+        sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+        sol_c.compute_world_welfare_changes(p,sol_baseline)
+        if country in p_baseline.countries:
+            recap.loc[run, 'delt_dom'] = p.delta_dom[idx_country,1]/p_baseline.delta_dom[idx_country,1]
+            recap_dyn.loc[run, 'delt_dom'] = p.delta_dom[idx_country,1]/p_baseline.delta_dom[idx_country,1]
+            
+            recap.loc[run, 'delt_int'] = p.delta_int[idx_country,1]/p_baseline.delta_int[idx_country,1]
+            recap_dyn.loc[run, 'delt_int'] = p.delta_int[idx_country,1]/p_baseline.delta_int[idx_country,1]
+            
+        recap.loc[run, 'growth'] = sol_c.g
+        recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
+        recap.loc[run,'World Equal'] = sol_c.cons_eq_pop_average_welfare_change
+        recap.loc[run,'World Negishi'] = sol_c.cons_eq_negishi_welfare_change
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         
         if dynamics:
