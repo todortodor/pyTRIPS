@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 start = time.perf_counter()
 
 def load(path, data_path=None, 
-         dir_path = None, context = 'calibration'):
+         dir_path = None, context = 'counterfactual'):
     # p = parameters(data_path=data_path)
     p = parameters()
     # p.load_data(path)
@@ -212,7 +212,7 @@ list_of_moments = ['GPDIFF','GROWTH','KM_DD_DD', 'OUT',
  'SRGDP','SGDP','RGDPPC','UUPCOST','SINNOVPATUS',
   'TO_DD_DD','TE','DOMPATINUS','DOMPATINCHN','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'PROBINNOVENTER',
- # 'objective'
+ 'objective'
  ]
 # list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 #  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',

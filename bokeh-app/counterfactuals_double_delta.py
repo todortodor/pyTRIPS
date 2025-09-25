@@ -23,7 +23,7 @@ baseline_dics = [
     # {'baseline':'1312','variation': '1.08'},
     # {'baseline':'1312','variation': '1.09'},
     # {'baseline':'1312','variation': '2.01'},
-    # {'baseline':'1312','variation': '2.02'},
+    {'baseline':'1312','variation': '2.02'},
     # {'baseline':'1312','variation': '2.03'},
     # {'baseline':'1312','variation': '2.04'},
     # {'baseline':'1312','variation': '2.05'},
@@ -37,7 +37,7 @@ baseline_dics = [
     # {'baseline':'1312','variation': '3.04'},
     # {'baseline':'1312','variation': '3.05'},
     # {'baseline':'1312','variation': '3.06'},
-    {'baseline':'1312','variation': '4.0'},
+    # {'baseline':'1312','variation': '4.0'},
     ]
 
 for bas in baseline_dics:

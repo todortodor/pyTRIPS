@@ -15,18 +15,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-baseline_number = 1311
-variation = 'baseline'
+baseline_number = 1312
+variation = '2.05'
 # pre_trips_number = 4096
-path = 'double_delta/baseline/'
+path = 'double_delta/1312_2_05/'
 try:
     os.mkdir(path)
 except:
     pass
 
 p = parameters()
-# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 # context = 'counterfactual',
@@ -55,8 +55,8 @@ sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 # plt.show()
 m = moments()
-# m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 m.compute_moments(sol_c,p)
 m.compute_moments_deviations()
 
