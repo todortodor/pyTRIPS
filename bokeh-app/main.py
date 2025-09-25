@@ -210,7 +210,7 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 list_of_moments = ['GPDIFF','GROWTH','KM_DD_DD', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRGDP','SGDP','RGDPPC','UUPCOST','SINNOVPATUS',
-  'TO_DD_DD','TE','DOMPATINUS','DOMPATUS',
+  'TO_DD_DD','TE','DOMPATINUS','DOMPATINCHN','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'PROBINNOVENTER',
  # 'objective'
  ]
@@ -222,11 +222,49 @@ list_of_moments = ['GPDIFF','GROWTH','KM_DD_DD', 'OUT',
 
 comments_dic = {}
 
-comments_dic['1311'] = {
-    "baseline":"baseline :same as original baseline",
-    '1.0':'1.0 : filler,same as baseline',
-    '2.0':'2.0 : half delta_dom USA',
-    '3.0':'3.0 : half delta_dom CHN',
+# comments_dic['1311'] = {
+#     "baseline":"baseline :same as original baseline",
+#     '1.0':'1.0 : filler,same as baseline',
+#     '2.0':'2.0 : half delta_dom USA',
+#     '3.0':'3.0 : half delta_dom CHN',
+#     # '2.0':'2.0 : baseline but bounded delta',
+#     # '2.1':'2.1 : 2.0 with doubled nu',
+#     # '2.2':'2.2 : 2.0 with doubled nu_tilde',
+#     # '3.0':'3.0 : calibrat nu. nu_tilde=nu. target TO_DD_DD',
+#     # '3.1':'3.1 : 3.0 with bounded delta',
+#     # '4.0':'4.0 : 3.0 with nu=1e-6',
+#     # '99.0':'99.0 : original baseline',
+#     # '99.1':'99.1 : SPFLOW instead',
+#     }
+
+comments_dic['1312'] = {
+    "baseline":"baseline",
+    '1.0':'1.0 : nu=1e-6',
+    '1.01':'1.01 : nu=1e-5',
+    '1.02':'1.02 : nu=5e-5',
+    '1.03':'1.03 : nu=1e-4',
+    '1.04':'1.04 : nu=5e-4',
+    '1.05':'1.05 : nu=1e-3',
+    '1.06':'1.06 : nu=5e-3',
+    '1.07':'1.07 : nu=1e-2',
+    '1.08':'1.08 : nu=2e-2',
+    '1.09':'1.09 : nu=3e-2',
+    '2.01':'2.01 : nu=4e-2',
+    '2.02':'2.02 : nu=5e-2',
+    '2.03':'2.03 : nu=6e-2',
+    '2.04':'2.04 : nu=7e-2',
+    '2.05':'2.05 : nu=8e-2',
+    '2.06':'2.06 : nu=9e-2',
+    '2.07':'2.07 : nu=1e-1',
+    '2.08':'2.08 : nu=1.5e-1',
+    '2.09':'2.09 : nu=2e-1',
+    '3.01':'3.01 : nu=2.5e-1',
+    '3.02':'3.02 : nu=3e-1',
+    '3.03':'3.03 : nu=3.5e-1',
+    '3.04':'3.04 : nu=4e-1',
+    '3.05':'3.05 : nu=4.5e-1',
+    '3.06':'3.06 : nu=5e-1',
+    '4.0':'4.0 : calibrate delta_dom_CHN\ntarget DOMPATINCHN',
     # '2.0':'2.0 : baseline but bounded delta',
     # '2.1':'2.1 : 2.0 with doubled nu',
     # '2.2':'2.2 : 2.0 with doubled nu_tilde',
@@ -249,8 +287,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['901','803','806','808']    
 # baseline_list = ['1030','1040','1050']    
 # baseline_list = ['1050']    
-baseline_list = ['1311']    
-baseline_mom = '1311'
+baseline_list = ['1312']    
+baseline_mom = '1312'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -783,14 +821,14 @@ print(time.perf_counter() - start)
 #%% counterfactuals
 
 # baseline_cf_both = '101'
-baseline_cf = '1311'
+baseline_cf = '1312'
 country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 
 cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1311') and s.startswith('baseline')], key=section_end)#+\
+                if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 

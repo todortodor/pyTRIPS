@@ -15,7 +15,8 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1311'
+baseline_number = '1312'
+variation = '3.05'
 
 if new_run:
     p = parameters()
@@ -23,12 +24,12 @@ if new_run:
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # print(p.k)
     # p.mask['k'] = np.array([ True,  True])
-    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
     start_time = time.perf_counter()
 
     m = moments()
     m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/3.0/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
 # m.load_data('data_smooth_3_years/data_12_countries_1992/')
 # p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
 # sol = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'calibration')
@@ -49,34 +50,34 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.a=0.1
 
 # p.delta_dom[0,1] = p.delta_dom[0,1]/2
-p.delta_dom[3,1] = p.delta_dom[3,1]/2
-p.update_delta_eff()
+# p.delta_dom[3,1] = p.delta_dom[3,1]/2
+# p.update_delta_eff()
 # p.nu_tilde[:] = p.nu.copy()
-# p.nu[:] = 1e-6
-p.calib_parameters = ['eta', 'k', 'fe', 'T', 
-                      'nu_tilde',
-                      'zeta', 'g_0', 
-                      'delta_int', 
-                      'delta_dom', 
-                      'fo', 
-                      'theta']
-m.list_of_moments=['GPDIFF',
- 'GROWTH',
- 'KM_DD_DD',
- 'OUT',
- 'RD',
- 'TO_DD_DD',
- 'RP',
- 'SRGDP',
- 'SINNOVPATUS',
- 'SPFLOW',
- 'UUPCOST',
- 'DOMPATINUS',
- 'TE']
+# p.nu[1] = 0.5
+# p.calib_parameters = ['eta', 'k', 'fe', 'T', 
+#                       'nu_tilde',
+#                       'zeta', 'g_0', 
+#                       'delta_int', 
+#                       # 'delta_dom', 
+#                       'fo', 
+#                       'theta']
+# m.list_of_moments=['GPDIFF',
+#  'GROWTH',
+#  'KM_DD_DD',
+#  'OUT',
+#  'RD',
+#  'TO_DD_DD',
+#  'RP',
+#  'SRGDP',
+#  'SINNOVPATUS',
+#  'SPFLOW',
+#  'UUPCOST',
+#  'DOMPATINUS',
+#  'TE']
 # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
-# p.calib_parameters.append('a')
+p.calib_parameters.append('delta_dom')
 # p.calib_parameters.append('d')
-# m.list_of_moments.append('PROBINNOVENT')
+m.list_of_moments.append('DOMPATINCHN')
 
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,
@@ -174,10 +175,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1311'
+baseline_number = '1312'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 3.0
+run_number = 4.0
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False

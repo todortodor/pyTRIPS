@@ -18,10 +18,34 @@ import time
 recaps_path = 'counterfactual_recaps/double_delta/'
 
 baseline_dics = [
-    {'baseline':'1311','variation': 'baseline'},
-    {'baseline':'1311','variation': '2.0'},
-    {'baseline':'1311','variation': '3.0'},
+    # {'baseline':'1312','variation': 'baseline'},
+    # {'baseline':'1312','variation': '1.0'},
+    # {'baseline':'1312','variation': '1.08'},
+    # {'baseline':'1312','variation': '1.09'},
+    # {'baseline':'1312','variation': '2.01'},
+    # {'baseline':'1312','variation': '2.02'},
+    # {'baseline':'1312','variation': '2.03'},
+    # {'baseline':'1312','variation': '2.04'},
+    # {'baseline':'1312','variation': '2.05'},
+    # {'baseline':'1312','variation': '2.06'},
+    # {'baseline':'1312','variation': '2.07'},
+    # {'baseline':'1312','variation': '2.08'},
+    # {'baseline':'1312','variation': '2.09'},
+    # {'baseline':'1312','variation': '3.01'},
+    # {'baseline':'1312','variation': '3.02'},
+    # {'baseline':'1312','variation': '3.03'},
+    # {'baseline':'1312','variation': '3.04'},
+    # {'baseline':'1312','variation': '3.05'},
+    # {'baseline':'1312','variation': '3.06'},
+    {'baseline':'1312','variation': '4.0'},
     ]
+
+for bas in baseline_dics:
+    try:
+        os.mkdir(f"counterfactual_recaps/double_delta/baseline_1312_{bas['variation']}")
+    except:
+        pass
+#%%
 
 def process_country(args):
     p, c, local_path, sol_baseline, recap_path = args

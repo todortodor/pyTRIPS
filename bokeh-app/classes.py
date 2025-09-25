@@ -233,6 +233,7 @@ class parameters:
                     'fo':[np.s_[0]],
                     'delta':[np.s_[::S]],#,np.s_[S-1]],
                     'delta_dom':[np.s_[::S]],#,np.s_[S-1]],
+                    # 'delta_dom':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'delta_int':[np.s_[::S]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
@@ -4757,7 +4758,7 @@ class moments:
                                'UUPCOST','UUPCOSTS','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
                                'JUPCOSTRD','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM','TE','TECHEM','TEPHARMA','TEPHARMACHEM',
                                'DOMPATRATUSEU','DOMPATUS','DOMPATEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
-                               'DOMPATINUS','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
+                               'DOMPATINUS','DOMPATINCHN','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
                                'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
         else:
             self.list_of_moments = list_of_moments
@@ -4822,6 +4823,7 @@ class moments:
                              'DOMPATUS': 1,
                              'DOMPATEU': 1,
                              'DOMPATINUS': 1,
+                             'DOMPATINCHN': 1,
                              'DOMPATINEU': 1,
                              'SPATORIG': 2,
                              'SPATDEST': 2,
@@ -4861,7 +4863,7 @@ class moments:
         return ['GPDIFF', 'GROWTH', 'KM','KM_DD_DD','KMCHEM','KMPHARMA','KMPHARMACHEM','KM_GDP', 'OUT', 'RD',
                 'RDPHARMA','RDCHEM','RDPHARMACHEM','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
-                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINEU',
+                'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINCHN','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','UUPCOSTS','PCOST','PCOSTINTER',
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
                 'SINNOVPATEU','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM',
@@ -5057,6 +5059,7 @@ class moments:
         self.DOMPATUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=1)['patent flows'].sum()
         self.DOMPATINEU_target = self.cc_moments.loc[(2,2),'patent flows']/self.cc_moments.xs(2,level=0)['patent flows'].sum()
         self.DOMPATINUS_target = self.cc_moments.loc[(1,1),'patent flows']/self.cc_moments.xs(1,level=0)['patent flows'].sum()
+        self.DOMPATINCHN_target = self.cc_moments.loc[(3,3),'patent flows']/self.cc_moments.xs(3,level=0)['patent flows'].sum()
         self.inter_TP_data = self.cc_moments.query("destination_code != origin_code")['patent flows'].sum()
         self.SINNOVPATEU_target = self.moments.loc['SINNOVPATEU'].value
         self.SINNOVPATUS_target = np.array([self.moments.loc['SINNOVPATUS'].value])[0]#*(S-1))
@@ -5153,6 +5156,7 @@ class moments:
                     'DOMPATUS':pd.Index(['scalar']),
                     'DOMPATEU':pd.Index(['scalar']),
                     'DOMPATINUS':pd.Index(['scalar']),
+                    'DOMPATINCHN':pd.Index(['scalar']),
                     'DOMPATINEU':pd.Index(['scalar']),
                     'NUR':pd.Index(['scalar']),
                     'ERDUS':pd.Index(['scalar']),
@@ -5175,6 +5179,7 @@ class moments:
                                                                             )
             self.idx['GPDIFF'] = pd.Index(self.sectors[1:], name='sector')
             self.idx['DOMPATINUS'] = pd.Index(self.sectors[1:], name='sector')
+            self.idx['DOMPATINCHN'] = pd.Index(self.sectors[1:], name='sector')
         
         self.shapes = {'SPFLOW':(len(self.countries),len(self.countries)-1),
                        'SPFLOWDOM':(len(self.countries),len(self.countries)),
@@ -5807,6 +5812,7 @@ class moments:
         
     def compute_DOMPATINUS(self,var,p):
         self.DOMPATINUS = var.pflow[0,0]/var.pflow[0,:].sum()
+        self.DOMPATINCHN = var.pflow[3,3]/var.pflow[3,:].sum()
         
     def compute_ERDUS(self,var,p):
         self.ERDUS = var.semi_elast_patenting_delta[0,1]
@@ -5919,7 +5925,7 @@ class moments:
             self.compute_SINNOVPATUS(var,p)
             self.compute_NUR(var,p)
             self.compute_TO(var,p)
-            # self.compute_TO_DD_DD(var,p)
+            self.compute_TO_DD_DD(var,p)
             self.compute_TE(var,p)
             self.compute_DOMPATRATUSEU(var,p)
             self.compute_SPATDEST(var,p)
