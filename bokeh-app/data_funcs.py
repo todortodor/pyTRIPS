@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import os
-from classes import moments, parameters, var, dynamic_var, var_with_entry_costs, var_double_diff_double_delta
+from classes import moments, parameters, var, dynamic_var, dynamic_var_double_diff_double_delta, var_with_entry_costs, var_double_diff_double_delta
 
 def write_calibration_results(path,p,m,sol_c,commentary = None):
     with pd.ExcelWriter(path + '.xlsx', engine='xlsxwriter') as writer:
@@ -505,7 +505,7 @@ def make_counterfactual_recap_double_delta(p_baseline, sol_baseline, country,
         recap.loc[run,p_baseline.countries] = sol_c.cons_eq_welfare
         
         if dynamics:
-            dyn_sol_c = dynamic_var.var_from_vector(p.dyn_guess, p, compute=True,
+            dyn_sol_c = dynamic_var_double_diff_double_delta.var_from_vector(p.dyn_guess, p, compute=True,
                                                     Nt=Nt,t_inf=t_inf,
                                                     sol_init = sol_baseline,
                                                     sol_fin = sol_c)

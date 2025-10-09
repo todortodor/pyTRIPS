@@ -827,8 +827,9 @@ country_cf = 'USA'
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
 
-cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
+# cf_list = sorted([s for s in os.listdir(cf_path) 
+#                 if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
+cf_list = sorted(['baseline_1312'], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
@@ -838,7 +839,7 @@ country_cf_select = Select(value=country_cf,
                             options=countries)
 
 def get_data_cf_both(baseline,country):
-    df_cf_both = pd.read_csv(cf_path+'baseline_'+baseline+'/both/'+country+'.csv')
+    df_cf_both = pd.read_csv(cf_path+'baseline_'+baseline+'/both/dyn_'+country+'.csv')
     # df_cf_both['Growth rate'] = df_cf_both['growth']/df_cf_both.loc[np.argmin(np.abs(df_cf_both.delt_int-1))].growth
     df_cf_both.set_index('delt_int',inplace=True)
     df_cf_both.rename_axis('delt_both',inplace=True)
@@ -868,7 +869,7 @@ p_cf_both.legend.label_text_font_size = '8pt'
 p_cf_both.add_layout(p_cf_both.legend[0], 'right')
 
 def get_data_cf_int(baseline,country):
-    df_cf_int = pd.read_csv(cf_path+'baseline_'+baseline+'/int/'+country+'.csv')
+    df_cf_int = pd.read_csv(cf_path+'baseline_'+baseline+'/int/dyn_'+country+'.csv')
     # df_cf_int['Growth rate'] = df_cf_int['growth']/df_cf_int.loc[np.argmin(np.abs(df_cf_int.delt_int-1))].growth
     df_cf_int.set_index('delt_int',inplace=True)
     return df_cf_int
@@ -897,7 +898,7 @@ p_cf_int.legend.label_text_font_size = '8pt'
 p_cf_int.add_layout(p_cf_int.legend[0], 'right')
 
 def get_data_cf_dom(baseline,country):
-    df_cf_dom = pd.read_csv(cf_path+'baseline_'+baseline+'/dom/'+country+'.csv')
+    df_cf_dom = pd.read_csv(cf_path+'baseline_'+baseline+'/dom/dyn_'+country+'.csv')
     # df_cf_dom['Growth rate'] = df_cf_dom['growth']/df_cf_dom.loc[np.argmin(np.abs(df_cf_dom.delt_dom-1))].growth
     df_cf_dom.set_index('delt_dom',inplace=True)
     return df_cf_dom

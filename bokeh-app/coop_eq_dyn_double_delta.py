@@ -34,7 +34,7 @@ baseline_dics = [
 
 lb_delta = 0.01
 ub_delta = 12
-dynamics=False
+dynamics=True
 # ub_delta = 1
 
 import time
@@ -59,7 +59,7 @@ if __name__ == '__main__':
             start = time.perf_counter()
             
             p_opti, sol_opti = find_coop_eq_double_delta(p_baseline,aggregation_method,
-                             lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
+                             lb_delta=lb_delta,ub_delta=ub_delta,dynamics=dynamics,
                              solver_options=None,tol=1e-12,
                              static_eq_deltas = None,custom_weights=None,
                              custom_x0 = None,parallel=False,

@@ -4076,7 +4076,7 @@ class dynamic_var:
             if it>40 and print_once:
                 print('stuck')
                 print_once = False
-                self.plot_numerical_derivatives()
+                # self.plot_numerical_derivatives()
                 cond = False
             it+=1
             
@@ -4740,6 +4740,1053 @@ class dynamic_var:
             pass
         time_evol = np.abs(getattr(self,qty)[...,-1]-getattr(self,qty)[...,0])/np.abs(origin_deriv)
         return np.nanmean(time_evol),np.nanmedian(time_evol)
+
+class dynamic_var_double_diff_double_delta:
+    def __init__(self, t_inf = 200, nbr_of_time_points = 1001, 
+                 N = 7, S = 2, sol_init = None, sol_fin = None):
+        self.t_inf = t_inf
+        self.Nt = nbr_of_time_points
+        self.t = np.linspace(-1,1,self.Nt)
+        self.D,self.t_cheby = cheb(self.Nt-1)
+        self.D_neuman,self.t_cheby = cheb_neuman_right(self.Nt-1)
+        self.t_real = (self.t_cheby+1)*self.t_inf/2
+        # print(self.t_real)
+        self.sol_init = sol_init
+        self.sol_fin = sol_fin
+        if N == 7:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'ROW']
+        if N==13:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'AUS', 'MEX', 'IDN', 'ROW']
+        if N==12:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'MEX', 'ZAF', 'ROW']
+        if N==11:
+            self.countries = ['USA', 'EUR', 'JAP', 'CHN', 'BRA', 'IND', 'CAN',
+                              'KOR', 'RUS', 'MEX', 'ROW']
+        self.map_parameter = 32
+        
+    def elements(self): 
+        for key, item in sorted(self.__dict__.items()):
+            print(key, ',', str(type(item))[8:-2])
+
+    def copy(self):
+        frame = deepcopy(self)
+        return frame
+            
+    def vector_from_var(self):
+        price_indices = self.price_indices.ravel()
+        w = self.w.ravel()
+        Z = self.Z.ravel()
+        list_of_raveled_vectors = [getattr(self,qty)[...,1:,:].ravel()
+                                   for qty in ['PSI_CL','PSI_CD','PSI_MNP','PSI_MPND',
+                                               # 'PSI_MPD','V_PD','V_P','V_NP']]
+                                               'PSI_MPL','PSI_MPD','V_PD','DELTA_V','V_NP']]
+        vec = np.concatenate([price_indices,w,Z]+list_of_raveled_vectors, axis=0)
+        return vec
+    
+    
+    @staticmethod
+    def var_from_vector(vec,p,compute = True,sol_init=None,Nt=25,t_inf=500,sol_fin=None):
+        init = dynamic_var_double_diff_double_delta(sol_init=sol_init,nbr_of_time_points =Nt,t_inf=t_inf,sol_fin=sol_fin)
+        init.initiate_state_variables_0(sol_init)
+        dic_of_guesses = {'price_indices':np.zeros((p.N,Nt)),
+                        'w':np.zeros((p.N,Nt)),
+                        'Z':np.zeros((p.N,Nt)),
+                        'PSI_CL':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'PSI_CD':np.zeros((p.N,p.S,Nt))[...,1:,:],
+                        'PSI_MNP':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'PSI_MPND':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'PSI_MPL':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'PSI_MPD':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        # 'PSI_CD':repeat_for_all_times(sol_fin.PSI_CD-sol_init.PSI_CD,dyn_var.Nt)[...,1:,:],
+                        # 'PSI_MNP':repeat_for_all_times(sol_fin.PSI_MNP-sol_init.PSI_MNP,dyn_var.Nt)[...,1:,:],
+                        # 'PSI_MPND':repeat_for_all_times(sol_fin.PSI_MPND-sol_init.PSI_MPND,dyn_var.Nt)[...,1:,:],
+                        # 'PSI_MPD':repeat_for_all_times(sol_fin.PSI_MPD-sol_init.PSI_MPD,dyn_var.Nt)[...,1:,:],
+                        'V_PD':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'DELTA_V':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:],
+                        'V_NP':np.zeros((p.N,p.N,p.S,Nt))[...,1:,:]}
+        init.guess_from_dic(dic_of_guesses)
+        init.guess_from_vector(vec)
+        if compute:
+            init.compute_solver_quantities(p)
+        return init
+    
+    def guess_from_vector(self, x_old):
+        idx = 0
+        idx_end = 0
+        
+        idx_end += self.price_indices.size
+        self.guess_price_indices(x_old[idx:idx_end].reshape(self.price_indices.shape))
+        idx = idx_end
+        
+        idx_end += self.w.size
+        self.guess_wage(x_old[idx:idx_end].reshape(self.w.shape))
+        idx = idx_end
+        
+        idx_end += self.Z.size
+        self.guess_Z(x_old[idx:idx_end].reshape(self.Z.shape))
+        idx = idx_end
+        
+        idx_end += self.PSI_CL[...,1:,:].size
+        self.guess_PSI_CL(x_old[idx:idx_end].reshape(self.PSI_CL[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.PSI_CD[...,1:,:].size
+        self.guess_PSI_CD(x_old[idx:idx_end].reshape(self.PSI_CD[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.PSI_MNP[...,1:,:].size
+        self.guess_PSI_MNP(x_old[idx:idx_end].reshape(self.PSI_MNP[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.PSI_MPND[...,1:,:].size
+        self.guess_PSI_MPND(x_old[idx:idx_end].reshape(self.PSI_MPND[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.PSI_MPL[...,1:,:].size
+        self.guess_PSI_MPL(x_old[idx:idx_end].reshape(self.PSI_MPL[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.PSI_MPD[...,1:,:].size
+        self.guess_PSI_MPD(x_old[idx:idx_end].reshape(self.PSI_MPD[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.V_PD[...,1:,:].size
+        self.guess_V_PD(x_old[idx:idx_end].reshape(self.V_PD[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end        
+        
+        idx_end += self.DELTA_V[...,1:,:].size
+        self.guess_DELTA_V(x_old[idx:idx_end].reshape(self.DELTA_V[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+        idx_end += self.V_NP[...,1:,:].size
+        self.guess_V_NP(x_old[idx:idx_end].reshape(self.V_NP[...,1:,:].shape)
+                          ,only_patenting_sectors=True)
+        idx = idx_end
+        
+    def guess_price_indices(self,price_indices_init):
+        self.price_indices = price_indices_init
+        
+    def guess_wage(self,w_init):
+        self.w = w_init
+        
+    def guess_Z(self,Z_init):
+        self.Z = Z_init
+        
+    def guess_PSI_CD(self,PSI_CD_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_CD_init.shape)
+            shape[1] = shape[1]+1
+            self.PSI_CD = np.zeros(shape)
+            self.PSI_CD[...,1:,:] = PSI_CD_init
+        else:
+            self.PSI_CD = PSI_CD_init
+            
+    def guess_PSI_CL(self,PSI_CL_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_CL_init.shape)
+            shape[2] = shape[2]+1
+            self.PSI_CL = np.zeros(shape)
+            self.PSI_CL[...,1:,:] = PSI_CL_init
+        else:
+            self.PSI_CL = PSI_CL_init
+        
+    def guess_PSI_MNP(self,PSI_MNP_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_MNP_init.shape)
+            shape[2] = shape[2]+1
+            self.PSI_MNP = np.zeros(shape)
+            self.PSI_MNP[...,1:,:] = PSI_MNP_init
+        else:
+            self.PSI_MNP = PSI_MNP_init
+        
+    def guess_PSI_MPND(self,PSI_MPND_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_MPND_init.shape)
+            shape[2] = shape[2]+1
+            self.PSI_MPND = np.zeros(shape)
+            self.PSI_MPND[...,1:,:] = PSI_MPND_init
+        else:
+            self.PSI_MPND = PSI_MPND_init
+        
+    def guess_PSI_MPD(self,PSI_MPD_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_MPD_init.shape)
+            shape[2] = shape[2]+1
+            self.PSI_MPD = np.zeros(shape)
+            self.PSI_MPD[...,1:,:] = PSI_MPD_init
+        else:
+            self.PSI_MPD = PSI_MPD_init
+        
+    def guess_PSI_MPL(self,PSI_MPL_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(PSI_MPL_init.shape)
+            shape[2] = shape[2]+1
+            self.PSI_MPL = np.zeros(shape)
+            self.PSI_MPL[...,1:,:] = PSI_MPL_init
+        else:
+            self.PSI_MPL = PSI_MPL_init
+        
+    def guess_V_PD(self, V_PD_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(V_PD_init.shape)
+            shape[2] = shape[2]+1
+            self.V_PD = np.zeros(shape)
+            self.V_PD[...,1:,:] = V_PD_init
+        else:
+            self.V_PD = V_PD_init
+        
+    def guess_V_P(self, V_P_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(V_P_init.shape)
+            shape[2] = shape[2]+1
+            self.V_P = np.zeros(shape)
+            self.V_P[...,1:,:] = V_P_init
+        else:
+            self.V_P = V_P_init
+        
+    def guess_V_NP(self, V_NP_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(V_NP_init.shape)
+            shape[2] = shape[2]+1
+            self.V_NP = np.zeros(shape)
+            self.V_NP[...,1:,:] = V_NP_init
+        else:
+            self.V_NP = V_NP_init
+            
+    def guess_DELTA_V(self, DELTA_V_init,only_patenting_sectors=False):
+        if only_patenting_sectors:
+            shape = list(DELTA_V_init.shape)
+            shape[2] = shape[2]+1
+            self.DELTA_V = np.zeros(shape)
+            self.DELTA_V[...,1:,:] = DELTA_V_init
+        else:
+            self.DELTA_V = DELTA_V_init
+        
+    def guess_from_dic(self, dic_of_guesses):
+        self.guess_price_indices(dic_of_guesses['price_indices'])
+        self.guess_wage(dic_of_guesses['w'])
+        self.guess_Z(dic_of_guesses['Z'])
+        self.guess_PSI_CL(dic_of_guesses['PSI_CL'],only_patenting_sectors=True)
+        self.guess_PSI_CD(dic_of_guesses['PSI_CD'],only_patenting_sectors=True)
+        self.guess_PSI_MNP(dic_of_guesses['PSI_MNP'],only_patenting_sectors=True)
+        self.guess_PSI_MPND( dic_of_guesses['PSI_MPND'],only_patenting_sectors=True)
+        self.guess_PSI_MPL( dic_of_guesses['PSI_MPL'],only_patenting_sectors=True)
+        self.guess_PSI_MPD( dic_of_guesses['PSI_MPD'],only_patenting_sectors=True)
+        self.guess_V_PD( dic_of_guesses['V_PD'],only_patenting_sectors=True)
+        self.guess_V_NP( dic_of_guesses['V_NP'],only_patenting_sectors=True)
+        try:
+            self.guess_V_P( dic_of_guesses['V_P'],only_patenting_sectors=True)
+        except:
+            pass
+        try:
+            self.guess_DELTA_V( dic_of_guesses['DELTA_V'],only_patenting_sectors=True)
+        except:
+            pass
+        
+    def initiate_state_variables_0(self,var):
+        self.PSI_CL_0 = var.PSI_CL
+        self.PSI_CD_0 = var.PSI_CD
+        self.PSI_MNP_0 = var.PSI_MNP
+        self.PSI_MPND_0 = var.PSI_MPND
+        self.PSI_MPL_0 = var.PSI_MPL
+        self.PSI_MPD_0 = var.PSI_MPD
+        self.PSI_M_0 = self.PSI_MNP_0+self.PSI_MPND_0+self.PSI_MPL_0+self.PSI_MPD_0
+    
+    def compute_phi(self, p):
+        self.phi = np.einsum('is,nis,nis,ist,ist->nist',
+                p.T**(1/p.theta[None,:]),
+                1/p.tau,
+                1/(1+p.tariff),
+                self.w[:,None,:]**(-p.alpha[None,:,None]),
+                self.price_indices[:,None,:]**(p.alpha[None,:,None]-1))
+        
+    def compute_PSI_M(self,p):
+        self.PSI_M = self.PSI_MNP + self.PSI_MPND + self.PSI_MPD + self.PSI_MPL
+    
+    def compute_sectoral_prices(self, p):
+        power = p.sigma-1
+
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, 1:, None] \
+            * ((self.PSI_M[...,1:,:]+self.PSI_M_0[...,1:,None])*self.phi[...,1:,:]**power[None, None, 1:,None]).sum(axis=1)
+
+        B = (self.PSI_CD[...,1:,:]+self.PSI_CD_0[...,1:,None])*(
+            self.phi[...,1:,:]**p.theta[None,None,1:,None]).sum(axis=1)**(power/p.theta)[None, 1:,None]
+        
+        C = ((self.PSI_CL[...,1:,:]+self.PSI_CL_0[...,1:,None])*self.phi[...,1:,:]**power[None, None, 1:,None]).sum(axis=1)
+
+        self.P_M = np.full((p.N, p.S, self.Nt),np.inf)
+        self.P_M[:,1:,:] = (A/(A+B+C))**(1/(1-p.sigma))[None, 1:,None]
+        
+        self.P_CD = np.ones((p.N, p.S, self.Nt))
+        self.P_CD[:,1:,:] = (B/(A+B+C))**(1/(1-p.sigma))[None, 1:,None]
+        
+        self.P_CL = np.ones((p.N, p.S, self.Nt))
+        self.P_CL[:,1:,:] = (C/(A+B+C))**(1/(1-p.sigma))[None, 1:,None]
+        
+    def compute_patenting_thresholds(self, p):
+        A = np.einsum('nt,n,s,it,i->nist',
+                               self.w,
+                               p.r_hjort,
+                               p.fe[1:],
+                               1/self.w,
+                               1/p.r_hjort,
+                               )
+        
+        self.psi_C = np.full((p.N,p.N,p.S,self.Nt),np.inf)
+        self.psi_C[...,1:,:] = np.einsum('nt,s,n,nist->nist',
+                                         self.w,
+                                         p.fe[1:],
+                                         p.r_hjort,
+                                         1/(self.DELTA_V[...,1:,:])
+                                         )
+        self.psi_star = np.maximum(self.psi_C,1)
+        psi_star_n_star = np.min(self.psi_star,axis=0)
+        
+        x_old = np.max(self.psi_C[...,1:,:], axis=0)
+        mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
+        
+        condition = np.maximum(A*(psi_star_n_star[None,:,1:,:]/self.psi_C[...,1:,:]-1),0).sum(axis=0)>=p.fo[None,1:,None]
+        
+        x_new = None
+        cond = True
+        it = 0
+        print_once= True
+        
+        while cond:
+            if it>0:
+                x_old = x_new
+            mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
+            x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:,None])/np.sum(A/self.psi_C[...,1:,:],axis=0,where=mask)
+            cond = np.any(x_old[~condition] != x_new[~condition])
+            if it>40 and print_once:
+                print('stuck')
+                print_once = False
+                self.plot_numerical_derivatives()
+                cond = False
+            it+=1
+            
+        x_new[condition] = psi_star_n_star[...,1:,:][condition]
+        self.psi_o_star = np.full((p.N,p.S,self.Nt),np.inf)
+        self.psi_o_star[...,1:,:] = x_new
+        self.psi_m_star = np.full((p.N,p.N,p.S,self.Nt),np.inf)
+        self.psi_m_star[...,1:,:] = np.maximum(self.psi_o_star[None,:,1:,:],self.psi_star[...,1:,:])
+        
+    def compute_V(self,p):
+        self.V = np.zeros((p.N,p.S,self.Nt))        
+        A1 = ((p.k[None,None,1:,None]/(p.k[None,None,1:,None]-1))*self.V_NP[...,1:,:]).sum(axis=0)
+        A2 = np.einsum('nist,nt,s,n,nist->ist',
+                       self.psi_m_star[...,1:,:]**-p.k[None,None,1:,None],
+                       self.w,
+                       p.fe[1:],
+                       p.r_hjort,
+                       p.k[None,None,1:,None]*self.psi_m_star[...,1:,:]/(self.psi_C[...,1:,:]*(p.k[None,None,1:,None]-1))-1
+                       )
+        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None]
+        self.V[...,1:,:] = A1+A2-B
+        
+    def compute_labor_research(self, p):
+        self.l_R = np.zeros((p.N,p.S,self.Nt))
+        self.l_R[...,1:,:] = np.einsum('is,ist,it->ist',
+                                     p.eta[...,1:],
+                                     self.V[...,1:,:],
+                                     1/self.w)**(1/p.kappa)
+    
+    def compute_growth(self, p):
+        self.g_s = p.k[:,None]*np.einsum('is,ist -> st',
+                                 p.eta,
+                                 self.l_R**(1-p.kappa)
+                                 )/(p.k[:,None]-1) - p.zeta[:,None]
+        self.g_s[0,:] = p.g_0
+        self.g = (p.beta[:,None]*self.g_s/(p.sigma[:,None]-1)).sum(axis=0) / (p.beta*p.alpha).sum()
+        
+    def compute_labor_allocations(self, p):
+        self.l_Ae = np.zeros((p.N,p.N,p.S,self.Nt))
+        self.l_Ae[...,1:,:] = np.einsum('n,s,is,ist,nist -> inst',
+                         p.r_hjort,
+                         p.fe[1:],
+                         p.eta[...,1:],
+                         self.l_R[...,1:,:]**(1-p.kappa),
+                         self.psi_m_star[...,1:,:]**-p.k[None,None,1:,None]
+                         )
+        self.l_Ao = np.zeros((p.N,p.S,self.Nt))
+        self.l_Ao[...,1:,:] = np.einsum('i,s,is,ist,ist -> ist',
+                         p.r_hjort,
+                         p.fo[1:],
+                         p.eta[...,1:],
+                         self.l_R[...,1:,:]**(1-p.kappa),
+                         self.psi_o_star[...,1:,:]**-p.k[None,1:,None]
+                         )
+        self.l_P = p.labor[:,None]-(self.l_Ao+self.l_R+self.l_Ae.sum(axis=0)).sum(axis=1)
+        
+    def compute_trade_flows_and_shares(self, p, assign = True):
+            temp = ((self.PSI_M+self.PSI_M_0[...,None])[...,1:,:]*self.phi[...,1:,:]**(p.sigma-1)[None, None, 1:,None]).sum(axis=1)
+            self.X_M = np.zeros((p.N, p.N, p.S, self.Nt))
+            self.X_M[...,1:,:] = np.einsum('nist,nist,nst,nst,s,nt->nist',
+                                    self.phi[..., 1:,:]**(p.sigma-1)[None, None, 1:,None],
+                                    (self.PSI_M+self.PSI_M_0[...,None])[...,1:,:],
+                                    1/temp,
+                                    self.P_M[...,1:,:]**(1-p.sigma[None,1:,None]),
+                                    p.beta[1:],
+                                    self.Z
+                                    )
+            self.X_CL = np.zeros((p.N, p.N, p.S, self.Nt))
+            self.X_CL[...,1:,:] = np.einsum('nist,nist,nst,nst,s,nt->nist',
+                                    self.phi[..., 1:,:]**(p.sigma-1)[None, None, 1:,None],
+                                    (self.PSI_CL+self.PSI_CL_0[...,None])[...,1:,:],
+                                    1/temp,
+                                    self.P_CL[...,1:,:]**(1-p.sigma[None,1:,None]),
+                                    p.beta[1:],
+                                    self.Z
+                                    )
+            self.X_CD = np.einsum('nist,nst,nst,s,nt->nist',
+                                    self.phi**(p.theta)[None,None,:,None],
+                                    1/(self.phi**(p.theta)[None,None,:,None]).sum(axis=1),
+                                    self.P_CD**(1-p.sigma[None,:,None]),
+                                    p.beta,
+                                    self.Z
+                                    )
+
+            self.X = self.X_M+self.X_CD+self.X_CL
+            
+    def compute_profit(self,p):
+        self.profit = np.zeros((p.N,p.N,p.S,self.Nt))
+        self.profit[...,1:,:] = np.einsum('nist,s,nist,nis->nist',
+                                self.X_M[...,1:,:],
+                                1/p.sigma[1:],
+                                1/(self.PSI_M+self.PSI_M_0[...,None])[...,1:,:],
+                                1/(1+p.tariff[...,1:]))
+    
+    def compute_nominal_final_consumption(self,p):
+        self.nominal_final_consumption = self.Z - np.einsum('s,nist,nis->it',
+                                                            1-p.alpha,
+                                                            self.X - self.X_M/p.sigma[None,None,:,None],
+                                                            1/(1+p.tariff))
+    
+    def compute_interest_rate(self,p):
+        self.CP_growth_rate = 2*np.einsum('tu,nu->nt',self.D_neuman,self.nominal_final_consumption)\
+            /(self.t_inf*self.nominal_final_consumption)
+        
+        A = p.rho + (self.g[None,:]+self.CP_growth_rate)/p.gamma
+        
+        self.inflation = 2*np.einsum('tu,nu->nt',self.D_neuman,self.price_indices)\
+            /(self.t_inf*self.price_indices)
+            
+        self.r = A + (1-1/p.gamma)*self.inflation
+        
+    def compute_solver_quantities(self,p):
+        self.compute_phi(p)
+        self.compute_PSI_M(p)
+        self.compute_sectoral_prices(p)
+        self.compute_patenting_thresholds(p)
+        self.compute_V(p)
+        self.compute_labor_research(p)
+        self.compute_growth(p)
+        self.compute_labor_allocations(p)
+        self.compute_trade_flows_and_shares(p)
+        self.compute_profit(p)
+        self.compute_nominal_final_consumption(p)
+        self.compute_interest_rate(p)
+        
+    def compute_wage(self,p):
+        wage = (p.alpha[None, :, None] * ((self.X - self.X_M/p.sigma[None, None, :, None])/(1+p.tariff[...,None])).sum(axis=0)
+                ).sum(axis=1)/self.l_P
+        return wage
+        
+    def compute_expenditure(self,p):
+        A = np.einsum('nist->it', self.X)
+        B = np.einsum('it,nist->it', self.w, self.l_Ae)
+        C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
+        D = np.einsum('nt,inst->it', self.w, self.l_Ae)
+        Z = (A+B-(C+D))
+        A1 = np.einsum('nist,nis->it', 
+                      self.X,
+                      1/(1+p.tariff))
+        A2 = np.einsum('inst,ins,ins->it', 
+                      self.X,
+                      p.tariff,
+                      1/(1+p.tariff))
+        B = np.einsum('it,nist->it', self.w, self.l_Ae)
+        C = np.einsum('i,t->it',
+                      p.deficit_share_world_output,
+                      np.einsum('nist,nis->t', 
+                                  self.X,
+                                  1/(1+p.tariff)
+                                  )
+                      )
+        D = np.einsum('nt,inst->it', self.w, self.l_Ae)
+        Z = (A1+A2+B-(C+D))
+        return Z
+        
+    def compute_price_indices(self,p):
+        power = (p.sigma-1)
+        A = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None, :, None] \
+            * ((self.PSI_M + self.PSI_M_0[...,None]) * self.phi**power[None, None, :, None]).sum(axis=1)
+        B = (self.PSI_CD + self.PSI_CD_0[...,None])*(self.phi**p.theta[None,None,:,None]).sum(axis=1)**(power/p.theta)[None, :, None]
+        C = ((self.PSI_CL + self.PSI_CL_0[...,None]) * self.phi**power[None, None, :, None]).sum(axis=1)
+
+        temp = (gamma((p.theta+1-p.sigma)/p.theta)[None,:,None]*(A+B+C))
+        one_over_price_indices_no_pow_no_prod =  np.divide(1, temp, out=np.full_like(temp,np.inf), where=temp > 0)
+        price_indices = (one_over_price_indices_no_pow_no_prod**(p.beta[None, :, None]/(p.sigma[None, :, None]-1)) ).prod(axis=1)
+        return price_indices
+    
+    def compute_PSI_CL(self,p):
+        self.PSI_CL_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_CL[...,1:,:])/self.t_inf
+        PSI_CL = np.zeros((p.N,p.N,p.S,self.Nt))
+        numA = np.einsum('s,nist->nist',
+            p.nu[1:],
+            self.PSI_MNP[...,1:,:]+self.PSI_MNP_0[...,1:,None],
+            )
+        numB = np.einsum('nis,nist->nist',
+            p.delta_eff[:,:,1:],
+            self.PSI_MPL[...,1:,:]+self.PSI_MPL_0[...,1:,None],
+            )
+        numC = self.PSI_CL_dot
+        PSI_CL[...,1:,:] = np.einsum('nist,st->nist',
+                           numA+numB-numC,
+                           1/(self.g_s[1:,:]+p.zeta[1:,None]+p.nu_tilde[1:,None])
+                           )-self.PSI_CL_0[...,1:,None]
+        
+        PSI_CL[...,-1] = 0
+        
+        return PSI_CL
+    
+    def compute_PSI_CD(self,p):
+        self.PSI_CD_dot = 2*np.einsum('tu,nsu->nst',self.D_neuman,self.PSI_CD[...,1:,:])/self.t_inf
+        PSI_CD = np.zeros((p.N,p.S,self.Nt))
+        numA = np.einsum('s,nist->nst',
+            p.nu_tilde[1:],
+            self.PSI_MNP[...,1:,:]+self.PSI_MNP_0[...,1:,None]+self.PSI_CL[...,1:,:]+self.PSI_CL_0[...,1:,None],
+            )
+        numB = np.einsum('nis,nist->nst',
+            p.delta_eff[:,:,1:],
+            self.PSI_MPD[...,1:,:]+self.PSI_MPD_0[...,1:,None],
+            )
+        numC = self.PSI_CD_dot
+        PSI_CD[...,1:,:] = np.einsum('nst,st->nst',
+                           numA+numB-numC,
+                           1/(self.g_s[1:,:]+p.zeta[1:,None])
+                           )-self.PSI_CD_0[...,1:,None]
+        PSI_CD[...,-1] = 0
+        
+        return PSI_CD
+        
+    def compute_PSI_MNP(self,p):
+        self.PSI_MNP_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MNP[...,1:,:])/self.t_inf
+        PSI_MNP = np.zeros((p.N,p.N,p.S,self.Nt))
+        numA = p.k[None,None,1:,None]*np.einsum('is,ist,nist->nist',
+            p.eta[:,1:],
+            self.l_R[...,1:,:]**(1-p.kappa),
+            1-self.psi_m_star[...,1:,:]**(1-p.k[None,None,1:,None]),
+            )/(p.k[None,None,1:,None]-1)
+        numB = np.einsum('nis,nist->nist',
+            p.delta_eff[:,:,1:],
+            self.PSI_MPND[...,1:,:]+self.PSI_MPND_0[...,1:,None],
+            )
+        numC = self.PSI_MNP_dot 
+        PSI_MNP[...,1:,:] = np.einsum('nist,st->nist',
+                           numA+numB-numC,
+                           1/(self.g_s[1:,:]+p.zeta[1:,None]+p.nu[1:,None]+p.nu_tilde[1:,None])
+                           )-self.PSI_MNP_0[...,1:,None]
+        
+        PSI_MNP[...,-1] = 0
+        
+        return PSI_MNP
+        
+        
+    def compute_PSI_MPND(self,p):
+        self.PSI_MPND_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPND[...,1:,:])/self.t_inf
+        PSI_MPND = np.zeros((p.N,p.N,p.S,self.Nt))
+        numA = p.k[None,None,1:,None]*np.einsum('is,ist,nist->nist',
+            p.eta[:,1:],
+            self.l_R[...,1:,:]**(1-p.kappa),
+            self.psi_m_star[...,1:,:]**(1-p.k[None,None,1:,None]),
+            )/(p.k[None,None,1:,None]-1)
+        numB = self.PSI_MPND_dot
+        PSI_MPND[...,1:,:] = np.einsum('nist,nist->nist',
+                           numA-numB,
+                           1/(self.g_s[None,None,1:,:]+p.zeta[None,None,1:,None]\
+                              +p.nu[None,None,1:,None]+p.nu_tilde[None,None,1:,None]+p.delta_eff[:,:,1:,None])
+                           )-self.PSI_MPND_0[...,1:,None]
+        
+        PSI_MPND[...,-1] = 0
+        
+        return PSI_MPND
+    
+    def compute_PSI_MPL(self,p):
+        self.PSI_MPL_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPL[...,1:,:])/self.t_inf
+        PSI_MPL = np.zeros((p.N,p.N,p.S,self.Nt))
+        numA = np.einsum('s,nist->nist',
+            p.nu[1:],
+            self.PSI_MPND[...,1:,:]+self.PSI_MPND_0[...,1:,None],
+            )
+        numB = self.PSI_MPL_dot
+        PSI_MPL[...,1:,:] = np.einsum('nist,nist->nist',
+                           numA-numB,
+                           1/(self.g_s[None,None,1:,:]+p.nu_tilde[None,None,1:,None]\
+                              +p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
+                           )-self.PSI_MPL_0[...,1:,None]
+        
+        PSI_MPL[...,-1] = 0
+        
+        return PSI_MPL
+        
+    def compute_PSI_MPD(self,p):
+        self.PSI_MPD_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.PSI_MPD[...,1:,:])/self.t_inf
+        PSI_MPD = np.zeros((p.N,p.N,p.S,self.Nt))
+        numA = np.einsum('s,nist->nist',
+            p.nu_tilde[1:],
+            self.PSI_MPND[...,1:,:]+self.PSI_MPND_0[...,1:,None]+self.PSI_MPL[...,1:,:]+self.PSI_MPL_0[...,1:,None],
+            )
+        numB = self.PSI_MPD_dot
+        PSI_MPD[...,1:,:] = np.einsum('nist,nist->nist',
+                           numA-numB,
+                           1/(self.g_s[None,None,1:,:]+p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
+                           )-self.PSI_MPD_0[...,1:,None]
+        
+        PSI_MPD[...,-1] = 0
+        
+        return PSI_MPD
+        
+    def compute_V_PD(self,p):
+        self.V_PD_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_PD[...,1:,:])/self.t_inf
+        V_PD = np.zeros((p.N,p.N,p.S,self.Nt))
+        V_PD[...,1:,:] = np.einsum('nist,nist->nist',
+                                   self.profit[...,1:,:]+self.V_PD_dot,
+                                   1/(self.r[None,:,None,:]+p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None]\
+                                      +self.g_s[None,None,1:,:]-self.g[None,None,None,:])
+                                   )
+        return V_PD
+        
+    def compute_V_NP(self,p):
+        self.V_NP_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_NP[...,1:,:])/self.t_inf
+        V_NP = np.zeros((p.N,p.N,p.S,self.Nt))
+        V_NP[...,1:,:] = np.einsum('nist,ist->nist',
+                                   self.profit[...,1:,:]+self.V_NP_dot,
+                                   1/(self.r[:,None,:]+p.zeta[None,1:,None]+p.nu[None,1:,None]+p.nu_tilde[None,1:,None]\
+                                      +self.g_s[None,1:,:]-self.g[None,None,:])
+                                   )
+        return V_NP
+        
+    def compute_V_P(self,p):
+        #Not used, replaced by DELTA_V = V_P - V_NP
+        self.V_P_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.V_P[...,1:,:])/self.t_inf
+        V_P = np.zeros((p.N,p.N,p.S,self.Nt))
+        V_P[...,1:,:] = np.einsum('nist,nist->nist',
+                                   self.profit[...,1:,:]+p.delta_eff[:,:,1:,None]*self.V_NP[...,1:,:]\
+                                       +(p.nu[None,None,1:,None]+p.nu_tilde[None,None,1:,None])*self.V_PD[...,1:,:]+self.V_P_dot,
+                                   1/(self.r[None,:,None,:]+p.zeta[None,None,1:,None]+p.nu[None,None,1:,None]+p.nu_tilde[None,None,1:,None]+
+                                      p.delta_eff[:,:,1:,None]+self.g_s[None,None,1:,:]-self.g[None,None,None,:])
+                                   )
+        return V_P
+    
+    def compute_DELTA_V(self,p):
+        self.DELTA_V_dot = 2*np.einsum('tu,nisu->nist',self.D_neuman,self.DELTA_V[...,1:,:])/self.t_inf
+        DELTA_V = np.zeros((p.N,p.N,p.S,self.Nt))
+        DELTA_V[...,1:,:] = np.einsum('nist,nist->nist',
+                                   (p.nu[None,None,1:,None]+p.nu_tilde[None,None,1:,None])*self.V_PD[...,1:,:]+self.DELTA_V_dot,
+                                   1/(self.r[None,:,None,:]+p.zeta[None,None,1:,None]+p.nu[None,None,1:,None]+p.nu_tilde[None,None,1:,None]+
+                                      p.delta_eff[:,:,1:,None]+self.g_s[None,None,1:,:]-self.g[None,None,None,:])
+                                   )
+        return DELTA_V
+    
+    def compute_A(self,p):
+        self.A = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
+                            self.g,
+                            self.Nt)),self.t_real))
+        
+    def compute_PSI_S(self,p):
+        self.PSI_S = np.zeros((p.S,self.Nt))
+        for s,_ in enumerate(p.sectors):
+            self.PSI_S[s,:] = np.exp(np.polyval(np.polyint(np.polyfit(self.t_real,
+                            self.g_s[s,:],
+                            self.Nt)),self.t_real))
+            
+    def compute_pflow(self,p):
+        self.pflow = np.einsum('nist,is,ist->nist',
+                              self.psi_m_star[...,1:,:]**(-p.k[None,None,1:,None]),
+                              p.eta[...,1:],
+                              self.l_R[...,1:,:]**(1-p.kappa)
+                              ).squeeze()
+            
+    def compute_consumption_equivalent_welfare(self,p):
+        power = 1-1/p.gamma
+
+        self.integrand_welfare = np.einsum(',t,nt->nt',
+                              p.rho-self.sol_init.g*power,
+                              np.exp(-p.rho*self.t_real),
+                              (self.ratios_of_consumption_levels_change_not_normalized*np.exp(self.sol_init.g*self.t_real)[None,:])**power)
+        
+        self.second_term_sum_welfare = self.integrand_welfare/(p.rho-self.g[None,:]*power)
+        
+        self.integral_welfare = np.zeros((p.N,self.Nt))
+        for i in range(p.N):
+            self.integral_welfare[i,:] = np.polyval(
+                np.polyint(np.polyfit(self.t_real,
+                            self.integrand_welfare[i,:],
+                            self.Nt)),self.t_real
+                )
+
+        self.cons_eq_welfare = (self.integral_welfare[:,0]+self.second_term_sum_welfare[:,0])**(1/power)
+        
+        # population-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       (p.labor[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *(p.labor**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        self.cons_eq_pop_average_welfare_change = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/(p.labor**(1/p.gamma)*self.sol_init.cons**power).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        # negishi-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       (self.sol_init.cons[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *(self.sol_init.cons**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        self.cons_eq_negishi_welfare_change = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/(self.sol_init.cons).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+    
+    def compute_consumption_equivalent_welfare_for_subset_of_countries(self,p,countries):
+        countries_indices = [p.countries.index(c) for c in countries]
+        power = 1-1/p.gamma
+        # population-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       np.take((p.labor[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power),countries_indices,axis=0).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *np.take((p.labor**(1/p.gamma)*(self.nominal_final_consumption[:,0]/self.price_indices[:,0])**power),countries_indices,axis=0).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        cons_eq_pop_average_welfare_change_subset_countries = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/np.take((p.labor**(1/p.gamma)*self.sol_init.cons**power),countries_indices,axis=0).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        # negishi-weighted world welfare change
+        bracketA_integrand = np.einsum('t,t,t->t',
+                                       np.exp(-p.rho*self.t_real),
+                                       self.A**power,
+                                       np.take((self.sol_init.cons[:,None]**(1/p.gamma)
+                                       *(self.nominal_final_consumption/self.price_indices)**power),countries_indices,axis=0).sum(axis=0)
+                                       )
+        bracket_A = np.polyval(
+            np.polyint(np.polyfit(self.t_real,
+                        bracketA_integrand,
+                        self.Nt)),self.t_real
+            )[0]
+        
+        bracket_B = self.A[0]**power\
+                *np.exp(-p.rho*self.t_real[0])\
+                *np.take((self.sol_init.cons**(1/p.gamma)*(self.nominal_final_consumption[:,0]
+                                                   /self.price_indices[:,0])**power),countries_indices,axis=0).sum()\
+                /(p.rho-self.g[0]*power)
+                
+        cons_eq_negishi_welfare_change_subset_countries = np.einsum(',,->',
+                                (p.rho-self.sol_init.g*power),
+                                1/np.take((self.sol_init.cons),countries_indices,axis=0).sum(),
+                                bracket_A+bracket_B
+                                )**(1/power)
+        
+        return {'pop_weighted':cons_eq_pop_average_welfare_change_subset_countries,'negishi':cons_eq_negishi_welfare_change_subset_countries}
+        
+    def compute_ratios_of_consumption_levels_change_not_normalized(self,p):
+        self.ratios_of_consumption_levels_change_not_normalized = \
+            (self.nominal_final_consumption/self.price_indices)*self.A[None,:]*np.exp(-self.sol_init.g*self.t_real)[None,:]/self.sol_init.cons[:,None]
+    
+    def compute_non_solver_quantities(self,p):
+        self.compute_A(p)
+        self.compute_PSI_S(p)
+        self.compute_ratios_of_consumption_levels_change_not_normalized(p)
+        self.compute_consumption_equivalent_welfare(p)
+        self.compute_pflow(p)
+    
+    def plot_country(self,country_idx,title=None,initial=False,history=False):
+        fig,ax = plt.subplots(5,2,figsize = (15,10),layout = 'constrained')
+        if country_idx == 'all':
+            for i,c in enumerate(self.countries):
+                fit = np.polyfit(self.t_cheby,
+                                  self.w[i,:]/self.w[i,0],
+                                  self.Nt)
+                ax[0,0].scatter(self.t_real,self.w[i,:]/self.w[i,0],label=c,zorder=-i*10)
+                ax[0,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                
+                fit = np.polyfit(self.t_cheby,
+                                  self.price_indices[i,:]/self.price_indices[i,0],
+                                  self.Nt)
+                ax[1,0].scatter(self.t_real,self.price_indices[i,:]/self.price_indices[i,0],label=str(i),zorder=-i*10)
+                ax[1,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                
+                fit = np.polyfit(self.t_cheby,
+                                  self.Z[i,:]/self.Z[i,0],
+                                  self.Nt)
+                ax[0,1].scatter(self.t_real,self.Z[i,:]/self.Z[i,0],label=str(i),zorder=-i*10)
+                ax[0,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                
+                fit = np.polyfit(self.t_cheby,
+                                  self.PSI_CD[i,1,:],
+                                  self.Nt)
+                ax[1,1].scatter(self.t_real,self.PSI_CD[i,1,:],label=str(i),zorder=-i*10)
+                ax[1,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                if not initial:
+                    fit = np.polyfit(self.t_cheby,
+                                      self.psi_o_star[i,1,:],
+                                      self.Nt)
+                    ax[2,0].scatter(self.t_real,self.psi_o_star[i,1,:],zorder=-i*10)
+                    ax[2,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                            np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                    
+                    fit = np.polyfit(self.t_cheby,
+                                      self.g,
+                                      self.Nt)
+                    ax[2,1].scatter(self.t_real,self.g,zorder=-i*10)
+                    ax[2,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                            np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                try:
+                    fit = np.polyfit(self.t_cheby,
+                                      self.l_R[i,1,:]/self.l_R[i,1,0],
+                                      self.Nt)
+                    ax[3,0].scatter(self.t_real,self.l_R[i,1,:]/self.l_R[i,1,0],zorder=-i*10)
+                    ax[3,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                            np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                except:
+                    pass
+                
+                try:
+                    fit = np.polyfit(self.t_cheby,
+                                      self.welfare[i,:],
+                                      self.Nt)
+                    ax[3,1].scatter(self.t_real,self.welfare[i,:],zorder=-i*10)
+                    ax[3,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                            np.polyval(fit, cheb(500)[1]),zorder=-i*10)
+                except:
+                    pass
+                
+                try:
+                    fit = np.polyfit(self.t_cheby,
+                                      self.cons_eq_welfare[i,:],
+                                      self.Nt)
+                    ax[4,1].scatter(self.t_real,self.cons_eq_welfare[i,:],marker='*',zorder=-i*10)
+                    ax[4,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                            np.polyval(fit, cheb(500)[1]),ls='--',zorder=-i*10)
+                except:
+                    pass
+                
+        else:
+            fit = np.polyfit(self.t_cheby,
+                              self.w[country_idx,:],
+                              self.Nt)
+            ax[0,0].scatter(self.t_real,self.w[country_idx,:])
+            ax[0,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                    np.polyval(fit, cheb(500)[1]))
+            
+            fit = np.polyfit(self.t_cheby,
+                              self.price_indices[country_idx,:],
+                              self.Nt)
+            ax[1,0].scatter(self.t_real,self.price_indices[country_idx,:])
+            ax[1,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                    np.polyval(fit, cheb(500)[1]))
+            
+            fit = np.polyfit(self.t_cheby,
+                              self.Z[country_idx,:],
+                              self.Nt)
+            ax[0,1].scatter(self.t_real,self.Z[country_idx,:])
+            ax[0,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                    np.polyval(fit, cheb(500)[1]))
+            
+            fit = np.polyfit(self.t_cheby,
+                              self.PSI_CD[country_idx,1,:],
+                              self.Nt)
+            ax[1,1].scatter(self.t_real,self.PSI_CD[country_idx,1,:])
+            ax[1,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                    np.polyval(fit, cheb(500)[1]))
+            
+            if not initial:
+                fit = np.polyfit(self.t_cheby,
+                                  self.psi_o_star[country_idx,1,:],
+                                  self.Nt)
+                ax[2,0].scatter(self.t_real,self.psi_o_star[country_idx,1,:])
+                ax[2,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]))
+                
+                fit = np.polyfit(self.t_cheby,
+                                  self.g,
+                                  self.Nt)
+                ax[2,1].scatter(self.t_real,self.g)
+                ax[2,1].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]))
+                
+                fit = np.polyfit(self.t_cheby,
+                                  self.r[0,:],
+                                  self.Nt)
+                ax[4,0].scatter(self.t_real,self.r[0,:])
+                ax[4,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]))
+            
+            try:
+                fit = np.polyfit(self.t_cheby,
+                                  self.l_R[country_idx,1,:],
+                                  self.Nt)
+                ax[3,0].scatter(self.t_real,self.l_R[country_idx,1,:])
+                ax[3,0].plot((cheb(500)[1]+1)*self.t_inf/2, 
+                        np.polyval(fit, cheb(500)[1]))
+            except:
+                pass
+            
+            if self.sol_init is not None:
+                ax[0,0].scatter([0],[self.sol_init.w[country_idx]],color='red')
+                ax[0,1].scatter([0],[self.sol_init.Z[country_idx]],color='red')
+                ax[1,0].scatter([0],[self.sol_init.price_indices[country_idx]],color='red')
+                ax[1,1].scatter([0],[self.sol_init.PSI_CD[country_idx,1]-self.PSI_CD_0[country_idx,1]],color='red')
+                if not initial:
+                    ax[2,0].scatter([0],[self.sol_init.psi_o_star[country_idx,1]],color='red')
+                    ax[2,1].scatter([0],[self.sol_init.g],color='red')
+                    ax[3,0].scatter([0],[self.sol_init.l_R[country_idx,1]],color='red')
+            
+            if self.sol_fin is not None:
+                ax[0,0].scatter([self.t_inf],[self.sol_fin.w[country_idx]],color='red')
+                ax[0,1].scatter([self.t_inf],[self.sol_fin.Z[country_idx]],color='red')
+                ax[1,0].scatter([self.t_inf],[self.sol_fin.price_indices[country_idx]],color='red')
+                ax[1,1].scatter([self.t_inf],[self.sol_fin.PSI_CD[country_idx,1]-self.PSI_CD_0[country_idx,1]],color='red')
+                if not initial:
+                    ax[2,0].scatter([self.t_inf],[self.sol_fin.psi_o_star[country_idx,1]],color='red')
+                    ax[2,1].scatter([self.t_inf],[self.sol_fin.g],color='red')
+                    ax[3,0].scatter([self.t_inf],[self.sol_fin.l_R[country_idx,1]],color='red')
+                    
+        if title is not None:
+            plt.suptitle(title)
+        ax[0,0].set_title('w')
+        ax[1,0].set_title('P')
+        ax[0,1].set_title('Z')
+        ax[1,1].set_title('PSI_CD')
+        ax[2,1].set_title('g')
+        ax[2,0].set_title('psi_o_star')
+        ax[3,1].set_title('welfares')
+        ax[4,1].set_title('cons equivalent welfares')
+        ax[3,0].set_title('l_R')
+        ax[4,0].set_title('r')
+
+        if not initial:
+            ax[4,1].plot(self.DELTA_V[...,1,:].ravel())
+            ax[4,1].set_title('DELTA V')
+        if country_idx == 'all':
+            ax[0,0].legend()
+        plt.show()
+        
+    def plot_all_countries(self):
+        for i,c in enumerate(self.countries):
+            self.plot_country(i,title=c)
+        
+    def plot_numerical_derivatives(self,title=None):
+        fig,ax = plt.subplots(2,2,figsize = (15,10),layout="constrained")
+        ax[0,0].plot(self.nominal_final_consumption.ravel())
+        ax[0,0].set_title('PC')
+        ax1 = ax[0,0].twinx()
+        ax1.plot(self.CP_growth_rate.ravel(),color='r')
+        ax[1,0].plot(self.PSI_CD[...,1:,:].ravel())
+        ax[1,0].set_title('PSI_CD')
+        ax1 = ax[1,0].twinx()
+        ax1.plot(self.PSI_CD_dot.ravel(),color='r')
+        # ax[0,1].plot(self.V_P[...,1:,:].ravel())
+        # ax[0,1].set_title('V_P')
+        # ax1 = ax[0,1].twinx()
+        # ax1.plot(self.V_P_dot.ravel(),color='r')
+        ax[0,1].plot(self.DELTA_V[...,1:,:].ravel())
+        ax[0,1].set_title('DELTA_V')
+        ax1 = ax[0,1].twinx()
+        ax1.plot(self.DELTA_V_dot.ravel(),color='r')
+        ax[1,1].plot(self.r.ravel())
+        ax[1,1].set_title('r')
+        
+        if title is not None:
+            plt.suptitle(title)
+        
+        plt.show()
+    
+    def get_jump(self,qty):
+        if qty == 'profit':
+            jump = (getattr(self,qty)[...,-1]-np.einsum('nis,i->nis',
+                                  self.sol_init.profit,
+                                  self.sol_init.w)
+                    )/(np.einsum('nis,i->nis',
+                                self.sol_fin.profit,
+                                self.sol_fin.w)
+                        -
+                        np.einsum('nis,i->nis',
+                                self.sol_init.profit,
+                                self.sol_init.w)
+                        )
+            return np.nanmean(jump)*100,np.nanmedian(jump)*100
+        jump = (getattr(self,qty)[...,-1]-getattr(self.sol_init,qty)
+                )/(getattr(self.sol_fin,qty)-getattr(self.sol_init,qty))
+        return np.nanmean(jump)*100,np.nanmedian(jump)*100
+    
+    def get_typical_time_evolution(self,qty):
+        #!!! to improve for dimensions
+        try:
+            origin_deriv = (2*np.einsum('tu,...u->...t',
+                                    self.D_neuman,
+                                    getattr(self,qty)
+                                    )/self.t_inf)[...,-1]
+        except:
+            pass
+        time_evol = np.abs(getattr(self,qty)[...,-1]-getattr(self,qty)[...,0])/np.abs(origin_deriv)
+        return np.nanmean(time_evol),np.nanmedian(time_evol)
+    
     
 def remove_diag(A):
     removed = A[~np.eye(A.shape[0], dtype=bool)].reshape(A.shape[0], int(A.shape[0])-1, -1)

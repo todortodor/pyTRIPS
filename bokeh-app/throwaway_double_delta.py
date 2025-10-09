@@ -8,7 +8,7 @@ Created on Wed May 14 08:44:45 2025
 
 
 from classes import moments, parameters, var, var_double_diff_double_delta
-from solver_funcs import fixed_point_solver, fixed_point_solver_double_diff_double_delta
+from solver_funcs import fixed_point_solver, fixed_point_solver_double_diff_double_delta, dyn_fixed_point_solver_double_diff_double_delta
 from solver_funcs import fixed_point_solver, dyn_fixed_point_solver
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import os
 
 baseline_number = 1312
-variation = '2.05'
+variation = 'baseline'
 # pre_trips_number = 4096
 path = 'double_delta/1312_2_05/'
 try:
@@ -25,8 +25,8 @@ except:
     pass
 
 p = parameters()
-p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-# p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 # context = 'counterfactual',
@@ -54,11 +54,11 @@ sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 # plt.show()
-m = moments()
-m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-# m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-m.compute_moments(sol_c,p)
-m.compute_moments_deviations()
+# m = moments()
+# m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+# m.compute_moments(sol_c,p)
+# m.compute_moments_deviations()
 
 
 #%%
@@ -97,6 +97,30 @@ sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_coop_negishi,x0=p_c
 dyn_sol.compute_non_solver_quantities(p_coop_negishi)
 dyn_sol.compute_consumption_equivalent_welfare(p_coop_negishi,sol_c)
 dyn_sol.compute_world_welfare_changes(p_coop_negishi,sol_c)
+
+sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_coop_negishi, sol_c, 
+                                                               Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-6,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-4,
+                        disp_summary=True,
+                        damping = 200,
+                        max_count = 10000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol.compute_non_solver_quantities(p)
 
 recap_negishi['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
 recap_negishi.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100
@@ -142,6 +166,30 @@ sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_coop_equal,x0=p_coo
 dyn_sol.compute_non_solver_quantities(p_coop_equal)
 dyn_sol.compute_consumption_equivalent_welfare(p_coop_equal,sol_c)
 dyn_sol.compute_world_welfare_changes(p_coop_equal,sol_c)
+
+sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_coop_equal, sol_c, 
+                                                               Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-6,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-4,
+                        disp_summary=True,
+                        damping = 200,
+                        max_count = 10000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol.compute_non_solver_quantities(p)
 
 recap_equal['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
 recap_equal.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100

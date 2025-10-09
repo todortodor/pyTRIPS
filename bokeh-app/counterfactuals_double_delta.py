@@ -18,12 +18,12 @@ import time
 recaps_path = 'counterfactual_recaps/double_delta/'
 
 baseline_dics = [
-    # {'baseline':'1312','variation': 'baseline'},
+    {'baseline':'1312','variation': 'baseline'},
     # {'baseline':'1312','variation': '1.0'},
     # {'baseline':'1312','variation': '1.08'},
     # {'baseline':'1312','variation': '1.09'},
     # {'baseline':'1312','variation': '2.01'},
-    {'baseline':'1312','variation': '2.02'},
+    # {'baseline':'1312','variation': '2.02'},
     # {'baseline':'1312','variation': '2.03'},
     # {'baseline':'1312','variation': '2.04'},
     # {'baseline':'1312','variation': '2.05'},
@@ -48,13 +48,18 @@ for bas in baseline_dics:
 #%%
 
 def process_country(args):
-    p, c, local_path, sol_baseline, recap_path = args
+    p_baseline, c, local_path, sol_baseline,delta_to_change, recap_path = args
     print(c,local_path)
-    make_counterfactual_double_delta(p, c, local_path, dynamics=False)
-    make_counterfactual_recap_double_delta(p, sol_baseline, c, local_path, recap_path, with_entry_costs=True)
+    make_counterfactual_double_delta(p_baseline,c,local_path,dynamics=dynamics,
+                                     sol_baseline=sol_baseline,
+                                     delta_to_change=delta_to_change,#can be 'dom','int',or 'both'
+                                     )
+    make_counterfactual_recap_double_delta(p_baseline, sol_baseline, c,
+                             local_path,recap_path,dynamics=dynamics)
     return 'done'
 
 parallel = False
+dynamics = True
 
 if __name__ == '__main__':
     for baseline_dic in baseline_dics:
@@ -124,17 +129,19 @@ if __name__ == '__main__':
             
             # print('working')
             if parallel:
-                args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
+                args_list = [(p_baseline, c, local_path, sol_baseline,delta_to_change,recap_path) for c in p_baseline.countries+['World']]
                 with ProcessPoolExecutor(max_workers=12) as executor:
                     results = list(executor.map(process_country, args_list))
             
             else:
                 for c in p_baseline.countries:
-                    make_counterfactual_double_delta(p_baseline,c,local_path,dynamics=False,
+                    make_counterfactual_double_delta(p_baseline,c,local_path,dynamics=dynamics,
+                                                     sol_baseline=sol_baseline,
                                                      delta_to_change=delta_to_change,#can be 'dom','int',or 'both'
                                                      )
+                    print('done')
                     make_counterfactual_recap_double_delta(p_baseline, sol_baseline, c,
-                                             local_path,recap_path)
+                                             local_path,recap_path,dynamics=dynamics)
                     
                 
                 

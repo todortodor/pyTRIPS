@@ -10,7 +10,7 @@ import numpy as np
 import aa
 import matplotlib.pyplot as plt
 import time
-from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs,var_double_diff_double_delta, history_nash, dynamic_var
+from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs,var_double_diff_double_delta, history_nash, dynamic_var, dynamic_var_double_diff_double_delta
 from scipy import optimize
 import os
 from optimparallel import minimize_parallel
@@ -835,6 +835,227 @@ def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=Non
             dyn_var.compute_V_PD(p)[...,1:,:].ravel(),
             dyn_var.compute_DELTA_V(p)[...,1:,:].ravel(),
             dyn_var.compute_V_NP(p)[...,1:,:].ravel(),
+            ],axis=0)
+
+        condition = np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old) > tol
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40):
+        status = 'successful'
+    else:
+        status = 'failed'
+        
+    if status == 'failed':
+        print('Failed, report :')
+        print('count',count)
+        print('nans',np.isnan(x_new).sum())
+        print('diverged',(x_new>1e40).sum())
+    
+    x_sol = x_new
+        
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+    return sol_inst, dyn_var
+
+
+def guess_PSIS_from_sol_init_and_sol_fin_double_diff_double_delta(dyn_var,sol_init,sol_fin,C=20):
+    def build_guess(fin,init,C=C):
+        if len(fin.shape) == 2:
+            return (fin-init)[...,1:,None]*(
+                np.exp( -C* (dyn_var.t_cheby+1) )[None,None,:]-1
+                )/(np.exp(-2*C)-1)
+        elif len(fin.shape) == 3:
+            return (fin-init)[...,1:,None]*(
+                np.exp(-C* (dyn_var.t_cheby+1) )[None,None,None,:]-1
+                )/(np.exp(-2*C)-1)
+    guess = {}
+    guess['PSI_CL'] = build_guess(sol_fin.PSI_CL,dyn_var.PSI_CL_0)
+    guess['PSI_CD'] = build_guess(sol_fin.PSI_CD,dyn_var.PSI_CD_0)
+    guess['PSI_MNP'] = build_guess(sol_fin.PSI_MNP,dyn_var.PSI_MNP_0)
+    guess['PSI_MPND'] = build_guess(sol_fin.PSI_MPND,dyn_var.PSI_MPND_0)
+    guess['PSI_MPL'] = build_guess(sol_fin.PSI_MPL,dyn_var.PSI_MPL_0)
+    guess['PSI_MPD'] = build_guess(sol_fin.PSI_MPD,dyn_var.PSI_MPD_0)
+    return guess
+
+def dyn_fixed_point_solver_double_diff_double_delta(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
+                           damping = 10, max_count=1e6,
+                       accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
+                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = True,
+                       accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
+                       accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=True,damping_post_acceleration=5):  
+    # print('called')
+    # print(p.delta[:,1])
+    if sol_fin is None:
+        sol, sol_fin = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1000,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        sol_fin.scale_P(p)
+        sol_fin.compute_non_solver_quantities(p) 
+    
+    dyn_var = dynamic_var_double_diff_double_delta(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin,
+                          N=p.N)
+    dyn_var.initiate_state_variables_0(sol_init)
+    
+    psis_guess = guess_PSIS_from_sol_init_and_sol_fin_double_diff_double_delta(dyn_var,sol_init,sol_fin)
+    
+    dic_of_guesses = {'price_indices':repeat_for_all_times(sol_fin.price_indices,dyn_var.Nt),
+                    'w':repeat_for_all_times(sol_fin.w,dyn_var.Nt),
+                    'Z':repeat_for_all_times(sol_fin.Z,dyn_var.Nt),
+                    'PSI_CL':psis_guess['PSI_CL'],
+                    'PSI_CD':psis_guess['PSI_CD'],
+                    'PSI_MNP':psis_guess['PSI_MNP'],
+                    'PSI_MPND':psis_guess['PSI_MPND'],
+                    'PSI_MPL':psis_guess['PSI_MPL'],
+                    'PSI_MPD':psis_guess['PSI_MPD'],
+                    # 'PSI_CD':repeat_for_all_times(sol_fin.PSI_CD-sol_init.PSI_CD,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MNP':repeat_for_all_times(sol_fin.PSI_MNP-sol_init.PSI_MNP,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MPND':repeat_for_all_times(sol_fin.PSI_MPND-sol_init.PSI_MPND,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MPD':repeat_for_all_times(sol_fin.PSI_MPD-sol_init.PSI_MPD,dyn_var.Nt)[...,1:,:],
+                    'V_PD':repeat_for_all_times(sol_fin.V_PD,dyn_var.Nt)[...,1:,:],
+                    # 'V_P':repeat_for_all_times(sol_fin.V_P,dyn_var.Nt)[...,1:,:],
+                    'V_NP':repeat_for_all_times(sol_fin.V_NP,dyn_var.Nt)[...,1:,:],
+                    'DELTA_V':repeat_for_all_times(sol_fin.V_P-sol_fin.V_NP,dyn_var.Nt)[...,1:,:]
+                    }
+
+    dyn_var.guess_from_dic(dic_of_guesses)
+
+    if x0 is not None:
+        dyn_var.guess_from_vector(x0)
+    
+    x_old = dyn_var.vector_from_var()
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+            dyn_var.guess_from_vector(x_old)
+
+            numeraire = dyn_var.price_indices[0,:]
+            for qty in ['price_indices','w','Z']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,:]
+                setattr(dyn_var,qty,temp)
+                
+            for qty in ['V_PD','DELTA_V','V_NP']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,None,None:]
+                setattr(dyn_var,qty,temp)
+                
+            x_old = dyn_var.vector_from_var()
+
+        if plot_live:
+            if count == 0:
+                dyn_var.plot_country(0,title = str(count),initial = True)
+        if plot_live:
+            if count<70 and count >0:
+                dyn_var.plot_country(0,title = str(count))
+                
+        dyn_var.compute_solver_quantities(p)
+        
+        numeraire = 1/(dyn_var.price_indices[0,-1]/dyn_var.compute_price_indices(p)[0,-1])
+        
+        # x_new = np.concatenate([
+        #     dyn_var.compute_price_indices(p).ravel(),
+        #     dyn_var.compute_wage(p).ravel(),
+        #     dyn_var.compute_expenditure(p).ravel(),
+        #     dyn_var.compute_PSI_CL(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_PSI_CD(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_PSI_MNP(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_PSI_MPND(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_PSI_MPL(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_PSI_MPD(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_V_PD(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_DELTA_V(p)[...,1:,:].ravel(),
+        #     dyn_var.compute_V_NP(p)[...,1:,:].ravel(),
+        #     ],axis=0)
+        x_new = np.concatenate([
+            dyn_var.compute_price_indices(p).ravel()/numeraire,
+            dyn_var.compute_wage(p).ravel()/numeraire,
+            dyn_var.compute_expenditure(p).ravel()/numeraire,
+            dyn_var.compute_PSI_CL(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_CD(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MNP(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPND(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPL(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPD(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_PD(p)[...,1:,:].ravel()/numeraire,
+            dyn_var.compute_DELTA_V(p)[...,1:,:].ravel()/numeraire,
+            dyn_var.compute_V_NP(p)[...,1:,:].ravel()/numeraire,
             ],axis=0)
 
         condition = np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old) > tol
@@ -4332,7 +4553,7 @@ def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,agg
     p.update_delta_eff()
     print(p.delta[...,1])
     if custom_sol_options is None:
-        custom_sol_options = dict(cobweb_anim=False,tol =1e-14,
+        custom_sol_options = dict(cobweb_anim=False,tol =1e-12,
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
@@ -4395,6 +4616,87 @@ def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,agg
         welfare = sol_c.cons_eq_pop_average_welfare_change
     if aggregation_method == 'custom_weights':
         welfare = sol_c.cons_eq_custom_weights_welfare_change
+        
+    if dynamics:
+        if custom_dyn_sol_options is None:
+            custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+            accelerate=False,
+            accelerate_when_stable=False,
+            cobweb_qty='l_R',
+            plot_convergence=False,
+            plot_cobweb=False,
+            plot_live = False,
+            safe_convergence=1e-8,
+            disp_summary=False,
+            damping = 60,
+            max_count = 50000,
+            accel_memory =5, 
+            accel_type1=True, 
+            accel_regularization=1e-10,
+            accel_relaxation=1, 
+            accel_safeguard_factor=1, 
+            accel_max_weight_norm=1e6,
+            damping_post_acceleration=10)
+        # if np.all(deltas>5):
+        #     custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
+        #     accelerate=False,
+        #     accelerate_when_stable=False,
+        #     cobweb_qty='l_R',
+        #     plot_convergence=False,
+        #     plot_cobweb=False,
+        #     plot_live = False,
+        #     safe_convergence=1e-8,
+        #     disp_summary=False,
+        #     damping = 0,
+        #     max_count = 50000,
+        #     accel_memory =5, 
+        #     accel_type1=True, 
+        #     accel_regularization=1e-10,
+        #     accel_relaxation=1, 
+        #     accel_safeguard_factor=1, 
+        #     accel_max_weight_norm=1e6,
+        #     damping_post_acceleration=10)
+        sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init=sol_baseline, Nt=23,
+                                                x0 = p.dyn_guess,
+                                              t_inf=500,
+                                **custom_dyn_sol_options
+                                )
+        if sol.status == 'failed':
+            p.dyn_guess=None
+            sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init=sol_baseline, Nt=23,
+                                                    x0 = p.dyn_guess,
+                                                  t_inf=500,
+                                    cobweb_anim=False,tol =1e-6,
+                                    accelerate=False,
+                                    accelerate_when_stable=False,
+                                    cobweb_qty='l_R',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    plot_live = False,
+                                    safe_convergence=1e-8,
+                                    disp_summary=False,
+                                    damping = 60,
+                                    max_count = 50000,
+                                    accel_memory =5, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=1, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=10
+                                    )
+            
+        dyn_sol_c.compute_non_solver_quantities(p)
+        p.dyn_guess = dyn_sol_c.vector_from_var()
+        if aggregation_method == 'custom_weights':
+            dyn_sol_c.compute_world_welfare_changes_custom_weights(p, custom_weights)
+
+        if aggregation_method == 'negishi':
+            welfare = dyn_sol_c.cons_eq_negishi_welfare_change
+        if aggregation_method == 'pop_weighted':
+            welfare = dyn_sol_c.cons_eq_pop_average_welfare_change
+        if aggregation_method == 'custom_weights':
+            welfare = dyn_sol_c.cons_eq_custom_weights_welfare_change
     
     print(deltas,welfare)
     
@@ -4430,7 +4732,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
     custom_sol_options = solver_options
     
     if custom_dyn_sol_options is None:
-        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
+        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
         accelerate=False,
         accelerate_when_stable=False,
         cobweb_qty='l_R',
@@ -4642,7 +4944,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
         sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
     
     if dynamics:
-        sol, dyn_sol_c = dyn_fixed_point_solver(p,  sol_baseline, sol_fin=sol_c, Nt=25,
+        sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p,  sol_baseline, sol_fin=sol_c, Nt=25,
                                               t_inf=500,
                                 **custom_dyn_sol_options
                                 )
@@ -5896,6 +6198,7 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
                         delta_int_factor_array=None,
                         delta_dom_factor_array=None,
                         delta_to_change='both',#can be 'dom','int',or 'both'
+                        sol_baseline=None,
                         dynamics=False,
                         Nt=25,t_inf=500):
     country_path = local_path+country+'/'
@@ -5906,7 +6209,7 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
 
     print(country)
     p = p_baseline.copy()
-    delta_factor_array = np.logspace(-1,1,21)
+    delta_factor_array = np.logspace(-1,1,11)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
         
@@ -5916,6 +6219,7 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
             if country in p_baseline.countries:
                 if delta_to_change == 'dom' or delta_to_change == 'both':
                     p.delta_dom[idx_country,1] = p_baseline.delta_dom[idx_country,1] * delt
+                    print(p.delta_dom[idx_country,1])
                 if delta_to_change == 'int' or delta_to_change == 'both':
                     p.delta_int[idx_country,1] = p_baseline.delta_int[idx_country,1] * delt
                 p.update_delta_eff()
@@ -5943,5 +6247,57 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
             )
             sol_c.scale_P(p)
             p.guess = sol_c.vector_from_var()
+            sol_c.compute_non_solver_quantities(p)
+            
+            if dynamics:
+                # sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init=sol_baseline,
+                #                                                                  sol_fin=sol_c,
+                #                         Nt=Nt,t_inf=t_inf,x0=p.dyn_guess,
+                #                         cobweb_anim=False,tol =1e-6,
+                #                         accelerate=False,
+                #                         accelerate_when_stable=False,
+                #                         cobweb_qty='l_R',
+                #                         plot_convergence=False,
+                #                         plot_cobweb=False,
+                #                         plot_live = False,
+                #                         safe_convergence=1e-8,
+                #                         disp_summary=True,
+                #                         damping = 20,
+                #                         max_count = 50000,
+                #                         accel_memory =5, 
+                #                         accel_type1=True, 
+                #                         accel_regularization=1e-10,
+                #                         accel_relaxation=1, 
+                #                         accel_safeguard_factor=1, 
+                #                         accel_max_weight_norm=1e6,
+                #                         damping_post_acceleration=5
+                #                         )
+                sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_baseline, Nt=25,
+                                                      t_inf=500,x0=p.dyn_guess,
+                                        cobweb_anim=False,tol =1e-6,
+                                        accelerate=False,
+                                        accelerate_when_stable=False,
+                                        cobweb_qty='l_R',
+                                        plot_convergence=True,
+                                        plot_cobweb=False,
+                                        plot_live = False,
+                                        safe_convergence=1e-4,
+                                        disp_summary=True,
+                                        damping = 60,
+                                        max_count = 5000,
+                                        accel_memory =5, 
+                                        accel_type1=True, 
+                                        accel_regularization=1e-10,
+                                        accel_relaxation=1, 
+                                        accel_safeguard_factor=1, 
+                                        accel_max_weight_norm=1e6,
+                                        damping_post_acceleration=5
+                                        )
+                if sol.status == 'successful':
+                    p.dyn_guess = dyn_sol_c.vector_from_var()
+                else:
+                    p.dyn_guess = None
+                    p.dyn_guess = dyn_sol_c.vector_from_var()
+                    print('failed',country_path+'/'+str(i)+'/')
             
         p.write_params(country_path+'/'+str(i)+'/') 
