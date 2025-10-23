@@ -13,7 +13,7 @@ import numpy as np
 
 p = parameters()
 p.load_run('calibration_results_matched_economy/1300/')
-p.delta_dom = p.delta_dom/2
+# p.delta_dom = p.delta_dom/2
 p.update_delta_eff()
 # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
 # p.k = np.array([p.k]*p.S)

@@ -4604,7 +4604,7 @@ def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,agg
         else:
             print(p.delta,'failed2')
             p.guess = None
-    # p.guess = sol_c.vector_from_var()
+    p.guess = sol_c.vector_from_var()
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
     sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
@@ -4619,7 +4619,7 @@ def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,agg
         
     if dynamics:
         if custom_dyn_sol_options is None:
-            custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+            custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
             accelerate=False,
             accelerate_when_stable=False,
             cobweb_qty='l_R',
@@ -4666,7 +4666,7 @@ def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,agg
             sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init=sol_baseline, Nt=23,
                                                     x0 = p.dyn_guess,
                                                   t_inf=500,
-                                    cobweb_anim=False,tol =1e-6,
+                                    cobweb_anim=False,tol =1e-14,
                                     accelerate=False,
                                     accelerate_when_stable=False,
                                     cobweb_qty='l_R',
@@ -4732,7 +4732,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
     custom_sol_options = solver_options
     
     if custom_dyn_sol_options is None:
-        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-14,
         accelerate=False,
         accelerate_when_stable=False,
         cobweb_qty='l_R',
@@ -6231,7 +6231,7 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
             accelerate=True,
             accelerate_when_stable=True,
             cobweb_qty='phi',
-            plot_convergence=True,
+            plot_convergence=False,
             plot_cobweb=False,
             safe_convergence=0.001,
             disp_summary=True,
@@ -6274,17 +6274,17 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
                 #                         )
                 sol, dyn_sol_c = dyn_fixed_point_solver_double_diff_double_delta(p, sol_baseline, Nt=25,
                                                       t_inf=500,x0=p.dyn_guess,
-                                        cobweb_anim=False,tol =1e-6,
+                                        cobweb_anim=False,tol =1e-12,
                                         accelerate=False,
                                         accelerate_when_stable=False,
                                         cobweb_qty='l_R',
-                                        plot_convergence=True,
+                                        plot_convergence=False,
                                         plot_cobweb=False,
                                         plot_live = False,
                                         safe_convergence=1e-4,
                                         disp_summary=True,
                                         damping = 60,
-                                        max_count = 5000,
+                                        max_count = 10000,
                                         accel_memory =5, 
                                         accel_type1=True, 
                                         accel_regularization=1e-10,

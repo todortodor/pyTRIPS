@@ -18,7 +18,7 @@ import os
 baseline_number = 1312
 variation = 'baseline'
 # pre_trips_number = 4096
-path = 'double_delta/1312_2_05/'
+path = 'double_delta/1312_baseline_with_dyn/'
 try:
     os.mkdir(path)
 except:
@@ -234,6 +234,30 @@ sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_nash,x0=p_nash.gues
 dyn_sol.compute_non_solver_quantities(p_nash)
 dyn_sol.compute_consumption_equivalent_welfare(p_nash,sol_c)
 dyn_sol.compute_world_welfare_changes(p_nash,sol_c)
+
+sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_nash, sol_c, 
+                                                               Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-6,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-4,
+                        disp_summary=True,
+                        damping = 200,
+                        max_count = 10000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol.compute_non_solver_quantities(p)
 
 recap_nash['welfare'] = dyn_sol.cons_eq_welfare*100 - 100
 recap_nash.loc['Negishi','welfare'] = dyn_sol.cons_eq_negishi_welfare_change*100 - 100

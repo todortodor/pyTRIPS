@@ -4096,7 +4096,7 @@ class dynamic_var:
                        p.r_hjort,
                        p.k[None,None,1:,None]*self.psi_m_star[...,1:,:]/(self.psi_C[...,1:,:]*(p.k[None,None,1:,None]-1))-1
                        )
-        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None]
+        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None,:]
         self.V[...,1:,:] = A1+A2-B
         
     def compute_labor_research(self, p):
@@ -5071,7 +5071,7 @@ class dynamic_var_double_diff_double_delta:
             if it>40 and print_once:
                 print('stuck')
                 print_once = False
-                self.plot_numerical_derivatives()
+                # self.plot_numerical_derivatives()
                 cond = False
             it+=1
             
@@ -5091,7 +5091,7 @@ class dynamic_var_double_diff_double_delta:
                        p.r_hjort,
                        p.k[None,None,1:,None]*self.psi_m_star[...,1:,:]/(self.psi_C[...,1:,:]*(p.k[None,None,1:,None]-1))-1
                        )
-        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None]
+        B = self.psi_o_star[:,1:,:]**-p.k[None,1:,None]*p.fo[None,1:,None]*p.r_hjort[:,None,None]*self.w[:,None,:]
         self.V[...,1:,:] = A1+A2-B
         
     def compute_labor_research(self, p):
@@ -5139,6 +5139,7 @@ class dynamic_var_double_diff_double_delta:
                                     p.beta[1:],
                                     self.Z
                                     )
+            temp = ((self.PSI_CL+self.PSI_CL_0[...,None])[...,1:,:]*self.phi[...,1:,:]**(p.sigma-1)[None, None, 1:,None]).sum(axis=1)
             self.X_CL = np.zeros((p.N, p.N, p.S, self.Nt))
             self.X_CL[...,1:,:] = np.einsum('nist,nist,nst,nst,s,nt->nist',
                                     self.phi[..., 1:,:]**(p.sigma-1)[None, None, 1:,None],
@@ -5203,11 +5204,11 @@ class dynamic_var_double_diff_double_delta:
         return wage
         
     def compute_expenditure(self,p):
-        A = np.einsum('nist->it', self.X)
-        B = np.einsum('it,nist->it', self.w, self.l_Ae)
-        C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
-        D = np.einsum('nt,inst->it', self.w, self.l_Ae)
-        Z = (A+B-(C+D))
+        # A = np.einsum('nist->it', self.X)
+        # B = np.einsum('it,nist->it', self.w, self.l_Ae)
+        # C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
+        # D = np.einsum('nt,inst->it', self.w, self.l_Ae)
+        # Z = (A+B-(C+D))
         A1 = np.einsum('nist,nis->it', 
                       self.X,
                       1/(1+p.tariff))
@@ -5332,8 +5333,7 @@ class dynamic_var_double_diff_double_delta:
         numB = self.PSI_MPL_dot
         PSI_MPL[...,1:,:] = np.einsum('nist,nist->nist',
                            numA-numB,
-                           1/(self.g_s[None,None,1:,:]+p.nu_tilde[None,None,1:,None]\
-                              +p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
+                           1/(p.nu_tilde[None,None,1:,None]+p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
                            )-self.PSI_MPL_0[...,1:,None]
         
         PSI_MPL[...,-1] = 0

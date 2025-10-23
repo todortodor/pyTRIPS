@@ -18,17 +18,17 @@ import time
 recaps_path = 'counterfactual_recaps/double_delta/'
 
 baseline_dics = [
-    {'baseline':'1312','variation': 'baseline'},
-    # {'baseline':'1312','variation': '1.0'},
+    # {'baseline':'1312','variation': 'baseline'},
+    # {'baseline':'1312','variation': '1.07'},
     # {'baseline':'1312','variation': '1.08'},
     # {'baseline':'1312','variation': '1.09'},
     # {'baseline':'1312','variation': '2.01'},
-    # {'baseline':'1312','variation': '2.02'},
+    {'baseline':'1312','variation': '2.02'},
     # {'baseline':'1312','variation': '2.03'},
     # {'baseline':'1312','variation': '2.04'},
     # {'baseline':'1312','variation': '2.05'},
     # {'baseline':'1312','variation': '2.06'},
-    # {'baseline':'1312','variation': '2.07'},
+    {'baseline':'1312','variation': '2.07'},
     # {'baseline':'1312','variation': '2.08'},
     # {'baseline':'1312','variation': '2.09'},
     # {'baseline':'1312','variation': '3.01'},

@@ -112,11 +112,13 @@ sol_init.scale_P(p_init)
 sol_init.compute_non_solver_quantities(p_init) 
 
 p = p_init.copy()
-p.delta_dom[:,1] = 12.0
-p.delta_dom[1,1] = 0.01
-p.delta_int[:,1] = 12.0
-p.update_delta_eff()
+p.load_run('coop_eq_direct_saves/dyn_1312_baseline_negishi/')
 
+#%%
+# p.delta_dom[:,1] = 12.0
+# p.delta_dom[1,1] = 0.01
+p.delta_int[5,1] = 12.0
+p.update_delta_eff()
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 context = 'counterfactual',
                         cobweb_anim=False,tol =1e-13,
@@ -144,7 +146,7 @@ p.guess = sol_c.vector_from_var()
 
 sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init, Nt=25,
                                       t_inf=500,
-                        cobweb_anim=False,tol =1e-6,
+                        cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=False,
                         cobweb_qty='l_R',

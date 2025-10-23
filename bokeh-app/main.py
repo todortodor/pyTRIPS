@@ -829,6 +829,7 @@ def section_end(s):
 
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #                 if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
+# cf_list = sorted(['baseline_1312','baseline_1312_1.07','baseline_1312_2.02','baseline_1312_2.07'], key=section_end)#+\
 cf_list = sorted(['baseline_1312'], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
