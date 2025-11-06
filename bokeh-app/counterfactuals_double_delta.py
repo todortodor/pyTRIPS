@@ -19,7 +19,7 @@ recaps_path = 'counterfactual_recaps/double_delta/'
 
 baseline_dics = [
     # {'baseline':'1312','variation': 'baseline'},
-    # {'baseline':'1312','variation': '1.07'},
+    {'baseline':'1312','variation': '1.07'},
     # {'baseline':'1312','variation': '1.08'},
     # {'baseline':'1312','variation': '1.09'},
     # {'baseline':'1312','variation': '2.01'},
@@ -63,7 +63,8 @@ dynamics = True
 
 if __name__ == '__main__':
     for baseline_dic in baseline_dics:
-        for delta_to_change in ['dom','int','both']:
+        # for delta_to_change in ['dom','int','both']:
+        for delta_to_change in ['both']:
             if baseline_dic['variation'] == 'baseline':
                 baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
             else:

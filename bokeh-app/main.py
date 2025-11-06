@@ -240,30 +240,30 @@ comments_dic = {}
 comments_dic['1312'] = {
     "baseline":"baseline",
     '1.0':'1.0 : nu=1e-6',
-    '1.01':'1.01 : nu=1e-5',
-    '1.02':'1.02 : nu=5e-5',
-    '1.03':'1.03 : nu=1e-4',
-    '1.04':'1.04 : nu=5e-4',
-    '1.05':'1.05 : nu=1e-3',
-    '1.06':'1.06 : nu=5e-3',
+    # '1.01':'1.01 : nu=1e-5',
+    # '1.02':'1.02 : nu=5e-5',
+    # '1.03':'1.03 : nu=1e-4',
+    # '1.04':'1.04 : nu=5e-4',
+    # '1.05':'1.05 : nu=1e-3',
+    # '1.06':'1.06 : nu=5e-3',
     '1.07':'1.07 : nu=1e-2',
-    '1.08':'1.08 : nu=2e-2',
-    '1.09':'1.09 : nu=3e-2',
-    '2.01':'2.01 : nu=4e-2',
+    # '1.08':'1.08 : nu=2e-2',
+    # '1.09':'1.09 : nu=3e-2',
+    # '2.01':'2.01 : nu=4e-2',
     '2.02':'2.02 : nu=5e-2',
-    '2.03':'2.03 : nu=6e-2',
-    '2.04':'2.04 : nu=7e-2',
-    '2.05':'2.05 : nu=8e-2',
-    '2.06':'2.06 : nu=9e-2',
+    # '2.03':'2.03 : nu=6e-2',
+    # '2.04':'2.04 : nu=7e-2',
+    # '2.05':'2.05 : nu=8e-2',
+    # '2.06':'2.06 : nu=9e-2',
     '2.07':'2.07 : nu=1e-1',
-    '2.08':'2.08 : nu=1.5e-1',
-    '2.09':'2.09 : nu=2e-1',
-    '3.01':'3.01 : nu=2.5e-1',
-    '3.02':'3.02 : nu=3e-1',
-    '3.03':'3.03 : nu=3.5e-1',
-    '3.04':'3.04 : nu=4e-1',
-    '3.05':'3.05 : nu=4.5e-1',
-    '3.06':'3.06 : nu=5e-1',
+    # '2.08':'2.08 : nu=1.5e-1',
+    # '2.09':'2.09 : nu=2e-1',
+    # '3.01':'3.01 : nu=2.5e-1',
+    # '3.02':'3.02 : nu=3e-1',
+    # '3.03':'3.03 : nu=3.5e-1',
+    # '3.04':'3.04 : nu=4e-1',
+    # '3.05':'3.05 : nu=4.5e-1',
+    # '3.06':'3.06 : nu=5e-1',
     '4.0':'4.0 : calibrate delta_dom_CHN\ntarget DOMPATINCHN',
     # '2.0':'2.0 : baseline but bounded delta',
     # '2.1':'2.1 : 2.0 with doubled nu',
@@ -829,8 +829,8 @@ def section_end(s):
 
 # cf_list = sorted([s for s in os.listdir(cf_path) 
 #                 if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
-# cf_list = sorted(['baseline_1312','baseline_1312_1.07','baseline_1312_2.02','baseline_1312_2.07'], key=section_end)#+\
-cf_list = sorted(['baseline_1312'], key=section_end)#+\
+cf_list = sorted(['baseline_1312','baseline_1312_1.07','baseline_1312_2.02','baseline_1312_2.07'], key=section_end)#+\
+# cf_list = sorted(['baseline_1312'], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
@@ -869,63 +869,63 @@ p_cf_both.legend.click_policy="hide"
 p_cf_both.legend.label_text_font_size = '8pt'
 p_cf_both.add_layout(p_cf_both.legend[0], 'right')
 
-def get_data_cf_int(baseline,country):
-    df_cf_int = pd.read_csv(cf_path+'baseline_'+baseline+'/int/dyn_'+country+'.csv')
-    # df_cf_int['Growth rate'] = df_cf_int['growth']/df_cf_int.loc[np.argmin(np.abs(df_cf_int.delt_int-1))].growth
-    df_cf_int.set_index('delt_int',inplace=True)
-    return df_cf_int
+# def get_data_cf_int(baseline,country):
+#     df_cf_int = pd.read_csv(cf_path+'baseline_'+baseline+'/int/dyn_'+country+'.csv')
+#     # df_cf_int['Growth rate'] = df_cf_int['growth']/df_cf_int.loc[np.argmin(np.abs(df_cf_int.delt_int-1))].growth
+#     df_cf_int.set_index('delt_int',inplace=True)
+#     return df_cf_int
 
-df_cf_int = get_data_cf_int(baseline_cf,country_cf)
-ds_cf_int = ColumnDataSource(df_cf_int)
+# df_cf_int = get_data_cf_int(baseline_cf,country_cf)
+# ds_cf_int = ColumnDataSource(df_cf_int)
 
-colors_cf_int = itertools.cycle(Category18)
+# colors_cf_int = itertools.cycle(Category18)
 
-p_cf_int = figure(title="Delta international", 
-                width = 1200,
-                height = 850,
-                x_range=(0.1,10),
-                # y_range=(0.93,1.07),
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare',
-                x_axis_type="log",
-                tools = TOOLS)
+# p_cf_int = figure(title="Delta international", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_range=(0.1,10),
+#                 # y_range=(0.93,1.07),
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare',
+#                 x_axis_type="log",
+#                 tools = TOOLS)
 
-for col in df_cf_int.columns:
-    if col not in [0,'delt_dom','delt_int','growth']:
-        p_cf_int.line(x='delt_int', y=col, source = ds_cf_int, color=next(colors_cf_int),line_width = 2, legend_label=col)
+# for col in df_cf_int.columns:
+#     if col not in [0,'delt_dom','delt_int','growth']:
+#         p_cf_int.line(x='delt_int', y=col, source = ds_cf_int, color=next(colors_cf_int),line_width = 2, legend_label=col)
      
-p_cf_int.legend.click_policy="hide"
-p_cf_int.legend.label_text_font_size = '8pt'
-p_cf_int.add_layout(p_cf_int.legend[0], 'right')
+# p_cf_int.legend.click_policy="hide"
+# p_cf_int.legend.label_text_font_size = '8pt'
+# p_cf_int.add_layout(p_cf_int.legend[0], 'right')
 
-def get_data_cf_dom(baseline,country):
-    df_cf_dom = pd.read_csv(cf_path+'baseline_'+baseline+'/dom/dyn_'+country+'.csv')
-    # df_cf_dom['Growth rate'] = df_cf_dom['growth']/df_cf_dom.loc[np.argmin(np.abs(df_cf_dom.delt_dom-1))].growth
-    df_cf_dom.set_index('delt_dom',inplace=True)
-    return df_cf_dom
+# def get_data_cf_dom(baseline,country):
+#     df_cf_dom = pd.read_csv(cf_path+'baseline_'+baseline+'/dom/dyn_'+country+'.csv')
+#     # df_cf_dom['Growth rate'] = df_cf_dom['growth']/df_cf_dom.loc[np.argmin(np.abs(df_cf_dom.delt_dom-1))].growth
+#     df_cf_dom.set_index('delt_dom',inplace=True)
+#     return df_cf_dom
 
-df_cf_dom = get_data_cf_dom(baseline_cf,country_cf)
-ds_cf_dom = ColumnDataSource(df_cf_dom)
+# df_cf_dom = get_data_cf_dom(baseline_cf,country_cf)
+# ds_cf_dom = ColumnDataSource(df_cf_dom)
 
-colors_cf_dom = itertools.cycle(Category18)
+# colors_cf_dom = itertools.cycle(Category18)
 
-p_cf_dom = figure(title="Delta domestic", 
-                width = 1200,
-                height = 850,
-                x_range=(0.1,10),
-                # y_range=(0.93,1.07),
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_cf_dom = figure(title="Delta domestic", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_range=(0.1,10),
+#                 # y_range=(0.93,1.07),
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-for col in df_cf_dom.columns:
-    if col not in [0,'delt_dom','delt_int','growth']:
-        p_cf_dom.line(x='delt_dom', y=col, source = ds_cf_dom, color=next(colors_cf_dom),line_width = 2, legend_label=col)
+# for col in df_cf_dom.columns:
+#     if col not in [0,'delt_dom','delt_int','growth']:
+#         p_cf_dom.line(x='delt_dom', y=col, source = ds_cf_dom, color=next(colors_cf_dom),line_width = 2, legend_label=col)
      
-p_cf_dom.legend.click_policy="hide"
-p_cf_dom.legend.label_text_font_size = '8pt'
-p_cf_dom.add_layout(p_cf_dom.legend[0], 'right')
+# p_cf_dom.legend.click_policy="hide"
+# p_cf_dom.legend.label_text_font_size = '8pt'
+# p_cf_dom.add_layout(p_cf_dom.legend[0], 'right')
 
 def update_baseline_cf(attrname, old, new):
     country_cf = country_cf_select.value
@@ -933,13 +933,13 @@ def update_baseline_cf(attrname, old, new):
     df_cf_both = get_data_cf_both(new,country_cf)
     ds_cf_both.data = df_cf_both
     
-    ds_cf_int.data = get_data_cf_int(new,country_cf)
-    df_cf_int = get_data_cf_int(new,country_cf)
-    ds_cf_int.data = df_cf_int
+    # ds_cf_int.data = get_data_cf_int(new,country_cf)
+    # df_cf_int = get_data_cf_int(new,country_cf)
+    # ds_cf_int.data = df_cf_int
     
-    ds_cf_dom.data = get_data_cf_dom(new,country_cf)
-    df_cf_dom = get_data_cf_dom(new,country_cf)
-    ds_cf_dom.data = df_cf_dom
+    # ds_cf_dom.data = get_data_cf_dom(new,country_cf)
+    # df_cf_dom = get_data_cf_dom(new,country_cf)
+    # ds_cf_dom.data = df_cf_dom
     # ds_cf_max.data = build_max(df_cf)
     
 def update_country_cf(attrname, old, new):
@@ -947,18 +947,19 @@ def update_country_cf(attrname, old, new):
     df_cf_both = get_data_cf_both(baseline_cf,new)
     ds_cf_both.data = df_cf_both
     
-    df_cf_int = get_data_cf_int(baseline_cf,new)
-    ds_cf_int.data = df_cf_int
+    # df_cf_int = get_data_cf_int(baseline_cf,new)
+    # ds_cf_int.data = df_cf_int
     
-    df_cf_dom = get_data_cf_dom(baseline_cf,new)
-    ds_cf_dom.data = df_cf_dom
+    # df_cf_dom = get_data_cf_dom(baseline_cf,new)
+    # ds_cf_dom.data = df_cf_dom
     
 controls_cf = row(baseline_cf_select, country_cf_select)
 
 baseline_cf_select.on_change('value', update_baseline_cf)
 country_cf_select.on_change('value', update_country_cf)
 
-counterfactuals_report = column(controls_cf,column(p_cf_both,p_cf_int,p_cf_dom))
+# counterfactuals_report = column(controls_cf,column(p_cf_both,p_cf_int,p_cf_dom))
+counterfactuals_report = column(controls_cf,column(p_cf_both))
 
 #%% counterfactuals 805 TO target
 

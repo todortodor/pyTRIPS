@@ -25,7 +25,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'1312','variation': 'baseline'},
+    {'baseline':'1312','variation': 'baseline'},
     {'baseline':'1312','variation': '1.07'},
     {'baseline':'1312','variation': '2.02'},
     {'baseline':'1312','variation': '2.07'},
@@ -74,4 +74,4 @@ if __name__ == '__main__':
                 save_directly = True
                 if save_directly:
                     direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
-                    p_opti.write_params(f'coop_eq_direct_saves/dyn_{direct_save_path}_{aggregation_method}/')
+                    p_opti.write_params(f'coop_eq_direct_saves/dyn_single_delta_{direct_save_path}_{aggregation_method}/')

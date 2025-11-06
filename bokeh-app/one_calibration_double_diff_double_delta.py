@@ -38,7 +38,7 @@ if new_run:
 # m.compute_moments(sol, p)
 # print(m.SPFLOWDOM[8,8])
 # m.compute_moments_deviations()
-#%%
+#
 # p.delta_dom[p.delta_dom<0.05] = 0.05
 # p.delta_int[p.delta_int<0.05] = 0.05
 # p.update_delta_eff()
@@ -53,7 +53,7 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.delta_dom[3,1] = p.delta_dom[3,1]/2
 # p.update_delta_eff()
 # p.nu_tilde[:] = p.nu.copy()
-# p.nu[1] = 0.5
+p.nu[1] = 1e-1
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 
 #                       'nu_tilde',
 #                       'zeta', 'g_0', 
@@ -75,9 +75,10 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 #  'DOMPATINUS',
 #  'TE']
 # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
-p.calib_parameters.append('delta_dom')
+# p.calib_parameters.append('delta_dom')
 # p.calib_parameters.append('d')
-m.list_of_moments.append('DOMPATINCHN')
+# m.list_of_moments.append('DOMPATINCHN')
+# m.weights_dict['DOMPATINCHN']=5
 
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,
@@ -178,7 +179,7 @@ commentary = ''
 baseline_number = '1312'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 4.0
+run_number = 2.07
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False

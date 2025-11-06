@@ -235,6 +235,7 @@ class parameters:
                     'delta_dom':[np.s_[::S]],#,np.s_[S-1]],
                     # 'delta_dom':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'delta_int':[np.s_[::S]],#,np.s_[S-1]],
+                    # 'delta_int':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
                     'khi':None,
@@ -2831,7 +2832,7 @@ class var_double_diff_double_delta:
                                     p.beta[1:],
                                     self.Z
                                     )
-            
+            temp = (self.PSI_CL[..., 1:]*self.phi[..., 1:]**(p.sigma-1)[None, None, 1:]).sum(axis=1)
             X_CL = np.zeros((p.N, p.N, p.S))
             X_CL[...,1:] = np.einsum('nis,nis,ns,ns,s,n->nis',
                                     self.phi[..., 1:]**(p.sigma-1)[None, None, 1:],
@@ -5333,7 +5334,7 @@ class dynamic_var_double_diff_double_delta:
         numB = self.PSI_MPL_dot
         PSI_MPL[...,1:,:] = np.einsum('nist,nist->nist',
                            numA-numB,
-                           1/(p.nu_tilde[None,None,1:,None]+p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
+                           1/(self.g_s[None,None,1:,:]+p.nu_tilde[None,None,1:,None]+p.zeta[None,None,1:,None]+p.delta_eff[:,:,1:,None])
                            )-self.PSI_MPL_0[...,1:,None]
         
         PSI_MPL[...,-1] = 0

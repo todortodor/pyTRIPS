@@ -85,10 +85,13 @@ from classes import moments, parameters, var_double_diff_double_delta, dynamic_v
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p_init.load_run('calibration_results_matched_economy/1312/')
+p_init.load_run('calibration_results_matched_economy/baseline_1312_variations/1.07/')
+# p_init.load_run('calibration_results_matched_economy/1312/')
+# p_init.nu[1] = 0.05
 
 sol, sol_init = fixed_point_solver_double_diff_double_delta(p_init,x0=p_init.guess,
-                                context = 'calibration',
+                                # context = 'calibration',
+                                context = 'counterfactual',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
                         accelerate_when_stable=True,
@@ -108,17 +111,19 @@ sol, sol_init = fixed_point_solver_double_diff_double_delta(p_init,x0=p_init.gue
                         damping_post_acceleration=10
                         )
 sol_init.scale_P(p_init)
-
 sol_init.compute_non_solver_quantities(p_init) 
+# p_init.tau = sol_init.tau
+p_init.guess = sol_init.vector_from_var()
 
 p = p_init.copy()
-p.load_run('coop_eq_direct_saves/dyn_1312_baseline_negishi/')
+# p.load_run('counterfactual_results/double_delta/baseline_1312_1.07/both/USA/5/')
+# p.load_run('calibration_results_matched_economy/baseline_1312_variations/1.07/')
 
 #%%
 # p.delta_dom[:,1] = 12.0
 # p.delta_dom[1,1] = 0.01
-p.delta_int[5,1] = 12.0
-p.update_delta_eff()
+# p.delta_int[5,1] = 12.0
+# p.update_delta_eff()
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 context = 'counterfactual',
                         cobweb_anim=False,tol =1e-13,
@@ -128,7 +133,7 @@ sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                         plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
-                        disp_summary=False,
+                        disp_summary=True,
                         damping = 10,
                         max_count = 1000,
                         accel_memory =50, 
@@ -142,9 +147,9 @@ sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p) 
 sol_c.compute_consumption_equivalent_welfare(p, sol_init)
-p.guess = sol_c.vector_from_var()
-
-sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init, Nt=25,
+# p.guess = sol_c.vector_from_var()
+#%%
+sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_init, sol_init, Nt=25,
                                       t_inf=500,
                         cobweb_anim=False,tol =1e-14,
                         accelerate=False,
@@ -165,4 +170,4 @@ sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p, sol_init, Nt=2
                         accel_max_weight_norm=1e6,
                         damping_post_acceleration=5
                         )
-dyn_sol.compute_non_solver_quantities(p)
+dyn_sol.compute_non_solver_quantities(p_init)

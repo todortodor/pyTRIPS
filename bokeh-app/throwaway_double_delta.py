@@ -16,17 +16,17 @@ import matplotlib.pyplot as plt
 import os
 
 baseline_number = 1312
-variation = 'baseline'
+variation = '2.07'
 # pre_trips_number = 4096
-path = 'double_delta/1312_baseline_with_dyn/'
+path = f'double_delta/1312_{variation}/'
 try:
     os.mkdir(path)
 except:
     pass
 
 p = parameters()
-# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 # context = 'counterfactual',
@@ -64,7 +64,7 @@ sol_c.compute_non_solver_quantities(p)
 #%%
 
 p_coop_negishi = parameters()
-p_coop_negishi.load_run(f'coop_eq_direct_saves/{baseline_number}_{variation}_negishi/')
+p_coop_negishi.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_negishi/')
 
 recap_negishi = pd.DataFrame(index=p.countries) 
 recap_negishi['delta_dom'] = p_coop_negishi.delta_dom[:,1]
@@ -101,7 +101,7 @@ dyn_sol.compute_world_welfare_changes(p_coop_negishi,sol_c)
 sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_coop_negishi, sol_c, 
                                                                Nt=25,
                                       t_inf=500,
-                        cobweb_anim=False,tol =1e-6,
+                        cobweb_anim=False,tol =1e-12,
                         accelerate=False,
                         accelerate_when_stable=False,
                         cobweb_qty='l_R',
@@ -132,7 +132,7 @@ recap_negishi.to_csv(path+'negishi.csv')
 
 
 p_coop_equal = parameters()
-p_coop_equal.load_run(f'coop_eq_direct_saves/{baseline_number}_{variation}_pop_weighted/')
+p_coop_equal.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_pop_weighted/')
 
 
 recap_equal = pd.DataFrame(index=p.countries) 
@@ -170,7 +170,7 @@ dyn_sol.compute_world_welfare_changes(p_coop_equal,sol_c)
 sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_coop_equal, sol_c, 
                                                                Nt=25,
                                       t_inf=500,
-                        cobweb_anim=False,tol =1e-6,
+                        cobweb_anim=False,tol =1e-12,
                         accelerate=False,
                         accelerate_when_stable=False,
                         cobweb_qty='l_R',
@@ -200,7 +200,7 @@ recap_equal.to_csv(path+'equal.csv')
 #%%
 
 p_nash = parameters()
-p_nash.load_run(f'coop_eq_direct_saves/{baseline_number}_{variation}_nash/')
+p_nash.load_run(f'coop_eq_direct_saves/dyn_{baseline_number}_{variation}_nash/')
 
 
 recap_nash = pd.DataFrame(index=p.countries) 
@@ -238,7 +238,7 @@ dyn_sol.compute_world_welfare_changes(p_nash,sol_c)
 sol, dyn_sol = dyn_fixed_point_solver_double_diff_double_delta(p_nash, sol_c, 
                                                                Nt=25,
                                       t_inf=500,
-                        cobweb_anim=False,tol =1e-6,
+                        cobweb_anim=False,tol =1e-12,
                         accelerate=False,
                         accelerate_when_stable=False,
                         cobweb_qty='l_R',
