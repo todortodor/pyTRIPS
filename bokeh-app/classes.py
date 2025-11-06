@@ -6973,7 +6973,10 @@ class moments:
             self.compute_SINNOVPATUS(var,p)
             self.compute_NUR(var,p)
             self.compute_TO(var,p)
-            self.compute_TO_DD_DD(var,p)
+            try:
+                self.compute_TO_DD_DD(var,p)
+            except:
+                pass
             self.compute_TE(var,p)
             self.compute_DOMPATRATUSEU(var,p)
             self.compute_SPATDEST(var,p)

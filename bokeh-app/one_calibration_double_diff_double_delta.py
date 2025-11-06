@@ -16,20 +16,20 @@ import numpy as np
 
 new_run = True
 baseline_number = '1312'
-variation = '3.05'
+variation = '1.0'
 
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    # p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     # print(p.k)
     # p.mask['k'] = np.array([ True,  True])
-    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
     start_time = time.perf_counter()
 
     m = moments()
-    m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
-    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+    # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
 # m.load_data('data_smooth_3_years/data_12_countries_1992/')
 # p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
 # sol = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'calibration')
@@ -44,6 +44,7 @@ if new_run:
 # p.update_delta_eff()
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.weights_dict['SPFLOWDOM'] = 5
+p.calib_parameters.append('nu')
 
 # p.d = 1.1
 # p.d = 0.191473

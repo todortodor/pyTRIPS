@@ -6,7 +6,7 @@ from bokeh.layouts import row, column
 from bokeh.models import Button, Slider, Toggle, FactorRange, Div, ColumnDataSource, LabelSet, Select,Legend, LegendItem, DataTable, TableColumn, HoverTool, Slope
 from bokeh.plotting import figure
 from bokeh.events import ButtonClick
-from classes import parameters, moments, var, var_with_entry_costs
+from classes import parameters, moments, var, var_with_entry_costs, var_double_diff_double_delta
 from data_funcs import compute_rough_jacobian,rough_dyn_fixed_point_solver
 import numpy as np
 import itertools
@@ -22,15 +22,12 @@ warnings.filterwarnings('ignore')
 start = time.perf_counter()
 
 def load(path, data_path=None, 
-         dir_path = None, context = 'calibration'):
+         dir_path = None, context = 'counterfactual'):
     # p = parameters(data_path=data_path)
     p = parameters()
     # p.load_data(path)
     p.load_run(path,dir_path=dir_path)
-    if path.endswith('11.0/') or path.endswith('11.01/') or path.endswith('11.02/'):
-        sol = var_with_entry_costs.var_from_vector(p.guess, p, compute=True, context = context)
-    else:
-        sol = var.var_from_vector(p.guess, p, compute=True, context = context)
+    sol = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = context)
     sol.scale_P(p)
     sol.compute_price_indices(p)
     sol.compute_non_solver_quantities(p)
@@ -38,14 +35,14 @@ def load(path, data_path=None,
     # m.load_data(data_path)
     m.load_run(path,dir_path=dir_path)
     m.compute_moments(sol, p)
-    m.compute_moments_deviations()
+    # m.compute_moments_deviations()
     return p,m,sol
 
 def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments):
     dic_df_param = {}
     dic_df_mom = {}
     dic_df_sol = {}
-    params = p_baseline.calib_parameters
+    params = p_baseline.calib_parameters+['nu']+['nu_tilde']+['delta_dom']+['delta_int']
     params.append('kappa')
     params.append('a')
     params.append('d')
@@ -59,13 +56,14 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     df_scalar_params.index.name='x'
     
     for param in params:
+        # print(param,getattr(p_baseline,param),[p_baseline.mask[param]])
         if hasattr(p_baseline,param):
             if len(getattr(p_baseline,param)[p_baseline.mask[param]]) == 1:
                 if param == 'k':
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])-1
                 else:
                     df_scalar_params.loc[param,'baseline'] = float(getattr(p_baseline,param)[p_baseline.mask[param]])
-            if param in ['eta','delta']:
+            if param in ['eta','delta_dom','delta_int']:
                 df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
                 df.index.name='x'
                 dic_df_param[param] = df
@@ -110,7 +108,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                 except:
                     pass
             
-    for sol_qty in ['semi_elast_patenting_delta','DT','psi_o_star']:
+    for sol_qty in ['psi_o_star']:
         df = pd.DataFrame(index = p_baseline.countries, 
                           columns = ['baseline'], 
                           )
@@ -142,8 +140,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         df['baseline'] = getattr(sol_baseline,'psi_m_star')[:,:,1].min(axis=0)
         dic_df_sol[sol_qty] = df
     
-    df_scalar_moments.loc['objective','target'] = 0.01
-    df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
+    # df_scalar_moments.loc['objective','target'] = 0.01
+    # df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
     dic_df_mom['scalars'] = df_scalar_moments
     return dic_df_param, dic_df_mom, dic_df_sol
 
@@ -160,7 +158,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
                 else:
                     dic_df_param[k].loc[i,run_name] = float(getattr(p,i)[p.mask[i]])
                 
-        if k in ['eta','delta']:
+        if k in ['eta','delta_dom','delta_int']:
             dic_df_param[k][run_name] = getattr(p,k)[...,1]
         if k in ['r_hjort']:
             dic_df_param[k][run_name] = getattr(p,k)
@@ -183,7 +181,7 @@ def append_dic_of_dataframes_with_variation(dic_df_param, dic_df_mom, dic_df_sol
             dic_df_mom[k][run_name] = getattr(m,k).ravel()
     
     for k in dic_df_sol.keys():
-        if k in ['semi_elast_patenting_delta','DT','psi_o_star']:
+        if k in ['psi_o_star']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]
         if k in ['l_R']:
             dic_df_sol[k][run_name] = getattr(sol,k)[...,1]/p.labor
@@ -201,7 +199,7 @@ data_path = join(dirname(__file__), 'data/')
 # data_path = 'data/'
 # results_path = 'calibration_results_matched_economy/'
 results_path = join(dirname(__file__), 'calibration_results_matched_economy/')
-cf_path = join(dirname(__file__), 'counterfactual_recaps/unilateral_patent_protection/')
+cf_path = join(dirname(__file__), 'counterfactual_recaps/double_delta/')
 around_dyn_eq_path = join(dirname(__file__), 'counterfactual_recaps/')
 nash_eq_path = join(dirname(__file__), 'nash_eq_recaps/')
 coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
@@ -209,12 +207,13 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 #%% moments / parameters for variations
 
-list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
+list_of_moments = ['GPDIFF','GROWTH','KM_DD_DD', 'OUT',
  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRGDP','SGDP','RGDPPC','UUPCOST','SINNOVPATUS',
-  'TO','TE','DOMPATINUS','DOMPATUS',
+  'TO_DD_DD','TE','DOMPATINUS','DOMPATINCHN','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'PROBINNOVENTER',
- 'objective']
+ 'objective'
+ ]
 # list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 #  'RD', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
 #  'SRDUS', 'SRGDP','UUPCOST', 'PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG','SINNOVPATUS',
@@ -223,432 +222,57 @@ list_of_moments = ['GPDIFF','GROWTH','KM', 'OUT',
 
 comments_dic = {}
 
-# comments_dic['901'] = {
-#     "baseline":"baseline : 2015",
-#     '1.0':'1.0:same as bsln',
-#     '2.0':'2.0:calibrated theta, new weights',
-#     '3.0':'3.0:more weights SPFLOW',
-#     '4.0':'4.0:more weights high SPFLOW',
-#     '5.0':'5.0:special weight on USA-EUR',
-#     '6.0':'6.0:more weight on high SPFLOW',
-#     '7.0':'7.0',
-#     '8.0':'8.0',
-#     '9.0':'9.0',
-#     '10.0':'10.0:doubling eta IDN',
-#     '11.0':'11.0',
-#     '12.0':'12.0',
-#     '13.0':'13.0',
-#     '14.0':'14.0',
-#     '15.0':'15.0:only TE, theta',
-#     '16.0':'16.0',
-#     '17.0':'17.0',
-#     '18.0':'18.0',
-#     '19.0':'19.0',
-#     '20.0':'20.0',
-#     '21.0':'21.0',
+# comments_dic['1311'] = {
+#     "baseline":"baseline :same as original baseline",
+#     '1.0':'1.0 : filler,same as baseline',
+#     '2.0':'2.0 : half delta_dom USA',
+#     '3.0':'3.0 : half delta_dom CHN',
+#     # '2.0':'2.0 : baseline but bounded delta',
+#     # '2.1':'2.1 : 2.0 with doubled nu',
+#     # '2.2':'2.2 : 2.0 with doubled nu_tilde',
+#     # '3.0':'3.0 : calibrat nu. nu_tilde=nu. target TO_DD_DD',
+#     # '3.1':'3.1 : 3.0 with bounded delta',
+#     # '4.0':'4.0 : 3.0 with nu=1e-6',
+#     # '99.0':'99.0 : original baseline',
+#     # '99.1':'99.1 : SPFLOW instead',
 #     }
 
-# comments_dic['902'] = {
-#     "baseline":"baseline : 2015",
-#     "1.0" : "1.0 : 1990",
-#     "1.1" : "1.1 : 1991",
-#     "1.2" : "1.2 : 1992",
-#     "1.3" : "1.3 : 1993",
-#     "1.4" : "1.4 : 1994",
-#     "1.5" : "1.5 : 1995",
-#     "1.6" : "1.6 : 1996",
-#     "1.7" : "1.7 : 1997",
-#     "1.8" : "1.8 : 1998",
-#     "1.9" : "1.9 : 1999",
-#     "1.10" : "1.10 : 2000",
-#     "1.11" : "1.11 : 2001",
-#     "1.12" : "1.12 : 2002",
-#     "1.13" : "1.13 : 2003",
-#     "1.14" : "1.14 : 2004",
-#     "1.15" : "1.15 : 2005",
-#     "1.16" : "1.16 : 2006",
-#     "1.17" : "1.17 : 2007",
-#     "1.18" : "1.18 : 2008",
-#     "1.19" : "1.19 : 2009",
-#     "1.20" : "1.20 : 2010",
-#     "1.21" : "1.21 : 2011",
-#     "1.22" : "1.22 : 2012",
-#     "1.23" : "1.23 : 2013",
-#     "1.24" : "1.24 : 2014",
-#     "1.25" : "1.25 : 2015",
-#     "1.26" : "1.26 : 2016",
-#     "1.27" : "1.27 : 2017",
-#     "1.28" : "1.28 : 2018",
-# }
-
-# comments_dic['903'] = {
-#     "baseline":"baseline : 2015",
-#     "1.0" : "1.0 : 1990 smooth 3y",
-#     "1.1" : "1.1 : 1991 smooth 3y",
-#     "1.2" : "1.2 : 1992 smooth 3y",
-#     "1.3" : "1.3 : 1993 smooth 3y",
-#     "1.4" : "1.4 : 1994 smooth 3y",
-#     "1.5" : "1.5 : 1995 smooth 3y",
-#     "1.6" : "1.6 : 1996 smooth 3y",
-#     "1.7" : "1.7 : 1997 smooth 3y",
-#     "1.8" : "1.8 : 1998 smooth 3y",
-#     "1.9" : "1.9 : 1999 smooth 3y",
-#     "1.10" : "1.10 : 2000 smooth 3y",
-#     "1.11" : "1.11 : 2001 smooth 3y",
-#     "1.12" : "1.12 : 2002 smooth 3y",
-#     "1.13" : "1.13 : 2003 smooth 3y",
-#     "1.14" : "1.14 : 2004 smooth 3y",
-#     "1.15" : "1.15 : 2005 smooth 3y",
-#     "1.16" : "1.16 : 2006 smooth 3y",
-#     "1.17" : "1.17 : 2007 smooth 3y",
-#     "1.18" : "1.18 : 2008 smooth 3y",
-#     "1.19" : "1.19 : 2009 smooth 3y",
-#     "1.20" : "1.20 : 2010 smooth 3y",
-#     "1.21" : "1.21 : 2011 smooth 3y",
-#     "1.22" : "1.22 : 2012 smooth 3y",
-#     "1.23" : "1.23 : 2013 smooth 3y",
-#     "1.24" : "1.24 : 2014 smooth 3y",
-#     "1.25" : "1.25 : 2015 smooth 3y",
-#     "1.26" : "1.26 : 2016 smooth 3y",
-#     "1.27" : "1.27 : 2017 smooth 3y",
-#     "1.28" : "1.28 : 2018 smooth 3y",
-# }
-
-# comments_dic['1001'] = {
-#     "baseline":"baseline : 2015",
-#     "1.0":"1.0:same as bsln",
-#     "2.0":"2.0:less weights on big flows",
-#     "3.0":"3.0:1 weight on all moments",
-#     "4.0":"4.0:increase weight on SPFLOW",
-#     "5.0":"5.0:corect RD",
-#     "6.0":"6.0:no weight on high pflow",
-# }
-
-# comments_dic['1002'] = {
-#     "baseline":"baseline : 2015",
-#     "1.0" : "1.0 : 1990 smooth 3y",
-#     "1.1" : "1.1 : 1991 smooth 3y",
-#     "1.2" : "1.2 : 1992 smooth 3y",
-#     "1.3" : "1.3 : 1993 smooth 3y",
-#     "1.4" : "1.4 : 1994 smooth 3y",
-#     "1.5" : "1.5 : 1995 smooth 3y",
-#     "1.6" : "1.6 : 1996 smooth 3y",
-#     "1.7" : "1.7 : 1997 smooth 3y",
-#     "1.8" : "1.8 : 1998 smooth 3y",
-#     "1.9" : "1.9 : 1999 smooth 3y",
-#     "1.10" : "1.10 : 2000 smooth 3y",
-#     "1.11" : "1.11 : 2001 smooth 3y",
-#     "1.12" : "1.12 : 2002 smooth 3y",
-#     "1.13" : "1.13 : 2003 smooth 3y",
-#     "1.14" : "1.14 : 2004 smooth 3y",
-#     "1.15" : "1.15 : 2005 smooth 3y",
-#     "1.16" : "1.16 : 2006 smooth 3y",
-#     "1.17" : "1.17 : 2007 smooth 3y",
-#     "1.18" : "1.18 : 2008 smooth 3y",
-#     "1.19" : "1.19 : 2009 smooth 3y",
-#     "1.20" : "1.20 : 2010 smooth 3y",
-#     "1.21" : "1.21 : 2011 smooth 3y",
-#     "1.22" : "1.22 : 2012 smooth 3y",
-#     "1.23" : "1.23 : 2013 smooth 3y",
-#     "1.24" : "1.24 : 2014 smooth 3y",
-#     "1.25" : "1.25 : 2015 smooth 3y",
-#     "1.26" : "1.26 : 2016 smooth 3y",
-#     "1.27" : "1.27 : 2017 smooth 3y",
-#     "1.28" : "1.28 : 2018 smooth 3y",
-# }
-
-# comments_dic['1005'] = comments_dic['1002']
-# comments_dic['1011'] = comments_dic['1002']
-
-# comments_dic['1003'] = {
-#     "baseline":"baseline : 2015",
-#     # '0.1':'0.1:better RD targeting',
-#     # '0.2':'0.2:better RD and GROWTH targeting',
-#     # '0.3':'0.3:better RD and GROWTH/TO/TE targeting',
-#     '0.4':'0.4:better RD targeting',
-#     '0.5':'0.5:0.4 with different UUPCOST/DOMPATINUS  tension',
-#     '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
-#     '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
-#     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '3.0':'3.0:full calibration',
-#     '3.1':'3.1:full calibration',
-#     '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-#     '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-#     '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-#     '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-#     }
-
-# comments_dic['1004'] = {
-#     "baseline":"baseline : 2015, same as 1003_0.4",
-#     '1.0':'1.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
-#     '1.1':'1.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US fixed',
-#     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '3.0':'3.0:full calibration',
-#     '3.1':'3.1:full calibration',
-#     '4.0':'4.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-#     '4.1':'4.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TP]',
-#     '5.0':'5.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-#     '5.1':'5.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,inter-TP]',
-#     '6.0':'6.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
-#     '6.1':'6.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_North fixed',
-#     '8.0':'8.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
-#     '8.1':'8.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP],delta_US bertolotti',
-#     '9.0':'9.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
-#     '9.1':'9.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST]',
-#     '9.2':'9.2:1995',
-#     '10.0':'10.0:full calibration, delta_US fixed',
-#     '10.1':'10.1:full calibration, delta_US fixed',
-#     '11.0':'11.0:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
-#     '11.1':'11.1:[delta,T,eta,nu], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,TO(updated)]',
-#     '12.0':'12.0:full calibration except delta_US fixed, KM and TO not targeted',
-#     '12.1':'12.1:full calibration except delta_US fixed, KM and TO not targeted',
-#     '13.0':'13.0:full calibration except delta_US and nu fixed, KM and TO not targeted',
-#     '13.1':'13.1:full calibration except delta_US and nu fixed, KM and TO not targeted',
-#     '14.0':'14.0:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-#     '14.1':'14.1:[delta,T,eta,fe,fo], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-#     '15.0':'15.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-#     '15.1':'15.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST], d_US fixed',
-#     }
-
-# comments_dic['1006'] = {
-#     "baseline":"baseline : 2015, same as 1004",
-#     '1.0':'1.0:SPFLOWDOM instead of SPFLOW',
-#     '2.0':'2.0:DOMPATUS instead of DOMPATINUS',
-#     '2.1':'2.1:1992 partial calibration',
-#     '3.0':'3.0:DOMPATUS and DOMPATINUS',
-#     '3.1':'3.1:1992 partial calibration',
-#     '4.0':'4.0:2.0 with higher weight on DOMPATUS',
-#     '4.1':'4.1:1992 partial calibration',
-#     '5.0':'5.0:3.0 with higher weight on DOMPAT(IN)US',
-#     '5.1':'5.1:1992 partial calibration',
-#     }
-
-# comments_dic['1010'] = {
-#     "baseline":"baseline : 2015, new correction US flows and new TO",
-#     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '3.0':'3.0:full calibration 2015',
-#     '3.1':'3.1:full calibration 1992',
-#     '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
-#     '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
-#     '9.2':'9.2:same conditions, 3-year smoothed out data 1992',
-#     '10.0':'10.0 corrected mistake denominator in the Gamma function',
-#     }
-
-# comments_dic['1020'] = {
-#     "baseline":"baseline : 2015, with corrected term in Gamma function",
-#     "1.0" : "1.0 : 1990 smooth 3y",
-#     "1.1" : "1.1 : 1991 smooth 3y",
-#     "1.2" : "1.2 : 1992 smooth 3y",
-#     "1.3" : "1.3 : 1993 smooth 3y",
-#     "1.4" : "1.4 : 1994 smooth 3y",
-#     "1.5" : "1.5 : 1995 smooth 3y",
-#     "1.6" : "1.6 : 1996 smooth 3y",
-#     "1.7" : "1.7 : 1997 smooth 3y",
-#     "1.8" : "1.8 : 1998 smooth 3y",
-#     "1.9" : "1.9 : 1999 smooth 3y",
-#     "1.10" : "1.10 : 2000 smooth 3y",
-#     "1.11" : "1.11 : 2001 smooth 3y",
-#     "1.12" : "1.12 : 2002 smooth 3y",
-#     "1.13" : "1.13 : 2003 smooth 3y",
-#     "1.14" : "1.14 : 2004 smooth 3y",
-#     "1.15" : "1.15 : 2005 smooth 3y",
-#     "1.16" : "1.16 : 2006 smooth 3y",
-#     "1.17" : "1.17 : 2007 smooth 3y",
-#     "1.18" : "1.18 : 2008 smooth 3y",
-#     "1.19" : "1.19 : 2009 smooth 3y",
-#     "1.20" : "1.20 : 2010 smooth 3y",
-#     "1.21" : "1.21 : 2011 smooth 3y",
-#     "1.22" : "1.22 : 2012 smooth 3y",
-#     "1.23" : "1.23 : 2013 smooth 3y",
-#     "1.24" : "1.24 : 2014 smooth 3y",
-#     "1.25" : "1.25 : 2015 smooth 3y",
-#     "1.26" : "1.26 : 2016 smooth 3y",
-#     "1.27" : "1.27 : 2017 smooth 3y",
-#     "1.28" : "1.28 : 2018 smooth 3y",
-#     '2.0':'2.0:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '2.1':'2.1:[delta,T,eta], [SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP]',
-#     '3.0':'3.0:full calibration 2015',
-#     '3.1':'3.1:full calibration 1992',
-#     '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
-#     '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
-#     '9.2':'9.2:same conditions, 3-year smoothed out data 1992',
-#     '10.1':'10.1:2015 calibration with 1992 trade costs',
-#     '10.2':'10.2:2015 calibration with doubled trade costs in pat sector',
-#     }
-
-# comments_dic['1030'] = {
-#     "baseline":"baseline : 2015",
-#     # '0.102':'0.1020:old baseline',
-#     # '0.2':'0.2:high weight on prices',
-#     '3.0':'3.0:full calibration 2015',
-#     '3.1':'3.1:full calibration 1992',
-#     # '9.0':'9.0:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 2015',
-#     # '9.1':'9.1:[delta,T,eta],[SPFLOW,DOMPATINUS,OUT,RD,RP,SRGDP,UUPCOST] 1992',
-#     '9.0':'9.0: partial calibration 2015',
-#     '9.1':'9.1: partial calibration 1992',
-#     '9.2':'9.2:partial calib, 3-year smoothed data 1992',
-#     '10.2':'10.2:2015 doubled trade costs in pat sector',
-#     # "11.0" : "11.0 : 1990 smooth 3y",
-#     # "11.1" : "11.1 : 1991 smooth 3y",
-#     "11.2" : "11.2 : 1992 smooth 3y",
-#     "11.3" : "11.3 : 1993 smooth 3y",
-#     "11.4" : "11.4 : 1994 smooth 3y",
-#     "11.5" : "11.5 : 1995 smooth 3y",
-#     "11.6" : "11.6 : 1996 smooth 3y",
-#     "11.7" : "11.7 : 1997 smooth 3y",
-#     "11.8" : "11.8 : 1998 smooth 3y",
-#     "11.9" : "11.9 : 1999 smooth 3y",
-#     "11.10" : "11.10 : 2000 smooth 3y",
-#     "11.11" : "11.11 : 2001 smooth 3y",
-#     "11.12" : "11.12 : 2002 smooth 3y",
-#     "11.13" : "11.13 : 2003 smooth 3y",
-#     "11.14" : "11.14 : 2004 smooth 3y",
-#     "11.15" : "11.15 : 2005 smooth 3y",
-#     "11.16" : "11.16 : 2006 smooth 3y",
-#     "11.17" : "11.17 : 2007 smooth 3y",
-#     "11.18" : "11.18 : 2008 smooth 3y",
-#     "11.19" : "11.19 : 2009 smooth 3y",
-#     "11.20" : "11.20 : 2010 smooth 3y",
-#     "11.21" : "11.21 : 2011 smooth 3y",
-#     "11.22" : "11.22 : 2012 smooth 3y",
-#     "11.23" : "11.23 : 2013 smooth 3y",
-#     "11.24" : "11.24 : 2014 smooth 3y",
-#     "11.25" : "11.25 : 2015 smooth 3y",
-#     # "11.26" : "11.26 : 2016 smooth 3y",
-#     # "11.27" : "11.27 : 2017 smooth 3y",
-#     # "11.28" : "11.28 : 2018 smooth 3y",
-#     # '97.1':'97.1: Sensitivity SRGDP_EUR',
-#     # '97.3':'97.3: Sensitivity SRGDP_CHN',
-#     # '98.1':'98.1: Sensitivity RP_EUR',
-#     # '98.2':'98.2: Sensitivity RP_EUR with high weight on prices',
-#     '99.0':'99.0: Low TO',
-#     '99.1':'99.1: High TO',
-#     '99.2':'99.2: Low TE',
-#     '99.3':'99.3: High TE',
-#     '99.4':'99.4: Low KM',
-#     '99.5':'99.5: High KM',
-#     '99.6':'99.6: Low Sigma',
-#     '99.7':'99.7: High Sigma',
-#     '99.8':'99.8: Low Kappa',
-#     '99.9':'99.9: High Kappa',
-#     '99.10':'99.10: Low Growth',
-#     '99.11':'99.11: High Growth',
-#     '99.12':'99.12: Low rho',
-#     '99.13':'99.13: High rho',
-#     '99.14':'99.14: Low UUPCOST',
-#     '99.15':'99.15: High UUPCOST',
-#     # '199.0':'199.0: Low TO 1992',
-#     # '199.1':'199.1: High TO 1992',
-#     # '199.2':'199.2: Low TE 1992',
-#     # '199.3':'199.3: High TE 1992',
-#     # '199.4':'199.4: Low KM 1992',
-#     # '199.5':'199.5: High KM 1992',
-#     # '199.6':'199.6: Low Sigma 1992',
-#     # '199.7':'199.7: High Sigma 1992',
-#     # '199.8':'199.8: Low Kappa 1992',
-#     # '199.9':'199.9: High Kappa 1992',
-#     # '199.10':'199.10: Low Growth 1992',
-#     # '199.11':'199.11: High Growth 1992',
-#     # '199.12':'199.12: Low rho 1992',
-#     # '199.13':'199.13: High rho 1992',
-#     # '199.14':'199.14: Low UUPCOST 1992',
-#     # '199.15':'199.15: High UUPCOST 1992',
-#     }
-
-# comments_dic['1040'] = {
-#     "baseline":"baseline : tariff = 0",
-#     '1.0':'1.0:tariff = 1%',
-#     '2.0':'2.0:tariff = 5%',
-#     '3.0':'3.0:tariff = 10%',
-#     '4.0':'4.0:tariff = 50%',
-#     '5.0':'5.0:tariff = 100%',
-#     }
-
-# comments_dic['1050'] = {
-#     "baseline":"baseline : 2015 with data tariffs",
-#     '9.2':'9.2:partial calib, 3-year smoothed data 1992',
-#     # "11.2" : "11.2 : 1992 smooth 3y",
-#     # "11.3" : "11.3 : 1993 smooth 3y",
-#     # "11.4" : "11.4 : 1994 smooth 3y",
-#     # "11.5" : "11.5 : 1995 smooth 3y",
-#     # "11.6" : "11.6 : 1996 smooth 3y",
-#     # "11.7" : "11.7 : 1997 smooth 3y",
-#     # "11.8" : "11.8 : 1998 smooth 3y",
-#     # "11.9" : "11.9 : 1999 smooth 3y",
-#     # "11.10" : "11.10 : 2000 smooth 3y",
-#     # "11.11" : "11.11 : 2001 smooth 3y",
-#     # "11.12" : "11.12 : 2002 smooth 3y",
-#     # "11.13" : "11.13 : 2003 smooth 3y",
-#     # "11.14" : "11.14 : 2004 smooth 3y",
-#     # "11.15" : "11.15 : 2005 smooth 3y",
-#     # "11.16" : "11.16 : 2006 smooth 3y",
-#     # "11.17" : "11.17 : 2007 smooth 3y",
-#     # "11.18" : "11.18 : 2008 smooth 3y",
-#     # "11.19" : "11.19 : 2009 smooth 3y",
-#     # "11.20" : "11.20 : 2010 smooth 3y",
-#     # "11.21" : "11.21 : 2011 smooth 3y",
-#     # "11.22" : "11.22 : 2012 smooth 3y",
-#     # "11.23" : "11.23 : 2013 smooth 3y",
-#     # "11.24" : "11.24 : 2014 smooth 3y",
-#     # "11.25" : "11.25 : 2015 smooth 3y"
-#     }
-
-# comments_dic['1200'] = {
-#     "baseline":"baseline : 2015 with zero tariffs",
-#     '9.2':'9.2:partial calib, 3-year smoothed data 1992'
-#     }
-
-# comments_dic['1220'] = {
-#     "baseline":"baseline : old compute, old target",
-#     '1.0':'1.0:new compute, old target',
-#     '1.1':'1.1:new compute, new target:6.896%'
-#     }
-
-comments_dic['1300'] = {
-    "baseline":"baseline : 2015",
-    # '2.0':'2.0 : doubled nu',
-    # '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
-    # '10.3':'10.3 : No trade costs',
-    # "11.0" : "11.0 : With entry costs d=1.5",
-    # "11.01" : "11.01 : With entry costs d=1.1",
-    # "11.02" : "11.02 : With entry costs d=0.19",
-    # "12.0" : "12.0 : no obsolescence",
-    "13.0" : "13.0 : target SGDP and RGDPpc",
-    '99.0':'99.0: Low TO',
-    '99.1':'99.1: High TO',
-    '99.2':'99.2: Low TE',
-    '99.3':'99.3: High TE',
-    '99.4':'99.4: Low KM',
-    '99.5':'99.5: High KM',
-    '99.6':'99.6: Low Sigma',
-    '99.7':'99.7: High Sigma',
-    '99.8':'99.8: Low Kappa',
-    '99.9':'99.9: High Kappa',
-    '99.10':'99.10: Low Growth',
-    '99.11':'99.11: High Growth',
-    '99.12':'99.12: Low rho',
-    '99.13':'99.13: High rho',
-    '99.14':'99.14: Low UUPCOST',
-    '99.15':'99.15: High UUPCOST',
-    # '199.0':'199.0: Low TO 1992',
-    # '199.1':'199.1: High TO 1992',
-    # '199.2':'199.2: Low TE 1992',
-    # '199.3':'199.3: High TE 1992',
-    # '199.4':'199.4: Low KM 1992',
-    # '199.5':'199.5: High KM 1992',
-    # '199.6':'199.6: Low Sigma 1992',
-    # '199.7':'199.7: High Sigma 1992',
-    # '199.8':'199.8: Low Kappa 1992',
-    # '199.9':'199.9: High Kappa 1992',
-    # '199.10':'199.10: Low Growth 1992',
-    # '199.11':'199.11: High Growth 1992',
-    # '199.12':'199.12: Low rho 1992',
-    # '199.13':'199.13: High rho 1992',
-    # '199.14':'199.14: Low UUPCOST 1992',
-    # '199.15':'199.15: High UUPCOST 1992',
+comments_dic['1312'] = {
+    "baseline":"baseline",
+    '1.0':'1.0 : nu=1e-6',
+    # '1.01':'1.01 : nu=1e-5',
+    # '1.02':'1.02 : nu=5e-5',
+    '1.03':'1.03 : nu=1e-4',
+    # '1.04':'1.04 : nu=5e-4',
+    # '1.05':'1.05 : nu=1e-3',
+    # '1.06':'1.06 : nu=5e-3',
+    '1.07':'1.07 : nu=1e-2',
+    # '1.08':'1.08 : nu=2e-2',
+    '1.09':'1.09 : nu=3e-2',
+    # '2.01':'2.01 : nu=4e-2',
+    '2.02':'2.02 : nu=5e-2',
+    # '2.03':'2.03 : nu=6e-2',
+    '2.04':'2.04 : nu=7e-2',
+    '2.05':'2.05 : nu=8e-2',
+    # '2.06':'2.06 : nu=9e-2',
+    '2.07':'2.07 : nu=1e-1',
+    # '2.08':'2.08 : nu=1.5e-1',
+    # '2.09':'2.09 : nu=2e-1',
+    # '3.01':'3.01 : nu=2.5e-1',
+    # '3.02':'3.02 : nu=3e-1',
+    # '3.03':'3.03 : nu=3.5e-1',
+    # '3.04':'3.04 : nu=4e-1',
+    # '3.05':'3.05 : nu=4.5e-1',
+    # '3.06':'3.06 : nu=5e-1',
+    '4.0':'4.0 : calibrate delta_dom_CHN\ntarget DOMPATINCHN',
+    # '2.0':'2.0 : baseline but bounded delta',
+    # '2.1':'2.1 : 2.0 with doubled nu',
+    # '2.2':'2.2 : 2.0 with doubled nu_tilde',
+    # '3.0':'3.0 : calibrat nu. nu_tilde=nu. target TO_DD_DD',
+    # '3.1':'3.1 : 3.0 with bounded delta',
+    # '4.0':'4.0 : 3.0 with nu=1e-6',
+    # '99.0':'99.0 : original baseline',
+    # '99.1':'99.1 : SPFLOW instead',
     }
 
 baselines_dic_param = {}
@@ -663,8 +287,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['901','803','806','808']    
 # baseline_list = ['1030','1040','1050']    
 # baseline_list = ['1050']    
-baseline_list = ['1300']    
-baseline_mom = '1300'
+baseline_list = ['1312']    
+baseline_mom = '1312'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -724,6 +348,8 @@ for baseline_nbr in baseline_list:
     for df_name in baselines_dic_sol_qty[baseline_nbr].keys():
         baselines_dic_sol_qty[baseline_nbr][df_name] = baselines_dic_sol_qty[baseline_nbr][df_name].reindex(columns=full_run_list[1:])
 
+#%%
+
 countries = p_baseline.countries
 
 TOOLS="pan,wheel_zoom,box_zoom,reset,save"
@@ -731,7 +357,7 @@ TOOLS="pan,wheel_zoom,box_zoom,reset,save"
 # baseline_mom = '101'
 # baseline_mom = '618'
 
-mom = 'SPFLOW'
+mom = 'SPFLOWDOM'
 
 baseline_mom_select = Select(value=baseline_mom, title='Baseline', options=sorted(baselines_dic_mom.keys()))
 mom_select = Select(value=mom, title='Quantity', options=sorted(baselines_dic_mom[baseline_mom].keys()))
@@ -886,9 +512,9 @@ mom_select.on_change('value', update_mom)
 x_mom_select.on_change('value', update_x_axis_target)
 
 baseline_par = baseline_mom
-par = 'delta'
+par = 'delta_int'
 
-baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
+baseline_par_select = Select(value=baseline_par, title='Baseline', options=list(sorted(baselines_dic_param.keys()))+['nu']+['nu_tilde'])
 par_select = Select(value=par, title='Quantity', options=sorted(baselines_dic_param[baseline_par].keys()))
 
 country_sort = {
@@ -915,6 +541,7 @@ p_par = figure(title="Parameters",
                height = 875,
            x_range = x_range,
            y_axis_label='Model implied',
+           y_axis_type="log",
            tools = TOOLS)
 hover_tool_par = HoverTool()
 hover_tool_par.tooltips = [
@@ -1193,114 +820,146 @@ print(time.perf_counter() - start)
 
 #%% counterfactuals
 
-# baseline_cf = '101'
-baseline_cf = '1300'
+# baseline_cf_both = '101'
+baseline_cf = '1312'
 country_cf = 'USA'
 
 def section_end(s):
       return [int(_) for _ in s.split("_")[-1].split(".")]
+
 # cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
-cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1300') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+#                 if s[9:].startswith('1312') and s.startswith('baseline')], key=section_end)#+\
+cf_list = sorted(['baseline_1312','baseline_1312_1.07','baseline_1312_2.02','baseline_1312_2.07'], key=section_end)#+\
+# cf_list = sorted(['baseline_1312'], key=section_end)#+\
 
 baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
 country_cf_select = Select(value=country_cf, 
                             title='Country', 
                             # options=countries+['World','Harmonizing','Upper_harmonizing',
                             #                    'Uniform_delta','Upper_uniform_delta'])
-                            options=countries+['World'])
+                            options=countries)
 
-def get_data_cf(baseline,country):
-    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-    df_cf.set_index('delt',inplace=True)
-    return df_cf
+def get_data_cf_both(baseline,country):
+    df_cf_both = pd.read_csv(cf_path+'baseline_'+baseline+'/both/dyn_'+country+'.csv')
+    # df_cf_both['Growth rate'] = df_cf_both['growth']/df_cf_both.loc[np.argmin(np.abs(df_cf_both.delt_int-1))].growth
+    df_cf_both.set_index('delt_int',inplace=True)
+    df_cf_both.rename_axis('delt_both',inplace=True)
+    return df_cf_both
 
-def build_max(df_cf):
-    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+df_cf_both = get_data_cf_both(baseline_cf,country_cf)
+ds_cf_both = ColumnDataSource(df_cf_both)
 
-df_cf = get_data_cf(baseline_cf,country_cf)
-ds_cf = ColumnDataSource(df_cf)
-df_cf_max = build_max(df_cf)
-ds_cf_max = ColumnDataSource(df_cf_max)
+colors_cf_both = itertools.cycle(Category18)
 
-colors_cf = itertools.cycle(Category18)
-colors_cf_max = itertools.cycle(Category18)
-
-p_cf = figure(title="Patent protection counterfactual", 
+p_cf_both = figure(title="Delta domestic and international", 
                 width = 1200,
                 height = 850,
-                x_range=(0.5,2),
-                y_range=(0.93,1.07),
+                x_range=(0.1,10),
+                # y_range=(0.93,1.07),
                 x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+                y_axis_label='Normalized Consumption equivalent welfare',
                 x_axis_type="log",
                 tools = TOOLS) 
 
-for col in df_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
-
-p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+for col in df_cf_both.columns:
+    if col not in [0,'delt_dom','delt_int','growth']:
+        p_cf_both.line(x='delt_both', y=col, source = ds_cf_both, color=next(colors_cf_both),line_width = 2, legend_label=col)
      
-p_cf.legend.click_policy="hide"
-p_cf.legend.label_text_font_size = '8pt'
-p_cf.add_layout(p_cf.legend[0], 'right')
+p_cf_both.legend.click_policy="hide"
+p_cf_both.legend.label_text_font_size = '8pt'
+p_cf_both.add_layout(p_cf_both.legend[0], 'right')
+
+# def get_data_cf_int(baseline,country):
+#     df_cf_int = pd.read_csv(cf_path+'baseline_'+baseline+'/int/dyn_'+country+'.csv')
+#     # df_cf_int['Growth rate'] = df_cf_int['growth']/df_cf_int.loc[np.argmin(np.abs(df_cf_int.delt_int-1))].growth
+#     df_cf_int.set_index('delt_int',inplace=True)
+#     return df_cf_int
+
+# df_cf_int = get_data_cf_int(baseline_cf,country_cf)
+# ds_cf_int = ColumnDataSource(df_cf_int)
+
+# colors_cf_int = itertools.cycle(Category18)
+
+# p_cf_int = figure(title="Delta international", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_range=(0.1,10),
+#                 # y_range=(0.93,1.07),
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare',
+#                 x_axis_type="log",
+#                 tools = TOOLS)
+
+# for col in df_cf_int.columns:
+#     if col not in [0,'delt_dom','delt_int','growth']:
+#         p_cf_int.line(x='delt_int', y=col, source = ds_cf_int, color=next(colors_cf_int),line_width = 2, legend_label=col)
+     
+# p_cf_int.legend.click_policy="hide"
+# p_cf_int.legend.label_text_font_size = '8pt'
+# p_cf_int.add_layout(p_cf_int.legend[0], 'right')
+
+# def get_data_cf_dom(baseline,country):
+#     df_cf_dom = pd.read_csv(cf_path+'baseline_'+baseline+'/dom/dyn_'+country+'.csv')
+#     # df_cf_dom['Growth rate'] = df_cf_dom['growth']/df_cf_dom.loc[np.argmin(np.abs(df_cf_dom.delt_dom-1))].growth
+#     df_cf_dom.set_index('delt_dom',inplace=True)
+#     return df_cf_dom
+
+# df_cf_dom = get_data_cf_dom(baseline_cf,country_cf)
+# ds_cf_dom = ColumnDataSource(df_cf_dom)
+
+# colors_cf_dom = itertools.cycle(Category18)
+
+# p_cf_dom = figure(title="Delta domestic", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_range=(0.1,10),
+#                 # y_range=(0.93,1.07),
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
+
+# for col in df_cf_dom.columns:
+#     if col not in [0,'delt_dom','delt_int','growth']:
+#         p_cf_dom.line(x='delt_dom', y=col, source = ds_cf_dom, color=next(colors_cf_dom),line_width = 2, legend_label=col)
+     
+# p_cf_dom.legend.click_policy="hide"
+# p_cf_dom.legend.label_text_font_size = '8pt'
+# p_cf_dom.add_layout(p_cf_dom.legend[0], 'right')
 
 def update_baseline_cf(attrname, old, new):
     country_cf = country_cf_select.value
-    ds_cf.data = get_data_cf(new,country_cf)
-    df_cf = get_data_cf(new,country_cf)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+    ds_cf_both.data = get_data_cf_both(new,country_cf)
+    df_cf_both = get_data_cf_both(new,country_cf)
+    ds_cf_both.data = df_cf_both
+    
+    # ds_cf_int.data = get_data_cf_int(new,country_cf)
+    # df_cf_int = get_data_cf_int(new,country_cf)
+    # ds_cf_int.data = df_cf_int
+    
+    # ds_cf_dom.data = get_data_cf_dom(new,country_cf)
+    # df_cf_dom = get_data_cf_dom(new,country_cf)
+    # ds_cf_dom.data = df_cf_dom
+    # ds_cf_max.data = build_max(df_cf)
     
 def update_country_cf(attrname, old, new):
     baseline_cf = baseline_cf_select.value
-    df_cf = get_data_cf(baseline_cf,new)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+    df_cf_both = get_data_cf_both(baseline_cf,new)
+    ds_cf_both.data = df_cf_both
+    
+    # df_cf_int = get_data_cf_int(baseline_cf,new)
+    # ds_cf_int.data = df_cf_int
+    
+    # df_cf_dom = get_data_cf_dom(baseline_cf,new)
+    # ds_cf_dom.data = df_cf_dom
     
 controls_cf = row(baseline_cf_select, country_cf_select)
 
 baseline_cf_select.on_change('value', update_baseline_cf)
 country_cf_select.on_change('value', update_country_cf)
 
-counterfactuals_report = column(controls_cf,p_cf)
+# counterfactuals_report = column(controls_cf,column(p_cf_both,p_cf_int,p_cf_dom))
+counterfactuals_report = column(controls_cf,column(p_cf_both))
 
 #%% counterfactuals 805 TO target
 
@@ -1402,76 +1061,76 @@ counterfactuals_report = column(controls_cf,p_cf)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1300'
-country_dyn_cf = 'USA'
+# baseline_dyn_cf = '1300'
+# country_dyn_cf = 'USA'
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1300',
-                                                                                  ])
-country_dyn_cf_select = Select(value=country_dyn_cf, 
-                            title='Country', 
-                            options=countries+['World'])
-                            # options=countries+['World','Harmonizing','Upper_harmonizing',
-                            #                    'Uniform_delta','Upper_uniform_delta'])
+# baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1300',
+#                                                                                   ])
+# country_dyn_cf_select = Select(value=country_dyn_cf, 
+#                             title='Country', 
+#                             options=countries+['World'])
+#                             # options=countries+['World','Harmonizing','Upper_harmonizing',
+#                             #                    'Uniform_delta','Upper_uniform_delta'])
 
-def get_data_dyn_cf(baseline,country):
-    df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
-    df_dyn_cf.set_index('delt',inplace=True)
-    return df_dyn_cf
+# def get_data_dyn_cf(baseline,country):
+#     df_dyn_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/dyn_'+country+'.csv')
+#     df_dyn_cf.set_index('delt',inplace=True)
+#     return df_dyn_cf
 
-def build_max(df_dyn_cf):
-    df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+# def build_max(df_dyn_cf):
+#     df_max = pd.concat([df_dyn_cf.idxmax(),df_dyn_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category18[:len(df_max)]
+#     return df_max
 
-df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
-ds_dyn_cf = ColumnDataSource(df_dyn_cf)
-df_dyn_cf_max = build_max(df_dyn_cf)
-ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
+# df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,country_dyn_cf)
+# ds_dyn_cf = ColumnDataSource(df_dyn_cf)
+# df_dyn_cf_max = build_max(df_dyn_cf)
+# ds_dyn_cf_max = ColumnDataSource(df_dyn_cf_max)
 
-colors_dyn_cf = itertools.cycle(Category18)
-colors_dyn_cf_max = itertools.cycle(Category18)
+# colors_dyn_cf = itertools.cycle(Category18)
+# colors_dyn_cf_max = itertools.cycle(Category18)
 
-p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
-                width = 1200,
-                height = 850,
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_dyn_cf = figure(title="With transitional dynamics patent protection counterfactual", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-for col in df_dyn_cf.columns:
-    if col not in [0,'delt']:
-        p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
-                      color=next(colors_dyn_cf),line_width = 2, legend_label=col)
+# for col in df_dyn_cf.columns:
+#     if col not in [0,'delt']:
+#         p_dyn_cf.line(x='delt', y=col, source = ds_dyn_cf, 
+#                       color=next(colors_dyn_cf),line_width = 2, legend_label=col)
 
-p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
+# p_dyn_cf.circle(x = 'xmax', y = 'max', source = ds_dyn_cf_max, size=4, color='colors')
      
-p_dyn_cf.legend.click_policy="hide"
-p_dyn_cf.legend.label_text_font_size = '8pt'
-p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
+# p_dyn_cf.legend.click_policy="hide"
+# p_dyn_cf.legend.label_text_font_size = '8pt'
+# p_dyn_cf.add_layout(p_dyn_cf.legend[0], 'right')
 
-def update_baseline_dyn_cf(attrname, old, new):
-    country_dyn_cf = country_dyn_cf_select.value
-    ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
-    df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
-    ds_dyn_cf.data = df_dyn_cf
-    ds_dyn_cf_max.data = build_max(df_dyn_cf)
+# def update_baseline_dyn_cf(attrname, old, new):
+#     country_dyn_cf = country_dyn_cf_select.value
+#     ds_dyn_cf.data = get_data_dyn_cf(new,country_dyn_cf)
+#     df_dyn_cf = get_data_dyn_cf(new,country_dyn_cf)
+#     ds_dyn_cf.data = df_dyn_cf
+#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-def update_country_dyn_cf(attrname, old, new):
-    baseline_dyn_cf = baseline_dyn_cf_select.value
-    df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
-    ds_dyn_cf.data = df_dyn_cf
-    ds_dyn_cf_max.data = build_max(df_dyn_cf)
+# def update_country_dyn_cf(attrname, old, new):
+#     baseline_dyn_cf = baseline_dyn_cf_select.value
+#     df_dyn_cf = get_data_dyn_cf(baseline_dyn_cf,new)
+#     ds_dyn_cf.data = df_dyn_cf
+#     ds_dyn_cf_max.data = build_max(df_dyn_cf)
     
-controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
+# controls_dyn_cf = row(baseline_dyn_cf_select, country_dyn_cf_select)
 
-baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
-country_dyn_cf_select.on_change('value', update_country_dyn_cf)
+# baseline_dyn_cf_select.on_change('value', update_baseline_dyn_cf)
+# country_dyn_cf_select.on_change('value', update_country_dyn_cf)
 
-counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
+# counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 
 #%% counterfactuals 405 TO target with dynamics
 
@@ -1561,8 +1220,8 @@ counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 # counterfactuals_to_dyn_report = column(controls_to_cf_dyn,p_to_cf_dyn)
 
 # #!!! third panel
-# # third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
-# third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
+# # # third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
+# # third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
 third_panel = row(counterfactuals_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
@@ -1758,229 +1417,229 @@ third_panel = row(counterfactuals_report)
 
 
 #%% Nash / coop equilibrium
-def section_ser(s):
-      return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
+# def section_ser(s):
+#       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1300'
+# baseline_nash_coop = '1300'
 
-# dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
+# # dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
-def get_data_nash_coop(baseline_nash_number):
+# def get_data_nash_coop(baseline_nash_number):
 
-    welf_coop = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    welf_nash = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation'],keep='last').sort_values(['baseline','variation'])
+#     welf_coop = pd.read_csv(coop_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
+#     welf_nash = pd.read_csv(nash_eq_path+'dyn_cons_eq_welfares.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation'],keep='last').sort_values(['baseline','variation'])
         
-    welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
-    welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
+#     welf_coop['run'] = welf_coop['baseline'].astype('str')+', '+welf_coop['variation']
+#     welf_nash['run'] = welf_nash['baseline'].astype('str')+', '+welf_nash['variation']
 
-    # welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_405)
-    # welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_405)
+#     # welf_coop['run'] = welf_coop['run'].replace(dic_change_labels_for_405)
+#     # welf_nash['run'] = welf_nash['run'].replace(dic_change_labels_for_405)
     
-    welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
-    welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
+#     welf_coop['sorting'] = welf_coop['variation'].str.replace('baseline','0')#.astype(float)
+#     welf_nash['sorting'] = welf_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
-    welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     welf_coop = welf_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     welf_nash = welf_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
-    welf_coop = welf_coop[welf_coop['baseline'].isin([int(baseline_nash_number)])]
-    welf_nash = welf_nash[welf_nash['baseline'].isin([int(baseline_nash_number)])]
+#     welf_coop = welf_coop[welf_coop['baseline'].isin([int(baseline_nash_number)])]
+#     welf_nash = welf_nash[welf_nash['baseline'].isin([int(baseline_nash_number)])]
     
-    welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
-    welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
+#     welf_negishi = welf_coop[welf_coop['aggregation_method'] == 'negishi']
+#     welf_pop_weighted = welf_coop[welf_coop['aggregation_method'] == 'pop_weighted']
     
-    return welf_pop_weighted, welf_negishi, welf_nash
+#     return welf_pop_weighted, welf_negishi, welf_nash
 
-baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
-                                    # options=['404','405','501','601'])
-                                    # options=['501','607','618','619'])
-                                    # options=['802','803','804','805','806'])
-                                    options=['1300'])
+# baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline', 
+#                                     # options=['404','405','501','601'])
+#                                     # options=['501','607','618','619'])
+#                                     # options=['802','803','804','805','806'])
+#                                     options=['1300'])
 
-welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
+# welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     
-ds_pop_weighted = ColumnDataSource(welf_pop_weighted)
-ds_negishi = ColumnDataSource(welf_negishi)
-ds_nash = ColumnDataSource(welf_nash)
+# ds_pop_weighted = ColumnDataSource(welf_pop_weighted)
+# ds_negishi = ColumnDataSource(welf_negishi)
+# ds_nash = ColumnDataSource(welf_nash)
 
-colors_pop_weighted = itertools.cycle(Category18)
-colors_negishi = itertools.cycle(Category18)
-colors_nash = itertools.cycle(Category18)
+# colors_pop_weighted = itertools.cycle(Category18)
+# colors_negishi = itertools.cycle(Category18)
+# colors_nash = itertools.cycle(Category18)
 
-x_range_nash = welf_nash['run'].to_list()
+# x_range_nash = welf_nash['run'].to_list()
 
-p_eq = figure(title="Cooperative and Nash equilibrium", 
-                width = 1200,
-                height = 900,
-                x_range = x_range_nash,
-                # x_axis_label='Run',
-                y_axis_label='Consumption eqivalent welfare change',
-                tools = TOOLS
-                ) 
-p_eq.xaxis.major_label_orientation = 3.14/3
+# p_eq = figure(title="Cooperative and Nash equilibrium", 
+#                 width = 1200,
+#                 height = 900,
+#                 x_range = x_range_nash,
+#                 # x_axis_label='Run',
+#                 y_axis_label='Consumption eqivalent welfare change',
+#                 tools = TOOLS
+#                 ) 
+# p_eq.xaxis.major_label_orientation = 3.14/3
 
-lines_nash = {}
-for col in p_baseline.countries+['Equal']+['Negishi']:
-    lines_nash[col+' Nash'] = p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
-    lines_nash[col+' coop equal'] = p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
-    lines_nash[col+' coop negishi'] = p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
-    if col != 'Negishi' and col != 'Equal':
-        lines_nash[col+' Nash'].visible = False
-        lines_nash[col+' coop equal'].visible = False
-        lines_nash[col+' coop negishi'].visible = False
+# lines_nash = {}
+# for col in p_baseline.countries+['Equal']+['Negishi']:
+#     lines_nash[col+' Nash'] = p_eq.line(x='run', y=col, source = ds_nash, color=next(colors_nash),line_width = 2, legend_label=col+' Nash')
+#     lines_nash[col+' coop equal'] = p_eq.line(x='run', y=col, source = ds_pop_weighted, color=next(colors_pop_weighted), line_dash='dashed', line_width = 2, legend_label=col+' coop equal')
+#     lines_nash[col+' coop negishi'] = p_eq.line(x='run', y=col, source = ds_negishi, color=next(colors_negishi), line_dash='dotted', line_width = 2, legend_label=col+' coop negishi')
+#     if col != 'Negishi' and col != 'Equal':
+#         lines_nash[col+' Nash'].visible = False
+#         lines_nash[col+' coop equal'].visible = False
+#         lines_nash[col+' coop negishi'].visible = False
         
         
-p_eq.legend.click_policy="hide"
-p_eq.legend.label_text_font_size = '8pt'
-p_eq.legend.spacing = 0
-p_eq.add_layout(p_eq.legend[0], 'right')    
+# p_eq.legend.click_policy="hide"
+# p_eq.legend.label_text_font_size = '8pt'
+# p_eq.legend.spacing = 0
+# p_eq.add_layout(p_eq.legend[0], 'right')    
 
-hover_tool_eq = HoverTool()
-hover_tool_eq.tooltips = [
-    ("run", "@run"),
-    ("value", "$y")
-    ] 
-p_eq.add_tools(hover_tool_eq)
+# hover_tool_eq = HoverTool()
+# hover_tool_eq.tooltips = [
+#     ("run", "@run"),
+#     ("value", "$y")
+#     ] 
+# p_eq.add_tools(hover_tool_eq)
 
-columns = [
-        TableColumn(field="runs", title="Runs"),
-        TableColumn(field="comments", title="Description"),
-    ]
+# columns = [
+#         TableColumn(field="runs", title="Runs"),
+#         TableColumn(field="comments", title="Description"),
+#     ]
 
-# explication = Div(text="In the legend, first is the quantity displayed and last\
-#                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
-#                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
-#                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
-#                           ")
+# # explication = Div(text="In the legend, first is the quantity displayed and last\
+# #                   is the quantity maximized <br> 'Negishi coop equal' means that: <br> \
+# #                       - we display the Change in cons equivalent of world welfare <br> according to Negishi weights aggregation<br>\
+# #                       - we maximize according to the Change in cons equivalent of world welfare <br> according to equal weights aggregation\
+# #                           ")
 
-data_table_welfares = pd.concat([welf_nash.set_index('run'),
-              welf_negishi.set_index('run'),
-              welf_pop_weighted.set_index('run')],
-            axis=0,
-            keys=['Nash','Coop Negishi','Coop equal'],
-            names=['type','run'],
-            sort=False
-            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# data_table_welfares = pd.concat([welf_nash.set_index('run'),
+#               welf_negishi.set_index('run'),
+#               welf_pop_weighted.set_index('run')],
+#             axis=0,
+#             keys=['Nash','Coop Negishi','Coop equal'],
+#             names=['type','run'],
+#             sort=False
+#             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-source_table_welfares = ColumnDataSource(data_table_welfares)
-columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# source_table_welfares = ColumnDataSource(data_table_welfares)
+# columns_welf = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=1100, height=400,
-                          )
+# table_widget_welfares = DataTable(source=source_table_welfares, columns=columns_welf, width=1100, height=400,
+#                           )
 
-def get_delta_nash_coop(baseline_number):
-    deltas_coop = pd.read_csv(coop_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
-    deltas_nash = pd.read_csv(nash_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
-                                'variation'],keep='last').sort_values(['baseline','variation'])
+# def get_delta_nash_coop(baseline_number):
+#     deltas_coop = pd.read_csv(coop_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation','aggregation_method'],keep='last').sort_values(['baseline','variation'])
+#     deltas_nash = pd.read_csv(nash_eq_path+'dyn_deltas.csv',index_col=0).drop_duplicates(['baseline', 
+#                                 'variation'],keep='last').sort_values(['baseline','variation'])
     
-    deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
-    deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
+#     deltas_coop['run'] = deltas_coop['baseline'].astype('str')+', '+deltas_coop['variation']
+#     deltas_nash['run'] = deltas_nash['baseline'].astype('str')+', '+deltas_nash['variation']
     
-    # deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_405)
-    # deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_405)
+#     # deltas_coop['run'] = deltas_coop['run'].replace(dic_change_labels_for_405)
+#     # deltas_nash['run'] = deltas_nash['run'].replace(dic_change_labels_for_405)
     
-    deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
-    deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
+#     deltas_coop['sorting'] = deltas_coop['variation'].str.replace('baseline','0')#.astype(float)
+#     deltas_nash['sorting'] = deltas_nash['variation'].str.replace('baseline','0')#.astype(float)
     
-    deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
-    deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     deltas_coop = deltas_coop.sort_values('sorting',key=section_ser)#.sort_values('baseline')
+#     deltas_nash = deltas_nash.sort_values('sorting',key=section_ser)#.sort_values('baseline')
     
-    deltas_coop = deltas_coop[deltas_coop['baseline'].isin([int(baseline_number)])]
-    deltas_nash = deltas_nash[deltas_nash['baseline'].isin([int(baseline_number)])]
+#     deltas_coop = deltas_coop[deltas_coop['baseline'].isin([int(baseline_number)])]
+#     deltas_nash = deltas_nash[deltas_nash['baseline'].isin([int(baseline_number)])]
     
-    deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
-    deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
+#     deltas_negishi = deltas_coop[deltas_coop['aggregation_method'] == 'negishi']
+#     deltas_pop_weighted = deltas_coop[deltas_coop['aggregation_method'] == 'pop_weighted']
     
-    return deltas_pop_weighted, deltas_negishi, deltas_nash
+#     return deltas_pop_weighted, deltas_negishi, deltas_nash
 
-deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_coop)
+# deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_coop)
 
-ds_deltas_negishi = ColumnDataSource(deltas_negishi)
-ds_deltas_pop_weighted = ColumnDataSource(deltas_pop_weighted)
-ds_deltas_nash = ColumnDataSource(deltas_nash)
+# ds_deltas_negishi = ColumnDataSource(deltas_negishi)
+# ds_deltas_pop_weighted = ColumnDataSource(deltas_pop_weighted)
+# ds_deltas_nash = ColumnDataSource(deltas_nash)
 
-colors_deltas_negishi = itertools.cycle(Category18)
-colors_deltas_pop_weighted = itertools.cycle(Category18)
-colors_deltas_nash = itertools.cycle(Category18)
+# colors_deltas_negishi = itertools.cycle(Category18)
+# colors_deltas_pop_weighted = itertools.cycle(Category18)
+# colors_deltas_nash = itertools.cycle(Category18)
 
-p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
-                width = 1200,
-                height = 900,
-                x_range = x_range_nash,
-                y_axis_type="log",
-                y_axis_label='Delta',
-                tools = TOOLS
-                ) 
-p_deltas_eq.xaxis.major_label_orientation = 3.14/3
+# p_deltas_eq = figure(title="Cooperative and Nash equilibrium", 
+#                 width = 1200,
+#                 height = 900,
+#                 x_range = x_range_nash,
+#                 y_axis_type="log",
+#                 y_axis_label='Delta',
+#                 tools = TOOLS
+#                 ) 
+# p_deltas_eq.xaxis.major_label_orientation = 3.14/3
 
-lines_delta={}
-for col in p_baseline.countries:
-    lines_delta[col+' Nash'] = p_deltas_eq.line(x='run', y=col, 
-                                            source = ds_deltas_nash, color=next(colors_deltas_nash),
-                                            line_width = 2, legend_label=col+' Nash')
-    lines_delta[col+' coop equal'] = p_deltas_eq.line(x='run', y=col, 
-                                                source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', 
-                                                line_width = 2, legend_label=col+' coop equal')
-    lines_delta[col+' coop negishi'] = p_deltas_eq.line(x='run', y=col, 
-                                                source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', 
-                                                line_width = 2, legend_label=col+' coop negishi')
-    lines_delta[col+' coop equal'].visible = False
-    lines_delta[col+' coop negishi'].visible = False
+# lines_delta={}
+# for col in p_baseline.countries:
+#     lines_delta[col+' Nash'] = p_deltas_eq.line(x='run', y=col, 
+#                                             source = ds_deltas_nash, color=next(colors_deltas_nash),
+#                                             line_width = 2, legend_label=col+' Nash')
+#     lines_delta[col+' coop equal'] = p_deltas_eq.line(x='run', y=col, 
+#                                                 source = ds_deltas_pop_weighted, color=next(colors_deltas_pop_weighted), line_dash='dashed', 
+#                                                 line_width = 2, legend_label=col+' coop equal')
+#     lines_delta[col+' coop negishi'] = p_deltas_eq.line(x='run', y=col, 
+#                                                 source = ds_deltas_negishi, color=next(colors_deltas_negishi), line_dash='dotted', 
+#                                                 line_width = 2, legend_label=col+' coop negishi')
+#     lines_delta[col+' coop equal'].visible = False
+#     lines_delta[col+' coop negishi'].visible = False
     
-p_deltas_eq.legend.click_policy="hide"
-p_deltas_eq.legend.label_text_font_size = '8pt'
-p_deltas_eq.legend.spacing = 0
-p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
-hover_tool_deltas_eq = HoverTool()
-hover_tool_deltas_eq.tooltips = [
-    ("run", "@run"),
-    ("value", "$y")
-    ] 
-p_deltas_eq.add_tools(hover_tool_deltas_eq)
+# p_deltas_eq.legend.click_policy="hide"
+# p_deltas_eq.legend.label_text_font_size = '8pt'
+# p_deltas_eq.legend.spacing = 0
+# p_deltas_eq.add_layout(p_deltas_eq.legend[0], 'right')   
+# hover_tool_deltas_eq = HoverTool()
+# hover_tool_deltas_eq.tooltips = [
+#     ("run", "@run"),
+#     ("value", "$y")
+#     ] 
+# p_deltas_eq.add_tools(hover_tool_deltas_eq)
 
-data_table_deltas = pd.concat([deltas_nash.set_index('run'),
-              deltas_negishi.set_index('run'),
-              deltas_pop_weighted.set_index('run')],
-            axis=0,
-            keys=['Nash','Coop Negishi','Coop equal'],
-            names=['type','run'],
-            sort=False
-            ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
+# data_table_deltas = pd.concat([deltas_nash.set_index('run'),
+#               deltas_negishi.set_index('run'),
+#               deltas_pop_weighted.set_index('run')],
+#             axis=0,
+#             keys=['Nash','Coop Negishi','Coop equal'],
+#             names=['type','run'],
+#             sort=False
+#             ).reset_index().sort_values('sorting',key=section_ser)[['run','type']+p_baseline.countries]
 
-source_table_deltas = ColumnDataSource(data_table_deltas)
-columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
+# source_table_deltas = ColumnDataSource(data_table_deltas)
+# columns_deltas = [TableColumn(field=col) for col in ['run','type']+p_baseline.countries+['Equal']+['Negishi']]
 
-table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=1100, height=400,
-                          )
+# table_widget_deltas = DataTable(source=source_table_deltas, columns=columns_deltas, width=1100, height=400,
+#                           )
 
-def update_baseline_nash(attrname, old, new):
-    baseline_nash_number = new
-    welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_number)
+# def update_baseline_nash(attrname, old, new):
+#     baseline_nash_number = new
+#     welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_number)
         
-    ds_pop_weighted.data = welf_pop_weighted
-    ds_negishi.data = welf_negishi
-    ds_nash.data = welf_nash
+#     ds_pop_weighted.data = welf_pop_weighted
+#     ds_negishi.data = welf_negishi
+#     ds_nash.data = welf_nash
     
-    deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_number)
+#     deltas_pop_weighted, deltas_negishi, deltas_nash = get_delta_nash_coop(baseline_nash_number)
 
-    ds_deltas_negishi.data = deltas_negishi
-    ds_deltas_pop_weighted.data = deltas_pop_weighted
-    ds_deltas_nash.data = deltas_nash
+#     ds_deltas_negishi.data = deltas_negishi
+#     ds_deltas_pop_weighted.data = deltas_pop_weighted
+#     ds_deltas_nash.data = deltas_nash
     
-    p_eq.x_range.factors = welf_nash['run'].to_list()
-    p_deltas_eq.x_range.factors = welf_nash['run'].to_list()
+#     p_eq.x_range.factors = welf_nash['run'].to_list()
+#     p_deltas_eq.x_range.factors = welf_nash['run'].to_list()
 
-baseline_nash_coop_select.on_change('value', update_baseline_nash)
+# baseline_nash_coop_select.on_change('value', update_baseline_nash)
 
-nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
-nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
+# nash_coop_welfare_report = column(baseline_nash_coop_select,p_eq,table_widget_welfares)
+# nash_coop_deltas_report = column(p_deltas_eq,table_widget_deltas)
 
-#!!! fourth panel
-fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
-# fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
+# #!!! fourth panel
 # fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
+# # fourth_panel = row(dyn_eq_dev_report, nash_coop_welfare_report, nash_coop_deltas_report)
+# # fourth_panel = row(nash_coop_welfare_report, nash_coop_deltas_report)
 
 #%% dynamic solver
 
@@ -2765,7 +2424,7 @@ print(time.perf_counter() - start)
 curdoc().add_root(column(first_panel, 
                             # second_panel, 
                            third_panel, 
-                            fourth_panel, 
+                            # fourth_panel, 
                            #  fifth_panel, 
                            #  sixth_panel,
                            # seventh_panel,
