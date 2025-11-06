@@ -53,7 +53,7 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.delta_dom[3,1] = p.delta_dom[3,1]/2
 # p.update_delta_eff()
 # p.nu_tilde[:] = p.nu.copy()
-p.nu[1] = 1e-1
+p.nu[1] = 8e-2
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 
 #                       'nu_tilde',
 #                       'zeta', 'g_0', 
@@ -179,7 +179,7 @@ commentary = ''
 baseline_number = '1312'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 2.07
+run_number = 2.05
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False
