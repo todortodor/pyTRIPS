@@ -672,6 +672,7 @@ data_left = pd.read_csv(gravity_patents_path+'pat_on_dist_group_avgs.csv')
 data_right = pd.read_csv(gravity_patents_path+'pat_on_dist_residuals_group_avgs.csv')
 
 fig,ax = plt.subplots(1,2,figsize=[6  , 2])
+# fig,ax = plt.subplots(1,2)
 
 ax[0].plot(data_left.loc[data_left.dev_group==0].year,data_left.loc[data_left.dev_group==0].avg_FE,ls='--',label='Developing economies')
 ax[0].plot(data_left.loc[data_left.dev_group==1].year,data_left.loc[data_left.dev_group==1].avg_FE,ls='-',label='Developed economies')
@@ -684,6 +685,49 @@ ax[1].set_xlabel('Destination year-FE residualized\non GDP and real GDP p.c.')
 
 for save_format in save_formats:
     plt.savefig(gravity_patents_output_path+'gravity_patents_graph.'+save_format,format=save_format)
+
+plt.show()
+
+fig,ax = plt.subplots(1,2,figsize=[6  , 2])
+# fig,ax = plt.subplots(1,2)
+
+ax[0].plot(data_left.loc[data_left.dev_group==0].year,data_left.loc[data_left.dev_group==0].avg_FE,ls='--',label='Developing economies')
+ax[0].plot(data_left.loc[data_left.dev_group==1].year,data_left.loc[data_left.dev_group==1].avg_FE,ls='-',label='Developed economies')
+ax[0].set_xlabel('Patent flows on distance with\nOrigin-year/Destination-year FE')
+ax[0].legend()
+
+ax[1].plot(data_right.loc[data_right.dev_group==0].year,data_right.loc[data_right.dev_group==0].avg_FE,ls='--',label='Developing economies')
+ax[1].plot(data_right.loc[data_right.dev_group==1].year,data_right.loc[data_right.dev_group==1].avg_FE,ls='-',label='Developed economies')
+ax[1].set_xlabel('Destination year-FE residualized\non GDP and real GDP p.c.')
+
+for save_format in save_formats:
+    plt.savefig(gravity_patents_output_path+'gravity_patents_graph_no_xlabel.'+save_format,format=save_format)
+
+plt.show()
+
+fig,ax = plt.subplots()
+# fig,ax = plt.subplots(1,2)
+
+ax.plot(data_left.loc[data_left.dev_group==0].year,data_left.loc[data_left.dev_group==0].avg_FE,ls='--',label='Developing economies')
+ax.plot(data_left.loc[data_left.dev_group==1].year,data_left.loc[data_left.dev_group==1].avg_FE,ls='-',label='Developed economies')
+# ax[0].set_xlabel('Patent flows on distance with\nOrigin-year/Destination-year FE')
+ax.legend()
+
+for save_format in save_formats:
+    plt.savefig(gravity_patents_output_path+'patent_flows_on_distance_with_origin-year_destination-year_fe.'+save_format,format=save_format)
+
+plt.show()
+
+fig,ax = plt.subplots()
+
+ax.plot(data_right.loc[data_right.dev_group==0].year,data_right.loc[data_right.dev_group==0].avg_FE,ls='--',label='Developing economies')
+ax.plot(data_right.loc[data_right.dev_group==1].year,data_right.loc[data_right.dev_group==1].avg_FE,ls='-',label='Developed economies')
+# ax[1].set_xlabel('Destination year-FE residualized\non GDP and real GDP p.c.')
+
+ax.legend()
+
+for save_format in save_formats:
+    plt.savefig(gravity_patents_output_path+'destination_year-fe_residualized_non_gdp_and_real_gdp_p_c.'+save_format,format=save_format)
 
 plt.show()
 

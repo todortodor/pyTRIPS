@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import os
 
 baseline_number = 1312
-variation = '2.07'
+variation = 'baseline'
 # pre_trips_number = 4096
 path = f'double_delta/1312_{variation}/'
 try:
@@ -25,8 +25,8 @@ except:
     pass
 
 p = parameters()
-p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-# p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+# p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
                                 # context = 'counterfactual',
@@ -54,11 +54,65 @@ sol, sol_c = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 # plt.show()
-# m = moments()
+m = moments()
 # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-# # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
 # m.compute_moments(sol_c,p)
 # m.compute_moments_deviations()
+
+#%%
+
+baseline_nus = pd.DataFrame(index=p.sectors[1:],
+                               data=p.nu[1:])
+
+baseline_nutilde = pd.DataFrame(index=p.sectors[1:],
+                               data=p.nu_tilde[1:])
+
+baseline_thetas = pd.DataFrame(index=p.sectors[1:],
+                               data=p.theta[1:])
+
+baseline_zetas = pd.DataFrame(index=p.sectors[1:],
+                               data=p.zeta[1:])
+
+baseline_fo = pd.DataFrame(index=p.sectors[1:],
+                               data=p.fo[1:])
+
+baseline_fe = pd.DataFrame(index=p.sectors[1:],
+                               data=p.fe[1:])
+
+recap_sectors = pd.DataFrame(index=p.sectors[1:])
+
+recap_sectors['nu'] = p.nu[1:]
+recap_sectors['nu_tilde'] = p.nu_tilde[1:]
+recap_sectors['theta'] = p.theta[1:]
+recap_sectors['zeta'] = p.zeta[1:]
+recap_sectors['fe'] = p.fe[1:]
+recap_sectors['fo'] = p.fo[1:]
+
+recap_sectors.to_csv(path+'scalars.csv')
+
+baseline_deltas = pd.DataFrame(index=p.countries,
+                               columns=['delta dom','delta int']) 
+baseline_deltas['delta dom'] = p.delta_dom[:,1]
+baseline_deltas['delta int'] = p.delta_int[:,1]
+baseline_deltas = pd.concat((baseline_deltas,baseline_deltas.describe()))
+
+baseline_deltas.to_csv(path+'baseline_deltas.csv')
+
+
+baseline_etas = pd.DataFrame(index=p.countries,
+                               columns=p.sectors[1:],
+                               data=p.eta[:,1:]) 
+baseline_etas = pd.concat((baseline_etas,baseline_etas.describe()))
+
+baseline_etas.to_csv(path+'baseline_etas.csv')
+
+baseline_T = pd.DataFrame(index=p.countries,
+                               columns=p.sectors,
+                               data=p.T) 
+baseline_T = pd.concat((baseline_T,baseline_T.describe()))
+
+baseline_T.to_csv(path+'baseline_T.csv')
 
 
 #%%

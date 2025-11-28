@@ -2585,7 +2585,39 @@ class var:
                 prefactor,
                 np.einsum('nis->is',B),
                 1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
-                )                                                                 
+                )          
+
+    def compute_export_price_index(self,p)  :
+        numeratorA = np.einsum('s,nis,nis,s->nis',
+            gamma((p.theta+2-p.sigma)/p.theta)[1:],
+            self.PSI_M[...,1:],
+            self.phi[...,1:]**(p.sigma[None,None,1:]-2),
+            ((p.sigma/(p.sigma-1))**(2-p.sigma))[1:]
+            )          
+        numeratorB = np.einsum('nis,ns,ns->nis',
+            self.phi[...,1:]**(p.theta[None,None,1:]),
+            self.PSI_CD[...,1:],
+            (
+                (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
+            )**((p.sigma[None,1:]-2)/p.theta[None,1:]-1)
+            )
+        
+        denominatorA = np.einsum('s,nis,nis,s->nis',
+            gamma((p.theta+1-p.sigma)/p.theta)[1:],
+            self.PSI_M[...,1:],
+            self.phi[...,1:]**(p.sigma[None,None,1:]-1),
+            ((p.sigma/(p.sigma-1))**(1-p.sigma))[1:]
+            )          
+        denominatorB = np.einsum('nis,ns,ns->nis',
+            self.phi[...,1:]**(p.theta[None,None,1:]),
+            self.PSI_CD[...,1:],
+            (
+                (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
+            )**((p.sigma[None,1:]-1)/p.theta[None,1:]-1)
+            ) 
+        
+        self.export_price_index = (numeratorA + numeratorB) / (denominatorA + denominatorB)
+                                     
                                                                      
     def compute_non_solver_quantities(self,p):
         self.compute_tau(p)
@@ -6040,8 +6072,14 @@ class moments:
             self.GPDIFF_target = 0.0242481 - np.array([0.0154756,0.0370867])
         self.GROWTH_target = self.moments.loc['GROWTH'].value 
         self.ERDUS_target = self.moments.loc['ERDUS'].value 
-        self.PROBINNOVENT_target = self.moments.loc['PROBINNOVENT'].value 
-        self.SHAREEXPMON_target = self.moments.loc['SHAREEXPMON'].value 
+        try:
+            self.PROBINNOVENT_target = self.moments.loc['PROBINNOVENT'].value 
+        except:
+            pass
+        try:
+            self.SHAREEXPMON_target = self.moments.loc['SHAREEXPMON'].value 
+        except:
+            pass
         self.TE_target = self.moments.loc['TE'].value 
         self.TO_target = self.moments.loc['TO'].value
         self.TO_DD_DD_target = self.moments.loc['TO'].value

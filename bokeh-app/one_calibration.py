@@ -107,6 +107,11 @@ if new_run:
 # p.tariff[:] = 1.0
 # np.einsum('iis->is',p.tariff)[:] = 0
 
+p.calib_parameters.remove('zeta')
+p.zeta[:] = 0
+
+#%%
+
 # m.RP_target[3] = m.RP_target[3]*1.2
 # m.SRGDP_target[1] = m.SRGDP_target[1]*1.2
 # m.SRGDP_target = m.SRGDP_target/m.SRGDP_target.sum()

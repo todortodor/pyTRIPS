@@ -615,7 +615,7 @@ comments_dic['1300'] = {
     # "11.0" : "11.0 : With entry costs d=1.5",
     # "11.01" : "11.01 : With entry costs d=1.1",
     # "11.02" : "11.02 : With entry costs d=0.19",
-    # "12.0" : "12.0 : no obsolescence",
+    "12.0" : "12.0 : no obsolescence",
     "13.0" : "13.0 : target SGDP and RGDPpc",
     '99.0':'99.0: Low TO',
     '99.1':'99.1: High TO',

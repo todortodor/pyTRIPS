@@ -85,8 +85,8 @@ from classes import moments, parameters, var_double_diff_double_delta, dynamic_v
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p_init.load_run('calibration_results_matched_economy/baseline_1312_variations/1.07/')
-# p_init.load_run('calibration_results_matched_economy/1312/')
+# p_init.load_run('calibration_results_matched_economy/baseline_1312_variations/1.07/')
+p_init.load_run('calibration_results_matched_economy/1312/')
 # p_init.nu[1] = 0.05
 
 sol, sol_init = fixed_point_solver_double_diff_double_delta(p_init,x0=p_init.guess,
