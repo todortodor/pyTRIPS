@@ -1193,114 +1193,114 @@ print(time.perf_counter() - start)
 
 #%% counterfactuals
 
-# baseline_cf = '101'
-baseline_cf = '1300'
-country_cf = 'USA'
+# # baseline_cf = '101'
+# baseline_cf = '1300'
+# country_cf = 'USA'
 
-def section_end(s):
-      return [int(_) for _ in s.split("_")[-1].split(".")]
+# def section_end(s):
+#       return [int(_) for _ in s.split("_")[-1].split(".")]
+# # cf_list = sorted([s for s in os.listdir(cf_path) 
+# #             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
 # cf_list = sorted([s for s in os.listdir(cf_path) 
-#             if s[9:].startswith('604') and s.startswith('baseline')], key=section_end)+\
-cf_list = sorted([s for s in os.listdir(cf_path) 
-                if s[9:].startswith('1300') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
-    # sorted([s for s in os.listdir(cf_path) 
-    #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
+#                 if s[9:].startswith('1300') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #                 if s[9:].startswith('803') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #                 if s[9:].startswith('804') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('805') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('608') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('609') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('618') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('501') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('601') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('602') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('603') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('404') and s.startswith('baseline')], key=section_end)#+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #             if s[9:].startswith('312') and s.startswith('baseline')], key=section_end)+\
+#     # sorted([s for s in os.listdir(cf_path) 
+#     #         if s[9:].startswith('311') and s.startswith('baseline')], key=section_end)
 
-baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
-country_cf_select = Select(value=country_cf, 
-                            title='Country', 
-                            # options=countries+['World','Harmonizing','Upper_harmonizing',
-                            #                    'Uniform_delta','Upper_uniform_delta'])
-                            options=countries+['World'])
+# baseline_cf_select = Select(value=baseline_cf, title='Baseline', options=[s[9:] for s in cf_list])
+# country_cf_select = Select(value=country_cf, 
+#                             title='Country', 
+#                             # options=countries+['World','Harmonizing','Upper_harmonizing',
+#                             #                    'Uniform_delta','Upper_uniform_delta'])
+#                             options=countries+['World'])
 
-def get_data_cf(baseline,country):
-    df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
-    if country != 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
-    if country == 'Harmonizing':
-        df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
-    df_cf.set_index('delt',inplace=True)
-    return df_cf
+# def get_data_cf(baseline,country):
+#     df_cf = pd.read_csv(cf_path+'baseline_'+baseline+'/'+country+'.csv')
+#     if country != 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt-1))].growth
+#     if country == 'Harmonizing':
+#         df_cf['Growth rate'] = df_cf['growth']/df_cf.loc[np.argmin(np.abs(df_cf.delt))].growth
+#     df_cf.set_index('delt',inplace=True)
+#     return df_cf
 
-def build_max(df_cf):
-    df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
-    df_max.index.name = 'label'
-    df_max.columns = ['xmax','max'] 
-    df_max = df_max.loc[countries]
-    df_max['colors'] = Category18[:len(df_max)]
-    return df_max
+# def build_max(df_cf):
+#     df_max = pd.concat([df_cf.idxmax(),df_cf.max()],axis=1)
+#     df_max.index.name = 'label'
+#     df_max.columns = ['xmax','max'] 
+#     df_max = df_max.loc[countries]
+#     df_max['colors'] = Category18[:len(df_max)]
+#     return df_max
 
-df_cf = get_data_cf(baseline_cf,country_cf)
-ds_cf = ColumnDataSource(df_cf)
-df_cf_max = build_max(df_cf)
-ds_cf_max = ColumnDataSource(df_cf_max)
+# df_cf = get_data_cf(baseline_cf,country_cf)
+# ds_cf = ColumnDataSource(df_cf)
+# df_cf_max = build_max(df_cf)
+# ds_cf_max = ColumnDataSource(df_cf_max)
 
-colors_cf = itertools.cycle(Category18)
-colors_cf_max = itertools.cycle(Category18)
+# colors_cf = itertools.cycle(Category18)
+# colors_cf_max = itertools.cycle(Category18)
 
-p_cf = figure(title="Patent protection counterfactual", 
-                width = 1200,
-                height = 850,
-                x_range=(0.5,2),
-                y_range=(0.93,1.07),
-                x_axis_label='Change in delta',
-                y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
-                x_axis_type="log",
-                tools = TOOLS) 
+# p_cf = figure(title="Patent protection counterfactual", 
+#                 width = 1200,
+#                 height = 850,
+#                 x_range=(0.5,2),
+#                 y_range=(0.93,1.07),
+#                 x_axis_label='Change in delta',
+#                 y_axis_label='Normalized Consumption equivalent welfare / Growth rate',
+#                 x_axis_type="log",
+#                 tools = TOOLS) 
 
-for col in df_cf.columns:
-    if col not in [0,'delt','growth']:
-        p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
+# for col in df_cf.columns:
+#     if col not in [0,'delt','growth']:
+#         p_cf.line(x='delt', y=col, source = ds_cf, color=next(colors_cf),line_width = 2, legend_label=col)
 
-p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
+# p_cf.circle(x = 'xmax', y = 'max', source = ds_cf_max, size=4, color='colors')
      
-p_cf.legend.click_policy="hide"
-p_cf.legend.label_text_font_size = '8pt'
-p_cf.add_layout(p_cf.legend[0], 'right')
+# p_cf.legend.click_policy="hide"
+# p_cf.legend.label_text_font_size = '8pt'
+# p_cf.add_layout(p_cf.legend[0], 'right')
 
-def update_baseline_cf(attrname, old, new):
-    country_cf = country_cf_select.value
-    ds_cf.data = get_data_cf(new,country_cf)
-    df_cf = get_data_cf(new,country_cf)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+# def update_baseline_cf(attrname, old, new):
+#     country_cf = country_cf_select.value
+#     ds_cf.data = get_data_cf(new,country_cf)
+#     df_cf = get_data_cf(new,country_cf)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
     
-def update_country_cf(attrname, old, new):
-    baseline_cf = baseline_cf_select.value
-    df_cf = get_data_cf(baseline_cf,new)
-    ds_cf.data = df_cf
-    ds_cf_max.data = build_max(df_cf)
+# def update_country_cf(attrname, old, new):
+#     baseline_cf = baseline_cf_select.value
+#     df_cf = get_data_cf(baseline_cf,new)
+#     ds_cf.data = df_cf
+#     ds_cf_max.data = build_max(df_cf)
     
-controls_cf = row(baseline_cf_select, country_cf_select)
+# controls_cf = row(baseline_cf_select, country_cf_select)
 
-baseline_cf_select.on_change('value', update_baseline_cf)
-country_cf_select.on_change('value', update_country_cf)
+# baseline_cf_select.on_change('value', update_baseline_cf)
+# country_cf_select.on_change('value', update_country_cf)
 
-counterfactuals_report = column(controls_cf,p_cf)
+# counterfactuals_report = column(controls_cf,p_cf)
 
 #%% counterfactuals 805 TO target
 
@@ -1406,6 +1406,8 @@ baseline_dyn_cf = '1300'
 country_dyn_cf = 'USA'
 
 baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1300',
+                                                                                  '1300_12.0',
+                                                                                  '1300_13.0',
                                                                                   ])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
@@ -1563,7 +1565,7 @@ counterfactuals_dyn_report = column(controls_dyn_cf,p_dyn_cf)
 # #!!! third panel
 # # third_panel = row(counterfactuals_dyn_report, counterfactuals_to_dyn_report,  dyn_report)
 # third_panel = row(counterfactuals_dyn_report,counterfactuals_report)
-third_panel = row(counterfactuals_report)
+third_panel = row(counterfactuals_dyn_report)
 
 #%% Dynamic Nash / coop equilibrium and deviations from it
 
