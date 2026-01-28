@@ -107,8 +107,8 @@ if new_run:
 # p.tariff[:] = 1.0
 # np.einsum('iis->is',p.tariff)[:] = 0
 
-p.calib_parameters.remove('zeta')
-p.zeta[:] = 0
+# p.calib_parameters.remove('zeta')
+# p.zeta[:] = 0
 
 #%%
 
@@ -121,7 +121,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 6
+max_iter = 8
 
 while cond:
     if iterations < max_iter - 4:
@@ -177,17 +177,17 @@ sol_c.compute_non_solver_quantities(p_sol)
 p_sol.tau = sol_c.tau
 m.compute_moments(sol_c,p_sol)
 m.compute_moments_deviations()
-m.plot_moments(m.list_of_moments)
+# m.plot_moments(m.list_of_moments)
 
 # print(sol_c.semi_elast_patenting_delta[0,1]/12)
 
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1300'
+baseline_number = '2000'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 13.0
+run_number = 1.0
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

@@ -50,6 +50,7 @@ TOCHEM; Turnover in US imports in the chemicals sector
 TOPHARMA; Turnover in US imports in the pharmaceuticals sector
 TOPHARMACHEM; Turnover in US imports in the pharma and chemicals sector
 TE; Trade elasticity in patenting sector
+TEPHARMACHEM; Trade elasticity in the pharma and chemicals sector
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total
 SPATDEST; total patent applications received in each destination country as share of world total

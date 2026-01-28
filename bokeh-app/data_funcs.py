@@ -83,10 +83,12 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
         
         df_psi_m_star = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors],names=['destination','origin','sector']))
         df_psi_m_star['psi_m_star'] = sol_c.psi_m_star.ravel()
-        df_psi_m_star.to_excel(writer,sheet_name='psi_m_star')
+        df_psi_m_star.to_excel(writer,sheet_name='psi_m_star',
+            merge_cells=False)
         df_psi_o_star = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.sectors],names=['country','sector']))
         df_psi_o_star['psi_o_star'] = sol_c.psi_o_star.ravel()
-        df_psi_o_star.to_excel(writer,sheet_name='psi_o_star')
+        df_psi_o_star.to_excel(writer,sheet_name='psi_o_star',
+            merge_cells=False)
         
         df_g_s = pd.DataFrame(index = pd.Index(p.sectors,name='sector'))
         df_g_s['g_s'] = sol_c.g_s
@@ -101,7 +103,8 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
         df_sales['M share of sales'] = sol_c.X_M[:,:,1].ravel()
         df_sales['CD share of sales'] = sol_c.X_CD[:,:,1].ravel()
         df_sales['total to check'] = df_sales['M share of sales'] + df_sales['CD share of sales']
-        df_sales.to_excel(writer,sheet_name='monopolistic_competitive_shares')
+        df_sales.to_excel(writer,sheet_name='monopolistic_competitive_shares',
+            merge_cells=False)
         
         df_qualities = pd.DataFrame(index=pd.Index(p.countries,name='country'))
         df_qualities['PSI_M'] = sol_c.PSI_M[...,1].sum(axis=1)
@@ -121,19 +124,39 @@ def write_calibration_results(path,p,m,sol_c,commentary = None):
         df_country['gdp'] = sol_c.gdp
         df_country.to_excel(writer,sheet_name='countries_macro_quantities')
         
-        df_pflows = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries],names=['destination','origin']))
-        df_pflows['pflow'] = sol_c.pflow.ravel()
-        print(df_pflows)
-        df_pflows.to_excel(writer,sheet_name='number of patent flows')
+        try:
+            df_pflows = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries],names=['destination','origin']))
+            df_pflows['pflow'] = sol_c.pflow.ravel()
+            print(df_pflows)
+            df_pflows.to_excel(writer,sheet_name='number of patent flows',
+                merge_cells=False)
+        except:
+            df_pflows = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors[1:]],names=['destination','origin','sector']))
+            df_pflows['pflow'] = sol_c.pflow.ravel()
+            print(df_pflows)
+            df_pflows.to_excel(writer,sheet_name='number of patent flows',
+                merge_cells=False)
+            
         
         df_tau = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries, p.sectors],names=['destination','origin','sector']))
         df_tau['tau'] = sol_c.tau.ravel()
         print(df_tau)
-        df_tau.to_excel(writer,sheet_name='tau')
+        df_tau.to_excel(writer,sheet_name='tau',
+            merge_cells=False)
         
-        df_share_patented = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries],names=['destination','origin']))
-        df_share_patented['share_innov_patented'] = sol_c.share_innov_patented.ravel()
-        df_share_patented.to_excel(writer,sheet_name='share of innovations patented')
+        # print(sol_c.share_innov_patented.shape)
+        try:
+            df_share_patented = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries],names=['destination','origin']))
+            df_share_patented['share_innov_patented'] = sol_c.share_innov_patented.ravel()
+            df_share_patented.to_excel(writer,sheet_name='share of innovations patented',
+                merge_cells=False)
+        except:
+            df_share_patented = pd.DataFrame(index = pd.MultiIndex.from_product([p.countries,p.countries,p.sectors[1:]],names=['destination','origin','sector']))
+            df_share_patented['share_innov_patented'] = sol_c.share_innov_patented.ravel()
+            df_share_patented.to_excel(writer,sheet_name='share of innovations patented',
+                merge_cells=False)
+            
+        
         
         writer.close()
 

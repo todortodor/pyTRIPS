@@ -118,6 +118,7 @@ pre_trips_variation_with_entry_costs = '11.92'
 # variation_with_zero_tariffs = '10.4'
 # variation_with_ten_times_tariffs = '10.5'
 variation_with_doubled_nu = '2.0'
+variation_with_no_obsolescence = '12.0'
 
 multi_sector_variation = '14.0'
 
@@ -221,6 +222,12 @@ except:
 no_trade_costs_path = save_path+'no-trade-costs-nor-tariffs-optima/'
 try:
     os.mkdir(no_trade_costs_path)
+except:
+    pass
+
+no_obsolescence_path = save_path+'no-obsolescence/'
+try:
+    os.mkdir(no_obsolescence_path)
 except:
     pass
 
@@ -983,7 +990,23 @@ df.style.format(precision=6).to_latex(calibration_path+parameter+'_patenting.tex
                   )
 df.to_csv(calibration_path+parameter+'_patenting.csv',float_format='%.6f')
 
+
+#%% Write the ratio of patent preparation and filing costs to RD costs
+
+patent_prep_costs = sol_baseline.w*sol_baseline.l_Ao[:,1]
+patent_filing_costs = np.einsum('n,in->i',sol_baseline.w,sol_baseline.l_Ae[:,:,1])
+total_RD_costs = sol_baseline.w*sol_baseline.l_R[:,1] + sol_baseline.w*sol_baseline.l_Ao[:,1] + np.einsum('n,in->i',sol_baseline.w,sol_baseline.l_Ae[:,:,1])
+
+df = pd.DataFrame(index=p_baseline.countries,columns=['patent_prep_costs','patent_filing_costs','total_RD_costs'])
+df['patent_prep_costs'] = patent_prep_costs
+df['patent_filing_costs'] = patent_filing_costs
+df['total_RD_costs'] = total_RD_costs
+
+df.to_csv(calibration_path+'patenting_and_RD_costs.csv',float_format='%.6f')
+
 #%% Multi-sector calibration
+
+from data_funcs import write_calibration_results
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -1015,6 +1038,19 @@ df.loc[[countries_names[c] for c in p_baseline.countries],'eta'] = p_multi.eta[:
 df.loc[[countries_names[c] for c in p_baseline.countries],'nu'] = p_multi.nu[2]
     
 df.to_csv(multi_sector_path+'raw_calibration_pharmachem.csv',float_format='%.6f')
+
+m_multi = moments()
+# m_multi.load_data()
+m_multi.load_run(multi_sector_run_path)
+
+sol_multi = var.var_from_vector(p_multi.guess, p_multi, compute=True, context = 'counterfactual')
+sol_multi.scale_P(p_multi)
+sol_multi.compute_non_solver_quantities(p_multi)
+
+m_multi.compute_moments(sol_multi,p_multi)
+m_multi.compute_moments_deviations()
+
+write_calibration_results(multi_sector_path+'baseline',p_multi,m_multi,sol_multi,commentary = '')
 
 
 #%% Harmonization to delta US
@@ -3252,6 +3288,379 @@ df.style.format(precision=5).to_latex(no_trade_costs_path+'dyn_Coop_negishi_weig
 df.to_csv(no_trade_costs_path+'dyn_Coop_negishi_weights_table_with_no_trade_costs.csv',float_format='%.5f')
 
 write_calibration_results(no_trade_costs_path+'dyn_Coop_negishi_weights_with_no_trade_costs',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
+
+#%% Write excel spreadsheets for variation with no obsolescence
+
+from data_funcs import write_calibration_results
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_no_obsolescence}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_no_obsolescence}/')
+m_pre.compute_moments(sol_pre,p_pre)
+m_pre.compute_moments_deviations()
+
+write_calibration_results(no_obsolescence_path+'no_obsolescence',p_pre,m_pre,sol_pre,commentary = '')
+
+
+#%% Nash table with transitional dynamics with no obsolescence
+
+all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
+all_nashes = all_nashes.drop_duplicates(['baseline','variation'],keep='last')
+
+run_nash= all_nashes.loc[(all_nashes.baseline == int(baseline)) 
+                         & (all_nashes.variation.astype(str) == variation_with_no_obsolescence)]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_no_obsolescence}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_no_obsolescence}/')
+
+p_nash = p_pre.copy()
+p_nash.delta[:,1] = run_nash[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_pre)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_pre)
+
+m_nash = m_pre.copy()
+m_nash.compute_moments(dyn_sol_nash.sol_fin,p_nash)
+m_nash.compute_moments_deviations()
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'
+                                     ],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_nash.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Nash equilibrium with no obsolescence'
+
+df.style.format(precision=5).to_latex(no_obsolescence_path+'dyn_Nash_table_with_no_obsolescence.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(no_obsolescence_path+'dyn_Nash_table_with_no_obsolescence.csv',float_format='%.5f')
+
+write_calibration_results(no_obsolescence_path+'dyn_Nash_with_no_obsolescence',p_nash,m_nash,dyn_sol_nash.sol_fin,commentary = '')
+
+
+#%% Coop equal weights table with transitional dynamics with no obsolescence
+
+all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_equales = all_coop_equales.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_equal= all_coop_equales.loc[(all_coop_equales.baseline == int(baseline))
+                                     & (all_coop_equales.variation == variation_with_no_obsolescence)
+                                     & (all_coop_equales.aggregation_method == 'pop_weighted')]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_no_obsolescence}/')
+# p_pre.tau = p_baseline.tau.copy()
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_no_obsolescence}/')
+
+p_coop_equal = p_pre.copy()
+p_coop_equal.delta[:,1] = run_coop_equal[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol_coop_equal = dyn_fixed_point_solver(p_coop_equal, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_equal.compute_non_solver_quantities(p_coop_equal)
+dyn_sol_coop_equal.sol_fin.compute_consumption_equivalent_welfare(p_coop_equal,sol_pre)
+dyn_sol_coop_equal.sol_fin.compute_world_welfare_changes(p_coop_equal,sol_pre)
+
+m_coop_equal = m_pre.copy()
+m_coop_equal.compute_moments(dyn_sol_coop_equal.sol_fin,p_coop_equal)
+m_coop_equal.compute_moments_deviations()
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_coop_equal.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_coop_equal.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Cooperative equilibrium with population weights'
+
+df.style.format(precision=5).to_latex(no_obsolescence_path+'dyn_Coop_population_weights_table_with_no_obsolescence.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(no_obsolescence_path+'dyn_Coop_population_weights_table_with_no_obsolescence.csv',float_format='%.5f')
+
+write_calibration_results(no_obsolescence_path+'dyn_Coop_population_weights_with_no_obsolescence',p_coop_equal,m_coop_equal,dyn_sol_coop_equal.sol_fin,commentary = '')
+
+#%% Coop negishi weights table with transitional dynamics with no obsolescence
+
+all_coop_negishies = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_negishies = all_coop_negishies.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_negishi= all_coop_negishies.loc[(all_coop_negishies.baseline == int(baseline))
+                                     & (all_coop_negishies.variation == variation)
+                                     & (all_coop_negishies.aggregation_method == 'negishi')]
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_no_obsolescence}/')
+_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+
+p_coop_negishi = p_pre.copy()
+p_coop_negishi.delta[:,1] = run_coop_negishi[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol_coop_negishi = dyn_fixed_point_solver(p_coop_negishi, sol_init=sol_pre,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_coop_negishi.compute_non_solver_quantities(p_coop_negishi)
+dyn_sol_coop_negishi.sol_fin.compute_consumption_equivalent_welfare(p_coop_negishi,sol_pre)
+dyn_sol_coop_negishi.sol_fin.compute_world_welfare_changes(p_coop_negishi,sol_pre)
+
+m_coop_negishi = m_pre.copy()
+m_coop_negishi.compute_moments(dyn_sol_coop_negishi.sol_fin,p_coop_negishi)
+m_coop_negishi.compute_moments_deviations()
+    
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta$'] = p_coop_negishi.delta[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_coop_negishi.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_coop_negishi.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+caption = 'Cooperative equilibrium with Negishi weights'
+
+df.style.format(precision=5).to_latex(no_obsolescence_path+'dyn_Coop_negishi_weights_table_with_no_obsolescence.tex',
+                  caption=caption,
+                  **save_to_tex_options
+                  )
+
+df.to_csv(no_obsolescence_path+'dyn_Coop_negishi_weights_table_with_no_obsolescence.csv',float_format='%.5f')
+
+write_calibration_results(no_obsolescence_path+'dyn_Coop_negishi_weights_with_no_obsolescence',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
 
 #%% Nash table with transitional dynamics -- multi-sector
 

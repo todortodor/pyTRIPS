@@ -607,48 +607,54 @@ comments_dic = {}
 #     '1.1':'1.1:new compute, new target:6.896%'
 #     }
 
-comments_dic['1300'] = {
-    "baseline":"baseline : 2015",
-    # '2.0':'2.0 : doubled nu',
-    # '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
-    # '10.3':'10.3 : No trade costs',
-    # "11.0" : "11.0 : With entry costs d=1.5",
-    # "11.01" : "11.01 : With entry costs d=1.1",
-    # "11.02" : "11.02 : With entry costs d=0.19",
-    "12.0" : "12.0 : no obsolescence",
-    "13.0" : "13.0 : target SGDP and RGDPpc",
-    '99.0':'99.0: Low TO',
-    '99.1':'99.1: High TO',
-    '99.2':'99.2: Low TE',
-    '99.3':'99.3: High TE',
-    '99.4':'99.4: Low KM',
-    '99.5':'99.5: High KM',
-    '99.6':'99.6: Low Sigma',
-    '99.7':'99.7: High Sigma',
-    '99.8':'99.8: Low Kappa',
-    '99.9':'99.9: High Kappa',
-    '99.10':'99.10: Low Growth',
-    '99.11':'99.11: High Growth',
-    '99.12':'99.12: Low rho',
-    '99.13':'99.13: High rho',
-    '99.14':'99.14: Low UUPCOST',
-    '99.15':'99.15: High UUPCOST',
-    # '199.0':'199.0: Low TO 1992',
-    # '199.1':'199.1: High TO 1992',
-    # '199.2':'199.2: Low TE 1992',
-    # '199.3':'199.3: High TE 1992',
-    # '199.4':'199.4: Low KM 1992',
-    # '199.5':'199.5: High KM 1992',
-    # '199.6':'199.6: Low Sigma 1992',
-    # '199.7':'199.7: High Sigma 1992',
-    # '199.8':'199.8: Low Kappa 1992',
-    # '199.9':'199.9: High Kappa 1992',
-    # '199.10':'199.10: Low Growth 1992',
-    # '199.11':'199.11: High Growth 1992',
-    # '199.12':'199.12: Low rho 1992',
-    # '199.13':'199.13: High rho 1992',
-    # '199.14':'199.14: Low UUPCOST 1992',
-    # '199.15':'199.15: High UUPCOST 1992',
+# comments_dic['1300'] = {
+#     "baseline":"baseline : 2015",
+#     # '2.0':'2.0 : doubled nu',
+#     # '9.2':'9.2 : partial calib, 3-year smoothed data 1992',
+#     # '10.3':'10.3 : No trade costs',
+#     # "11.0" : "11.0 : With entry costs d=1.5",
+#     # "11.01" : "11.01 : With entry costs d=1.1",
+#     # "11.02" : "11.02 : With entry costs d=0.19",
+#     "12.0" : "12.0 : no obsolescence",
+#     "13.0" : "13.0 : target SGDP and RGDPpc",
+#     '99.0':'99.0: Low TO',
+#     '99.1':'99.1: High TO',
+#     '99.2':'99.2: Low TE',
+#     '99.3':'99.3: High TE',
+#     '99.4':'99.4: Low KM',
+#     '99.5':'99.5: High KM',
+#     '99.6':'99.6: Low Sigma',
+#     '99.7':'99.7: High Sigma',
+#     '99.8':'99.8: Low Kappa',
+#     '99.9':'99.9: High Kappa',
+#     '99.10':'99.10: Low Growth',
+#     '99.11':'99.11: High Growth',
+#     '99.12':'99.12: Low rho',
+#     '99.13':'99.13: High rho',
+#     '99.14':'99.14: Low UUPCOST',
+#     '99.15':'99.15: High UUPCOST',
+#     # '199.0':'199.0: Low TO 1992',
+#     # '199.1':'199.1: High TO 1992',
+#     # '199.2':'199.2: Low TE 1992',
+#     # '199.3':'199.3: High TE 1992',
+#     # '199.4':'199.4: Low KM 1992',
+#     # '199.5':'199.5: High KM 1992',
+#     # '199.6':'199.6: Low Sigma 1992',
+#     # '199.7':'199.7: High Sigma 1992',
+#     # '199.8':'199.8: Low Kappa 1992',
+#     # '199.9':'199.9: High Kappa 1992',
+#     # '199.10':'199.10: Low Growth 1992',
+#     # '199.11':'199.11: High Growth 1992',
+#     # '199.12':'199.12: Low rho 1992',
+#     # '199.13':'199.13: High rho 1992',
+#     # '199.14':'199.14: Low UUPCOST 1992',
+#     # '199.15':'199.15: High UUPCOST 1992',
+#     }
+
+comments_dic['2000'] = {
+    "baseline":"baseline",
+    '1.0':'1.0:old baseline with TO typo',
+    # '1.1':'1.1:new compute, new target:6.896%'
     }
 
 baselines_dic_param = {}
@@ -663,8 +669,8 @@ baselines_dic_sol_qty = {}
 # baseline_list = ['901','803','806','808']    
 # baseline_list = ['1030','1040','1050']    
 # baseline_list = ['1050']    
-baseline_list = ['1300']    
-baseline_mom = '1300'
+baseline_list = ['2000']    
+baseline_mom = '2000'
 
 def section(s):
      return [int(_) for _ in s.split(".")]
@@ -1402,12 +1408,12 @@ print(time.perf_counter() - start)
 
 #%% dynamic counterfactuals
 
-baseline_dyn_cf = '1300'
+baseline_dyn_cf = '2000'
 country_dyn_cf = 'USA'
 
-baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['1300',
-                                                                                  '1300_12.0',
-                                                                                  '1300_13.0',
+baseline_dyn_cf_select = Select(value=baseline_dyn_cf, title='Baseline', options=['2000',
+                                                                                  # '1300_12.0',
+                                                                                  # '1300_13.0',
                                                                                   ])
 country_dyn_cf_select = Select(value=country_dyn_cf, 
                             title='Country', 
@@ -1763,7 +1769,7 @@ third_panel = row(counterfactuals_dyn_report)
 def section_ser(s):
       return pd.Series([[int(_) for _ in s_e.split(".")] for s_e in s])
 
-baseline_nash_coop = '1300'
+baseline_nash_coop = '2000'
 
 # dic_change_labels_for_405 = {'405, '+k:comments_dic['403'][k] for k in comments_dic['405']}
 
@@ -1798,7 +1804,7 @@ baseline_nash_coop_select = Select(value=baseline_nash_coop, title='Baseline',
                                     # options=['404','405','501','601'])
                                     # options=['501','607','618','619'])
                                     # options=['802','803','804','805','806'])
-                                    options=['1300'])
+                                    options=['2000'])
 
 welf_pop_weighted, welf_negishi, welf_nash = get_data_nash_coop(baseline_nash_coop)
     

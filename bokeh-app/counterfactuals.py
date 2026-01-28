@@ -18,7 +18,7 @@ import time
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1300','variation': 'baseline'},
+    {'baseline':'2000','variation': 'baseline'},
     # {'baseline':'1300','variation': '2.0'},
     # {'baseline':'1300','variation': '10.2'},
     # {'baseline':'1300','variation': '10.3'},

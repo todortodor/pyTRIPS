@@ -9,10 +9,48 @@ Created on Wed Jun  5 13:10:17 2024
 from scipy import optimize
 import time
 from classes import moments, parameters,  var_double_diff_double_delta, history
-from solver_funcs import calibration_func_double_diff_double_delta, fixed_point_solver_double_diff_double_delta
+from solver_funcs import calibration_func_double_diff_double_delta,fixed_point_solver, fixed_point_solver_double_diff_double_delta
 from data_funcs import write_calibration_results
 import os
 import numpy as np
+
+baseline_number = '2000'
+# n = 4
+
+p_mono = parameters()
+p_mono.correct_eur_patent_cost = True
+p_mono.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+
+
+
+sol, sol_mono = fixed_point_solver(p_mono,
+                        context = 'calibration',x0=p_mono.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=True,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_mono.scale_P(p_mono)
+sol_mono.compute_non_solver_quantities(p_mono)
+
+m_mono = moments()
+m_mono.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+m_mono.compute_moments(sol_mono, p_mono)
+
+#%%
 
 new_run = True
 baseline_number = '1312'
@@ -22,6 +60,7 @@ if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
     p.load_run('calibration_results_matched_economy/'+baseline_number+'/')
+    p_baseline = p.copy()
     # print(p.k)
     # p.mask['k'] = np.array([ True,  True])
     # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
@@ -44,7 +83,7 @@ if new_run:
 # p.update_delta_eff()
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 # m.weights_dict['SPFLOWDOM'] = 5
-p.calib_parameters.append('nu')
+# p.calib_parameters.append('nu')
 
 # p.d = 1.1
 # p.d = 0.191473
@@ -53,8 +92,20 @@ p.calib_parameters.append('nu')
 # p.delta_dom[0,1] = p.delta_dom[0,1]/2
 # p.delta_dom[3,1] = p.delta_dom[3,1]/2
 # p.update_delta_eff()
-p.nu_tilde[1] = 0.058643
-p.nu[1] = 1e-10
+# p.nu_tilde[1] = 0.058643
+p.nu[1] = 1e-12
+p.nu_tilde[1] = p_mono.nu[1]
+p.delta_int[...] = p_mono.delta[...]
+p.delta_dom[...] = p_mono.delta[...]
+p.update_delta_eff()
+p.eta[...] = p_mono.eta[...]
+p.k[...] = p_mono.k[...]
+p.T[...] = p_mono.T[...]
+p.zeta[...] = p_mono.zeta[...]
+p.g_0[...] = p_mono.g_0[...]
+p.theta[...] = p_mono.theta[...]
+p.fe[...] = p_mono.fe[...]
+p.fo[...] = p_mono.fo[...]
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 
 #                       'nu_tilde',
 #                       'zeta', 'g_0', 
@@ -106,6 +157,8 @@ sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 m.compute_moments(sol_c, p)
 m.compute_moments_deviations()
+
+#%%
 
 # sol_c.compute_non_solver_quantities(p)
 # p.guess = sol_c.vector_from_var()

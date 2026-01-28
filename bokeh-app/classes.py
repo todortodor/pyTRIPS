@@ -243,7 +243,8 @@ class parameters:
                     'beta':None,
                      'T':None,
                      'r_hjort':None,
-                     'eta':[np.s_[::S]]}
+                     'eta':[np.s_[::S]]
+                     }
         
         # if nbr_sectors == 4:
         #     sl_non_calib['delta'] = [np.s_[::S],np.s_[2::S],np.s_[3::S]]
@@ -343,6 +344,9 @@ class parameters:
         
         if self.k.shape == ():
             self.k = np.repeat(self.k,self.S)
+            
+        if self.k.shape[0] != self.mask['k'].shape[0]:
+            self.mask['k'] = np.array([True]*self.S)
         
         self.update_delta_eff()            
         
@@ -464,6 +468,7 @@ class parameters:
         lb = []
         ub = []
         for par in self.calib_parameters:
+            # print(par)
             lb.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.lb_dict[par])
             ub.append(np.ones(np.array(getattr(self,par))[self.mask[par]].size)*self.ub_dict[par])
         return (np.concatenate(lb),np.concatenate(ub))
@@ -2511,9 +2516,9 @@ class var:
 
         # ii)
         num_bracket = self.V_NP_P_minus_V_NP_NP_with_prod_patent[...,1]/self.w[None,:]*(
-            1-np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k)
+            1-np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k[1])
             ) + self.V_P_P_minus_V_P_NP_with_prod_patent[...,1]/self.w[None,:]*(
-                np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k)
+                np.maximum(self.psi_m_star[...,1]/np.diagonal(self.psi_m_star[...,1])[None,:],1)**(1-p.k[1])
                 )
         
         self.mult_val_pat = 1 + (
@@ -2525,19 +2530,19 @@ class var:
         
         self.V_with_prod_patent = np.zeros((p.N,p.S))
         
-        A1 = ((p.k/(p.k-1))*self.V_NP[...,1]/self.w[None,:]).sum(axis=0)
+        A1 = ((p.k[1]/(p.k[1]-1))*self.V_NP[...,1]/self.w[None,:]).sum(axis=0)
         A2 = np.einsum('ni,ni,i->i',
                         self.V_P[...,1]/self.w[None,:] - self.V_NP[...,1]/self.w[None,:],
-                        self.psi_m_star[...,1]**(1-p.k),
+                        self.psi_m_star[...,1]**(1-p.k[1]),
                         self.mult_val_pat
-                        )*(p.k/(p.k-1))
+                        )*(p.k[1]/(p.k[1]-1))
         A3 = - np.einsum('ni,n,n,i->i',
-                          self.psi_m_star[...,1]**-p.k,
+                          self.psi_m_star[...,1]**-p.k[1],
                           self.w,
                           p.r_hjort,
                           1/self.w
                           )*p.fe[1]
-        B = self.psi_o_star[:,1]**-p.k*p.fo[1]*p.r_hjort
+        B = self.psi_o_star[:,1]**-p.k[1]*p.fo[1]*p.r_hjort
         self.V_with_prod_patent[...,1] = (A1+A2+A3-B)*self.w[None,:]
         
         self.mult_val_all_innov = self.V_with_prod_patent[...,1]/self.V[...,1]
@@ -6541,7 +6546,33 @@ class moments:
             )
         self.KM_DD_DD = KM_DD_DD[0,0]
         
+        if p.S==3:
+            bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[None,1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
+            KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
+                p.k[1:]/(p.k[1:]-1),
+                p.eta[:,1:],
+                var.l_R[:,1:]**(1-p.kappa),
+                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                var.profit[:,:,1:],
+                bracket,
+                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                )
+            self.KM = KM[0,0,0]
+            self.KMPHARMACHEM = KM[0,0,1]
+            
+            if self.aggregate_moments:
+                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+                    p.k[1:]/(p.k[1:]-1),
+                    p.eta[:,1:],
+                    var.l_R[:,1:]**(1-p.kappa),
+                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                    var.profit[:,:,1:],
+                    bracket,
+                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                    )[0,0]
+        
         if p.S==4:
+            bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[None,1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
             KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
                 p.k[1:]/(p.k[1:]-1),
                 p.eta[:,1:],
@@ -6565,29 +6596,7 @@ class moments:
                     bracket,
                     1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
                     )[0,0]
-        if p.S==3:
-            KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
-                p.k[1:]/(p.k[1:]-1),
-                p.eta[:,1:],
-                var.l_R[:,1:]**(1-p.kappa),
-                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-                var.profit[:,:,1:],
-                bracket,
-                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-                )
-            self.KM = KM[0,0,0]
-            self.KMPHARMACHEM = KM[0,0,1]
-            
-            if self.aggregate_moments:
-                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
-                    p.k[1:]/(p.k[1:]-1),
-                    p.eta[:,1:],
-                    var.l_R[:,1:]**(1-p.kappa),
-                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-                    var.profit[:,:,1:],
-                    bracket,
-                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-                    )[0,0]
+        
         
     def compute_SRDUS(self,var,p):
         self.SRDUS = (var.X_M[:,0,1]/(1+p.tariff[:,0,1])).sum()/(var.X[:,0,1]/(1+p.tariff[:,0,1])).sum()
@@ -6671,7 +6680,9 @@ class moments:
         
         num_brack_B = var.PSI_MNP*eps(p.nu*delt)[None,None,:]
         num_brack_C = var.PSI_MPND*(eps(p.delta*delt)*eps(p.nu*delt)[None,:])[:,None,:]
-        num_brack_E = var.PSI_MPD*eps(p.nu*delt)[None,None,:]
+        # num_brack_E = var.PSI_MPD*eps(p.nu*delt)[None,None,:]
+        num_brack_E = var.PSI_MPD*eps(p.delta*delt)[:,None,:]
+        ##!!!!!!!!!!!!
         
         num_brack = (num_brack_B + num_brack_C + num_brack_E)
         
@@ -6747,9 +6758,102 @@ class moments:
             self.TOPHARMA = np.nan
             self.TOCHEM = np.nan
             self.TOPHARMACHEM = np.nan
-            
+        
+        self.num_TO = num          
+        self.num_TO_B = num_brack_B                             
+        self.num_TO_C = num_brack_C                                                            
+        self.num_TO_E = num_brack_E                                                     
+        self.denom_TO = denom 
+        
+    # def compute_TO_DD_DD(self,var,p):
+    #     delt = 5
+    #     self.delta_t = delt
+    #     PHI = var.phi**p.theta[None,None,:]
+        
+    #     num_brack_B = var.PSI_MNP*eps(p.nu_tilde*delt)[None,None,:]
+    #     num_brack_C = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
+    #     num_brack_B = var.PSI_MNP*eps(p.nu_tilde*delt)[None,None,:]
+    #     num_brack_C = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
+    #     num_brack_D = var.PSI_MPD*eps(p.delta_eff*delt)
+    #     num_brack_E = var.PSI_MPL*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
+    #     num_brack_F = var.PSI_CL*eps(p.nu_tilde*delt)[None,None,:]
+        
+    #     num_brack = (num_brack_B + num_brack_C + num_brack_D + num_brack_E + num_brack_F)
+        
+    #     num_sum = np.einsum('nis,njs->ns',
+    #                         num_brack,
+    #                         PHI
+    #                         ) - \
+    #               np.einsum('ns,njs->ns',
+    #                         np.diagonal(num_brack).transpose(),
+    #                         PHI
+    #                         ) - \
+    #               np.einsum('nis,ns->ns',
+    #                         num_brack,
+    #                         np.diagonal(PHI).transpose()
+    #                         ) + \
+    #               np.einsum('ns,ns->ns',
+    #                         np.diagonal(num_brack).transpose(),
+    #                         np.diagonal(PHI).transpose()
+    #                         )
+
+    #     num = np.einsum('ns,ns->ns',
+    #                     PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
+    #                     num_sum
+    #                     )
+        
+    #     denom_A = np.einsum('nis,ns,ns->nis',
+    #                               PHI,
+    #                               var.PSI_CD,
+    #                               PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:]
+    #                               )
+        
+    #     denom_B_a = var.PSI_MNP*np.exp(-delt*(p.nu+p.nu_tilde))[None,None,:]
+    #     denom_B_b = var.PSI_MPND*(np.exp(-delt*p.delta_eff)
+    #                               +np.exp(-(p.nu+p.nu_tilde)*delt)[None,None,:]*eps(delt*p.delta_eff))
+    #     denom_B_c = (var.PSI_MPD+var.PSI_MPL)*np.exp(-delt*p.delta_eff)
+    #     denom_B = np.einsum('nis,nis,s->nis',
+    #                         denom_B_a + denom_B_b + denom_B_c,
+    #                         var.phi**(p.sigma-1)[None,None,:],
+    #                         (p.sigma/(p.sigma-1))**(1-p.sigma)
+    #                         )
+        
+    #     denom_C_a = var.PSI_MNP*eps(p.nu)[None,None,:]
+    #     denom_C_b = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu*delt)[None,None,:])
+    #     denom_C_c = var.PSI_MPL*eps(p.delta_eff*delt)
+    #     denom_C = np.einsum('s,nis,nis,s->nis',
+    #                         np.exp(-delt*p.nu_tilde),
+    #                         denom_C_a + denom_C_b + denom_C_c,
+    #                         var.phi**(p.sigma-1)[None,None,:],
+    #                         (p.sigma/(p.sigma-1))**(1-p.sigma)
+    #                         )
+        
+    #     denom_D_sum = np.einsum('nis,njs->nis',
+    #                             num_brack,
+    #                             PHI
+    #                             ) - \
+    #                   np.einsum('nis,ns->nis',
+    #                             num_brack,
+    #                             np.diagonal(PHI).transpose()
+    #                             )
+        
+    #     denom_D = np.einsum('ns,nis->nis',
+    #                     PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
+    #                     denom_D_sum
+    #                     )
+        
+    #     denom = np.einsum('nis->ns',
+    #                       denom_A + denom_B + denom_C + denom_D
+    #                       ) - np.einsum('nns->ns',
+    #                                         denom_A + denom_B + denom_C + denom_D
+    #                                         ) 
+        
+    #     self.turnover_DD_DD = num/denom
+    #     self.TO_DD_DD = self.turnover_DD_DD[0,1]
+    
     def compute_TO_DD_DD(self,var,p):
         delt = 5
+        
         self.delta_t = delt
         PHI = var.phi**p.theta[None,None,:]
         
@@ -6829,6 +6933,14 @@ class moments:
                                             denom_A + denom_B + denom_C + denom_D
                                             ) 
         
+        self.num_TO_DD_DD = num                                
+        self.num_TO_DD_DD_B = num_brack_B                             
+        self.num_TO_DD_DD_C = num_brack_C                                
+        self.num_TO_DD_DD_D = num_brack_D                                
+        self.num_TO_DD_DD_E = num_brack_E                                
+        self.num_TO_DD_DD_F = num_brack_F                                
+        self.denom_TO_DD_DD = denom                            
+                                        
         self.turnover_DD_DD = num/denom
         self.TO_DD_DD = self.turnover_DD_DD[0,1]
         
@@ -6855,6 +6967,7 @@ class moments:
                                                         p.theta-(p.sigma-1),
                                                         out_diag_trade_flows_shares)
                         ).sum(axis=1).sum(axis=0) )[2]/(p.N*(p.N-1))
+            # !!! just changed it, it was commented
             # if self.aggregate_moments:
             #     weights = remove_diag(var.X / var.X.sum(axis=-1)[:,:,None])
             #     self.TE = ( 

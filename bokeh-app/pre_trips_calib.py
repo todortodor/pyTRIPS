@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 
-baseline_number = '1300'
+baseline_number = '2000'
 
 p_baseline = parameters()
 p_baseline.load_run('calibration_results_matched_economy/'+baseline_number+'/')
@@ -72,18 +72,18 @@ runs_params = [
     #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
     #   'year':1992
     #   },
-    # {
-    #   'number': 9.2,
-    #   'calib_params':['delta','T','eta'],
-    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-    #   'year':1992
-    #   },
     {
-      'number': 9.3,
+      'number': 9.2,
       'calib_params':['delta','T','eta'],
       'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
-      'year':2015
+      'year':1992
       },
+    # {
+    #   'number': 9.3,
+    #   'calib_params':['delta','T','eta'],
+    #   'list_of_moments':['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST'],
+    #   'year':2015
+    #   },
     ]
 
 for run_params in runs_params:

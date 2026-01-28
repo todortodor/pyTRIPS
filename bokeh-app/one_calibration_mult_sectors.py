@@ -15,15 +15,17 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '6001'
-# baseline_number = '1300'
-variation_to_load = '4.02'
+# baseline_number = '6001'
+baseline_number = '1300'
+variation_to_load = '14.0'
+# baseline_number = '6001'
+# variation_to_load = '4.02'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     # p.load_data('data/data_12_countries_3_sectors_2015/',keep_already_calib_params=True,nbr_sectors=3)
     start_time = time.perf_counter()
@@ -32,6 +34,35 @@ if new_run:
     # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
     m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     m.aggregate_moments = True
+    
+    sol, sol_init = fixed_point_solver(p,x0=p.guess,
+                                    # context = 'counterfactual',
+                                    context = 'calibration',
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=True,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=True,
+                            damping = 100,
+                            max_count = 10000,
+                            accel_memory =50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=2
+                            # damping=10
+                              # apply_bound_psi_star=True
+                            )
+    sol_init.scale_P(p)
+    sol_init.compute_non_solver_quantities(p)
+    
+    m.compute_moments(sol_init, p)
+
     # m.load_data('data/data_12_countries_3_sectors_2015/')
     # m.load_data('data/data_12_countries_4_sectors_1992/')
     
@@ -44,7 +75,7 @@ if new_run:
 # print('TOPHARMA',m.TOPHARMA_target,'TOCHEM',m.TOCHEM_target)
 
 # m.KMPHARMACHEM_deviation = 1
-#%%
+#
 # m.weights_dict['KMPHARMACHEM'] = 5
 # m.weights_dict['RDPHARMACHEM'] = 10
 # m.weights_dict['RP'] = 10

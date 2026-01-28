@@ -30,7 +30,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'6001','variation': '4.02'},
+    {'baseline':'2000','variation': 'baseline'},
     ]
 
 lb_delta=0.01
@@ -61,7 +61,7 @@ if __name__ == '__main__':
                             #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )
         
-        write = False
+        write = True
         if write:
             # baseline_dic = {'baseline':'1300','variation': '11.02'}
             if not os.path.exists('nash_eq_recaps/deltas.csv'):
