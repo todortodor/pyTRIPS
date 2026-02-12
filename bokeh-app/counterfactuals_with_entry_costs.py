@@ -18,7 +18,7 @@ import time
 recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
 
 baseline_dics = [
-    {'baseline':'1300','variation': '11.02'},
+    {'baseline':'2000','variation': '11.02'},
     ]
 
 def process_country(args):
@@ -28,7 +28,7 @@ def process_country(args):
     make_counterfactual_recap(p, sol_baseline, c, local_path, recap_path, with_entry_costs=True)
     return 'done'
 
-parallel = False
+parallel = True
 
 if __name__ == '__main__':
     for baseline_dic in baseline_dics:
@@ -92,8 +92,8 @@ if __name__ == '__main__':
         
         else:
             # sequential processes
-            for c in p_baseline.countries[3:4]:
-            # for c in p_baseline.countries[1:]:
+            # for c in p_baseline.countries[3:4]:
+            for c in p_baseline.countries:
                 make_counterfactual_with_entry_costs(p_baseline,c,local_path,dynamics=False,
                                                      sol_baseline=sol_baseline)
                 make_counterfactual_recap(p_baseline, sol_baseline, c,

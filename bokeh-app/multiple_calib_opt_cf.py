@@ -220,12 +220,12 @@ from solver_funcs import calibration_func
 
 write = True
 
-baseline_number = '1300'
+baseline_number = '2000'
 
 # for variation_number in [11]:
 for variation_number in [99]:
     
-    for run_params in runs_params[:9]:
+    for run_params in runs_params:
         print(run_params)
         baseline_dic = {'baseline':baseline_number,
                         'variation':str(variation_number)+'.'+str(run_params['number'])}
@@ -334,8 +334,8 @@ for variation_number in [99]:
                                 accelerate=False,
                                 accelerate_when_stable=True,
                                 cobweb_qty='phi',
-                                plot_convergence=True,
-                                plot_cobweb=True,
+                                plot_convergence=False,
+                                plot_cobweb=False,
                                 safe_convergence=0.001,
                                 disp_summary=True,
                                 damping = 10,
@@ -356,7 +356,7 @@ for variation_number in [99]:
         p_sol.tau = sol_c.tau
         m.compute_moments(sol_c,p_sol)
         m.compute_moments_deviations()
-        m.plot_moments(m.list_of_moments)
+        # m.plot_moments(m.list_of_moments)
         
         ##%% writing results as excel and locally
         commentary = ''
@@ -408,7 +408,8 @@ for variation_number in [99]:
         ##%% Nash eq
         method = 'fixed_point'
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=12,method='fixed_point',
-                          plot_convergence = True,solver_options=None,tol=1e-4)
+                          plot_convergence = False,solver_options=None,tol=1e-4,
+                          parallel=False)
         
         if not os.path.exists('nash_eq_recaps/deltas.csv'):
             deltas_df = pd.DataFrame(columns = ['baseline',
@@ -446,7 +447,9 @@ for variation_number in [99]:
             p_opti, sol_opti = find_coop_eq(p_baseline,aggregation_method,
                               lb_delta=0.01,ub_delta=12,dynamics=False,
                               solver_options=None,tol=1e-15,
-                              static_eq_deltas = None,custom_weights=None)
+                              static_eq_deltas = None,custom_weights=None,
+                              parallel=False)
+                              
             
             if not os.path.exists('coop_eq_recaps/deltas.csv'):
                 deltas_df = pd.DataFrame(columns = ['baseline',
@@ -480,38 +483,38 @@ for variation_number in [99]:
             cons_eq_welfares.to_csv('coop_eq_recaps/cons_eq_welfares.csv')
 
         
-        ##%% counterfactuals 
-        if baseline_dic['variation'] == 'baseline':
-            local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
-        else:
-            local_path = \
-                f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
+        # ##%% counterfactuals 
+        # if baseline_dic['variation'] == 'baseline':
+        #     local_path = 'counterfactual_results/unilateral_patent_protection/baseline_'+baseline_dic['baseline']+'/'
+        # else:
+        #     local_path = \
+        #         f'counterfactual_results/unilateral_patent_protection/baseline_{baseline_dic["baseline"]}_{baseline_dic["variation"]}/'
         
-        try:
-            os.mkdir(local_path)
-        except:
-            pass
+        # try:
+        #     os.mkdir(local_path)
+        # except:
+        #     pass
         
-        recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
+        # recaps_path = 'counterfactual_recaps/unilateral_patent_protection/'
         
-        if baseline_dic['variation'] == 'baseline':
-            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
-        else:
-            recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
+        # if baseline_dic['variation'] == 'baseline':
+        #     recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'/'
+        # else:
+        #     recap_path = recaps_path+'baseline_'+baseline_dic['baseline']+'_'+baseline_dic["variation"]+'/'
 
-        for c in p_baseline.countries:
-            make_counterfactual(p_baseline,c,local_path,dynamics=False)
-            make_counterfactual_recap(p_baseline, sol_baseline, c,
-                                          local_path,recap_path)
+        # for c in p_baseline.countries:
+        #     make_counterfactual(p_baseline,c,local_path,dynamics=False)
+        #     make_counterfactual_recap(p_baseline, sol_baseline, c,
+        #                                   local_path,recap_path)
         
-        make_counterfactual(p_baseline,'World',local_path,dynamics=False)
-        make_counterfactual_recap(p_baseline, sol_baseline, 'World',
-                                      local_path,recap_path)
+        # make_counterfactual(p_baseline,'World',local_path,dynamics=False)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'World',
+        #                               local_path,recap_path)
         
-        make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
-        make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
-                                      local_path,recap_path)
+        # make_counterfactual(p_baseline,'Harmonizing',local_path,dynamics=False)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Harmonizing',
+        #                               local_path,recap_path)
         
-        make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
-        make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
-                                      local_path,recap_path)
+        # make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
+        # make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
+        #                               local_path,recap_path)

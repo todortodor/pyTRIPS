@@ -30,7 +30,24 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'2000','variation': 'baseline'},
+    # {'baseline':'2000','variation': 'baseline'},
+    {'baseline':'2000','variation': '14.0'},
+    # {'baseline':'2000','variation': '99.0'},
+    # {'baseline':'2000','variation': '99.1'},
+    # {'baseline':'2000','variation': '99.2'},
+    # {'baseline':'2000','variation': '99.3'},
+    # {'baseline':'2000','variation': '99.4'},
+    # {'baseline':'2000','variation': '99.5'},
+    # {'baseline':'2000','variation': '99.6'},
+    # {'baseline':'2000','variation': '99.7'},
+    # {'baseline':'2000','variation': '99.8'},
+    # {'baseline':'2000','variation': '99.9'},
+    # {'baseline':'2000','variation': '99.10'},
+    # {'baseline':'2000','variation': '99.11'},
+    # {'baseline':'2000','variation': '99.12'},
+    # {'baseline':'2000','variation': '99.13'},
+    # {'baseline':'2000','variation': '99.14'},
+    # {'baseline':'2000','variation': '99.15'},
     ]
 
 lb_delta=0.01
@@ -54,14 +71,14 @@ if __name__ == '__main__':
         p_baseline.load_run(baseline_path)
         
         p_nash, sol_nash = find_nash_eq(p_baseline,lb_delta=lb_delta,ub_delta=ub_delta,method='fixed_point',
-                         plot_convergence = False,solver_options=None,tol=1e-4,
-                            # delta_init=np.ones(p_baseline.N)*ub_delta,
+                         plot_convergence = True,solver_options=None,tol=1e-4,
+                            delta_init=np.ones(p_baseline.N*2)*ub_delta,
                             max_workers=12,parallel=False
                             # delta_init=np.array([11.99414972, 11.98829932, 12,         11.98828496, 11.98830984, 11.99414867,
                             #   6.01670143, 11.98829828, 11.99415106, 12,         12        ])
                          )
         
-        write = True
+        write = False
         if write:
             # baseline_dic = {'baseline':'1300','variation': '11.02'}
             if not os.path.exists('nash_eq_recaps/deltas.csv'):

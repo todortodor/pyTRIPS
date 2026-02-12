@@ -911,7 +911,7 @@ class var_with_entry_costs:
                                     alpha = self.V_P[...,1],
                                     # b = self.w[:,None]*p.fe[1]*p.r_hjort[:,None],
                                     beta = self.w*p.fe[1]*p.r_hjort,
-                                    y = p.k,
+                                    y = p.k[1],
                                     z = p.d)
         
         # print(integral_k_d)
@@ -925,20 +925,20 @@ class var_with_entry_costs:
             where=self.a[...,1:]!=0
             )
         
-        A = p.k*(
+        A = p.k[1]*(
             1
-            - np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(1-p.k)
-            + self.psi_m_star[...,1:]**(1-p.k)
-            - self.psi_MP_star[...,1:]**(1-p.k)
-            )/(p.k-1)
+            - np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(1-p.k[1])
+            + self.psi_m_star[...,1:]**(1-p.k[1])
+            - self.psi_MP_star[...,1:]**(1-p.k[1])
+            )/(p.k[1]-1)
         
         
-        B = p.k*np.einsum('nis,nis->nis',
+        B = p.k[1]*np.einsum('nis,nis->nis',
                       temp_w_a_power_minus_d/self.V_NP[...,1:]**(-p.d),
-                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k+1) - 1
-                      )/(p.d-p.k+1)
+                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k[1]+1) - 1
+                      )/(p.d-p.k[1]+1)
         
-        C = p.k*np.einsum('nis,ni->nis',
+        C = p.k[1]*np.einsum('nis,ni->nis',
                           temp_w_a_power_minus_d,
                           integral_k_d
                           )
@@ -949,12 +949,12 @@ class var_with_entry_costs:
         # print('mu_MNE')
         
         self.mu_MPND = np.zeros((p.N,p.N,p.S))
-        self.mu_MPND[...,1:] = C + (p.k*self.psi_MP_star[...,1:]**(1-p.k))/(p.k-1)
+        self.mu_MPND[...,1:] = C + (p.k[1]*self.psi_MP_star[...,1:]**(1-p.k[1]))/(p.k[1]-1)
         
-        D = p.k*(
-            np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(1-p.k)
-            - self.psi_m_star[...,1:]**(1-p.k)
-            )/(p.k-1)
+        D = p.k[1]*(
+            np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(1-p.k[1])
+            - self.psi_m_star[...,1:]**(1-p.k[1])
+            )/(p.k[1]-1)
         
         self.mu_MNP = np.zeros((p.N,p.N,p.S))
         self.mu_MNP[...,1:] = B + D
@@ -1017,7 +1017,7 @@ class var_with_entry_costs:
                          p.fo[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:]**(1-p.kappa),
-                         self.psi_o_star[...,1:]**-p.k
+                         self.psi_o_star[...,1:]**-p.k[1]
                          )
         
         self.l_Ae = np.zeros((p.N,p.N,p.S))
@@ -1040,7 +1040,7 @@ class var_with_entry_costs:
                                     alpha = self.V_P[...,1],
                                     # b = self.w[:,None]*p.fe[1]*p.r_hjort[:,None],
                                     beta = self.w*p.fe[1]*p.r_hjort,
-                                    y = p.k+1,
+                                    y = p.k[1]+1,
                                     z = p.d)
         self.integral_k_plus_un_d = integral_k_plus_un_d
         self.l_Ae[...,1:] = np.einsum('n,s,is,is,nis -> ins',
@@ -1048,25 +1048,25 @@ class var_with_entry_costs:
                          p.fe[1:],
                          p.eta[...,1:],
                          self.l_R[...,1:]**(1-p.kappa),
-                         p.k*temp_w_a_power_minus_d*integral_k_plus_un_d[...,None]+self.psi_MP_star[...,1:]**-p.k
+                         p.k[1]*temp_w_a_power_minus_d*integral_k_plus_un_d[...,None]+self.psi_MP_star[...,1:]**-p.k[1]
                          )
         
         self.l_Aa = np.zeros((p.N,p.N,p.S))
-        A = p.k*np.einsum('nis,nis,nis -> nis',
+        A = p.k[1]*np.einsum('nis,nis,nis -> nis',
                       temp_w_a_power_minus_d_minus_1,
                       1/self.V_NP[...,1:]**(-p.d-1),
-                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k+1) - 1
-                      )/(p.d-p.k+1)
-        B = self.psi_MP_star[...,1:]**(-p.k)\
-            -self.psi_m_star[...,1:]**(-p.k)\
-            +np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(-p.k)
+                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k[1]+1) - 1
+                      )/(p.d-p.k[1]+1)
+        B = self.psi_MP_star[...,1:]**(-p.k[1])\
+            -self.psi_m_star[...,1:]**(-p.k[1])\
+            +np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(-p.k[1])
 
         lb = self.psi_m_star[...,1]
         ub = self.psi_MP_star[...,1]
         alpha = self.V_P[...,1]
         # b = self.w[:,None]*p.fe[1]*p.r_hjort[:,None],
         beta = self.w*p.fe[1]*p.r_hjort
-        y = p.k
+        y = p.k[1]
         z = p.d
         
         # by part integration to use the previous calculation of the integral
@@ -1076,7 +1076,7 @@ class var_with_entry_costs:
         integral_k_plus_un_d_plus_un = term_lb-term_ub + alpha*(z+1)*self.integral_k_d/y
         
         self.integral_k_plus_un_d_plus_un = integral_k_plus_un_d_plus_un
-        C = p.k*temp_w_a_power_minus_d_minus_1*integral_k_plus_un_d_plus_un[...,None]
+        C = p.k[1]*temp_w_a_power_minus_d_minus_1*integral_k_plus_un_d_plus_un[...,None]
         self.l_Aa[...,1:] = p.d*np.einsum('is,is,nis,nis->nis',
                                       p.eta[:,1:],
                                       self.l_R[...,1:]**(1-p.kappa),
@@ -1137,26 +1137,26 @@ class var_with_entry_costs:
         return price_indices
     
     def compute_labor_research(self,p):
-        A_1 = p.k*np.einsum('nis,i,nis->nis',
+        A_1 = p.k[1]*np.einsum('nis,i,nis->nis',
                         self.V_NP[...,1:],
                         1/self.w,
                         self.a_NP_star[...,1:]
-                        )/(p.k-1)
+                        )/(p.k[1]-1)
         A_2 = p.d*self.a[...,1:]/(p.d+1)
         A = np.einsum('nis,nis->nis',
                       A_1 - A_2,
-                      self.a_NP_star[...,1:]**(-p.k)
+                      self.a_NP_star[...,1:]**(-p.k[1])
                       )
         
-        B_1 = p.k*np.einsum('nis,i,nis->nis',
+        B_1 = p.k[1]*np.einsum('nis,i,nis->nis',
                         self.V_NP[...,1:],
                         1/self.w,
                         self.psi_MNP_star[...,1:]
-                        )/(p.k-1)
+                        )/(p.k[1]-1)
         B_2 = p.d*self.a[...,1:]/(p.d+1)
         B = np.einsum('nis,nis->nis',
                       B_1 - B_2,
-                      self.psi_MNP_star[...,1:]**(-p.k)
+                      self.psi_MNP_star[...,1:]**(-p.k[1])
                       )
             
         temp_w_a_power_minus_d = np.divide(
@@ -1185,29 +1185,29 @@ class var_with_entry_costs:
         #                   0)**(p.d-p.k+1)-1,
         #               )/((p.d+1)*(p.d-p.k+1))
         
-        C = p.k*np.einsum('nis,i,nis,nis,nis->nis',
+        C = p.k[1]*np.einsum('nis,i,nis,nis,nis->nis',
                       temp_w_a_power_minus_d,
                       1/self.w,
                       self.V_NP[...,1:]**(p.d+1),
                       signature_C,
-                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k+1) - 1
-                      )/((p.d+1)*(p.d-p.k+1))
+                      np.minimum(self.psi_m_star[...,1:],self.a_NP_star[...,1:])**(p.d-p.k[1]+1) - 1
+                      )/((p.d+1)*(p.d-p.k[1]+1))
         
         # print(C)
         
         # C[np.isnan(C)] = 0
         # C[C < 0] = 0
         
-        D_1 = p.k*np.einsum('nis,i,nis->nis',
+        D_1 = p.k[1]*np.einsum('nis,i,nis->nis',
                         self.V_P[...,1:],
                         1/self.w,
                         self.psi_MP_star[...,1:]
-                        )/(p.k-1)
+                        )/(p.k[1]-1)
         D_2 = self.w[:,None,None]*p.fe[None,None,1:]*p.r_hjort[:,None,None]/self.w[None,:,None]\
                 +p.d*self.a[...,1:]/(p.d+1)
         D = np.einsum('nis,nis->nis',
                       D_1 - D_2,
-                      self.psi_MP_star[...,1:]**(-p.k)
+                      self.psi_MP_star[...,1:]**(-p.k[1])
                       )
         
         signature_E = np.einsum('nis,nis->nis',
@@ -1217,7 +1217,7 @@ class var_with_entry_costs:
         
         integral_k_plus_un_d_plus_un = self.integral_k_plus_un_d_plus_un
         
-        E = p.k*np.einsum('nis,nis,i,ni->nis',
+        E = p.k[1]*np.einsum('nis,nis,i,ni->nis',
                       signature_E,
                       temp_w_a_power_minus_d,
                       1/self.w,
@@ -1225,7 +1225,7 @@ class var_with_entry_costs:
                       )/(p.d+1)
         
         l_R = np.zeros((p.N,p.S))
-        temp = (A - B + C + D +E).sum(axis=0) - p.fe[None,1:]*p.r_hjort[:,None]*self.psi_o_star[...,1:]**(-p.k)
+        temp = (A - B + C + D +E).sum(axis=0) - p.fe[None,1:]*p.r_hjort[:,None]*self.psi_o_star[...,1:]**(-p.k[1])
         l_R[...,1:] = (temp*p.eta[...,1:])**(1/p.kappa)
         return l_R
     
@@ -1382,10 +1382,10 @@ class var_with_entry_costs:
             where=self.a[...,1:]!=0
             )
         
-        bracket = p.k*np.einsum('nis,ni->nis',
+        bracket = p.k[1]*np.einsum('nis,ni->nis',
                               temp_w_a_power_minus_d,
                               self.integral_k_plus_un_d
-                              ) + self.psi_MP_star[...,1:]**(-p.k)
+                              ) + self.psi_MP_star[...,1:]**(-p.k[1])
         
         self.pflow = np.einsum('nis,is,is->nis',
                               bracket,
@@ -1395,7 +1395,7 @@ class var_with_entry_costs:
         
     def compute_share_of_innovations_patented(self,p):
         # this will only be valid for domestic quantities, we only use it as such
-        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k)
+        self.share_innov_patented = self.psi_m_star[...,1:]**(-p.k[1])
         
     def compute_semi_elast_patenting_delta(self,p):
         # This is not updated with entry costs
@@ -1410,17 +1410,17 @@ class var_with_entry_costs:
         
         self.semi_elast_patenting_delta = np.zeros((p.N,p.S))
         A = (
-            (1-p.kappa)*p.k/(p.kappa*(p.k-1))
+            (1-p.kappa)*p.k[1]/(p.kappa*(p.k[1]-1))
               )*np.einsum('is,is,s,i,is,is->is',
                       p.eta[...,1:],
                       1/self.l_R[...,1:]**p.kappa,
                       p.fe[1:]+p.fo[1:],
                       p.r_hjort,
-                      self.psi_o_star[...,1:]**(-p.k),
+                      self.psi_o_star[...,1:]**(-p.k[1]),
                       1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:])
                       )
                          
-        B = p.k*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
+        B = p.k[1]*(1/(self.G[None,1:]+p.delta[...,1:])+1/(self.G[None,1:]+p.delta[...,1:]-p.nu[None,1:]))
         
         self.semi_elast_patenting_delta[...,1:] = p.delta[...,1:]**2*(A+B)
     
@@ -1447,7 +1447,7 @@ class var_with_entry_costs:
                         )
         )
         
-        self.mass_enters = p.k/(p.k-1) - self.mu_MNE
+        self.mass_enters = p.k[1]/(p.k[1]-1) - self.mu_MNE
         self.sales_innovators = np.einsum('is,is,nis,nis,nis->i',
                                           p.eta[...,1:],
                                           self.l_R[...,1:]**(1-p.kappa),
@@ -2568,29 +2568,31 @@ class var:
         A = self.X_M[:,:,1:]/(1+p.tariff[:,:,1:])
         B = self.X_CD[:,:,1:]/(1+p.tariff[:,:,1:])
         
+        # TYPO
         self.sectoral_average_markup = np.einsum(
             's,is,is->is',
             prefactor,
             np.einsum('nis->is',A),
             1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
-            ) / np.einsum(
+            ) + np.einsum(
                 's,is,is->is',
                 prefactor,
                 np.einsum('nis->is',B),
                 1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
                 )
         
+        # TYPO
         self.aggregate_average_markup = np.einsum(
             's,is,i->i',
             prefactor,
             np.einsum('nis->is',A),
             1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
-            ) / np.einsum(
+            ) + np.einsum(
                 's,is,i->i',
                 prefactor,
                 np.einsum('nis->is',B),
                 1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
-                )          
+                )
 
     def compute_export_price_index(self,p)  :
         numeratorA = np.einsum('s,nis,nis,s->nis',
@@ -4237,15 +4239,15 @@ class dynamic_var:
         return wage
         
     def compute_expenditure(self,p):
-        A = np.einsum('nist->it', self.X)
-        B = np.einsum('it,nist->it', self.w, self.l_Ae)
-        C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
-        D = np.einsum('nt,inst->it', self.w, self.l_Ae)
-        Z = (A+B-(C+D))
-        A1 = np.einsum('nist,nis->it', 
+        # A = np.einsum('nist->it', self.X)
+        # B = np.einsum('it,nist->it', self.w, self.l_Ae)
+        # C = np.einsum('i,kt->it',p.deficit_share_world_output,self.Z)
+        # D = np.einsum('nt,inst->it', self.w, self.l_Ae)
+        # Z = (A+B-(C+D))
+        A1 = np.einsum('nist,nis->it',
                       self.X,
                       1/(1+p.tariff))
-        A2 = np.einsum('inst,ins,ins->it', 
+        A2 = np.einsum('inst,ins,ins->it',
                       self.X,
                       p.tariff,
                       1/(1+p.tariff))
@@ -7057,7 +7059,7 @@ class moments:
             
             def integrand_US(psi):
                 inside_min = (aleph_P_star(psi) * (psi >= var.psi_m_star[...,1])) + (aleph_NP_star(psi) * (psi <= var.psi_m_star[...,1]))
-                res = ( p.k*psi**(-p.k-1)*np.min( inside_min[1:,0] )**(-p.d) )
+                res = ( p.k[1]*psi**(-p.k[1]-1)*np.min( inside_min[1:,0] )**(-p.d) )
                 return res
             
             self.PROBINNOVENT = integrate.quad(integrand_US,1,np.inf)[0]
@@ -7067,7 +7069,7 @@ class moments:
                 mask = np.ones(p.N)
                 mask = (mask == 1)
                 mask[2]=False
-                res = ( p.k*psi**(-p.k-1)*np.min( inside_min[mask,2] )**(-p.d) )
+                res = ( p.k[1]*psi**(-p.k[1]-1)*np.min( inside_min[mask,2] )**(-p.d) )
                 return res
             
             self.PROBINNOVENT_JAP = integrate.quad(integrand_JAP,1,np.inf)[0]

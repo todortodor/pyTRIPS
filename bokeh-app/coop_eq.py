@@ -25,7 +25,24 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'2000','variation': 'baseline'},
+    # {'baseline':'2000','variation': 'baseline'},
+    {'baseline':'2000','variation': '14.0'},
+    # {'baseline':'2000','variation': '99.0'},
+    # {'baseline':'2000','variation': '99.1'},
+    # {'baseline':'2000','variation': '99.2'},
+    # {'baseline':'2000','variation': '99.3'},
+    # {'baseline':'2000','variation': '99.4'},
+    # {'baseline':'2000','variation': '99.5'},
+    # {'baseline':'2000','variation': '99.6'},
+    # {'baseline':'2000','variation': '99.7'},
+    # {'baseline':'2000','variation': '99.8'},
+    # {'baseline':'2000','variation': '99.9'},
+    # {'baseline':'2000','variation': '99.10'},
+    # {'baseline':'2000','variation': '99.11'},
+    # {'baseline':'2000','variation': '99.12'},
+    # {'baseline':'2000','variation': '99.13'},
+    # {'baseline':'2000','variation': '99.14'},
+    # {'baseline':'2000','variation': '99.15'},
     ]
 
 

@@ -198,7 +198,7 @@ for run_params in runs_params:
 
 #%% save a version of calibration with doubled trade costs in patenting sector
 
-baseline_number = 1300
+baseline_number = 2000
 
 p_alt_trade_costs = p_baseline.copy()
 p_alt_trade_costs.tau[...,1] = p_baseline.tau[...,1]*2
@@ -243,7 +243,7 @@ m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
 
 #%% save a version of calibration with no trade costs nor tariffs
 
-baseline_number = 1300
+baseline_number = 2000
 
 p_alt_trade_costs = p_baseline.copy()
 p_alt_trade_costs.tau[...] = 1
@@ -373,7 +373,7 @@ m_alt_trade_costs.write_moments(local_path+str(run_number)+'/')
 
 #%% save a version of calibration with doubled nu
 
-baseline_number = 1300
+baseline_number = 2000
 
 p_double_nu = p_baseline.copy()
 p_double_nu.nu[...,1] = p_baseline.nu[...,1]*2
@@ -424,13 +424,13 @@ from data_funcs import write_calibration_results
 import os
 import numpy as np
 
-baseline_number = '1300'
+baseline_number = '2000'
 
 for i in range(16):
 # for i in [8]:
-    # if True:
+    if True:
     # if i != 8:
-    if i == 8:
+    # if i == 8:
     
         p_baseline = parameters()
         p_baseline.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/99.{i}/')

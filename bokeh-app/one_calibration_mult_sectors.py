@@ -24,8 +24,8 @@ variation_to_load = '14.0'
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     # p.load_data('data/data_12_countries_3_sectors_2015/',keep_already_calib_params=True,nbr_sectors=3)
     start_time = time.perf_counter()
@@ -38,7 +38,7 @@ if new_run:
     sol, sol_init = fixed_point_solver(p,x0=p.guess,
                                     # context = 'counterfactual',
                                     context = 'calibration',
-                            cobweb_anim=False,tol =1e-14,
+                            cobweb_anim=False,tol =1e-10,
                             accelerate=True,
                             accelerate_when_stable=True,
                             cobweb_qty='l_R',
@@ -80,7 +80,8 @@ if new_run:
 # m.weights_dict['RDPHARMACHEM'] = 10
 # m.weights_dict['RP'] = 10
 # m.weights_dict['RD'] = 10
-# m.weights_dict['RDPHARMACHEM'] = 20
+# m.weights_dict['RDPHARMACHEM'] = 2
+# m.weights_dict['SPFLOW'] = 1
 
 # p.ub_dict['k'] = 1.15
 # p.lb_dict['sigma'] = 2
@@ -88,65 +89,6 @@ if new_run:
 # p.beta = p.beta/p.beta.sum()
 
 # p.delta = np.maximum(p.delta,0.05)
-# for mm in m.weights_dict:
-#     m.weights_dict[mm] = np.minimum(m.weights_dict[mm],2.0)
-# p.ub_dict['nu'] = 50
-# p.nu[1] = 0.1
-# m.list_of_moments.append('AGGAVMARKUP')
-# m.list_of_moments.append('AVMARKUPPHARCHEM')
-# m.list_of_moments.append('TEPHARMA')
-# m.list_of_moments.append('TECHEM')
-# m.list_of_moments.append('TOPHARMA')
-# m.list_of_moments.append('TOCHEM')
-# m.list_of_moments.append('RDPHARMACHEM')
-# m.list_of_moments.append('RDPHARMA')
-# m.list_of_moments.append('RDCHEM')
-# m.list_of_moments.append('KMPHARMACHEM')
-# m.list_of_moments.append('KMPHARMA')
-# m.list_of_moments.append('KMCHEM')
-# # m.list_of_moments.append('UUPCOST')
-# # m.list_of_moments.remove('UUPCOSTS')
-# m.list_of_moments.remove('SDFLOW')
-# m.list_of_moments.remove('KMPHARMACHEM')
-
-# m.TOPHARMA_target = np.float64(0.24055165)
-# m.KMPHARMA_target = np.float64(0.156020318914251)
-# m.TOCHEM_target = np.float64(0.05290285)
-# m.KMCHEM_target = np.float64(0.108714651159773)
-# # m.KMCHEM_target = 0.156020318914251
-# m.KMPHARMACHEM_target = (m.KMPHARMA_target+m.KMCHEM_target)/2
-# m.TOPHARMACHEM_target = (m.TOPHARMA_target+m.TOCHEM_target)/2
-# m.TOPHARMACHEM_target = np.float64(0.162464114570443)
-# m.KMPHARMACHEM_target = np.float64(0.183202572)
-# average 1995-2007
-# m.KMPHARMACHEM_target = 0.084591245
-# 2007 value
-# m.weights_dict['AVMARKUPPHARCHEM'] = 10.0
-# m.weights_dict['RD'] = 20.0
-# m.weights_dict['RDPHARMA'] = 1.0
-# m.weights_dict['RDCHEM'] = m.weights_dict['RDPHARMA']
-# m.weights_dict['KMPHARMA'] = 4.0
-# m.weights_dict['KMCHEM'] = m.weights_dict['KMPHARMA']
-
-# p.sigma[2] = 2.5
-# p.sigma[3] = 2.5
-# p.calib_parameters.append('sigma')
-# p.calib_parameters.remove('sigma')
-# p.delta[p.delta<0.02] = 0.02
-# p.eta[p.eta<1e-4] = 1e-4
-# p.eta[:,2:] = p.eta[:,2:]*2
-# p.fix_fe_across_sectors = True
-# p.calib_parameters.remove('sigma')
-# p.sigma[:] = 2.9
-
-# p.sigma[1] = p.sigma[1]*0.8
-# p.sigma[2] = p.sigma[2]*1.2
-# p.calib_parameters.remove('sigma')
-
-# p.nu[2] = 10
-# p.calib_parameters.remove('nu')
-# m.list_of_moments.remove('TOPHARMACHEM')
-# m.list_of_moments.remove('KMPHARMACHEM')
 
 #%%
 
@@ -190,11 +132,11 @@ p_sol = p.copy()
 p_sol.update_parameters(test_ls.x)
 
 sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
-                        cobweb_anim=False,tol =1e-14,
+                        cobweb_anim=False,tol =1e-13,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='phi',
-                        plot_convergence=False,
+                        plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=True,
@@ -234,9 +176,9 @@ m.compute_moments_deviations()
 # # p_sol.write_params(local_path+run_str+'/')
 # # m.write_moments(local_path+run_str+'/')
 
-baseline_number = '1300'
+baseline_number = '2001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 14.0
+run_number = 2.0
 
 new_baseline = False
 if new_baseline:

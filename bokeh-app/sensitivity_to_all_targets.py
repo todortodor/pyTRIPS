@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 #%% define baseline and conditions of sensitivity analysis
 
-baseline = '1300'
+baseline = '2000'
 baseline_path = 'calibration_results_matched_economy/'+baseline+'/'
 p_baseline = parameters()
 p_baseline.load_run(baseline_path)
@@ -139,8 +139,8 @@ def make_alternative_calib(m_baseline,p_baseline,qty_to_change,target,result_pat
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='phi',
-                            plot_convergence=True,
-                            plot_cobweb=True,
+                            plot_convergence=False,
+                            plot_cobweb=False,
                             safe_convergence=0.001,
                             disp_summary=True,
                             damping = 10,
@@ -244,7 +244,7 @@ moments_to_change = ['theta','gamma','kappa','rho','sigma','KM','TE','TO','UUPCO
 def fill_row(df,parent_moment_result_path,mom_idx,p_baseline):
     p = parameters()
     p.load_run(parent_moment_result_path+mom_idx+'/')
-    df.loc[mom_idx,'k'] = (p.k/p_baseline.k-1)/0.20
+    df.loc[mom_idx,'k'] = (p.k[1]/p_baseline.k[1]-1)/0.20
     df.loc[mom_idx,'g_0'] = (p.g_0/p_baseline.g_0-1)/0.20
     for par in ['fe','fo','zeta','nu','theta']:
         df.loc[mom_idx,par] = (getattr(p,par)[1]/getattr(p_baseline,par)[1]-1)/0.20
@@ -280,7 +280,7 @@ for mom in moments_to_change:
             mom_idx = mom+'_origin_'+origin
             fill_row(df,parent_moment_result_path,mom_idx,p_baseline)
 
-table_path = 'calibration_results_matched_economy/baseline_1300_sensitivity_tables/'
+table_path = 'calibration_results_matched_economy/baseline_2000_sensitivity_tables/'
 try:
     os.mkdir(table_path)
 except:
@@ -393,7 +393,7 @@ for idx in df.index:
 
 #%%
 
-table_path = 'calibration_results_matched_economy/baseline_1300_sensitivity_tables/'
+table_path = 'calibration_results_matched_economy/baseline_2000_sensitivity_tables/'
 
 try:
     os.mkdir(table_path)

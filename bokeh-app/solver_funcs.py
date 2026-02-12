@@ -364,7 +364,7 @@ def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, dampin
         #               for qty in ['w','Z','profit','l_R','phi']])
         condition = np.any(conditions)
         convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
-        if plot_live and count>500 and count%500 == 0:
+        if False and plot_live and count>500 and count%500 == 0:
             plt.plot(convergence)
             plt.yscale('log')
             plt.show()
@@ -375,7 +375,7 @@ def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, dampin
                 accelerate = True
                 damping = damping_post_acceleration
                 
-        if plot_convergence:
+        if False and plot_convergence:
             norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
             if count%100==0:
                 plt.plot(convergence)
@@ -1439,27 +1439,8 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     except:
         pass
     
-    # sol, sol_c = fixed_point_solver(p,context = 'calibration', x0=v0,
-    #                         cobweb_anim=False,tol =1e-14,
-    #                         accelerate=False,
-    #                         accelerate_when_stable=True,
-    #                         cobweb_qty='l_R',
-    #                         plot_convergence=False,
-    #                         plot_cobweb=False,
-    #                         safe_convergence=0.1,
-    #                         disp_summary=False,
-    #                         damping =10,
-    #                         max_count = 1000,
-    #                         accel_memory = 50, 
-    #                         accel_type1=True, 
-    #                         accel_regularization=1e-10,
-    #                         accel_relaxation=0.5, 
-    #                         accel_safeguard_factor=1, 
-    #                         accel_max_weight_norm=1e6,
-    #                         damping_post_acceleration=10
-    #                         )
     sol, sol_c = fixed_point_solver(p,context = 'calibration', x0=v0,
-                            cobweb_anim=False,tol =1e-14,
+                            cobweb_anim=False,tol =1e-10, #!!!! to change back to 14
                             accelerate=False,
                             accelerate_when_stable=True,
                             cobweb_qty='l_R',
@@ -1486,7 +1467,7 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     #                         plot_cobweb=False,
     #                         safe_convergence=0.1,
     #                         disp_summary=False,
-    #                         damping =5,
+    #                         damping =2,
     #                         max_count = 1000,
     #                         accel_memory = 50, 
     #                         accel_type1=True, 
@@ -1494,9 +1475,9 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     #                         accel_relaxation=0.5, 
     #                         accel_safeguard_factor=1, 
     #                         accel_max_weight_norm=1e6,
-    #                         damping_post_acceleration=2
+    #                         damping_post_acceleration=1
     #                         )
-    
+
     if sol.status == 'failed': 
         print('trying safer')
         sol, sol_c = fixed_point_solver(p,context = 'calibration',x0=v0,tol=1e-14,
@@ -1801,14 +1782,14 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
             hist.time = time.perf_counter() - start_time
         if hist.count%100 == 0:
             hist.plot()
-        if hist.count%1==0:
+        if hist.count%100==0:
             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
                   , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
                   , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
                   'a :', p.a)
     hist.count += 1
-    print(hist.count)
+    # print(hist.count)
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
@@ -2344,15 +2325,15 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
             damping = 5
         
         if plot_convergence:
-                deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
-                fig,ax = plt.subplots()
-                
-                ax2 = ax.twinx()
-                ax.semilogy(deltas.transpose())
-                ax2.plot(welfares.transpose(), ls = '--')
-                plt.legend(labels = p_baseline.countries)
-                
-                plt.show()
+            deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
+            fig,ax = plt.subplots()
+            
+            ax2 = ax.twinx()
+            ax.semilogy(deltas.transpose())
+            ax2.plot(welfares.transpose(), ls = '--')
+            plt.legend(labels = p_baseline.countries)
+            
+            plt.show()
 
     if dynamics:
         return p_it_baseline, dyn_sol_it

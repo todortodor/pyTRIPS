@@ -107,20 +107,20 @@ if __name__ == '__main__':
         
         # start = time.perf_counter()
         
-        if parallel:
-            # parallel processes
-            args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
-            # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
-            with ProcessPoolExecutor(max_workers=12) as executor:
-                # returns = executor.map(lambda args: process_country(*args), args_list)
-                results = list(executor.map(process_country, args_list))
+        # if parallel:
+        #     # parallel processes
+        #     args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries+['World']]
+        #     # args_list = [(p_baseline, c, local_path, sol_baseline, recap_path) for c in p_baseline.countries]
+        #     with ProcessPoolExecutor(max_workers=12) as executor:
+        #         # returns = executor.map(lambda args: process_country(*args), args_list)
+        #         results = list(executor.map(process_country, args_list))
         
-        else:
-            # sequential processes
-            for c in p_baseline.countries+['World']:
-                make_counterfactual(p_baseline,c,local_path,dynamics=False)
-                make_counterfactual_recap(p_baseline, sol_baseline, c,
-                                              local_path,recap_path)
+        # else:
+        #     # sequential processes
+        #     for c in p_baseline.countries+['World']:
+        #         make_counterfactual(p_baseline,c,local_path,dynamics=False)
+        #         make_counterfactual_recap(p_baseline, sol_baseline, c,
+        #                                       local_path,recap_path)
         
         # print(time.perf_counter() - start)
         
@@ -137,9 +137,9 @@ if __name__ == '__main__':
         #                               local_path,recap_path)
         
         if baseline_dic['variation'] == 'baseline':
-            make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
-            make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
-                                          local_path,recap_path)
+            # make_counterfactual(p_baseline,'Uniform_delta',local_path,dynamics=False)
+            # make_counterfactual_recap(p_baseline, sol_baseline, 'Uniform_delta',
+            #                               local_path,recap_path)
             
             p_pre = parameters()
             p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_dic["baseline"]}_variations/9.2/')
@@ -148,10 +148,10 @@ if __name__ == '__main__':
             for country_idx in [0,1,2,6,7,11]:
                 alt_delta[country_idx] = p_baseline.delta[country_idx,1]
         
-            make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_pat_sectors',
-                                local_path,dynamics=False,alt_delta=alt_delta)
-            make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_pat_sectors',
-                                          local_path,recap_path)
+            # make_counterfactual(p_baseline,'trade_cost_eq_trips_all_countries_pat_sectors',
+            #                     local_path,dynamics=False,alt_delta=alt_delta)
+            # make_counterfactual_recap(p_baseline, sol_baseline, 'trade_cost_eq_trips_all_countries_pat_sectors',
+            #                               local_path,recap_path)
             
             for c in ['CHN','IND','RUS']:
                 make_counterfactual(p_baseline,c+'_tariff_eq_trips_exp_pat_sect',local_path,

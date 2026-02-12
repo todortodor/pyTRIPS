@@ -25,7 +25,7 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    {'baseline':'1300','variation': '11.01'},
+    {'baseline':'1300','variation': '11.02'},
     ]
 
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
                              lb_delta=lb_delta,ub_delta=ub_delta,dynamics=False,
                              solver_options=None,tol=1e-12,
                              static_eq_deltas = None,custom_weights=None,
-                             custom_x0 = None,parallel=False,
+                             custom_x0 = None,parallel=True,
                              max_workers=12)
             
             print(time.perf_counter() - start)

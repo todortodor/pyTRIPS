@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1300'
+baseline_number = '2000'
 
 if new_run:
     p = parameters()
@@ -28,8 +28,7 @@ if new_run:
     # m.load_run('calibration_results_matched_economy/'+baseline_number+'/')
     m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/11.02/')
 
-m.load_data('data_smooth_3_years/data_12_countries_1992/')
-p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
+
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -38,48 +37,54 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.a=0.1
 
 
-p.calib_parameters = ['delta','T','eta']
-m.list_of_moments=['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
+
 # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
 # p.calib_parameters.append('a')
 # p.calib_parameters.append('d')
-# m.list_of_moments.append('PROBINNOVENT')
 
 
-sol, sol_c = fixed_point_solver_with_entry_costs(p,
-                        context = 'calibration',x0=p.guess,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='phi',
-                        plot_convergence=True,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=True,
-                        damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
-                        )
-m.compute_PROBINNOVENT(sol_c, p)
+# if 'PROBINNOVENT' not in m.list_of_moments:
+#     m.list_of_moments.append('PROBINNOVENT')
+
+# sol, sol_c = fixed_point_solver_with_entry_costs(p,
+#                         context = 'calibration',x0=p.guess,
+#                         cobweb_anim=False,tol =1e-14,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='phi',
+#                         plot_convergence=True,
+#                         plot_cobweb=False,
+#                         safe_convergence=0.001,
+#                         disp_summary=True,
+#                         damping = 10,
+#                         max_count = 3e3,
+#                         accel_memory = 50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=5
+#                         )
+# m.compute_PROBINNOVENT(sol_c, p)
 
 # sol_c.compute_non_solver_quantities(p)
 # p.guess = sol_c.vector_from_var()
+
+m.load_data('data_smooth_3_years/data_12_countries_1992/')
+p.load_data('data_smooth_3_years/data_12_countries_1992/',keep_already_calib_params=True)
+p.calib_parameters = ['delta','T','eta']
+m.list_of_moments=['SPFLOW','DOMPATINUS','OUT','RD','RP','SRGDP','UUPCOST']
 
 if new_run:
     hist = history(*tuple(m.list_of_moments+['objective']))
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 6
+max_iter = 4
 
 while cond:
-    if iterations < max_iter - 4:
+    if iterations < max_iter - 2:
         test_ls = optimize.least_squares(fun = calibration_func_with_entry_costs,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time), 
@@ -138,7 +143,7 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1300'
+baseline_number = '2000'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
 run_number = 11.92

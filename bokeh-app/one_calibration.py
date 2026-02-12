@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 new_run = True
-baseline_number = '1300'
+baseline_number = '2000'
 # n = 4
 if new_run:
     p = parameters()
@@ -39,8 +39,8 @@ if new_run:
 # m.list_of_moments.remove('RP')
 # m.list_of_moments.append('SGDP')
 # m.list_of_moments.append('RGDPPC')
-# # p.calib_parameters.remove('zeta')
-# # p.zeta[:] = 0
+p.calib_parameters.remove('zeta')
+p.zeta[:] = 0
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.sigma = np.array([2.7, 2.9])
 # m.weights_dict['RD'] = 10
@@ -187,7 +187,7 @@ commentary = ''
 baseline_number = '2000'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 1.0
+run_number = 12.0
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

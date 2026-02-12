@@ -774,7 +774,7 @@ if annotate_with_labels:
                          xy=(x[i],y[i]),
                         # xytext=(0.01,0.01),
                         # textcoords='offset points',
-                          fontsize = 3
+                          fontsize = 2
                         )
              for i,label in enumerate(labels)]
     
@@ -783,12 +783,12 @@ if annotate_with_labels:
 plt.xlabel('Data')
 plt.ylabel('Model')
 
-plt.title(m_baseline.description.loc[moment,'description'])
+# plt.title(m_baseline.description.loc[moment,'description'])
 if annotate_with_labels:
     adjust_text(texts, precision=0.001,
             expand_text=(1.01, 1.05), expand_points=(1.01, 1.05),
-            force_text=(0.01, 0.25), force_points=(0.01, 0.25),
-            arrowprops=dict(arrowstyle='-', color='k',lw=0.3,# alpha=.5
+            force_text=(0.01, 0.01), force_points=(0.01, 0.25),
+            arrowprops=dict(arrowstyle='-', color='k',lw=0,# alpha=.5
                             ))
     # adjust_text(texts)
 
@@ -1010,7 +1010,7 @@ df['total_RD_costs'] = total_RD_costs
 
 df.to_csv(calibration_path+'patenting_and_RD_costs.csv',float_format='%.6f')
 
-#%% Multi-sector calibration
+#%% Multi-sector calibration #TODO
 
 from data_funcs import write_calibration_results
 
@@ -2621,6 +2621,7 @@ df = pd.DataFrame(columns = ['welfare_US'])
 df.loc['no protection','welfare_US'] = dyn_sol_nash.cons_eq_welfare[0]
 df.loc['full protection','welfare_US'] = dyn_sol_nash_dev.cons_eq_welfare[0]
 
+
 #%% Nash table with transitional dynamics with doubled trade costs in patenting sector
 
 # all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
@@ -3668,7 +3669,7 @@ df.to_csv(no_obsolescence_path+'dyn_Coop_negishi_weights_table_with_no_obsolesce
 write_calibration_results(no_obsolescence_path+'dyn_Coop_negishi_weights_with_no_obsolescence',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
 
 
-#%% Nash table with transitional dynamics -- multi-sector
+#%% Nash table with transitional dynamics -- multi-sector #TODO
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -3743,7 +3744,7 @@ for col in df.columns:
 df.to_csv(multi_sector_path+'dyn_Nash_table.csv',float_format='%.5f')
 
 
-#%% Coop equal weights table with transitional dynamics -- multi-sector
+#%% Coop equal weights table with transitional dynamics -- multi-sector #TODO
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -3818,7 +3819,7 @@ for col in df.columns:
 df.to_csv(multi_sector_path+'dyn_Coop_equal_table.csv',float_format='%.5f')
 
 
-#%% Coop negishi weights table with transitional dynamics -- multi-sector
+#%% Coop negishi weights table with transitional dynamics -- multi-sector #TODO
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -3946,9 +3947,9 @@ for i,country in enumerate(p_baseline.countries):
                             damping_post_acceleration=10
                             )
     dyn_sol.compute_non_solver_quantities(p)
-    df.loc[country,'baseline number of patented innovations'] = sol_baseline.psi_o_star[i,1]**-p.k * sol_baseline.l_R[i,1]**(1-p.kappa)
-    df.loc[country,'change in number of patented innovations'] = (dyn_sol.psi_o_star[i,1,-3]**-p.k * dyn_sol.l_R[i,1,-3]**(1-p.kappa)
-                                                                  / (sol_baseline.psi_o_star[i,1]**-p.k * sol_baseline.l_R[i,1]**(1-p.kappa))
+    df.loc[country,'baseline number of patented innovations'] = sol_baseline.psi_o_star[i,1]**-p.k[1] * sol_baseline.l_R[i,1]**(1-p.kappa)
+    df.loc[country,'change in number of patented innovations'] = (dyn_sol.psi_o_star[i,1,-3]**-p.k[1] * dyn_sol.l_R[i,1,-3]**(1-p.kappa)
+                                                                  / (sol_baseline.psi_o_star[i,1]**-p.k[1] * sol_baseline.l_R[i,1]**(1-p.kappa))
                                                                   )*100-100
     df.loc[country,'change in tariff in percentage'] = x
     print(df)
@@ -4545,10 +4546,12 @@ df = pd.DataFrame()
 
 # for qty in ['eta','T_pat','labor','iceberg_trade_cost_in','iceberg_trade_cost_out']:
 # for qty in ['eta','T_pat','labor']:
-for qty in ['eta','T_pat']:
+# for qty in ['eta','T_pat']:
+for qty in ['eta']:
     for c,country in enumerate(p_baseline.countries):
         # if country in ['CHN','IND','RUS']:
-        if country not in ['ROW']:
+        if country in ['CHN','IND']:
+        # if country not in ['ROW']:
 
             df_c = pd.read_csv(f'solve_to_join_pat_club/{qty}/baseline_{baseline}/pop_weighted_{country}.csv')
             df.loc[country,qty] = df_c[f'{qties_dic[qty]["column_name"]}_{country}'].iloc[-1]
@@ -4579,8 +4582,10 @@ for qty in ['eta','T_pat']:
 df = df.T
 
 # for qty in ['eta','T_pat','labor']:
-for qty in ['eta','T_pat']:
-    if qty in ['eta','T_pat']:
+for qty in ['eta']:
+# for qty in ['eta','T_pat']:
+    if qty in ['eta']:
+    # if qty in ['eta','T_pat']:
         fig,ax = plt.subplots()
         
         plt.axhline(y=df.loc[qty+'_US_baseline'].iloc[0],
@@ -6025,7 +6030,42 @@ df_welf.round(3).to_csv(robustness_checks_path+'pre_trips_welfares.csv')
 
 #%% Results with entry costs
 
-#%% Unilateral patent protection counterfactuals
+#%% Write excel spreadsheets with entry costs
+
+from data_funcs import write_calibration_results
+
+p_pre = parameters()
+p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_entry_costs}/')
+_, sol_pre = fixed_point_solver_with_entry_costs(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='phi',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 3e3,
+                        accel_memory = 50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+sol_pre.scale_P(p_pre)
+sol_pre.compute_non_solver_quantities(p_pre)
+m_pre = moments()
+m_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_entry_costs}/')
+m_pre.compute_moments(sol_pre,p_pre)
+m_pre.compute_moments_deviations()
+
+write_calibration_results(with_entry_costs_path+'with_entry_costs',p_pre,m_pre,sol_pre,commentary = '')
+
+
+#%% Unilateral patent protection counterfactuals #NOTTODO
 from scipy.interpolate import make_interp_spline
 
 def smooth_curve(x, y):

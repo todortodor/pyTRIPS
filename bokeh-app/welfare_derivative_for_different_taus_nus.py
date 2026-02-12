@@ -12,7 +12,7 @@ from classes import moments, parameters, var, dynamic_var
 from solver_funcs import fixed_point_solver,dyn_fixed_point_solver,compute_deriv_welfare_to_patent_protec
 from concurrent.futures import ProcessPoolExecutor
 
-baseline = '1300'
+baseline = '2000'
 variation = 'baseline'
 
 run_path = 'calibration_results_matched_economy/'+baseline+'/'

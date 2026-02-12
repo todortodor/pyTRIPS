@@ -18,7 +18,8 @@ df = pd.DataFrame()
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-p_init.load_run('calibration_results_matched_economy/1300/')
+# p_init.load_run('calibration_results_matched_economy/1300/')
+p_init.load_run('coop_eq_direct_saves/dyn_2000_14.0_negishi/')
 # p_init.delta[1,2] = 12
 # p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
 #        1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
@@ -32,7 +33,7 @@ sol, sol_init = fixed_point_solver(p_init,x0=p_init.guess,
                         accelerate=False,
                         accelerate_when_stable=True,
                         cobweb_qty='l_R',
-                        plot_convergence=False,
+                        plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=False,
@@ -51,25 +52,27 @@ sol_init.compute_export_price_index(p_init)
 
 # sol_init.export_price_index[1,0,0] = 10
 
-df = pd.DataFrame(index=p_init.countries,
-                  columns=p_init.countries,
-                  data=sol_init.export_price_index[...,0])
+# df = pd.DataFrame(index=p_init.countries,
+#                   columns=p_init.countries,
+#                   data=sol_init.export_price_index[...,0])
 
 # df.to_csv('export_price_index.csv')
 
 #%%
 
-sol_init.compute_non_solver_quantities(p_init) 
+# sol_init.compute_non_solver_quantities(p_init) 
 
-p = p_init.copy()
-p.delta[:,1] = np.array(
-    [1.0e-02, 1.0e-02, 1.0e-02, 
-     1.2e+01, 1.2e+01, 1.2e+01, 
-     1.0e-02,1.0e-02, 
-     1.2e+01, #RUS
-     # 1.0e-02, #RUS
-     1.0e-02, 
-     1.2e+01, 1.2e+01])
+# p = p_init.copy()
+p = p_opti.copy()
+p.delta[0,1] = 12.0
+# p.delta[:,1] = np.array(
+#     [1.0e-02, 1.0e-02, 1.0e-02, 
+#      1.2e+01, 1.2e+01, 1.2e+01, 
+#      1.0e-02,1.0e-02, 
+#      1.2e+01, #RUS
+#      # 1.0e-02, #RUS
+#      1.0e-02, 
+#      1.2e+01, 1.2e+01])
 # p.delta[1,2] = 0.01
 # p = parameters()
 # p.load_run('coop_eq_direct_saves/dyn_6001_4.02_nash/')
