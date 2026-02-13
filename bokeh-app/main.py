@@ -359,6 +359,7 @@ comments_dic['2001'] = {
     "3.3":"3.3:Doubled both sigma",
     "4.0":"4.0:Fixed AGGAVMARKUP target",
     "5.0":"5.0:Doubled sigma_1",
+    "6.0":"6.0:stuff",
     }
 
 baselines_dic_param = {}
