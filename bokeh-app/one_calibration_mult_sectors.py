@@ -90,8 +90,8 @@ if new_run:
 
 p.delta = np.maximum(p.delta,0.01)
 
-p.sigma[1] = p.sigma[1]*2
-p.sigma[2] = p.sigma[2]*2
+# p.sigma[1] = p.sigma[1]*2
+# p.sigma[2] = p.sigma[2]*2
 
 #%%
 
@@ -134,7 +134,7 @@ print('minimizing time',finish_time-start_time)
 #%%
 
 p_sol = p.copy()
-# p_sol.update_parameters(test_ls.x)
+p_sol.update_parameters(test_ls.x)
 
 sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         cobweb_anim=False,tol =1e-13,

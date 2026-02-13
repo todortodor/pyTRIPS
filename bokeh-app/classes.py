@@ -2569,28 +2569,50 @@ class var:
         B = self.X_CD[:,:,1:]/(1+p.tariff[:,:,1:])
         
         # TYPO
+        # self.sectoral_average_markup = np.einsum(
+        #     's,is,is->is',
+        #     prefactor,
+        #     np.einsum('nis->is',A),
+        #     1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
+        #     ) + np.einsum(
+        #         's,is,is->is',
+        #         prefactor,
+        #         np.einsum('nis->is',B),
+        #         1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
+        #         )
         self.sectoral_average_markup = np.einsum(
             's,is,is->is',
             prefactor,
             np.einsum('nis->is',A),
             1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
             ) + np.einsum(
-                's,is,is->is',
+                's,nis,is->is',
                 prefactor,
-                np.einsum('nis->is',B),
+                np.einsum('nis->nis',B),
                 1/np.einsum('nis->is',A+prefactor[None,None,:]*B)
                 )
         
         # TYPO
+        # self.aggregate_average_markup = np.einsum(
+        #     's,is,i->i',
+        #     prefactor,
+        #     np.einsum('nis->is',A),
+        #     1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
+        #     ) + np.einsum(
+        #         's,is,i->i',
+        #         prefactor,
+        #         np.einsum('nis->is',B),
+        #         1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
+        #         )
         self.aggregate_average_markup = np.einsum(
             's,is,i->i',
             prefactor,
             np.einsum('nis->is',A),
             1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
             ) + np.einsum(
-                's,is,i->i',
+                's,nis,i->i',
                 prefactor,
-                np.einsum('nis->is',B),
+                np.einsum('nis->nis',B),
                 1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
                 )
 
