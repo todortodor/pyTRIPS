@@ -4231,6 +4231,17 @@ for i,country in enumerate(p_baseline.countries):
                    ls=ls)
 # ax.set_ylabel('Real final consumption')
 # plt.legend(loc=[1.02,0.02])
+qty = dyn_sol.g*100
+norm_start = dyn_sol.sol_init.g*100
+norm_end = dyn_sol.sol_fin.g*100
+name = 'growth_rate'
+add_graph(dyn_sol,qty,norm_start,norm_end,
+               ax,time,time_truncated,
+               normalize_start=True,
+               normalize_end=False,
+               label='Growth rate',
+               color='black',
+               ls=':')
 plt.legend(fontsize=4.8)
 
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))

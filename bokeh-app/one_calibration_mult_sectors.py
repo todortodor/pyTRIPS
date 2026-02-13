@@ -15,24 +15,24 @@ import os
 import numpy as np
 
 new_run = True
-# baseline_number = '6001'
-baseline_number = '1300'
-variation_to_load = '14.0'
+baseline_number = '2001'
+# baseline_number = '1300'
+# variation_to_load = '14.0'
 # baseline_number = '6001'
 # variation_to_load = '4.02'
 # n = 4
 if new_run:
     p = parameters()
     p.correct_eur_patent_cost = True
-    # p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    p.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # p.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     # p.load_data('data/data_12_countries_4_sectors_1992/',keep_already_calib_params=True,nbr_sectors=4)
     # p.load_data('data/data_12_countries_3_sectors_2015/',keep_already_calib_params=True,nbr_sectors=3)
     start_time = time.perf_counter()
 
     m = moments()
-    # m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-    m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
+    m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+    # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation_to_load}/')
     m.aggregate_moments = True
     
     sol, sol_init = fixed_point_solver(p,x0=p.guess,
@@ -88,7 +88,10 @@ if new_run:
 # p.beta[2] = p.beta[2]*2
 # p.beta = p.beta/p.beta.sum()
 
-# p.delta = np.maximum(p.delta,0.05)
+p.delta = np.maximum(p.delta,0.01)
+
+p.sigma[1] = p.sigma[1]*2
+p.sigma[2] = p.sigma[2]*2
 
 #%%
 
@@ -128,8 +131,10 @@ while cond:
 finish_time = time.perf_counter()
 print('minimizing time',finish_time-start_time)
 
+#%%
+
 p_sol = p.copy()
-p_sol.update_parameters(test_ls.x)
+# p_sol.update_parameters(test_ls.x)
 
 sol, sol_c = fixed_point_solver(p_sol,context = 'calibration',x0=p_sol.guess,
                         cobweb_anim=False,tol =1e-13,
@@ -178,7 +183,7 @@ m.compute_moments_deviations()
 
 baseline_number = '2001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 2.0
+run_number = 3.3
 
 new_baseline = False
 if new_baseline:

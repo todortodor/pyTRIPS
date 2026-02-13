@@ -353,6 +353,10 @@ comments_dic['2001'] = {
     "baseline":"new baseline",
     "1.0":"1.0:filler, same as baseline",
     "2.0":"2.0:Old baseline, before typo",
+    "3.0":"3.0:Bounded delta",
+    "3.1":"3.1:Doubled sigma_1",
+    "3.2":"3.2:Doubled sigma_2",
+    "3.3":"3.3:Doubled both sigma",
     }
 
 baselines_dic_param = {}
