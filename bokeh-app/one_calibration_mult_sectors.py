@@ -92,7 +92,7 @@ if new_run:
 # p.delta = np.maximum(p.delta,0.01)
 
 # p.sigma[1] = 2.9
-# m.list_of_moments.remove('AGGAVMARKUP')
+m.list_of_moments.remove('AGGAVMARKUP')
 # p.calib_parameters.remove('sigma')
 # p.sigma[2] = p.sigma[2]*2
 
