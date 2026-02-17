@@ -218,8 +218,8 @@ class parameters:
                                                       , names=['country','sector'])}
         
         sl_non_calib = {
-                    'sigma':[np.s_[0],np.s_[1]],
-                    # 'sigma':[np.s_[0]],
+                    # 'sigma':[np.s_[0],np.s_[1]],
+                    'sigma':[np.s_[0]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,
@@ -6612,16 +6612,16 @@ class moments:
             self.KMPHARMA = KM[0,0,1]
             self.KMCHEM = KM[0,0,2]
             
-            if self.aggregate_moments:
-                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
-                    p.k[1:]/(p.k[1:]-1),
-                    p.eta[:,1:],
-                    var.l_R[:,1:]**(1-p.kappa),
-                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-                    var.profit[:,:,1:],
-                    bracket,
-                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-                    )[0,0]
+            # if self.aggregate_moments:
+            #     self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+            #         p.k[1:]/(p.k[1:]-1),
+            #         p.eta[:,1:],
+            #         var.l_R[:,1:]**(1-p.kappa),
+            #         var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+            #         var.profit[:,:,1:],
+            #         bracket,
+            #         1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+            #         )[0,0]
         
         
     def compute_SRDUS(self,var,p):

@@ -363,6 +363,7 @@ comments_dic['2001'] = {
     "6.1":"6.1:higher KM weight",
     "7.0":"7.0:sector specific KM",
     "7.1":"7.1:higher weight KM",
+    "7.2":"7.2:yellow option",
     }
 
 baselines_dic_param = {}
