@@ -18,7 +18,7 @@ new_run = True
 baseline_number = '2001'
 # baseline_number = '2000'
 # baseline_number = '1300'
-variation_to_load = '6.0'
+variation_to_load = '7.0'
 # baseline_number = '6001'
 # variation_to_load = '4.02'
 # n = 4
@@ -96,7 +96,7 @@ if new_run:
 # p.calib_parameters.remove('sigma')
 # p.sigma[2] = p.sigma[2]*2
 
-m.weights_dict['KM'] = 10
+m.weights_dict['KM'] = 5
 
 # m.AGGAVMARKUP_target = np.float64(1.0629487478533735)
 
@@ -188,7 +188,7 @@ m.compute_moments_deviations()
 
 baseline_number = '2001'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 6.1
+run_number = 7.1
 
 new_baseline = False
 if new_baseline:

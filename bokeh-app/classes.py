@@ -1557,6 +1557,7 @@ class var:
             print(k, (np.nanmean(vars(self)[k]/vars(sol2)[k])))
 
     def compute_growth(self, p):
+        # print(self.l_R.shape)
         self.g_s = p.k*np.einsum('is,is -> s',
                                  p.eta,
                                  self.l_R**(1-p.kappa)
@@ -4241,13 +4242,14 @@ class dynamic_var:
             
         self.r = A + (1-1/p.gamma)*self.inflation
         
-    def compute_solver_quantities(self,p):
+    def compute_solver_quantities(self,p,exog_lr=False):
         self.compute_phi(p)
         self.compute_PSI_M(p)
         self.compute_sectoral_prices(p)
         self.compute_patenting_thresholds(p)
         self.compute_V(p)
-        self.compute_labor_research(p)
+        if not exog_lr:
+            self.compute_labor_research(p)
         self.compute_growth(p)
         self.compute_labor_allocations(p)
         self.compute_trade_flows_and_shares(p)
@@ -6584,16 +6586,16 @@ class moments:
             self.KM = KM[0,0,0]
             self.KMPHARMACHEM = KM[0,0,1]
             
-            if self.aggregate_moments:
-                self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
-                    p.k[1:]/(p.k[1:]-1),
-                    p.eta[:,1:],
-                    var.l_R[:,1:]**(1-p.kappa),
-                    var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-                    var.profit[:,:,1:],
-                    bracket,
-                    1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-                    )[0,0]
+            # if self.aggregate_moments:
+            #     self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+            #         p.k[1:]/(p.k[1:]-1),
+            #         p.eta[:,1:],
+            #         var.l_R[:,1:]**(1-p.kappa),
+            #         var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+            #         var.profit[:,:,1:],
+            #         bracket,
+            #         1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+            #         )[0,0]
         
         if p.S==4:
             bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[None,1:]) - 1/(var.G[None,1:]+p.delta[:,1:])

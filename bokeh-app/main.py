@@ -361,6 +361,8 @@ comments_dic['2001'] = {
     "5.0":"5.0:Doubled sigma_1",
     "6.0":"6.0:fix sigma_1, no target AGGAVMARKUP",
     "6.1":"6.1:higher KM weight",
+    "7.0":"7.0:sector specific KM",
+    "7.1":"7.1:higher weight KM",
     }
 
 baselines_dic_param = {}
