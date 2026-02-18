@@ -69,8 +69,8 @@ if new_run:
 
 m.list_of_moments = ['GPDIFF',
  'GROWTH',
- # 'KM',
- 'KMPATENT',
+ 'KM',
+ # 'KMPATENT',
  'OUT',
  'RD',
  'RP',
@@ -86,7 +86,7 @@ m.list_of_moments = ['GPDIFF',
  'TOPHARMACHEM',
  'RDPHARMACHEM',
  'KMPHARMACHEM',
- 'AGGAVMARKUP',
+ # 'AGGAVMARKUP',
  'AVMARKUPPHARCHEM'
  ]
 
@@ -210,7 +210,7 @@ m.plot_moments(m.list_of_moments)
 
 baseline_number = '2002'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 8.1
+run_number = 5.1
 
 new_baseline = False
 if new_baseline:
