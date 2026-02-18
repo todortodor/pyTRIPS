@@ -18,7 +18,7 @@ new_run = True
 baseline_number = '2002'
 # baseline_number = '2001'
 # baseline_number = '1300'
-# variation_to_load = '2.0'
+# variation_to_load = '1.0'
 # baseline_number = '6001'
 # variation_to_load = '4.02'
 # n = 4
@@ -69,8 +69,8 @@ if new_run:
 
 m.list_of_moments = ['GPDIFF',
  'GROWTH',
- # 'KM',
- 'KMPATENT',
+ 'KM',
+ # 'KMPATENT',
  'OUT',
  'RD',
  'RP',
@@ -86,13 +86,13 @@ m.list_of_moments = ['GPDIFF',
  'TOPHARMACHEM',
  'RDPHARMACHEM',
  'KMPHARMACHEM',
- # 'AGGAVMARKUP',
+ 'AGGAVMARKUP',
  'AVMARKUPPHARCHEM'
  ]
 
 p.sigma[1] = 2.9
 
-# p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
+p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
 
 # print('variation',variation_to_load)
 # print('KMPHARMA',m.KMPHARMA_target,'KMCHEM',m.KMCHEM_target)
@@ -210,7 +210,7 @@ m.plot_moments(m.list_of_moments)
 
 baseline_number = '2002'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 8.0
+run_number = 5.1
 
 new_baseline = False
 if new_baseline:

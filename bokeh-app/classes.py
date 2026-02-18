@@ -218,8 +218,8 @@ class parameters:
                                                       , names=['country','sector'])}
         
         sl_non_calib = {
-                    # 'sigma':[np.s_[0],np.s_[1]],
-                    'sigma':[np.s_[0]],
+                    'sigma':[np.s_[0],np.s_[1]],
+                    # 'sigma':[np.s_[0]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,
@@ -6583,14 +6583,14 @@ class moments:
         
         if p.S==3:
             bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[None,1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
-            KM = np.einsum('s,is,is,nis,nis,ns,i->nis',
+            KM = np.einsum('s,is,is,nis,nis,ns,is->nis',
                 p.k[1:]/(p.k[1:]-1),
                 p.eta[:,1:],
                 var.l_R[:,1:]**(1-p.kappa),
                 var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
                 var.profit[:,:,1:],
                 bracket,
-                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                1/(var.l_R[:,1:]+var.l_Ao[:,1:]+np.einsum('n,ins,i->is',var.w,var.l_Ae[:,:,1:],1/var.w))
                 )
             self.KMPATENT = KM[0,0,0]
             self.KMPHARMACHEM = KM[0,0,1]

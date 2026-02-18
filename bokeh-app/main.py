@@ -373,6 +373,7 @@ comments_dic['2002'] = {
     "3.0":"3.0:KMPATENT, AGGAVMARKUP, TO",
     "4.0":"4.0:KMPATENT, AGGAVMARKUP, TOPATENT",
     "5.0":"5.0:KM, fixed sigma 1, TO",
+    "5.1":"5.1:KM, fixed sigma 1, TO, corrected KM",
     "6.0":"6.0:KM, fixed sigma 1, TOPATENT",
     "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
     "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
