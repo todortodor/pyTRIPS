@@ -379,7 +379,7 @@ comments_dic['2002'] = {
     "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
     "7.1":"7.1:KMPATENT, fixed sigma 1, TO, TO, corrected KM",
     "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
-    # "8.1":"8.1:KMPATENT, fixed sigma 1, TOPATENT, TO, corrected KM",
+    "8.1":"8.1:KMPATENT, fixed sigma 1, TOPATENT, TO, corrected KM",
     }
 
 baselines_dic_param = {}
