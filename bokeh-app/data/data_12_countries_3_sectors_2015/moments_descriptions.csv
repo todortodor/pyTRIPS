@@ -5,6 +5,7 @@ KM;Value of patents relative toRD expenditure in US
 KMPHARMA;Value of patents relative toRD expenditure in US in pharma sector
 KMPHARMACHEM;Value of patents relative toRD expenditure in US in pharma and chemicals sector
 KMCHEM;Value of patents relative toRD expenditure in US in chemicals sector
+KMPATENT;Value of patents relative toRD expenditure in US in the patent sector excluding pharma and chem
 KM_GDP;Kogan Moment relative to GDP of the US
 OUT;World output
 RD;RD expenditures relative to GDP
@@ -49,8 +50,8 @@ TO; Turnover in US imports
 TOCHEM; Turnover in US imports in the chemicals sector
 TOPHARMA; Turnover in US imports in the pharmaceuticals sector
 TOPHARMACHEM; Turnover in US imports in the pharma and chemicals sector
+TOPATENT; Turnover in US imports in the patent sector excluding pharma and chem
 TE; Trade elasticity in patenting sector
-TEPHARMACHEM; Trade elasticity in the pharma and chemicals sector
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total
 SPATDEST; total patent applications received in each destination country as share of world total

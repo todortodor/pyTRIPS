@@ -232,10 +232,10 @@ coop_eq_path = join(dirname(__file__), 'coop_eq_recaps/')
 
 #%% moments / parameters for variations
 
-list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMA','KMPHARMACHEM','KMCHEM', 'OUT',
+list_of_moments = ['GPDIFF','GROWTH','KM','KMPHARMACHEM','KMPATENT','OUT',
  'RD','RDPHARMACHEM','RDPHARMA','RDCHEM', 'RP', 'SPFLOWDOM', 'SPFLOW','STFLOW','STFLOWSDOM',
  'SRGDP','SGDP','RGDPPC','UUPCOSTS','SINNOVPATUS','AGGAVMARKUP','AVMARKUPPHARCHEM',
-  'TO','TE','TOPHARMA','TOPHARMACHEM','TEPHARMA','TEPHARMACHEM','TOCHEM','TECHEM','DOMPATINUS','DOMPATUS',
+  'TO','TE','TOPHARMACHEM','TOPATENT','TEPHARMACHEM','DOMPATINUS','DOMPATUS',
  'TWSPFLOW','TWSPFLOWDOM','SDOMTFLOW',#'UUPCOST',
  'objective']
 comments_dic = {}
@@ -366,12 +366,24 @@ comments_dic['2001'] = {
     "7.2":"7.2:yellow option",
     }
 
+comments_dic['2002'] = {
+    "baseline":"old baseline, before typo",
+    "1.0":"1.0:KM, AGGAVMARKUP, TO",
+    "2.0":"2.0:KM, AGGAVMARKUP, TOPATENT",
+    "3.0":"3.0:KMPATENT, AGGAVMARKUP, TO",
+    "4.0":"4.0:KMPATENT, AGGAVMARKUP, TOPATENT",
+    "5.0":"5.0:KM, fixed sigma 1, TO",
+    "6.0":"6.0:KM, fixed sigma 1, TOPATENT",
+    "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
+    "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
+    }
+
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
 # baseline_list = ['5003','5001','5002']    
-baseline_list = ['2001']    
+baseline_list = ['2002']    
 baseline_mom = baseline_list[0]
 
 def section(s):

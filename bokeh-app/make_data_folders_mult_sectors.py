@@ -703,10 +703,14 @@ for config_dic in config_dics:
     scalar_moments.loc['TO', 'value'] = 0.071287577
     scalar_moments.loc['TOCHEM', 'value'] = 0.08029173
     scalar_moments.loc['TOPHARMA', 'value'] = 0.07421839
+    scalar_moments.loc['TOPHARMACHEM', 'value'] = 0.07944382
+    scalar_moments.loc['TOPATENT', 'value'] = 0.070641617
     scalar_moments.loc['AGGAVMARKUP', 'value'] = 0.20148744
     scalar_moments.loc['AVMARKUPPHARCHEM', 'value'] = 1.94*(0.06/1.81+0.23/1.94+0.24/1.38)/(0.06+0.23+0.24)
     scalar_moments.loc['KMCHEM', 'value'] = scalar_moments.loc['KM', 'value'] * 1.0070478349928664
     scalar_moments.loc['KMPHARMA', 'value'] = scalar_moments.loc['KM', 'value'] * 2.804796127298683
+    scalar_moments.loc['KMPHARMACHEM', 'value'] = scalar_moments.loc['KM', 'value'] * 1.90567074716
+    scalar_moments.loc['KMPATENT', 'value'] = scalar_moments.loc['KM', 'value'] * 0.91324916669 
     scalar_moments.loc['TECHEM', 'value'] = 3.13
     scalar_moments.loc['TEPHARMA', 'value'] = 3.13
     scalar_moments.loc['PROBINNOVENT', 'value'] = 0.7

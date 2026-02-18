@@ -5862,12 +5862,15 @@ def eps(x):
 class moments:
     def __init__(self,list_of_moments = None):
         if list_of_moments is None:
-            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM','KM_DD_DD','KMCHEM','KMPHARMA','KMPHARMACHEM', 'KM_GDP', 
+            self.list_of_moments = ['GPDIFF', 'GROWTH', 'OUT', 'KM','KM_DD_DD','KMCHEM','KMPHARMA','KMPHARMACHEM',
+                                    'KMPATENT',
+                                    'KM_GDP', 
                                     'RD','RDPHARMA','RDCHEM','RDPHARMACHEM','RD_US','RD_RUS', 'RP',
                                'SRDUS', 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW',
                                'STFLOWSDOM','SPFLOWDOM_RUS', 'SPFLOW_RUS','SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST',
                                'UUPCOST','UUPCOSTS','PCOST','PCOSTINTER','PCOSTNOAGG','PCOSTINTERNOAGG',
-                               'JUPCOSTRD','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM','TE','TECHEM','TEPHARMA','TEPHARMACHEM',
+                               'JUPCOSTRD','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM','TOPATENT',
+                               'TE','TECHEM','TEPHARMA','TEPHARMACHEM',
                                'DOMPATRATUSEU','DOMPATUS','DOMPATEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                                'DOMPATINUS','DOMPATINCHN','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
                                'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
@@ -5878,6 +5881,7 @@ class moments:
                              'KM': 1,
                              'KM_DD_DD': 1,
                              'KMCHEM': 1,
+                             'KMPATENT': 1,
                              'KMPHARMA': 1,
                              'KMPHARMACHEM': 1,
                              'KM_GDP': 5,
@@ -5926,6 +5930,7 @@ class moments:
                              'TOCHEM': 5,
                              'TOPHARMA': 5,
                              'TOPHARMACHEM': 5,
+                             'TOPATENT': 5,
                              'TECHEM': 5,
                              'TEPHARMA': 5,
                              'TEPHARMACHEM': 5,
@@ -5971,13 +5976,13 @@ class moments:
     
     @staticmethod
     def get_list_of_moments():
-        return ['GPDIFF', 'GROWTH', 'KM','KM_DD_DD','KMCHEM','KMPHARMA','KMPHARMACHEM','KM_GDP', 'OUT', 'RD',
+        return ['GPDIFF', 'GROWTH', 'KM','KM_DD_DD','KMCHEM','KMPHARMA','KMPHARMACHEM','KMPATENT','KM_GDP', 'OUT', 'RD',
                 'RDPHARMA','RDCHEM','RDPHARMACHEM','RD_US','RD_RUS', 'RP', 
                 'SPFLOWDOM', 'SPFLOW','SPFLOWDOM_US', 'SPFLOW_US','SDOMTFLOW','STFLOW','STFLOWSDOM',
                 'SPFLOWDOM_RUS', 'SPFLOW_RUS','DOMPATUS','DOMPATEU','DOMPATINUS','DOMPATINCHN','DOMPATINEU',
                 'SRDUS', 'SRGDP','SRGDP_US','SRGDP_RUS', 'JUPCOST','UUPCOST','UUPCOSTS','PCOST','PCOSTINTER',
                 'PCOSTNOAGG','PCOSTINTERNOAGG','JUPCOSTRD', 'TP', 'Z','inter_TP', 
-                'SINNOVPATEU','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM',
+                'SINNOVPATEU','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM','TOPATENT',
                 'TE','TECHEM','TEPHARMA','TEPHARMACHEM','NUR','DOMPATRATUSEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
                 'SHAREEXPMON','SGDP','RGDPPC','SDFLOW']
@@ -6092,7 +6097,8 @@ class moments:
             self.KMPHARMA_target = self.moments.loc['KMPHARMA'].value
             self.KMCHEM_target = self.moments.loc['KMCHEM'].value
         if S == 3:
-            self.KMPHARMACHEM_target = (self.moments.loc['KMPHARMA'].value + self.moments.loc['KMCHEM'].value)/2
+            self.KMPHARMACHEM_target = self.moments.loc['KMPHARMACHEM'].value
+            self.KMPATENT_target = self.moments.loc['KMPATENT'].value
         self.KM_GDP_target = self.KM_target*self.RD_US_target
         self.NUR_target = self.moments.loc['NUR'].value
         self.SRDUS_target = self.moments.loc['SRDUS'].value
@@ -6122,7 +6128,8 @@ class moments:
             self.TECHEM_target = self.moments.loc['TECHEM'].value 
             self.TEPHARMA_target = self.moments.loc['TEPHARMA'].value 
         elif S == 3:
-            self.TOPHARMACHEM_target = (self.moments.loc['TOPHARMA'].value + self.moments.loc['TOCHEM'].value)/2
+            self.TOPHARMACHEM_target = self.moments.loc['TOPHARMACHEM'].value
+            self.TOPATENT_target = self.moments.loc['TOPATENT'].value
             self.TEPHARMACHEM_target = (self.moments.loc['TEPHARMA'].value + self.moments.loc['TECHEM'].value)/2
             self.TOCHEM_target = np.array([np.nan])
             self.TOPHARMA_target = np.array([np.nan])
@@ -6203,6 +6210,7 @@ class moments:
                     'KMCHEM':pd.Index(['scalar']), 
                     'KMPHARMA':pd.Index(['scalar']), 
                     'KMPHARMACHEM':pd.Index(['scalar']), 
+                    'KMPATENT':pd.Index(['scalar']), 
                     'KM_GDP':pd.Index(['scalar']), 
                     'OUT':pd.Index(['scalar']), 
                     'RD':pd.Index(self.countries, name='country'), 
@@ -6264,6 +6272,7 @@ class moments:
                     'TO':pd.Index(['scalar']),
                     'TO_DD_DD':pd.Index(['scalar']),
                     'TE':pd.Index(['scalar']),
+                    'TOPATENT':pd.Index(['scalar']),
                     'TOPHARMACHEM':pd.Index(['scalar']),
                     'TEPHARMACHEM':pd.Index(['scalar']),
                     'TOPHARMA':pd.Index(['scalar']),
@@ -6583,19 +6592,19 @@ class moments:
                 bracket,
                 1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
                 )
-            self.KM = KM[0,0,0]
+            self.KMPATENT = KM[0,0,0]
             self.KMPHARMACHEM = KM[0,0,1]
             
             # if self.aggregate_moments:
-            #     self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
-            #         p.k[1:]/(p.k[1:]-1),
-            #         p.eta[:,1:],
-            #         var.l_R[:,1:]**(1-p.kappa),
-            #         var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-            #         var.profit[:,:,1:],
-            #         bracket,
-            #         1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-            #         )[0,0]
+            self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+                p.k[1:]/(p.k[1:]-1),
+                p.eta[:,1:],
+                var.l_R[:,1:]**(1-p.kappa),
+                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                var.profit[:,:,1:],
+                bracket,
+                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                )[0,0]
         
         if p.S==4:
             bracket = 1/(var.G[None,1:]+p.delta[:,1:]-p.nu[None,1:]) - 1/(var.G[None,1:]+p.delta[:,1:])
@@ -6608,21 +6617,21 @@ class moments:
                 bracket,
                 1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
                 )
-            self.KM = KM[0,0,0]
+            self.KMPATENT = KM[0,0,0]
             self.KMPHARMA = KM[0,0,1]
             self.KMCHEM = KM[0,0,2]
             
             # if self.aggregate_moments:
-            #     self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
-            #         p.k[1:]/(p.k[1:]-1),
-            #         p.eta[:,1:],
-            #         var.l_R[:,1:]**(1-p.kappa),
-            #         var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
-            #         var.profit[:,:,1:],
-            #         bracket,
-            #         1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
-            #         )[0,0]
-        
+            self.KM = np.einsum('s,is,is,nis,nis,ns,i->ni',
+                p.k[1:]/(p.k[1:]-1),
+                p.eta[:,1:],
+                var.l_R[:,1:]**(1-p.kappa),
+                var.psi_m_star[:,:,1:]**(1-p.k[None,None,1:]),
+                var.profit[:,:,1:],
+                bracket,
+                1/(var.l_R[:,1:].sum(axis=1)+var.l_Ao[:,1:].sum(axis=1)+(var.w[:,None]*var.l_Ae[:,:,1:].sum(axis=2)/var.w[None,:]).sum(axis=0))
+                )[0,0]
+    
         
     def compute_SRDUS(self,var,p):
         self.SRDUS = (var.X_M[:,0,1]/(1+p.tariff[:,0,1])).sum()/(var.X[:,0,1]/(1+p.tariff[:,0,1])).sum()
@@ -6771,6 +6780,7 @@ class moments:
                                             ) 
         
         self.turnover = num/denom
+        weights = (np.exp(-p.zeta*delt) * gamma((p.theta+1-p.sigma)/p.theta))[None,:]*var.sectoral_cons
         self.TO = self.turnover[0,1]
         if p.S==4:
             self.TOPHARMA = self.turnover[0,2]
@@ -6780,6 +6790,8 @@ class moments:
             self.TOPHARMA = np.nan
             self.TOCHEM = np.nan
             self.TOPHARMACHEM = self.turnover[0,2]
+            self.TOPATENT = self.turnover[0,1]
+            self.TO = ((weights[:,1:]*num[:,1:]).sum(axis=1)/(weights[:,1:]*denom[:,1:]).sum(axis=1))[0]
         else:
             self.TOPHARMA = np.nan
             self.TOCHEM = np.nan
