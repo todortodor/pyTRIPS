@@ -76,8 +76,8 @@ m.list_of_moments = ['GPDIFF',
  'RP',
  'SRGDP',
  'SINNOVPATUS',
- # 'TO',
- 'TOPATENT',
+ 'TO',
+ # 'TOPATENT',
  'SPFLOW',
  'UUPCOSTS',
  'DOMPATINUS',
@@ -92,7 +92,7 @@ m.list_of_moments = ['GPDIFF',
 
 p.sigma[1] = 2.9
 
-p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
+# p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
 
 # print('variation',variation_to_load)
 # print('KMPHARMA',m.KMPHARMA_target,'KMCHEM',m.KMCHEM_target)
@@ -131,7 +131,7 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 4
+max_iter = 3
 # max_iter = 6
 
 while cond:
