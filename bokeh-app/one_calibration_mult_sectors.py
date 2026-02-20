@@ -16,9 +16,9 @@ import numpy as np
 
 new_run = True
 baseline_number = '2002'
-# baseline_number = '2001'
+# baseline_number = '2000'
 # baseline_number = '1300'
-variation_to_load = '6.0'
+variation_to_load = '4.0'
 # baseline_number = '6001'
 # variation_to_load = '4.02'
 # n = 4
@@ -67,30 +67,30 @@ if new_run:
     # m.load_data('data/data_12_countries_3_sectors_2015/')
     # m.load_data('data/data_12_countries_4_sectors_1992/')
 
-m.list_of_moments = ['GPDIFF',
- 'GROWTH',
- # 'KM',
- 'KMPATENT',
- 'OUT',
- 'RD',
- 'RP',
- 'SRGDP',
- 'SINNOVPATUS',
- 'TO',
- # 'TOPATENT',
- 'SPFLOW',
- 'UUPCOSTS',
- 'DOMPATINUS',
- 'TE',
- 'TEPHARMACHEM',
- 'TOPHARMACHEM',
- 'RDPHARMACHEM',
- 'KMPHARMACHEM',
- # 'AGGAVMARKUP',
- 'AVMARKUPPHARCHEM'
- ]
+# m.list_of_moments = ['GPDIFF',
+#  'GROWTH',
+#  # 'KM',
+#  'KMPATENT',
+#  'OUT',
+#  'RD',
+#  'RP',
+#  'SRGDP',
+#  'SINNOVPATUS',
+#  'TO',
+#  # 'TOPATENT',
+#  'SPFLOW',
+#  'UUPCOSTS',
+#  'DOMPATINUS',
+#  'TE',
+#  'TEPHARMACHEM',
+#  'TOPHARMACHEM',
+#  'RDPHARMACHEM',
+#  'KMPHARMACHEM',
+#  # 'AGGAVMARKUP',
+#  'AVMARKUPPHARCHEM'
+#  ]
 
-p.sigma[1] = 2.9
+# p.sigma[1] = 2.9
 
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
 
@@ -117,8 +117,9 @@ p.sigma[1] = 2.9
 # p.calib_parameters.remove('sigma')
 # p.sigma[2] = p.sigma[2]*2
 
-m.weights_dict['KM'] = 5
-m.weights_dict['KMPATENT'] = 5
+# m.weights_dict['KM'] = 5
+# m.weights_dict['KMPATENT'] = 5
+# m.weights_dict['AGGAVMARKUP'] = 20
 
 # m.AGGAVMARKUP_target = np.float64(1.0629487478533735)
 
@@ -190,7 +191,7 @@ sol_c.compute_non_solver_quantities(p_sol)
 p_sol.tau = sol_c.tau
 m.compute_moments(sol_c,p_sol)
 m.compute_moments_deviations()
-# m.plot_moments(m.list_of_moments)
+m.plot_moments(m.list_of_moments)
 
 # print(sol_c.semi_elast_patenting_delta[0,1]/12)
 
@@ -210,7 +211,7 @@ m.compute_moments_deviations()
 
 baseline_number = '2002'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 7.0
+run_number = 4.0
 
 new_baseline = False
 if new_baseline:
