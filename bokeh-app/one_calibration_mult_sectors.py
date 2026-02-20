@@ -121,7 +121,7 @@ if new_run:
 # m.weights_dict['KMPATENT'] = 5
 # m.weights_dict['AGGAVMARKUP'] = 20
 
-# m.AGGAVMARKUP_target = np.float64(1.0629487478533735)
+m.AGGAVMARKUP_target = np.float64(1.0629487478533735)
 
 #%%
 
