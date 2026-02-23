@@ -373,9 +373,15 @@ comments_dic['2002'] = {
     "3.0":"3.0:KMPATENT, AGGAVMARKUP, TO",
     "4.0":"4.0:KMPATENT, AGGAVMARKUP, TOPATENT",
     "5.0":"5.0:KM, fixed sigma 1, TO",
+    "5.1":"5.1:5.0 with lowered sigma_2",
+    "5.2":"5.2:5.2, lowered sigma_2, recalibrated",
+    "5.9":"5.9:5.0 fixed sigma_2, no markup moment",
     "6.0":"6.0:KM, fixed sigma 1, TOPATENT",
+    "6.9":"6.9:6.0 fixed sigma_2, no markup moment",
     "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
+    "7.9":"7.9:7.0 fixed sigma_2, no markup moment",
     "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
+    "8.9":"8.9:8.0 fixed sigma_2, no markup moment",
     }
 
 baselines_dic_param = {}
