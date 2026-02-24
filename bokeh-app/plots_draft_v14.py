@@ -1508,6 +1508,21 @@ df.to_csv(nash_coop_path+'dyn_Nash_table.csv',float_format='%.5f')
 
 write_calibration_results(nash_coop_path+'dyn_Nash',p_nash,m_nash,dyn_sol_nash.sol_fin,commentary = '')
 
+df_summary = pd.DataFrame(index=p_baseline.countries)
+
+df_summary['change in normalised consumption (%)'] = (dyn_sol_nash.sol_fin.nominal_final_consumption/dyn_sol_nash.sol_fin.price_indices)\
+    /(dyn_sol_nash.sol_init.nominal_final_consumption/dyn_sol_nash.sol_init.price_indices)-1
+df_summary['change in real profits (%) sum over n'] = (dyn_sol_nash.sol_fin.profit[...,1].sum(axis=0)/dyn_sol_nash.sol_fin.price_indices)\
+    /(dyn_sol_nash.sol_init.profit[...,1].sum(axis=0)/dyn_sol_nash.sol_init.price_indices)-1
+df_summary['change in real profits (%) sum over i'] = (dyn_sol_nash.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_fin.price_indices)\
+    /(dyn_sol_nash.sol_init.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_init.price_indices)-1
+df_summary['change in real wages (%)'] = (dyn_sol_nash.sol_fin.w/dyn_sol_nash.sol_fin.price_indices)\
+    /(dyn_sol_nash.sol_init.w/dyn_sol_nash.sol_init.price_indices)-1
+
+df_summary = df_summary*100
+
+df_summary.to_csv(nash_coop_path+'unpacking_dyn_Nash_table.csv',float_format='%.5f')
+
 #%% Coop equal weights table with transitional dynamics
 
 all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
@@ -1593,6 +1608,21 @@ df.style.format(precision=5).to_latex(nash_coop_path+'dyn_Coop_population_weight
 df.to_csv(nash_coop_path+'dyn_Coop_population_weights_table.csv',float_format='%.5f')
 
 write_calibration_results(nash_coop_path+'dyn_Coop_population_weights',p_coop_equal,m_coop_equal,dyn_sol_coop_equal.sol_fin,commentary = '')
+
+df_summary = pd.DataFrame(index=p_baseline.countries)
+
+df_summary['change in normalised consumption (%)'] = (dyn_sol_coop_equal.sol_fin.nominal_final_consumption/dyn_sol_coop_equal.sol_fin.price_indices)\
+    /(dyn_sol_coop_equal.sol_init.nominal_final_consumption/dyn_sol_coop_equal.sol_init.price_indices)-1
+df_summary['change in real profits (%) sum over n'] = (dyn_sol_coop_equal.sol_fin.profit[...,1].sum(axis=0)/dyn_sol_coop_equal.sol_fin.price_indices)\
+    /(dyn_sol_coop_equal.sol_init.profit[...,1].sum(axis=0)/dyn_sol_coop_equal.sol_init.price_indices)-1
+df_summary['change in real profits (%) sum over i'] = (dyn_sol_coop_equal.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_fin.price_indices)\
+    /(dyn_sol_coop_equal.sol_init.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_init.price_indices)-1
+df_summary['change in real wages (%)'] = (dyn_sol_coop_equal.sol_fin.w/dyn_sol_coop_equal.sol_fin.price_indices)\
+    /(dyn_sol_coop_equal.sol_init.w/dyn_sol_coop_equal.sol_init.price_indices)-1
+
+df_summary = df_summary*100
+
+df_summary.to_csv(nash_coop_path+'unpacking_dyn_Coop_population_weights_table.csv',float_format='%.5f')
 
 #%% Coop negishi weights table with transitional dynamics
 
@@ -4242,7 +4272,7 @@ add_graph(dyn_sol,qty,norm_start,norm_end,
                label='Growth rate',
                color='black',
                ls=':')
-plt.legend(fontsize=4.8)
+plt.legend(fontsize=4.8,ncol=4,loc=[0.2,0.55])
 
 ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 

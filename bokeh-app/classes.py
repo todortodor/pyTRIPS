@@ -218,8 +218,8 @@ class parameters:
                                                       , names=['country','sector'])}
         
         sl_non_calib = {
-                    # 'sigma':[np.s_[0],np.s_[1]],
-                    'sigma':[np.s_[0]],
+                    'sigma':[np.s_[0],np.s_[1]],
+                    # 'sigma':[np.s_[0]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,
@@ -231,7 +231,8 @@ class parameters:
                     'a':None,
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    'delta':[np.s_[::S]],#,np.s_[S-1]],
+                    # 'delta':[np.s_[::S]],
+                    'delta':[np.s_[::S],np.s_[2::S]],
                     'delta_dom':[np.s_[::S]],#,np.s_[S-1]],
                     # 'delta_dom':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'delta_int':[np.s_[::S]],#,np.s_[S-1]],
@@ -1567,7 +1568,7 @@ class var:
         self.r = p.rho + self.g/p.gamma
         self.G = self.r+p.zeta-self.g+self.g_s+p.nu
         
-    def compute_patenting_thresholds(self, p):
+    def compute_patenting_thresholds(self, p,exog_patent_thresholds=False):
         A = np.einsum('n,n,s,i,i->nis',
                                self.w,
                                p.r_hjort,
@@ -1579,27 +1580,28 @@ class var:
         denom_bracket = 1/(self.G[None,:]+p.delta-p.nu[None,:])-1/(self.G[None,:]+p.delta)
         self.psi_C = np.full((p.N,p.N,p.S),np.inf)
         self.psi_C[...,1:] = A*p.r_hjort[None,:,None]/(self.profit[...,1:]*denom_bracket[:,None,1:])
-        self.psi_star = np.maximum(self.psi_C,1)
-        psi_star_n_star = np.min(self.psi_star,axis=0)
-        
-        x_old = np.max(self.psi_C[...,1:], axis=0)
-        x_new = None
-        cond = True
-        it = 0
-        while cond:
-            if it>0:
-                x_old = x_new
-            mask = x_old[None,:,:]>=self.psi_C[...,1:]
-            x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:])/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
-            cond = np.any(x_old != x_new)
-            it+=1
-
-        condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=p.fo[None,1:]
-        x_new[condition] = psi_star_n_star[...,1:][condition]
-        self.psi_o_star = np.full((p.N,p.S),np.inf)
-        self.psi_o_star[...,1:] = x_new
-        self.psi_m_star = np.full((p.N,p.N,p.S),np.inf)
-        self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],self.psi_star[...,1:])
+        if not exog_patent_thresholds:
+            self.psi_star = np.maximum(self.psi_C,1)
+            psi_star_n_star = np.min(self.psi_star,axis=0)
+            
+            x_old = np.max(self.psi_C[...,1:], axis=0)
+            x_new = None
+            cond = True
+            it = 0
+            while cond:
+                if it>0:
+                    x_old = x_new
+                mask = x_old[None,:,:]>=self.psi_C[...,1:]
+                x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:])/np.sum(A/self.psi_C[...,1:],axis=0,where=mask)
+                cond = np.any(x_old != x_new)
+                it+=1
+    
+            condition = np.maximum(A*(psi_star_n_star[None,:,1:]/self.psi_C[...,1:]-1),0).sum(axis=0)>=p.fo[None,1:]
+            x_new[condition] = psi_star_n_star[...,1:][condition]
+            self.psi_o_star = np.full((p.N,p.S),np.inf)
+            self.psi_o_star[...,1:] = x_new
+            self.psi_m_star = np.full((p.N,p.N,p.S),np.inf)
+            self.psi_m_star[...,1:] = np.maximum(self.psi_o_star[None,:,1:],self.psi_star[...,1:])
 
     def compute_aggregate_qualities(self, p):
         prefact = p.k * p.eta * self.l_R**(1-p.kappa) /(p.k-1)
@@ -1689,9 +1691,9 @@ class var:
             else:
                 return X_M,X_CD,X
         
-    def compute_solver_quantities(self,p):
+    def compute_solver_quantities(self,p,exog_patent_thresholds=False):
         self.compute_growth(p)
-        self.compute_patenting_thresholds(p)
+        self.compute_patenting_thresholds(p,exog_patent_thresholds=exog_patent_thresholds)
         self.compute_aggregate_qualities(p)
         self.compute_sectoral_prices(p)
         self.compute_labor_allocations(p)
@@ -4101,7 +4103,7 @@ class dynamic_var:
         self.P_CD = np.ones((p.N, p.S, self.Nt))
         self.P_CD[:,1:,:] = (B/(A+B))**(1/(1-p.sigma))[None, 1:,None]
         
-    def compute_patenting_thresholds(self, p):
+    def compute_patenting_thresholds(self, p, exog_patent_thresholds=False):
         A = np.einsum('nt,n,s,it,i->nist',
                                self.w,
                                p.r_hjort,
@@ -4117,37 +4119,38 @@ class dynamic_var:
                                          p.r_hjort,
                                          1/(self.DELTA_V[...,1:,:])
                                          )
-        self.psi_star = np.maximum(self.psi_C,1)
-        psi_star_n_star = np.min(self.psi_star,axis=0)
-        
-        x_old = np.max(self.psi_C[...,1:,:], axis=0)
-        mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
-        
-        condition = np.maximum(A*(psi_star_n_star[None,:,1:,:]/self.psi_C[...,1:,:]-1),0).sum(axis=0)>=p.fo[None,1:,None]
-        
-        x_new = None
-        cond = True
-        it = 0
-        print_once= True
-        
-        while cond:
-            if it>0:
-                x_old = x_new
-            mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
-            x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:,None])/np.sum(A/self.psi_C[...,1:,:],axis=0,where=mask)
-            cond = np.any(x_old[~condition] != x_new[~condition])
-            if it>40 and print_once:
-                print('stuck')
-                print_once = False
-                # self.plot_numerical_derivatives()
-                cond = False
-            it+=1
+        if not exog_patent_thresholds:
+            self.psi_star = np.maximum(self.psi_C,1)
+            psi_star_n_star = np.min(self.psi_star,axis=0)
             
-        x_new[condition] = psi_star_n_star[...,1:,:][condition]
-        self.psi_o_star = np.full((p.N,p.S,self.Nt),np.inf)
-        self.psi_o_star[...,1:,:] = x_new
-        self.psi_m_star = np.full((p.N,p.N,p.S,self.Nt),np.inf)
-        self.psi_m_star[...,1:,:] = np.maximum(self.psi_o_star[None,:,1:,:],self.psi_star[...,1:,:])
+            x_old = np.max(self.psi_C[...,1:,:], axis=0)
+            mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
+            
+            condition = np.maximum(A*(psi_star_n_star[None,:,1:,:]/self.psi_C[...,1:,:]-1),0).sum(axis=0)>=p.fo[None,1:,None]
+            
+            x_new = None
+            cond = True
+            it = 0
+            print_once= True
+            
+            while cond:
+                if it>0:
+                    x_old = x_new
+                mask = x_old[None,:,:,:]>=self.psi_C[...,1:,:]
+                x_new = (np.sum(A,axis=0,where=mask)+p.fo[None,1:,None])/np.sum(A/self.psi_C[...,1:,:],axis=0,where=mask)
+                cond = np.any(x_old[~condition] != x_new[~condition])
+                if it>40 and print_once:
+                    print('stuck')
+                    print_once = False
+                    # self.plot_numerical_derivatives()
+                    cond = False
+                it+=1
+                
+            x_new[condition] = psi_star_n_star[...,1:,:][condition]
+            self.psi_o_star = np.full((p.N,p.S,self.Nt),np.inf)
+            self.psi_o_star[...,1:,:] = x_new
+            self.psi_m_star = np.full((p.N,p.N,p.S,self.Nt),np.inf)
+            self.psi_m_star[...,1:,:] = np.maximum(self.psi_o_star[None,:,1:,:],self.psi_star[...,1:,:])
         
     def compute_V(self,p):
         self.V = np.zeros((p.N,p.S,self.Nt))        
@@ -4242,11 +4245,11 @@ class dynamic_var:
             
         self.r = A + (1-1/p.gamma)*self.inflation
         
-    def compute_solver_quantities(self,p,exog_lr=False):
+    def compute_solver_quantities(self,p,exog_lr=False,exog_patent_thresholds=False):
         self.compute_phi(p)
         self.compute_PSI_M(p)
         self.compute_sectoral_prices(p)
-        self.compute_patenting_thresholds(p)
+        self.compute_patenting_thresholds(p,exog_patent_thresholds=exog_patent_thresholds)
         self.compute_V(p)
         if not exog_lr:
             self.compute_labor_research(p)

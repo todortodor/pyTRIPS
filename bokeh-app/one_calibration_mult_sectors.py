@@ -18,7 +18,7 @@ new_run = True
 baseline_number = '2002'
 # baseline_number = '2000'
 # baseline_number = '1300'
-variation_to_load = '8.0'
+variation_to_load = '4.0'
 # baseline_number = '6001'
 # variation_to_load = '4.02'
 # n = 4
@@ -123,13 +123,14 @@ if new_run:
 # m.weights_dict['AVMARKUPPHARCHEM'] = 10
 
 # m.AGGAVMARKUP_target = np.float64(1.0629487478533735)
-p.sigma[2] = p.sigma[1]
-p.calib_parameters.remove('sigma')
+# p.sigma[2] = p.sigma[1]
+# p.calib_parameters.remove('sigma')
 m.list_of_moments.remove('AVMARKUPPHARCHEM')
+# m.list_of_moments.remove('AGGAVMARKUP')
 
 #%%
 
-p.delta[:] = 0.05
+# p.delta[:] = 0.05
 
 m.drop_CHN_IND_BRA_ROW_from_RD = True
 
@@ -219,7 +220,7 @@ m.plot_moments(m.list_of_moments)
 
 baseline_number = '2002'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 8.9
+run_number = 12.0
 
 new_baseline = False
 if new_baseline:

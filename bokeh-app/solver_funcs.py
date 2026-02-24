@@ -339,37 +339,244 @@ def fixed_point_solver_exog_lr(p, p_old, context, x0=None, tol = 1e-15, damping 
         if count == 0:
             sol_0 = init.copy()
             sol_0.compute_solver_quantities(p_old)
-            # print(sol_0.PSI_CD)
-            # time.sleep(5)
         init.compute_solver_quantities(p)
         
-        # init.compute_growth(p)
-        # init.compute_patenting_thresholds(p)
+        w = init.compute_wage(p)#/init.price_indices[0]
+        Z = init.compute_expenditure(p)#/init.price_indices[0]
+        # l_R = init.compute_labor_research(p)[...,1:].ravel()
+        profit = init.compute_profit(p)[...,1:].ravel()
+        phi = init.compute_phi(p).ravel()#*init.price_indices[0]
         
-        # # init.psi_C = sol_0.psi_C.copy()
-        # # init.psi_star = sol_0.psi_star.copy()
-        # # init.psi_o_star = sol_0.psi_o_star.copy()
-        # # init.psi_m_star = sol_0.psi_m_star.copy()
+        l_R = sol_0.l_R[...,1:].ravel().copy()
         
-        # init.compute_aggregate_qualities(p)
+        x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
+
+        x_new_decomp = get_vec_qty(x_new,p)
+        x_old_decomp = get_vec_qty(x_old,p)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['w','Z','profit','l_R','phi']]
+        condition = np.any(conditions)
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        if plot_live and count>500 and count%500 == 0:
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
         
-        # # init.PSI_M = sol_0.PSI_M.copy()
-        # # init.PSI_CD = sol_0.PSI_CD.copy()
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+            # plt.plot(convergence)
+            # plt.show()
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40) and np.all(x_new > 0):
+        status = 'successful'
+    else:
+        status = 'failed'
+    
+    x_sol = x_new
         
-        # init.compute_sectoral_prices(p)
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
         
-        # init.compute_labor_allocations(p)
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+
+    return sol_inst, init
+
+def fixed_point_solver_exog_patent_thresholds(p, p_old, context, x0=None, tol = 1e-15, damping = 10, max_count=1e4,
+                       accelerate = False, safe_convergence=0.001,accelerate_when_stable=True, 
+                       plot_cobweb = False, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = False, apply_bound_zero = False, 
+                        apply_bound_research_labor = False,
+                       accel_memory = 50, accel_type1=True, accel_regularization=1e-10,
+                       accel_relaxation=0.5, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=False,damping_post_acceleration=5):   
+    if x0 is None:
+        x0 = p.guess_from_params()
+    x_old = x0 
         
-        # # init.l_Ae = sol_0.l_Ae.copy()
-        # # init.l_Ao = sol_0.l_Ao.copy()
-        # # init.l_P = sol_0.l_P.copy()
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
         
-        # init.compute_trade_flows_and_shares(p)
-        # init.compute_price_indices(p)
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+        if apply_bound_zero:
+            x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+        init = var.var_from_vector(x_old,p,context=context,compute=False)
+        if count == 0:
+            sol_0 = init.copy()
+            sol_0.compute_solver_quantities(p_old)
+        init.psi_o_star = sol_0.psi_o_star.copy()
+        init.psi_m_star = sol_0.psi_m_star.copy()
+        init.compute_solver_quantities(p,exog_patent_thresholds=True)
         
         w = init.compute_wage(p)#/init.price_indices[0]
         Z = init.compute_expenditure(p)#/init.price_indices[0]
         l_R = init.compute_labor_research(p)[...,1:].ravel()
+        profit = init.compute_profit(p)[...,1:].ravel()
+        phi = init.compute_phi(p).ravel()#*init.price_indices[0]
+        l_R = init.compute_labor_research(p)[...,1:].ravel()
+        
+        x_new = np.concatenate((w,Z,l_R,profit,phi), axis=0)
+
+        x_new_decomp = get_vec_qty(x_new,p)
+        x_old_decomp = get_vec_qty(x_old,p)
+        conditions = [np.linalg.norm(x_new_decomp[qty] - x_old_decomp[qty])/np.linalg.norm(x_old_decomp[qty]) > tol
+                      for qty in ['w','Z','profit','l_R','phi']]
+        condition = np.any(conditions)
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        if plot_live and count>500 and count%500 == 0:
+            plt.plot(convergence)
+            plt.yscale('log')
+            plt.show()
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+            # plt.plot(convergence)
+            # plt.show()
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40) and np.all(x_new > 0):
+        status = 'successful'
+    else:
+        status = 'failed'
+    
+    x_sol = x_new
+        
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+
+    return sol_inst, init
+
+def fixed_point_solver_exog_lr_and_patent_thresholds(p, p_old, context, x0=None, tol = 1e-15, damping = 10, max_count=1e4,
+                       accelerate = False, safe_convergence=0.001,accelerate_when_stable=True, 
+                       plot_cobweb = False, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = False, apply_bound_zero = False, 
+                        apply_bound_research_labor = False,
+                       accel_memory = 50, accel_type1=True, accel_regularization=1e-10,
+                       accel_relaxation=0.5, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=False,damping_post_acceleration=5):   
+    if x0 is None:
+        x0 = p.guess_from_params()
+    x_old = x0 
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+        if apply_bound_zero:
+            x_old, hit_the_bound_count = bound_zero(x_old,1e-12, hit_the_bound_count)
+        init = var.var_from_vector(x_old,p,context=context,compute=False)
+        if count == 0:
+            sol_0 = init.copy()
+            sol_0.compute_solver_quantities(p_old)
+        init.psi_o_star = sol_0.psi_o_star.copy()
+        init.psi_m_star = sol_0.psi_m_star.copy()
+        init.compute_solver_quantities(p,exog_patent_thresholds=True)
+        
+        w = init.compute_wage(p)#/init.price_indices[0]
+        Z = init.compute_expenditure(p)#/init.price_indices[0]
+        # l_R = init.compute_labor_research(p)[...,1:].ravel()
         profit = init.compute_profit(p)[...,1:].ravel()
         phi = init.compute_phi(p).ravel()#*init.price_indices[0]
         
@@ -1032,7 +1239,7 @@ def dyn_fixed_point_solver(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=Non
     return sol_inst, dyn_var
 
 
-def dyn_fixed_point_solver_exog_lr(p, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
+def dyn_fixed_point_solver_exog_lr(p,p_old, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
                            damping = 10, max_count=1e6,
                        accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
                        plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
@@ -1040,10 +1247,184 @@ def dyn_fixed_point_solver_exog_lr(p, sol_init, sol_fin = None,t_inf=200, Nt=500
                        accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
                        accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
                        disp_summary=True,damping_post_acceleration=5):  
-    # print('called')
-    # print(p.delta[:,1])
     if sol_fin is None:
-        sol, sol_fin = fixed_point_solver(p,x0=p.guess,
+        sol, sol_fin = fixed_point_solver_exog_lr(p,p_old,x0=p.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1000,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        sol_fin.scale_P(p)
+        sol_fin.compute_non_solver_quantities(p) 
+    
+    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin,
+                          N=p.N)
+    dyn_var.initiate_state_variables_0(sol_init)
+    
+    psis_guess = guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin)
+    
+    dic_of_guesses = {'price_indices':repeat_for_all_times(sol_fin.price_indices,dyn_var.Nt),
+                    'w':repeat_for_all_times(sol_fin.w,dyn_var.Nt),
+                    'Z':repeat_for_all_times(sol_fin.Z,dyn_var.Nt),
+                    'PSI_CD':psis_guess['PSI_CD'],
+                    'PSI_MNP':psis_guess['PSI_MNP'],
+                    'PSI_MPND':psis_guess['PSI_MPND'],
+                    'PSI_MPD':psis_guess['PSI_MPD'],
+                    'V_PD':repeat_for_all_times(sol_fin.V_PD,dyn_var.Nt)[...,1:,:],
+                    'V_NP':repeat_for_all_times(sol_fin.V_NP,dyn_var.Nt)[...,1:,:],
+                    'DELTA_V':repeat_for_all_times(sol_fin.V_P-sol_fin.V_NP,dyn_var.Nt)[...,1:,:]
+                    }
+
+    dyn_var.guess_from_dic(dic_of_guesses)
+
+    if x0 is not None:
+        dyn_var.guess_from_vector(x0)
+    
+    x_old = dyn_var.vector_from_var()
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+            dyn_var.guess_from_vector(x_old)
+
+            numeraire = dyn_var.price_indices[0,:]
+            for qty in ['price_indices','w','Z']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,:]
+                setattr(dyn_var,qty,temp)
+                
+            for qty in ['V_PD','DELTA_V','V_NP']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,None,None:]
+                setattr(dyn_var,qty,temp)
+                
+            x_old = dyn_var.vector_from_var()
+
+        if plot_live:
+            if count == 0:
+                dyn_var.plot_country(0,title = str(count),initial = True)
+        if plot_live:
+            if count<70 and count >0:
+                dyn_var.plot_country(0,title = str(count))
+        
+        dyn_var.l_R = np.zeros((p.N,p.S,Nt))
+        dyn_var.l_R[...,1:,:] = repeat_for_all_times(sol_init.l_R,dyn_var.Nt)[...,1:,:]
+        dyn_var.compute_solver_quantities(p,exog_lr=True)
+
+        x_new = np.concatenate([
+            dyn_var.compute_price_indices(p).ravel(),
+            dyn_var.compute_wage(p).ravel(),
+            dyn_var.compute_expenditure(p).ravel(),
+            dyn_var.compute_PSI_CD(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MNP(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPND(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPD(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_PD(p)[...,1:,:].ravel(),
+            dyn_var.compute_DELTA_V(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_NP(p)[...,1:,:].ravel(),
+            ],axis=0)
+
+        condition = np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old) > tol
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40):
+        status = 'successful'
+    else:
+        status = 'failed'
+        
+    if status == 'failed':
+        print('Failed, report :')
+        print('count',count)
+        print('nans',np.isnan(x_new).sum())
+        print('diverged',(x_new>1e40).sum())
+    
+    x_sol = x_new
+        
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+    return sol_inst, dyn_var
+
+def dyn_fixed_point_solver_exog_patent_thresholds(p,p_old, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
+                           damping = 10, max_count=1e6,
+                       accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
+                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = True,
+                       accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
+                       accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=True,damping_post_acceleration=5):  
+    if sol_fin is None:
+        sol, sol_fin = fixed_point_solver_exog_patent_thresholds(p,p_old,x0=p.guess,
                                         context = 'counterfactual',
                                 cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -1145,8 +1526,198 @@ def dyn_fixed_point_solver_exog_lr(p, sol_init, sol_fin = None,t_inf=200, Nt=500
             if count<70 and count >0:
                 dyn_var.plot_country(0,title = str(count))
         
+        # dyn_var.l_R = np.zeros((p.N,p.S,Nt))
+        # dyn_var.l_R[...,1:,:] = repeat_for_all_times(sol_init.l_R,dyn_var.Nt)[...,1:,:]
+        dyn_var.psi_o_star = np.full((p.N,p.S,Nt),np.inf)
+        dyn_var.psi_m_star = np.full((p.N,p.N,p.S,Nt),np.inf)
+        dyn_var.psi_o_star[...,1:,:] = repeat_for_all_times(sol_init.psi_o_star,dyn_var.Nt)[...,1:,:]
+        dyn_var.psi_m_star[...,1:,:] = repeat_for_all_times(sol_init.psi_m_star,dyn_var.Nt)[...,1:,:]
+        dyn_var.compute_solver_quantities(p,exog_patent_thresholds=True)
+
+        x_new = np.concatenate([
+            dyn_var.compute_price_indices(p).ravel(),
+            dyn_var.compute_wage(p).ravel(),
+            dyn_var.compute_expenditure(p).ravel(),
+            dyn_var.compute_PSI_CD(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MNP(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPND(p)[...,1:,:].ravel(),
+            dyn_var.compute_PSI_MPD(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_PD(p)[...,1:,:].ravel(),
+            dyn_var.compute_DELTA_V(p)[...,1:,:].ravel(),
+            dyn_var.compute_V_NP(p)[...,1:,:].ravel(),
+            ],axis=0)
+
+        condition = np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old) > tol
+        convergence.append(np.linalg.norm(x_new - x_old)/np.linalg.norm(x_old))
+        
+        count += 1
+        if np.all(np.array(convergence[-5:])<safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping = damping_post_acceleration
+                
+        if plot_convergence:
+            norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+        if plot_cobweb:
+            history_old.append(get_vec_qty(x_old,p)[cobweb_qty].mean())
+            history_new.append(get_vec_qty(x_new,p)[cobweb_qty].mean())
+    
+    finish = time.perf_counter()
+    solving_time = finish-start
+    dev_norm = 'TODO'
+
+    if count < max_count and np.isnan(x_new).sum()==0 and np.all(x_new<1e40):
+        status = 'successful'
+    else:
+        status = 'failed'
+        
+    if status == 'failed':
+        print('Failed, report :')
+        print('count',count)
+        print('nans',np.isnan(x_new).sum())
+        print('diverged',(x_new>1e40).sum())
+    
+    x_sol = x_new
+        
+    sol_inst = sol_class(x_sol, p, solving_time=solving_time, iterations=count, deviation_norm=dev_norm, 
+                   status=status, hit_the_bound_count=hit_the_bound_count, x0=x0, tol = tol)
+        
+    if disp_summary:
+        sol_inst.run_summary()
+    
+    if plot_cobweb:
+        cob = cobweb(cobweb_qty)
+        for i,c in enumerate(convergence):
+            cob.append_old_new(history_old[i],history_new[i])
+            if cobweb_anim:
+                cob.plot(count=i, window = 5000,pause = 0.01) 
+        cob.plot(count = count, window = None)
+            
+    if plot_convergence:
+        plt.semilogy(convergence, label = 'convergence')
+        plt.semilogy(norm, label = 'norm')
+        plt.legend()
+        plt.show()
+    return sol_inst, dyn_var
+
+def dyn_fixed_point_solver_exog_lr_and_patent_thresholds(p,p_old, sol_init, sol_fin = None,t_inf=200, Nt=500, x0=None, tol = 1e-10, 
+                           damping = 10, max_count=1e6,
+                       accelerate = False, safe_convergence=0.1,accelerate_when_stable=True, 
+                       plot_cobweb = True, plot_live = False, cobweb_anim=False, cobweb_qty='profit',
+                       cobweb_coord = 1, plot_convergence = True,
+                       accel_memory = 10, accel_type1=False, accel_regularization=1e-12,
+                       accel_relaxation=1, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+                       disp_summary=True,damping_post_acceleration=5):  
+    if sol_fin is None:
+        sol, sol_fin = fixed_point_solver_exog_lr_and_patent_thresholds(p,p_old,x0=p.guess,
+                                        context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-14,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='l_R',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1000,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=10
+                                )
+        sol_fin.scale_P(p)
+        sol_fin.compute_non_solver_quantities(p) 
+    
+    dyn_var = dynamic_var(nbr_of_time_points = Nt,t_inf=t_inf,sol_init=sol_init,sol_fin=sol_fin,
+                          N=p.N)
+    dyn_var.initiate_state_variables_0(sol_init)
+    
+    psis_guess = guess_PSIS_from_sol_init_and_sol_fin(dyn_var,sol_init,sol_fin)
+    
+    dic_of_guesses = {'price_indices':repeat_for_all_times(sol_fin.price_indices,dyn_var.Nt),
+                    'w':repeat_for_all_times(sol_fin.w,dyn_var.Nt),
+                    'Z':repeat_for_all_times(sol_fin.Z,dyn_var.Nt),
+                    'PSI_CD':psis_guess['PSI_CD'],
+                    'PSI_MNP':psis_guess['PSI_MNP'],
+                    'PSI_MPND':psis_guess['PSI_MPND'],
+                    'PSI_MPD':psis_guess['PSI_MPD'],
+                    # 'PSI_CD':repeat_for_all_times(sol_fin.PSI_CD-sol_init.PSI_CD,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MNP':repeat_for_all_times(sol_fin.PSI_MNP-sol_init.PSI_MNP,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MPND':repeat_for_all_times(sol_fin.PSI_MPND-sol_init.PSI_MPND,dyn_var.Nt)[...,1:,:],
+                    # 'PSI_MPD':repeat_for_all_times(sol_fin.PSI_MPD-sol_init.PSI_MPD,dyn_var.Nt)[...,1:,:],
+                    'V_PD':repeat_for_all_times(sol_fin.V_PD,dyn_var.Nt)[...,1:,:],
+                    # 'V_P':repeat_for_all_times(sol_fin.V_P,dyn_var.Nt)[...,1:,:],
+                    'V_NP':repeat_for_all_times(sol_fin.V_NP,dyn_var.Nt)[...,1:,:],
+                    'DELTA_V':repeat_for_all_times(sol_fin.V_P-sol_fin.V_NP,dyn_var.Nt)[...,1:,:]
+                    }
+
+    dyn_var.guess_from_dic(dic_of_guesses)
+
+    if x0 is not None:
+        dyn_var.guess_from_vector(x0)
+    
+    x_old = dyn_var.vector_from_var()
+        
+    condition = True
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    if plot_cobweb:
+        history_old = []
+        history_new = []
+    x_new = None
+    aa_options = {'dim': len(x_old),
+                'mem': accel_memory,
+                'type1': accel_type1,
+                'regularization': accel_regularization,
+                'relaxation': accel_relaxation,
+                'safeguard_factor': accel_safeguard_factor,
+                'max_weight_norm': accel_max_weight_norm}
+    aa_wrk = aa.AndersonAccelerator(**aa_options)
+    start = time.perf_counter()
+    cob = cobweb(cobweb_qty)
+    if plot_convergence:
+        norm = []
+    damping = damping
+    
+    while condition and count < max_count and np.all(x_old<1e40): 
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new+(damping-1)*x_old)/damping
+            dyn_var.guess_from_vector(x_old)
+
+            numeraire = dyn_var.price_indices[0,:]
+            for qty in ['price_indices','w','Z']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,:]
+                setattr(dyn_var,qty,temp)
+                
+            for qty in ['V_PD','DELTA_V','V_NP']:
+                temp = getattr(dyn_var,qty)
+                temp = temp/numeraire[None,None,None:]
+                setattr(dyn_var,qty,temp)
+                
+            x_old = dyn_var.vector_from_var()
+
+        if plot_live:
+            if count == 0:
+                dyn_var.plot_country(0,title = str(count),initial = True)
+        if plot_live:
+            if count<70 and count >0:
+                dyn_var.plot_country(0,title = str(count))
+        
+        dyn_var.l_R = np.zeros((p.N,p.S,Nt))
         dyn_var.l_R[...,1:,:] = repeat_for_all_times(sol_init.l_R,dyn_var.Nt)[...,1:,:]
-        dyn_var.compute_solver_quantities(p,exog_lr=True)
+        dyn_var.psi_o_star = np.full((p.N,p.S,Nt),np.inf)
+        dyn_var.psi_m_star = np.full((p.N,p.N,p.S,Nt),np.inf)
+        dyn_var.psi_o_star[...,1:,:] = repeat_for_all_times(sol_init.psi_o_star,dyn_var.Nt)[...,1:,:]
+        dyn_var.psi_m_star[...,1:,:] = repeat_for_all_times(sol_init.psi_m_star,dyn_var.Nt)[...,1:,:]
+        dyn_var.compute_solver_quantities(p,exog_patent_thresholds=True,exog_lr=True)
 
         x_new = np.concatenate([
             dyn_var.compute_price_indices(p).ravel(),
@@ -1754,6 +2325,8 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     # if p.S>2:
     #     for s in range(2,p.S):
     #         p.delta[:,s] = p.delta[:,1]
+    if p.S>2:
+        p.sigma[1] = p.sigma[2]
     # print('min delta',p.delta.min())
     if 'khi' in p.calib_parameters:
         p.update_khi_and_r_hjort(p.khi)
