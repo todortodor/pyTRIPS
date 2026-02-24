@@ -218,8 +218,8 @@ class parameters:
                                                       , names=['country','sector'])}
         
         sl_non_calib = {
-                    'sigma':[np.s_[0],np.s_[1]],
-                    # 'sigma':[np.s_[0]],
+                    # 'sigma':[np.s_[0],np.s_[1]],
+                    'sigma':[np.s_[0]],
                     'theta':[np.s_[0]],
                     'rho':None,
                     'gamma':None,
@@ -231,8 +231,8 @@ class parameters:
                     'a':None,
                     'fe':[np.s_[0]],
                     'fo':[np.s_[0]],
-                    # 'delta':[np.s_[::S]],
-                    'delta':[np.s_[::S],np.s_[2::S]],
+                    'delta':[np.s_[::S]],
+                    # 'delta':[np.s_[::S],np.s_[2::S]],
                     'delta_dom':[np.s_[::S]],#,np.s_[S-1]],
                     # 'delta_dom':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'delta_int':[np.s_[::S]],#,np.s_[S-1]],

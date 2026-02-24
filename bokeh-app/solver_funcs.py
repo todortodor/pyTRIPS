@@ -2325,8 +2325,8 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     # if p.S>2:
     #     for s in range(2,p.S):
     #         p.delta[:,s] = p.delta[:,1]
-    if p.S>2:
-        p.sigma[1] = p.sigma[2]
+    # if p.S>2:
+    #     p.sigma[1] = p.sigma[2]
     # print('min delta',p.delta.min())
     if 'khi' in p.calib_parameters:
         p.update_khi_and_r_hjort(p.khi)
