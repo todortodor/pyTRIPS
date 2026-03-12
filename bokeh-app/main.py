@@ -950,12 +950,12 @@ def update_baseline_cf(attrname, old, new):
     ds_cf_both.data = df_cf_both
     
     # ds_cf_int.data = get_data_cf_int(new,country_cf)
-    # df_cf_int = get_data_cf_int(new,country_cf)
-    # ds_cf_int.data = df_cf_int
+    df_cf_int = get_data_cf_int(new,country_cf)
+    ds_cf_int.data = df_cf_int
     
     # ds_cf_dom.data = get_data_cf_dom(new,country_cf)
-    # df_cf_dom = get_data_cf_dom(new,country_cf)
-    # ds_cf_dom.data = df_cf_dom
+    df_cf_dom = get_data_cf_dom(new,country_cf)
+    ds_cf_dom.data = df_cf_dom
     # ds_cf_max.data = build_max(df_cf)
     
 def update_country_cf(attrname, old, new):
@@ -963,11 +963,11 @@ def update_country_cf(attrname, old, new):
     df_cf_both = get_data_cf_both(baseline_cf,new)
     ds_cf_both.data = df_cf_both
     
-    # df_cf_int = get_data_cf_int(baseline_cf,new)
-    # ds_cf_int.data = df_cf_int
+    df_cf_int = get_data_cf_int(baseline_cf,new)
+    ds_cf_int.data = df_cf_int
     
-    # df_cf_dom = get_data_cf_dom(baseline_cf,new)
-    # ds_cf_dom.data = df_cf_dom
+    df_cf_dom = get_data_cf_dom(baseline_cf,new)
+    ds_cf_dom.data = df_cf_dom
     
 controls_cf = row(baseline_cf_select, country_cf_select)
 
