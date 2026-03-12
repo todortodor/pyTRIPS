@@ -53,7 +53,7 @@ m_mono.compute_moments(sol_mono, p_mono)
 #%%
 
 new_run = True
-baseline_number = '1312'
+baseline_number = '2003'
 variation = '1.0'
 
 if new_run:
@@ -89,48 +89,50 @@ m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.d = 0.191473
 # p.a=0.1
 
-# p.delta_dom[0,1] = p.delta_dom[0,1]/2
-# p.delta_dom[3,1] = p.delta_dom[3,1]/2
+# # p.delta_dom[0,1] = p.delta_dom[0,1]/2
+# # p.delta_dom[3,1] = p.delta_dom[3,1]/2
+# # p.update_delta_eff()
+# # p.nu_tilde[1] = 0.058643
+p.nu[1] = 1.0
+# p.nu_tilde[1] = p_mono.nu[1]
+# p.delta_int[...] = p_mono.delta[...]
+# p.delta_dom[...] = p_mono.delta[...]
 # p.update_delta_eff()
-# p.nu_tilde[1] = 0.058643
-p.nu[1] = 1e-12
-p.nu_tilde[1] = p_mono.nu[1]
-p.delta_int[...] = p_mono.delta[...]
-p.delta_dom[...] = p_mono.delta[...]
-p.update_delta_eff()
-p.eta[...] = p_mono.eta[...]
-p.k[...] = p_mono.k[...]
-p.T[...] = p_mono.T[...]
-p.zeta[...] = p_mono.zeta[...]
-p.g_0[...] = p_mono.g_0[...]
-p.theta[...] = p_mono.theta[...]
-p.fe[...] = p_mono.fe[...]
-p.fo[...] = p_mono.fo[...]
-# p.calib_parameters = ['eta', 'k', 'fe', 'T', 
-#                       'nu_tilde',
-#                       'zeta', 'g_0', 
-#                       'delta_int', 
-#                       # 'delta_dom', 
-#                       'fo', 
-#                       'theta']
-# m.list_of_moments=['GPDIFF',
-#  'GROWTH',
-#  'KM_DD_DD',
-#  'OUT',
-#  'RD',
-#  'TO_DD_DD',
-#  'RP',
-#  'SRGDP',
-#  'SINNOVPATUS',
-#  'SPFLOW',
-#  'UUPCOST',
-#  'DOMPATINUS',
-#  'TE']
-# p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
+# p.eta[...] = p_mono.eta[...]
+# p.k[...] = p_mono.k[...]
+# p.T[...] = p_mono.T[...]
+# p.zeta[...] = p_mono.zeta[...]
+# p.g_0[...] = p_mono.g_0[...]
+# p.theta[...] = p_mono.theta[...]
+# p.fe[...] = p_mono.fe[...]
+# p.fo[...] = p_mono.fo[...]
+# # p.calib_parameters = ['eta', 'k', 'fe', 'T', 
+# #                       'nu_tilde',
+# #                       'zeta', 'g_0', 
+# #                       'delta_int', 
+# #                       # 'delta_dom', 
+# #                       'fo', 
+# #                       'theta']
+# # m.list_of_moments=['GPDIFF',
+# #  'GROWTH',
+# #  'KM_DD_DD',
+# #  'OUT',
+# #  'RD',
+# #  'TO_DD_DD',
+# #  'RP',
+# #  'SRGDP',
+# #  'SINNOVPATUS',
+# #  'SPFLOW',
+# #  'UUPCOST',
+# #  'DOMPATINUS',
+# #  'TE']
+# # p.guess = np.concatenate((p.guess,np.ones(p.N)),axis=0)
 # p.calib_parameters.append('delta_dom')
-# p.calib_parameters.append('d')
+# # p.calib_parameters.append('d')
 # m.list_of_moments.append('DOMPATINCHN')
 # m.weights_dict['DOMPATINCHN']=5
+# m.list_of_moments.append('SPFLOWDOM')
+# m.list_of_moments.remove('SPFLOW')
 
 
 sol, sol_c = fixed_point_solver_double_diff_double_delta(p,
@@ -168,10 +170,10 @@ if new_run:
 bounds = p.make_parameters_bounds()
 cond = True
 iterations = 0
-max_iter = 6
+max_iter = 4
 
 while cond:
-    if iterations < max_iter - 4:
+    if iterations < max_iter - 2:
         test_ls = optimize.least_squares(fun = calibration_func_double_diff_double_delta,    
                                 x0 = p.make_p_vector(), 
                                 args = (p,m,p.guess,hist,start_time), 
@@ -230,10 +232,10 @@ m.plot_moments(m.list_of_moments)
 #%% writing results as excel and locally
 
 commentary = ''
-baseline_number = '1312'
+baseline_number = '2003'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 2.05
+run_number = 2.08
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'
 
 new_baseline = False

@@ -15,10 +15,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-baseline_number = 1312
+baseline_number = 2003
 variation = 'baseline'
 # pre_trips_number = 4096
-path = f'double_delta/1312_{variation}/'
+path = f'double_delta/2003_{variation}/'
 try:
     os.mkdir(path)
 except:
@@ -126,13 +126,13 @@ recap_negishi['delta_int'] = p_coop_negishi.delta_int[:,1]
 
 
 sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_coop_negishi,x0=p_coop_negishi.guess,
-                                # context = 'counterfactual',
-                                context = 'calibration',
+                                context = 'counterfactual',
+                                # context = 'calibration',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=True,
-                        accelerate_when_stable=True,
+                        accelerate_when_stable=False,
                         cobweb_qty='l_R',
-                        plot_convergence=False,
+                        plot_convergence=True,
                         plot_cobweb=False,
                         safe_convergence=0.001,
                         disp_summary=True,
@@ -195,8 +195,8 @@ recap_equal['delta_int'] = p_coop_equal.delta_int[:,1]
 
 
 sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_coop_equal,x0=p_coop_equal.guess,
-                                # context = 'counterfactual',
-                                context = 'calibration',
+                                context = 'counterfactual',
+                                # context = 'calibration',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=True,
                         accelerate_when_stable=True,
@@ -263,8 +263,8 @@ recap_nash['delta_int'] = p_nash.delta_int[:,1]
 
 
 sol, dyn_sol = fixed_point_solver_double_diff_double_delta(p_nash,x0=p_nash.guess,
-                                # context = 'counterfactual',
-                                context = 'calibration',
+                                context = 'counterfactual',
+                                # context = 'calibration',
                         cobweb_anim=False,tol =1e-14,
                         accelerate=True,
                         accelerate_when_stable=True,

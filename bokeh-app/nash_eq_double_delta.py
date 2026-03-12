@@ -29,8 +29,8 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 baseline_dics = [
-    # {'baseline':'1312','variation': 'baseline'},
-    {'baseline':'1312','variation': '1.07'},
+    {'baseline':'2003','variation': 'baseline'},
+    # {'baseline':'1312','variation': '1.07'},
     # {'baseline':'1312','variation': '2.02'},
     # {'baseline':'1312','variation': '2.07'},
     # {'baseline':'1312','variation': '4.0'},
@@ -66,4 +66,4 @@ if __name__ == '__main__':
         save_directly = True
         if save_directly:
             direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
-            p_nash.write_params(f'coop_eq_direct_saves/{direct_save_path}_nash/')
+            p_nash.write_params(f'coop_eq_direct_saves/dyn_{direct_save_path}_nash/')

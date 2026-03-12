@@ -8,17 +8,17 @@ Created on Wed May 14 08:44:45 2025
 
 
 from classes import moments, parameters, var, var_with_entry_costs
-from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
+# from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
 from solver_funcs import fixed_point_solver, dyn_fixed_point_solver
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-baseline_number = 6001
-variation = '4.02'
+baseline_number = 2000
+variation = '14.0'
 # pre_trips_number = 4096
-path = 'mult_sector_calib/merge_pharma_chem_v2/'
+path = 'mult_sector_calib/2000_14.0/'
 try:
     os.mkdir(path)
 except:
@@ -54,11 +54,11 @@ sol, sol_c = fixed_point_solver(p,x0=p.guess,
 sol_c.scale_P(p)
 sol_c.compute_non_solver_quantities(p)
 # plt.show()
-m = moments()
-# m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
-m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
-m.compute_moments(sol_c,p)
-m.compute_moments_deviations()
+# m = moments()
+# # m.load_run(f'calibration_results_matched_economy/baseline_{baseline_number}_variations/{variation}/')
+# m.load_run(f'calibration_results_matched_economy/{baseline_number}/')
+# m.compute_moments(sol_c,p)
+# m.compute_moments_deviations()
 
 # p_pre_trips_full = parameters()
 # p_pre_trips_full.load_run(f'calibration_results_matched_economy/{pre_trips_number}/')
@@ -176,7 +176,7 @@ recap_equal = pd.DataFrame(index=p.countries,
                                columns=p.sectors[1:],
                                data=p_coop_equal.delta[:,1:]) 
 
-p_coop_equal.delta[8,1] = 12
+# p_coop_equal.delta[8,1] = 12
 
 sol, dyn_sol = dyn_fixed_point_solver(p_coop_equal, sol_c, Nt=25,
                                       t_inf=500,

@@ -12,6 +12,7 @@ import pandas as pd
 import os
 from classes import moments, parameters, var, dynamic_var, var_with_entry_costs
 from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs, dyn_fixed_point_solver
+from solver_funcs import dyn_fixed_point_solver_exog_lr, dyn_fixed_point_solver_exog_patent_thresholds, dyn_fixed_point_solver_exog_lr_and_patent_thresholds
 import matplotlib.pylab as pylab
 from data_funcs import write_calibration_results
 import seaborn as sns
@@ -204,6 +205,12 @@ except:
 nash_coop_path = save_path+'/nash_and_coop_eq/'
 try:
     os.mkdir(nash_coop_path)
+except:
+    pass
+
+partial_equilibria_path = save_path+'/partial_equilibria/'
+try:
+    os.mkdir(partial_equilibria_path)
 except:
     pass
 
@@ -1010,7 +1017,7 @@ df['total_RD_costs'] = total_RD_costs
 
 df.to_csv(calibration_path+'patenting_and_RD_costs.csv',float_format='%.6f')
 
-#%% Multi-sector calibration #TODO
+#%% Multi-sector calibration
 
 from data_funcs import write_calibration_results
 
@@ -1030,7 +1037,7 @@ df.loc[[countries_names[c] for c in p_baseline.countries],'delta'] = p_multi.del
 df.loc[[countries_names[c] for c in p_baseline.countries],'eta'] = p_multi.eta[:,1]
 df.loc[[countries_names[c] for c in p_baseline.countries],'nu'] = p_multi.nu[1]
     
-df.to_csv(multi_sector_path+'raw_calibration_patenting.csv',float_format='%.6f')
+df.to_csv(multi_sector_path+'calibration_patenting.csv',float_format='%.6f')
 
 df = pd.DataFrame(
     index = pd.Index(
@@ -1043,7 +1050,7 @@ df.loc[[countries_names[c] for c in p_baseline.countries],'delta'] = p_multi.del
 df.loc[[countries_names[c] for c in p_baseline.countries],'eta'] = p_multi.eta[:,2]
 df.loc[[countries_names[c] for c in p_baseline.countries],'nu'] = p_multi.nu[2]
     
-df.to_csv(multi_sector_path+'raw_calibration_pharmachem.csv',float_format='%.6f')
+df.to_csv(multi_sector_path+'calibration_pharmachem.csv',float_format='%.6f')
 
 m_multi = moments()
 # m_multi.load_data()
@@ -1512,10 +1519,10 @@ df_summary = pd.DataFrame(index=p_baseline.countries)
 
 df_summary['change in normalised consumption (%)'] = (dyn_sol_nash.sol_fin.nominal_final_consumption/dyn_sol_nash.sol_fin.price_indices)\
     /(dyn_sol_nash.sol_init.nominal_final_consumption/dyn_sol_nash.sol_init.price_indices)-1
-df_summary['change in real profits (%) sum over n'] = (dyn_sol_nash.sol_fin.profit[...,1].sum(axis=0)/dyn_sol_nash.sol_fin.price_indices)\
-    /(dyn_sol_nash.sol_init.profit[...,1].sum(axis=0)/dyn_sol_nash.sol_init.price_indices)-1
-df_summary['change in real profits (%) sum over i'] = (dyn_sol_nash.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_fin.price_indices)\
-    /(dyn_sol_nash.sol_init.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_init.price_indices)-1
+df_summary['change in real profits (%)'] = (np.einsum('in,i,n->n',dyn_sol_nash.sol_fin.profit[...,1],dyn_sol_nash.sol_fin.w,1/dyn_sol_nash.sol_fin.price_indices))\
+    /(np.einsum('in,i,n->n',dyn_sol_nash.sol_init.profit[...,1],dyn_sol_nash.sol_init.w,1/dyn_sol_nash.sol_init.price_indices))-1
+# df_summary['change in real profits (%) sum over i'] = (dyn_sol_nash.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_fin.price_indices)\
+#     /(dyn_sol_nash.sol_init.profit[...,1].sum(axis=1)/dyn_sol_nash.sol_init.price_indices)-1
 df_summary['change in real wages (%)'] = (dyn_sol_nash.sol_fin.w/dyn_sol_nash.sol_fin.price_indices)\
     /(dyn_sol_nash.sol_init.w/dyn_sol_nash.sol_init.price_indices)-1
 
@@ -1613,10 +1620,10 @@ df_summary = pd.DataFrame(index=p_baseline.countries)
 
 df_summary['change in normalised consumption (%)'] = (dyn_sol_coop_equal.sol_fin.nominal_final_consumption/dyn_sol_coop_equal.sol_fin.price_indices)\
     /(dyn_sol_coop_equal.sol_init.nominal_final_consumption/dyn_sol_coop_equal.sol_init.price_indices)-1
-df_summary['change in real profits (%) sum over n'] = (dyn_sol_coop_equal.sol_fin.profit[...,1].sum(axis=0)/dyn_sol_coop_equal.sol_fin.price_indices)\
-    /(dyn_sol_coop_equal.sol_init.profit[...,1].sum(axis=0)/dyn_sol_coop_equal.sol_init.price_indices)-1
-df_summary['change in real profits (%) sum over i'] = (dyn_sol_coop_equal.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_fin.price_indices)\
-    /(dyn_sol_coop_equal.sol_init.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_init.price_indices)-1
+df_summary['change in real profits (%)'] = (np.einsum('in,i,n->n',dyn_sol_coop_equal.sol_fin.profit[...,1],dyn_sol_coop_equal.sol_fin.w,1/dyn_sol_coop_equal.sol_fin.price_indices))\
+    /(np.einsum('in,i,n->n',dyn_sol_coop_equal.sol_init.profit[...,1],dyn_sol_coop_equal.sol_init.w,1/dyn_sol_coop_equal.sol_init.price_indices))-1
+# df_summary['change in real profits (%) sum over i'] = (dyn_sol_coop_equal.sol_fin.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_fin.price_indices)\
+#     /(dyn_sol_coop_equal.sol_init.profit[...,1].sum(axis=1)/dyn_sol_coop_equal.sol_init.price_indices)-1
 df_summary['change in real wages (%)'] = (dyn_sol_coop_equal.sol_fin.w/dyn_sol_coop_equal.sol_fin.price_indices)\
     /(dyn_sol_coop_equal.sol_init.w/dyn_sol_coop_equal.sol_init.price_indices)-1
 
@@ -1709,6 +1716,279 @@ df.style.format(precision=5).to_latex(nash_coop_path+'dyn_Coop_negishi_weights_t
 df.to_csv(nash_coop_path+'dyn_Coop_negishi_weights_table.csv',float_format='%.5f')
 
 write_calibration_results(nash_coop_path+'dyn_Coop_negishi_weights',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
+
+#%% Partial equilibriums Nash
+
+sol, sol_init = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 1000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+sol_init.scale_P(p_baseline)
+sol_init.compute_non_solver_quantities(p_baseline)
+
+all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
+all_nashes = all_nashes.drop_duplicates(['baseline','variation'],keep='last')
+
+run_nash= all_nashes.loc[(all_nashes.baseline == int(baseline)) & (all_nashes.variation.astype(str) == variation)]
+
+p_nash = p_baseline.copy()
+p_nash.delta[:,1] = run_nash[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol = dyn_fixed_point_solver(p_nash, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol.compute_non_solver_quantities(p_nash)
+
+sol, dyn_sol_exog_lr = dyn_fixed_point_solver_exog_lr(p_nash,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_lr.compute_non_solver_quantities(p_nash)
+
+sol, dyn_sol_exog_patent = dyn_fixed_point_solver_exog_patent_thresholds(p_nash,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_patent.compute_non_solver_quantities(p_nash)
+
+sol, dyn_sol_exog_lr_and_patent = dyn_fixed_point_solver_exog_lr_and_patent_thresholds(p_nash,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_lr_and_patent.compute_non_solver_quantities(p_nash)
+
+df = pd.DataFrame(index=p_baseline.countries+['Equal','Negishi'])
+
+df['full solve'] = dyn_sol.cons_eq_welfare.tolist() + [dyn_sol.cons_eq_pop_average_welfare_change] + [dyn_sol.cons_eq_negishi_welfare_change]
+df['exog l_R'] = dyn_sol_exog_lr.cons_eq_welfare.tolist() + [dyn_sol_exog_lr.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_lr.cons_eq_negishi_welfare_change]
+df['exog patent thresh'] = dyn_sol_exog_patent.cons_eq_welfare.tolist() + [dyn_sol_exog_patent.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_patent.cons_eq_negishi_welfare_change]
+df['exog l_R and patent thresh'] = dyn_sol_exog_lr_and_patent.cons_eq_welfare.tolist() + [dyn_sol_exog_lr_and_patent.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_lr_and_patent.cons_eq_negishi_welfare_change]
+
+df.to_csv(partial_equilibria_path+'nash.csv')
+
+#%% Partial equilibriums Coop Equal
+
+sol, sol_init = fixed_point_solver(p_baseline,x0=p_baseline.guess,
+                                context = 'counterfactual',
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=True,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 10,
+                        max_count = 1000,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+sol_init.scale_P(p_baseline)
+sol_init.compute_non_solver_quantities(p_baseline)
+
+all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_equales = all_coop_equales.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_equal= all_coop_equales.loc[(all_coop_equales.baseline == int(baseline))
+                                     & (all_coop_equales.variation == variation)
+                                     & (all_coop_equales.aggregation_method == 'pop_weighted')]
+
+p_coop_equal = p_baseline.copy()
+p_coop_equal.delta[:,1] = run_coop_equal[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol = dyn_fixed_point_solver(p_coop_equal, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol.compute_non_solver_quantities(p_coop_equal)
+
+sol, dyn_sol_exog_lr = dyn_fixed_point_solver_exog_lr(p_coop_equal,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_lr.compute_non_solver_quantities(p_coop_equal)
+
+sol, dyn_sol_exog_patent = dyn_fixed_point_solver_exog_patent_thresholds(p_coop_equal,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_patent.compute_non_solver_quantities(p_coop_equal)
+
+sol, dyn_sol_exog_lr_and_patent = dyn_fixed_point_solver_exog_lr_and_patent_thresholds(p_coop_equal,p_baseline, sol_init, Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=True,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=True,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=5
+                        )
+dyn_sol_exog_lr_and_patent.compute_non_solver_quantities(p_coop_equal)
+
+df = pd.DataFrame(index=p_baseline.countries+['Equal','Negishi'])
+
+df['full solve'] = dyn_sol.cons_eq_welfare.tolist() + [dyn_sol.cons_eq_pop_average_welfare_change] + [dyn_sol.cons_eq_negishi_welfare_change]
+df['exog l_R'] = dyn_sol_exog_lr.cons_eq_welfare.tolist() + [dyn_sol_exog_lr.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_lr.cons_eq_negishi_welfare_change]
+df['exog patent thresh'] = dyn_sol_exog_patent.cons_eq_welfare.tolist() + [dyn_sol_exog_patent.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_patent.cons_eq_negishi_welfare_change]
+df['exog l_R and patent thresh'] = dyn_sol_exog_lr_and_patent.cons_eq_welfare.tolist() + [dyn_sol_exog_lr_and_patent.cons_eq_pop_average_welfare_change] + [dyn_sol_exog_lr_and_patent.cons_eq_negishi_welfare_change]
+
+df.to_csv(partial_equilibria_path+'coop_equal.csv')
+
 
 #%% Write excel spreadsheets for partial calibration pre-TRIPS
 
@@ -2651,6 +2931,7 @@ df = pd.DataFrame(columns = ['welfare_US'])
 df.loc['no protection','welfare_US'] = dyn_sol_nash.cons_eq_welfare[0]
 df.loc['full protection','welfare_US'] = dyn_sol_nash_dev.cons_eq_welfare[0]
 
+df.to_csv(counterfactuals_doubled_nu_tau_path+'check_US_dev_Nash_doubled_tau_pat_sect.csv',float_format='%.5f')
 
 #%% Nash table with transitional dynamics with doubled trade costs in patenting sector
 
@@ -3699,7 +3980,7 @@ df.to_csv(no_obsolescence_path+'dyn_Coop_negishi_weights_table_with_no_obsolesce
 write_calibration_results(no_obsolescence_path+'dyn_Coop_negishi_weights_with_no_obsolescence',p_coop_negishi,m_coop_negishi,dyn_sol_coop_negishi.sol_fin,commentary = '')
 
 
-#%% Nash table with transitional dynamics -- multi-sector #TODO
+#%% Nash table with transitional dynamics -- multi-sector
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -3773,8 +4054,78 @@ for col in df.columns:
 
 df.to_csv(multi_sector_path+'dyn_Nash_table.csv',float_format='%.5f')
 
+# if policy was the same as monosector
 
-#%% Coop equal weights table with transitional dynamics -- multi-sector #TODO
+all_nashes = pd.read_csv('nash_eq_recaps/dyn_deltas.csv')
+all_nashes = all_nashes.drop_duplicates(['baseline','variation'],keep='last')
+
+run_nash= all_nashes.loc[(all_nashes.baseline == int(baseline)) & (all_nashes.variation.astype(str) == variation)]
+
+p_nash.delta[:,1] = run_nash[p_baseline.countries].values.squeeze()
+p_nash.delta[:,2] = run_nash[p_baseline.countries].values.squeeze()
+
+sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_baseline_multi,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_baseline_multi)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_baseline_multi)
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta pharma/chem$',r'$\delta patenting$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta patenting$'] = p_nash.delta[i,1]
+    df.loc[countries_names[c],r'$\delta pharma/chem$'] = p_nash.delta[i,2]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+df.to_csv(multi_sector_path+'dyn_Nash_table_if_same_policy_as_monosector.csv',float_format='%.5f')
+
+
+#%% Coop equal weights table with transitional dynamics -- multi-sector
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()
@@ -3848,8 +4199,86 @@ for col in df.columns:
 
 df.to_csv(multi_sector_path+'dyn_Coop_equal_table.csv',float_format='%.5f')
 
+# if same policy as monosector
 
-#%% Coop negishi weights table with transitional dynamics -- multi-sector #TODO
+all_coop_equales = pd.read_csv('coop_eq_recaps/dyn_deltas.csv')
+all_coop_equales = all_coop_equales.drop_duplicates(['baseline',
+                                                     'variation',
+                                                     'aggregation_method'],keep='last')
+
+run_coop_equal= all_coop_equales.loc[(all_coop_equales.baseline == int(baseline))
+                                     & (all_coop_equales.variation == variation)
+                                     & (all_coop_equales.aggregation_method == 'pop_weighted')]
+
+p_equal.delta[:,1] = run_coop_equal[p_baseline.countries].values.squeeze()
+p_equal.delta[:,2] = run_coop_equal[p_baseline.countries].values.squeeze()
+
+sol_baseline_multi = var.var_from_vector(p_multi.guess, p_multi, compute=True, context = 'counterfactual')
+sol_baseline_multi.scale_P(p_multi)
+sol_baseline_multi.compute_non_solver_quantities(p_multi)
+
+sol, dyn_sol_equal = dyn_fixed_point_solver(p_equal, sol_init=sol_baseline_multi,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_equal.compute_non_solver_quantities(p_equal)
+dyn_sol_equal.sol_fin.compute_consumption_equivalent_welfare(p_equal,sol_baseline_multi)
+dyn_sol_equal.sol_fin.compute_world_welfare_changes(p_equal,sol_baseline_multi)
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta pharma/chem$',r'$\delta patenting$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta patenting$'] = p_equal.delta[i,1]
+    df.loc[countries_names[c],r'$\delta pharma/chem$'] = p_equal.delta[i,2]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+df.to_csv(multi_sector_path+'dyn_Coop_equal_table_if_same_policy_as_monosector.csv',float_format='%.5f')
+
+
+#%% Coop negishi weights table with transitional dynamics -- multi-sector
 
 multi_sector_run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{multi_sector_variation}/'
 p_multi = parameters()

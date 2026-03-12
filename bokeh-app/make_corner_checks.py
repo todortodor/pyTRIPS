@@ -24,7 +24,8 @@ results_path = 'calibration_results_matched_economy/'
 
 baseline_dics = [
     # {'baseline':'2000','variation': 'baseline'},
-    {'baseline':'2000','variation': '14.0'},
+    # {'baseline':'2000','variation': '14.0'},
+    {'baseline':'2000','variation': '14.1'},
     # {'baseline':'2000','variation': '99.0'},
     # {'baseline':'2000','variation': '99.1'},
     # {'baseline':'2000','variation': '99.2'},
@@ -82,8 +83,8 @@ for baseline_dic in baseline_dics:
         direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
         
         p_opti = parameters()
-        p_opti.load_run(f'coop_eq_direct_saves/dyn_{direct_save_path}_{aggregation_method}/')
-        # p_opti.load_run(f'coop_eq_direct_saves/{direct_save_path}_{aggregation_method}/')
+        # p_opti.load_run(f'coop_eq_direct_saves/dyn_{direct_save_path}_{aggregation_method}/')
+        p_opti.load_run(f'coop_eq_direct_saves/{direct_save_path}_{aggregation_method}/')
         
         solver_options = dict(cobweb_anim=False,tol =1e-14,
                                 accelerate=False,
@@ -168,8 +169,6 @@ for baseline_dic in baseline_dics:
                                 damping_post_acceleration=10
                                 )
         dyn_sol_coop_equal.compute_non_solver_quantities(p_opti)
-        
-        #%%
         
         sol_opti = dyn_sol_coop_equal.copy()
         p = p_opti.copy()

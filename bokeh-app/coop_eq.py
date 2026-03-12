@@ -26,7 +26,7 @@ pylab.rcParams.update(params)
 
 baseline_dics = [
     # {'baseline':'2000','variation': 'baseline'},
-    {'baseline':'2000','variation': '14.0'},
+    {'baseline':'2002','variation': '8.8'},
     # {'baseline':'2000','variation': '99.0'},
     # {'baseline':'2000','variation': '99.1'},
     # {'baseline':'2000','variation': '99.2'},
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             
             print(time.perf_counter() - start)
             
-            write = True
+            write = False
             if write:
                 if not os.path.exists('coop_eq_recaps/deltas.csv'):
                     deltas_df = pd.DataFrame(columns = ['baseline',
