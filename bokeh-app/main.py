@@ -143,7 +143,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         dic_df_sol[sol_qty] = df
     
     df_scalar_moments.loc['objective','target'] = 0.01
-    # df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
+    df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
     dic_df_mom['scalars'] = df_scalar_moments
     return dic_df_param, dic_df_mom, dic_df_sol
 
