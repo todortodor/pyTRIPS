@@ -6262,6 +6262,7 @@ class moments:
                     'SDOMTFLOW':pd.MultiIndex.from_product([self.countries,self.sectors]
                                                       , names=['country','sector']),
                     'TP':pd.Index(['scalar']),
+                    'objective':pd.Index(['scalar']),
                     'inter_TP':pd.Index(['scalar']),
                     'Z':pd.Index(self.countries, name='country'),
                     'DOMPATRATUSEU':pd.Index(self.countries, name='country'),

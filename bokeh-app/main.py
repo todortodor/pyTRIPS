@@ -35,7 +35,8 @@ def load(path, data_path=None,
     # m.load_data(data_path)
     m.load_run(path,dir_path=dir_path)
     m.compute_moments(sol, p)
-    # m.compute_moments_deviations()
+    m.compute_moments_deviations()
+    # print(m.objective_function())
     return p,m,sol
 
 def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list_of_moments):
@@ -87,7 +88,8 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
     df_scalar_moments.index.name='x'
     for mom in list_of_moments:
-        if mom != 'objective':
+        # if mom != 'objective':
+        if True:
             if len(m_baseline.idx[mom]) == 1:
                 if mom != 'OUT':
                     try:
@@ -140,7 +142,7 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
         df['baseline'] = getattr(sol_baseline,'psi_m_star')[:,:,1].min(axis=0)
         dic_df_sol[sol_qty] = df
     
-    # df_scalar_moments.loc['objective','target'] = 0.01
+    df_scalar_moments.loc['objective','target'] = 0.01
     # df_scalar_moments.loc['objective','baseline'] = m_baseline.objective_function()*28
     dic_df_mom['scalars'] = df_scalar_moments
     return dic_df_param, dic_df_mom, dic_df_sol
@@ -511,8 +513,8 @@ def update_x_axis_target(attrname, old, new):
         m_temp.load_run(path_x_axis,
         dir_path=dir_path)
         for i,x in enumerate(df_temp['x']):
-            if x != 'objective':
-                df_temp['target'][i] = float(getattr(m_temp,x+'_target'))
+            # if x != 'objective':
+            df_temp['target'][i] = float(getattr(m_temp,x+'_target'))
     ds_mom.data = df_temp
     
 def toggle_labels(event):
