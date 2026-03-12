@@ -7850,7 +7850,7 @@ def make_counterfactual_double_delta(p_baseline,country,local_path,
 
     print(country)
     p = p_baseline.copy()
-    delta_factor_array = np.logspace(-1,1,11)
+    delta_factor_array = np.logspace(-1,1,6)
     if country in p_baseline.countries:
         idx_country = p_baseline.countries.index(country)
         

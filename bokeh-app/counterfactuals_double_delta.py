@@ -68,8 +68,8 @@ dynamics = True
 
 if __name__ == '__main__':
     for baseline_dic in baseline_dics:
-        # for delta_to_change in ['dom','int','both']:
-        for delta_to_change in ['both']:
+        for delta_to_change in ['dom','int']:
+        # for delta_to_change in ['both']:
             if baseline_dic['variation'] == 'baseline':
                 baseline_path = 'calibration_results_matched_economy/'+baseline_dic['baseline']+'/'
             else:
