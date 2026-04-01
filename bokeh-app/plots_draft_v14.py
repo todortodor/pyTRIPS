@@ -2846,92 +2846,100 @@ df.to_csv(pre_TRIPS_plots_path+'tariff_eq_trips_exp_pat_sect.csv',float_format='
 
 #%% Check that the US deviates in Nash for doubled trade costs
 
-p_pre = parameters()
-p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_tau_in_pat_sect}/')
-_, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='phi',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=False,
-                        damping = 10,
-                        max_count = 3e3,
-                        accel_memory = 50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=5
-                        )
-sol_pre.scale_P(p_pre)
-sol_pre.compute_non_solver_quantities(p_pre)
-
-p_nash = p_pre.copy()
-p_nash.delta[:,1] = 12.0
-
-sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_pre,Nt=25,
-                                      t_inf=500,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='l_R',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        plot_live = False,
-                        safe_convergence=1e-8,
-                        disp_summary=False,
-                        damping = 60,
-                        max_count = 50000,
-                        accel_memory =5, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=1, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=10
-                        )
-dyn_sol_nash.compute_non_solver_quantities(p_nash)
-dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_pre)
-dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_pre)
-
-p_nash_dev = p_pre.copy()
-p_nash_dev.delta[:,1] = 12.0
-p_nash_dev.delta[0,1] = 0.01
-
-sol, dyn_sol_nash_dev = dyn_fixed_point_solver(p_nash_dev, sol_init=sol_pre,Nt=25,
-                                      t_inf=500,
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='l_R',
-                        plot_convergence=False,
-                        plot_cobweb=False,
-                        plot_live = False,
-                        safe_convergence=1e-8,
-                        disp_summary=False,
-                        damping = 60,
-                        max_count = 50000,
-                        accel_memory =5, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=1, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=10
-                        )
-dyn_sol_nash_dev.compute_non_solver_quantities(p_nash_dev)
-dyn_sol_nash_dev.sol_fin.compute_consumption_equivalent_welfare(p_nash_dev,sol_pre)
-dyn_sol_nash_dev.sol_fin.compute_world_welfare_changes(p_nash_dev,sol_pre)
-
+# p_pre = parameters()
+# p_pre.load_run(f'calibration_results_matched_economy/baseline_{baseline_pre_trips_variation}_variations/{variation_with_doubled_tau_in_pat_sect}/')
 df = pd.DataFrame(columns = ['welfare_US'])
-df.loc['no protection','welfare_US'] = dyn_sol_nash.cons_eq_welfare[0]
-df.loc['full protection','welfare_US'] = dyn_sol_nash_dev.cons_eq_welfare[0]
-
-df.to_csv(counterfactuals_doubled_nu_tau_path+'check_US_dev_Nash_doubled_tau_pat_sect.csv',float_format='%.5f')
+for factor in [2,3,4,5,6,7,8,9,10]:
+    p_pre = p_baseline.copy()
+    p_pre.tau = p_pre.tau*factor
+    for i in range(p.N):
+        p_pre.tau[i,i,:] = 1.0
+    _, sol_pre = fixed_point_solver(p_pre,context = 'counterfactual',x0=p_pre.guess,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='phi',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            safe_convergence=0.001,
+                            disp_summary=False,
+                            damping = 10,
+                            max_count = 3e3,
+                            accel_memory = 50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=5
+                            )
+    sol_pre.scale_P(p_pre)
+    sol_pre.compute_non_solver_quantities(p_pre)
+    
+    p_nash = p_pre.copy()
+    p_nash.delta[:,1] = 12.0
+    
+    sol, dyn_sol_nash = dyn_fixed_point_solver(p_nash, sol_init=sol_pre,Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 60,
+                            max_count = 20000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol_nash.compute_non_solver_quantities(p_nash)
+    dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_pre)
+    dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_pre)
+    
+    p_nash_dev = p_pre.copy()
+    p_nash_dev.delta[:,1] = 12.0
+    p_nash_dev.delta[0,1] = 0.01
+    
+    sol, dyn_sol_nash_dev = dyn_fixed_point_solver(p_nash_dev, sol_init=sol_pre,Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=True,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=True,
+                            damping = 60,
+                            max_count = 20000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol_nash_dev.compute_non_solver_quantities(p_nash_dev)
+    dyn_sol_nash_dev.sol_fin.compute_consumption_equivalent_welfare(p_nash_dev,sol_pre)
+    dyn_sol_nash_dev.sol_fin.compute_world_welfare_changes(p_nash_dev,sol_pre)
+    
+    
+    df.loc['factor' + str(factor) + ', no protection','welfare_US'] = dyn_sol_nash.cons_eq_welfare[0]*100-100
+    df.loc['factor' + str(factor) + ', full protection','welfare_US'] = dyn_sol_nash_dev.cons_eq_welfare[0]*100-100
+    
+    print(df)
+    
+    df.to_csv(counterfactuals_doubled_nu_tau_path+'check_US_dev_Nash_doubled_tau_pat_sect.csv',float_format='%.5f')
 
 #%% Nash table with transitional dynamics with doubled trade costs in patenting sector
 

@@ -27,10 +27,15 @@ pylab.rcParams.update(params)
 baseline_dics = [
     {'baseline':'2003','variation': 'baseline'},
     # {'baseline':'1312','variation': '1.07'},
-    # {'baseline':'1312','variation': '2.02'},
-    # {'baseline':'1312','variation': '2.07'},
-    # {'baseline':'1312','variation': '2.05'},
-    # {'baseline':'1312','variation': '4.0'},
+    # {'baseline':'2003','variation': '2.02'},
+    # {'baseline':'2003','variation': '2.03'},
+    # {'baseline':'2003','variation': '2.04'},
+    # {'baseline':'2003','variation': '2.05'},
+    # {'baseline':'2003','variation': '2.06'},
+    # {'baseline':'2003','variation': '2.07'},
+    # {'baseline':'2003','variation': '1.01'},
+    # {'baseline':'2003','variation': '3.0'},
+    # {'baseline':'2003','variation': '4.0'},
     ]
 
 
@@ -53,6 +58,8 @@ if __name__ == '__main__':
         print(baseline_path)
         p_baseline = parameters()
         p_baseline.load_run(baseline_path)  
+        p_baseline.tau[:] = 1.0
+        p_baseline.tariff[:] = 0.0
         
         for aggregation_method in ['pop_weighted','negishi']:
         # for aggregation_method in ['pop_weighted']:
@@ -69,9 +76,9 @@ if __name__ == '__main__':
             
             print(time.perf_counter() - start)
             
-            write = True
+            write = False
             if write:
                 save_directly = True
                 if save_directly:
                     direct_save_path = baseline_dic["baseline"] + '_' + baseline_dic['variation']
-                    p_opti.write_params(f'coop_eq_direct_saves/dyn_single_delta_{direct_save_path}_{aggregation_method}/')
+                    p_opti.write_params(f'coop_eq_direct_saves/{direct_save_path}_{aggregation_method}/')

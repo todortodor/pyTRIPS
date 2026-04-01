@@ -10,7 +10,7 @@ import numpy as np
 import aa
 import matplotlib.pyplot as plt
 import time
-from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs,var_double_diff_double_delta, history_nash, dynamic_var, dynamic_var_double_diff_double_delta
+from classes import cobweb, sol_class, moments, parameters, var, var_with_entry_costs, var_with_fdi, var_double_diff_double_delta, history_nash, dynamic_var, dynamic_var_double_diff_double_delta
 from scipy import optimize
 import os
 from optimparallel import minimize_parallel
@@ -640,6 +640,173 @@ def fixed_point_solver_exog_lr_and_patent_thresholds(p, p_old, context, x0=None,
         plt.show()
 
     return sol_inst, init
+
+
+def get_vec_qty_fdi(x, p):
+    """Decompose the solver vector — mirrors get_vec_qty in solver_funcs.py."""
+    N, S = p.N, p.S
+    i0=0
+    w      =x[i0:i0+N];                    i0+=N
+    Z      =x[i0:i0+N];                    i0+=N
+    l_R    =x[i0:i0+N*(S-1)];              i0+=N*(S-1)
+    profit =x[i0:i0+N*N*(S-1)];            i0+=N*N*(S-1)
+    phi    =x[i0:i0+N*N*S];                i0+=N*N*S
+    pi_idx =x[i0:i0+N];                    i0+=N
+    pi_F   =x[i0:]
+    return {'w':w,'Z':Z,'l_R':l_R,'profit':profit,
+            'phi':phi,'price_indices':pi_idx,'pi_F':pi_F}
+ 
+ 
+# ─────────────────────────────────────────────────────────────────────────────
+# fixed_point_solver_with_fdi
+# ─────────────────────────────────────────────────────────────────────────────
+ 
+def fixed_point_solver_with_fdi(
+        p, context, x0=None, tol=1e-15, damping=10, max_count=1e4,
+        accelerate=False, safe_convergence=0.001, accelerate_when_stable=True,
+        plot_cobweb=False, plot_live=False, cobweb_anim=False,
+        cobweb_qty='profit', plot_convergence=False,
+        apply_bound_zero=False, keep_l_R_fixed=False,
+        accel_memory=50, accel_type1=True, accel_regularization=1e-10,
+        accel_relaxation=0.5, accel_safeguard_factor=1, accel_max_weight_norm=1e6,
+        disp_summary=False, damping_post_acceleration=5):
+    """
+    Fixed-point solver for var_with_fdi.
+ 
+    Identical in structure to fixed_point_solver_with_entry_costs; the only
+    differences are:
+      1. Uses var_with_fdi instead of var_with_entry_costs.
+      2. The solver vector includes pi_F (normalised FDI profits).
+      3. compute_pi_F() is called each iteration alongside compute_profit().
+      4. Convergence is checked on pi_F as well as the standard quantities.
+    """
+    from classes import sol_class, cobweb
+ 
+    # ── initial guess ────────────────────────────────────────────────────────
+    # if x0 is not None:
+    #     x_old = x0.copy()
+    # else:
+    #     x_old = None
+
+    condition = True
+    
+    pi_F_size = p.N * p.N * (p.S - 1)
+    entry_costs_size = 2*p.N + p.N*(p.S-1) + p.N**2*(p.S-1) + p.N**2*p.S + p.N
+    full_size = entry_costs_size + pi_F_size
+
+    if x0 is None:
+        base = p.guess if p.guess is not None else p.guess_from_params(for_solver_with_entry_costs=True)
+    else:
+        base = x0
+
+    if len(base) < entry_costs_size:
+        # base is from var (no price_indices) — append price_indices and pi_F
+        price_indices_init = np.ones(p.N)
+        pi_F_init = np.ones(pi_F_size) * 1e-4
+        x0 = np.concatenate([base, price_indices_init, pi_F_init])
+    elif len(base) < full_size:
+        # base is from var_with_entry_costs (has price_indices, no pi_F)
+        pi_F_init = np.ones(pi_F_size) * 1e-4
+        x0 = np.concatenate([base, pi_F_init])
+    else:
+        x0 = base
+
+    x_old = x0.copy()
+    count = 0
+    convergence = []
+    hit_the_bound_count = 0
+    x_new = None
+    l_R_0 = None
+ 
+    aa_wrk = aa.AndersonAccelerator(
+        dim=len(x_old), mem=accel_memory, type1=accel_type1,
+        regularization=accel_regularization, relaxation=accel_relaxation,
+        safeguard_factor=accel_safeguard_factor, max_weight_norm=accel_max_weight_norm)
+    cob   = cobweb(cobweb_qty)
+    start = time.perf_counter()
+ 
+    while condition and count < max_count and np.all(x_old < 1e40):
+        # print(count, len(x_old))
+        if count != 0:
+            if accelerate:
+                aa_wrk.apply(x_new, x_old)
+            x_old = (x_new + (damping-1)*x_old) / damping
+ 
+        if apply_bound_zero:
+            if np.any(x_old <= 0):
+                x_old[x_old <= 0] = 1e-12
+                hit_the_bound_count += 1
+ 
+        init = var_with_fdi.var_from_vector(x_old, p, context=context, compute=False)
+ 
+        if count == 0 and keep_l_R_fixed:
+            init.compute_solver_quantities(p)
+            l_R_0 = init.l_R[...,1:].ravel().copy()
+ 
+        init.compute_solver_quantities(p)
+ 
+        # update
+        w             = init.compute_wage(p)
+        Z             = init.compute_expenditure(p)
+        l_R           = init.compute_labor_research(p)[...,1:].ravel()
+        profit        = init.compute_profit(p)[...,1:].ravel()
+        phi           = init.compute_phi(p).ravel()
+        price_indices = init.compute_price_indices(p)
+        pi_F          = init.compute_pi_F(p)[...,1:].ravel()   # [FDI]
+ 
+        if keep_l_R_fixed and l_R_0 is not None:
+            l_R = l_R_0.copy()
+ 
+        P0 = price_indices[0]
+        x_new = np.concatenate([
+            w/P0, Z/P0, l_R, profit, phi*P0, price_indices/P0,
+            pi_F,   # not rescaled — it is a dimensionless ratio
+        ])
+ 
+        # convergence
+        xn = get_vec_qty_fdi(x_new, p)
+        xo = get_vec_qty_fdi(x_old, p)
+        if count < 2:
+            print('x_old shape:', len(x_old), 'x_new shape:', len(x_new))
+        conds = [
+            np.linalg.norm(xn[q]-xo[q]) / (np.linalg.norm(xo[q])+1e-30) > tol
+            for q in ['w','Z','profit','l_R','phi','pi_F']
+        ]
+        condition = np.any(conds)
+        convergence.append(
+            np.linalg.norm(x_new-x_old) / (np.linalg.norm(x_old)+1e-30))
+ 
+        count += 1
+        if np.all(np.array(convergence[-5:]) < safe_convergence):
+            if accelerate_when_stable:
+                accelerate = True
+                damping    = damping_post_acceleration
+ 
+        if plot_live and count>500 and count%500==0:
+            plt.plot(convergence); plt.yscale('log'); plt.show()
+ 
+    finish = time.perf_counter()
+ 
+    if (x_new is not None and count < max_count
+            and np.isnan(x_new).sum()==0
+            and np.all(x_new<1e40) and np.all(x_new>0)):
+        status = 'successful'
+    else:
+        status = 'failed'
+ 
+    sol_inst = sol_class(
+        x_new, p, solving_time=finish-start, iterations=count,
+        deviation_norm='TODO', status=status,
+        hit_the_bound_count=hit_the_bound_count, x0=x0, tol=tol)
+ 
+    if disp_summary:
+        sol_inst.run_summary()
+ 
+    if plot_convergence:
+        plt.semilogy(convergence, label='convergence'); plt.legend(); plt.show()
+ 
+    return sol_inst, init
+ 
 
 def fixed_point_solver_with_entry_costs(p, context, x0=None, tol = 1e-15, damping = 10, max_count=1e4,
                        accelerate = False, safe_convergence=0.001,accelerate_when_stable=True, 
