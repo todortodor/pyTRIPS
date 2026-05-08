@@ -1,0 +1,145 @@
+File_ccode,Rep_ccode,FileCountry,RepCountry,Year,FileToRep_Flow
+1,1,United States,United States,2015,8023744.87718023
+1,2,United States,Europe,2015,1180066.8009069457
+1,3,United States,Japan,2015,295422.94946001726
+1,4,United States,China,2015,11696.257712176583
+1,5,United States,Brazil,2015,40238.798868774466
+1,6,United States,India,2015,7169.389669089853
+1,7,United States,Canada,2015,89550.96552685942
+1,8,United States,"Korea, Republic of",2015,33927.587752873274
+1,9,United States,Russian Federation,2015,3579.919958103326
+1,10,United States,Mexico,2015,19620.93932023494
+1,11,United States,South Africa,2015,2741.9598711794715
+1,12,United States,Rest of World,2015,94131.56597351906
+2,1,Europe,United States,2015,1238536.0747249555
+2,2,Europe,Europe,2015,10467765.462015262
+2,3,Europe,Japan,2015,164558.69838346995
+2,4,Europe,China,2015,43300.87323811803
+2,5,Europe,Brazil,2015,7424.7202178527305
+2,6,Europe,India,2015,12707.50901864781
+2,7,Europe,Canada,2015,50043.989417400546
+2,8,Europe,"Korea, Republic of",2015,35516.850770125835
+2,9,Europe,Russian Federation,2015,31764.344026424238
+2,10,Europe,Mexico,2015,3333.620121261032
+2,11,Europe,South Africa,2015,5643.2512974756955
+2,12,Europe,Rest of World,2015,90922.04856900417
+3,1,Japan,United States,2015,56328.68348725745
+3,2,Japan,Europe,2015,55926.00840458915
+3,3,Japan,Japan,2015,3063928.5541165266
+3,4,Japan,China,2015,4751.740080395666
+3,5,Japan,Brazil,2015,0.0
+3,6,Japan,India,2015,49.460000980900304
+3,7,Japan,Canada,2015,2359.6500108565806
+3,8,Japan,"Korea, Republic of",2015,2812.070128648037
+3,9,Japan,Russian Federation,2015,0.0
+3,10,Japan,Mexico,2015,0.0
+3,11,Japan,South Africa,2015,0.0
+3,12,Japan,Rest of World,2015,22347.390270745636
+4,1,China,United States,2015,231448.61280608494
+4,2,China,Europe,2015,278110.07624924707
+4,3,China,Japan,2015,255347.20734566645
+4,4,China,China,2015,15276888.49949363
+4,5,China,Brazil,2015,9336.898944564258
+4,6,China,India,2015,1367.809941880597
+4,7,China,Canada,2015,5181.780012146434
+4,8,China,"Korea, Republic of",2015,280733.56265723443
+4,9,China,Russian Federation,2015,11177.648907369685
+4,10,China,Mexico,2015,10607.648459647447
+4,11,China,South Africa,2015,2088.4397414816
+4,12,China,Rest of World,2015,246290.30034105747
+5,1,Brazil,United States,2015,102822.32857741066
+5,2,Brazil,Europe,2015,112781.97449711498
+5,3,Brazil,Japan,2015,8474.011296338038
+5,4,Brazil,China,2015,3029.4793331587794
+5,5,Brazil,Brazil,2015,790376.4926313383
+5,6,Brazil,India,2015,69.44998142025676
+5,7,Brazil,Canada,2015,9572.27130006721
+5,8,Brazil,"Korea, Republic of",2015,1957.1997713591634
+5,9,Brazil,Russian Federation,2015,0.0
+5,10,Brazil,Mexico,2015,2557.8402508776053
+5,11,Brazil,South Africa,2015,5.54999853836067
+5,12,Brazil,Rest of World,2015,12879.56166237661
+6,1,India,United States,2015,43307.11016524965
+6,2,India,Europe,2015,63443.816318296456
+6,3,India,Japan,2015,16638.38998644012
+6,4,India,China,2015,17148.35105745464
+6,5,India,Brazil,2015,978.6999814712725
+6,6,India,India,2015,1343669.60499517
+6,7,India,Canada,2015,1675.2997215478533
+6,8,India,"Korea, Republic of",2015,6343.62054034468
+6,9,India,Russian Federation,2015,1311.689959481958
+6,10,India,Mexico,2015,0.0
+6,11,India,South Africa,2015,550.3999710940025
+6,12,India,Rest of World,2015,8858.259303447241
+7,1,Canada,United States,2015,193774.39604069697
+7,2,Canada,Europe,2015,91539.83568512744
+7,3,Canada,Japan,2015,24682.042555661592
+7,4,Canada,China,2015,1985.549928948063
+7,5,Canada,Brazil,2015,1953.1396664947665
+7,6,Canada,India,2015,2922.2890784243564
+7,7,Canada,Canada,2015,421215.58139558363
+7,8,Canada,"Korea, Republic of",2015,1568.3199582565835
+7,9,Canada,Russian Federation,2015,307.50994296139675
+7,10,Canada,Mexico,2015,1404.4697498645753
+7,11,Canada,South Africa,2015,452.3599300904364
+7,12,Canada,Rest of World,2015,17456.978467890025
+8,1,"Korea, Republic of",United States,2015,47266.45747810438
+8,2,"Korea, Republic of",Europe,2015,35846.260266390214
+8,3,"Korea, Republic of",Japan,2015,26419.328925828027
+8,4,"Korea, Republic of",China,2015,0.0
+8,5,"Korea, Republic of",Brazil,2015,0.0
+8,6,"Korea, Republic of",India,2015,1682.7803139452328
+8,7,"Korea, Republic of",Canada,2015,154.64981279093422
+8,8,"Korea, Republic of","Korea, Republic of",2015,1647078.807127476
+8,9,"Korea, Republic of",Russian Federation,2015,0.0
+8,10,"Korea, Republic of",Mexico,2015,0.0
+8,11,"Korea, Republic of",South Africa,2015,0.0
+8,12,"Korea, Republic of",Rest of World,2015,11218.689775466553
+9,1,Russian Federation,United States,2015,23829.836767695535
+9,2,Russian Federation,Europe,2015,53357.56945490279
+9,3,Russian Federation,Japan,2015,621.1201751491868
+9,4,Russian Federation,China,2015,9745.397814216802
+9,5,Russian Federation,Brazil,2015,1031.8797790625904
+9,6,Russian Federation,India,2015,115.93993609327983
+9,7,Russian Federation,Canada,2015,1111.0999558691262
+9,8,Russian Federation,"Korea, Republic of",2015,4234.699464762282
+9,9,Russian Federation,Russian Federation,2015,620308.7948902769
+9,10,Russian Federation,Mexico,2015,0.0
+9,11,Russian Federation,South Africa,2015,230.35994372465348
+9,12,Russian Federation,Rest of World,2015,9508.128618246506
+10,1,Mexico,United States,2015,112675.4542720875
+10,2,Mexico,Europe,2015,68078.1516712674
+10,3,Mexico,Japan,2015,11545.245065649948
+10,4,Mexico,China,2015,3954.7978069319965
+10,5,Mexico,Brazil,2015,1173.7194472266017
+10,6,Mexico,India,2015,80.03992551390061
+10,7,Mexico,Canada,2015,8330.217437560008
+10,8,Mexico,"Korea, Republic of",2015,2125.368784443024
+10,9,Mexico,Russian Federation,2015,865.8795632718209
+10,10,Mexico,Mexico,2015,553136.2027050193
+10,11,Mexico,South Africa,2015,238.8299007131129
+10,12,Mexico,Rest of World,2015,15300.822720314356
+11,1,South Africa,United States,2015,14777.922190268637
+11,2,South Africa,Europe,2015,33634.76328898604
+11,3,South Africa,Japan,2015,6122.127307652979
+11,4,South Africa,China,2015,1852.2103121563805
+11,5,South Africa,Brazil,2015,494.3698496129064
+11,6,South Africa,India,2015,86.03009119174047
+11,7,South Africa,Canada,2015,573.830336989749
+11,8,South Africa,"Korea, Republic of",2015,866.4498198339611
+11,9,South Africa,Russian Federation,2015,362.7998539210009
+11,10,South Africa,Mexico,2015,305.9498836091869
+11,11,South Africa,South Africa,2015,160258.52686334905
+11,12,South Africa,Rest of World,2015,13663.974002428418
+12,1,Rest of World,United States,2015,441453.8640462395
+12,2,Rest of World,Europe,2015,481440.2847325182
+12,3,Rest of World,Japan,2015,310738.80269925826
+12,4,Rest of World,China,2015,179355.9514688635
+12,5,Rest of World,Brazil,2015,10446.226828771481
+12,6,Rest of World,India,2015,3395.37861822516
+12,7,Rest of World,Canada,2015,34793.10928963275
+12,8,Rest of World,"Korea, Republic of",2015,62299.01850662757
+12,9,Rest of World,Russian Federation,2015,8971.218751608147
+12,10,Rest of World,Mexico,2015,9366.812099416988
+12,11,Rest of World,South Africa,2015,4403.93769246906
+12,12,Rest of World,Rest of World,2015,6594696.063666365

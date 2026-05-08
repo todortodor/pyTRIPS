@@ -39,15 +39,27 @@ if new_run:
 # m.list_of_moments.remove('RP')
 # m.list_of_moments.append('SGDP')
 # m.list_of_moments.append('RGDPPC')
-p.calib_parameters.remove('zeta')
-p.zeta[:] = 0
+# p.calib_parameters.remove('zeta')
+# p.zeta[:] = 0
 # m.drop_CHN_IND_BRA_ROW_from_RD = True
 # p.sigma = np.array([2.7, 2.9])
 # m.weights_dict['RD'] = 10
 # p.calib_parameters = ['eta', 'k', 'fe', 'T', 'zeta', 'g_0', 'delta', 'nu', 'fo', 'theta']
-# m.list_of_moments = ['GPDIFF',
-#  'GROWTH', 'KM', 'OUT', 'RD', 'RP', 'SRGDP', 'SINNOVPATUS', 'TO', 'SPFLOW', 'UUPCOST', 'DOMPATINUS',
-#  'TE']
+m.list_of_moments = ['GPDIFF',
+ 'GROWTH',
+ 'KM',
+ 'OUT',
+ 'RD',
+ # 'RP',
+ # 'SRGDP',
+ 'SGDP',
+ 'RGDPPC',
+ 'SINNOVPATUS',
+ 'TO',
+ 'SPFLOW',
+ 'UUPCOST',
+ 'DOMPATINUS',
+ 'TE']
 # m.load_data('data/data_11_countries_1992/')
 # m.weights_dict['TO'] = 5
 # m.weights_dict['TE'] = 10
@@ -187,7 +199,7 @@ commentary = ''
 baseline_number = '2000'
 dropbox_path = '/Users/slepot/Dropbox/TRIPS/simon_version/code/calibration_results_matched_economy/'
 local_path = 'calibration_results_matched_economy/baseline_'+baseline_number+'_variations/'
-run_number = 12.0
+run_number = 13.0
 # run_number = f'{n}.1'
 # run_str = '4.'
 path = dropbox_path+'baseline_'+baseline_number+'_variations/'

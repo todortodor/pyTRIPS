@@ -23,6 +23,7 @@ SPFLOWDOM_US;Ratio of patent flows to the US to world patenting
 SPFLOWDOM_RUS;Ratio of patent flows to world patenting, ratio to the US-US patent flow
 SRDUS;Market share of innovative firms in US
 SRGDP;World real GDP shares
+SGDP;World GDP shares
 SRGDP_US;US share of world real GDP 
 SRGDP_RUS;Share of world real GDP, ratio with the US
 STFLOW;Ratio of bilateral trade flow to world output

@@ -699,17 +699,24 @@ def fixed_point_solver_with_fdi(
     else:
         base = x0
 
+    # Always strip to entry_costs_size and rebuild pi_F from export profits.
+    # This avoids reusing a stale near-zero pi_F from a previous run and
+    # prevents the self-fulfilling zero-FDI equilibrium.
     if len(base) < entry_costs_size:
-        # base is from var (no price_indices) — append price_indices and pi_F
+        # base is from var (no price_indices) — append price_indices then pi_F
         price_indices_init = np.ones(p.N)
-        pi_F_init = np.ones(pi_F_size) * 1e-4
-        x0 = np.concatenate([base, price_indices_init, pi_F_init])
-    elif len(base) < full_size:
-        # base is from var_with_entry_costs (has price_indices, no pi_F)
-        pi_F_init = np.ones(pi_F_size) * 1e-4
-        x0 = np.concatenate([base, pi_F_init])
-    else:
-        x0 = base
+        base = np.concatenate([base, price_indices_init])
+
+    # Strip any existing pi_F tail, then rebuild from export profits
+    base_core = base[:entry_costs_size]
+    # Export profits sit at offset 2N + N*(S-1) with length N²*(S-1)
+    profit_offset = 2*p.N + p.N*(p.S-1)
+    profit_flat = base_core[profit_offset : profit_offset + pi_F_size]
+    # Init pi_F = profit so case2 fires for pairs where w_n > w_i.
+    # compute_pi_F uses the useful expression (always non-zero), so pi_F
+    # self-corrects after the first iteration.
+    pi_F_init = np.where(profit_flat > 0, profit_flat, 1e-4)
+    x0 = np.concatenate([base_core, pi_F_init])
 
     x_old = x0.copy()
     count = 0
@@ -746,6 +753,7 @@ def fixed_point_solver_with_fdi(
         init.compute_solver_quantities(p)
  
         # update
+        # print('updating')
         w             = init.compute_wage(p)
         Z             = init.compute_expenditure(p)
         l_R           = init.compute_labor_research(p)[...,1:].ravel()
@@ -753,6 +761,8 @@ def fixed_point_solver_with_fdi(
         phi           = init.compute_phi(p).ravel()
         price_indices = init.compute_price_indices(p)
         pi_F          = init.compute_pi_F(p)[...,1:].ravel()   # [FDI]
+        pi_F = np.maximum(pi_F, 1e-10)
+        # print('updated')
  
         if keep_l_R_fixed and l_R_0 is not None:
             l_R = l_R_0.copy()
@@ -766,8 +776,8 @@ def fixed_point_solver_with_fdi(
         # convergence
         xn = get_vec_qty_fdi(x_new, p)
         xo = get_vec_qty_fdi(x_old, p)
-        if count < 2:
-            print('x_old shape:', len(x_old), 'x_new shape:', len(x_new))
+        # if count < 2:
+        #     print('x_old shape:', len(x_old), 'x_new shape:', len(x_new))
         conds = [
             np.linalg.norm(xn[q]-xo[q]) / (np.linalg.norm(xo[q])+1e-30) > tol
             for q in ['w','Z','profit','l_R','phi','pi_F']
@@ -784,6 +794,13 @@ def fixed_point_solver_with_fdi(
  
         if plot_live and count>500 and count%500==0:
             plt.plot(convergence); plt.yscale('log'); plt.show()
+            
+        # if plot_convergence:
+        #     # norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
+        #     if count%1==0:
+        #         plt.plot(convergence)
+        #         plt.yscale('log')
+        #         plt.show()
  
     finish = time.perf_counter()
  
@@ -2836,6 +2853,94 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
     sol_c.compute_non_solver_quantities(p)
     m.compute_moments(sol_c,p)
     m.compute_PROBINNOVENT(sol_c, p)
+    m.compute_moments_deviations()
+    if hist is not None:
+        if hist.count%1 == 0:
+            hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
+            hist_dic['objective'] = np.linalg.norm(m.deviation_vector())
+            hist.append(**hist_dic)
+            hist.time = time.perf_counter() - start_time
+        if hist.count%100 == 0:
+            hist.plot()
+        if hist.count%100==0:
+            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
+                  , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
+                  , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
+                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
+                  'a :', p.a)
+    hist.count += 1
+    # print(hist.count)
+    p.guess = sol_c.vector_from_var()
+    if np.any(np.isnan(p.guess)) or sol.status == 'failed':
+        print('failed')
+        p.guess = None
+        return np.full_like(m.deviation_vector(),1e10)
+    else:
+        return m.deviation_vector() 
+    
+def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+    p.update_parameters(vec_parameters)
+    if 'khi' in p.calib_parameters:
+        p.update_khi_and_r_hjort(p.khi)
+    try:
+        v0 = p.guess
+    except:
+        pass
+    sol, sol_c = fixed_point_solver_with_fdi(p,
+                                         x0=p.guess,
+                                         # x0=None,
+                        # context = 'counterfactual',
+                        context = 'calibration',
+                        cobweb_anim=False,tol =1e-3,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=True,
+                        safe_convergence=0.001,
+                        disp_summary=False,
+                        damping = 5,
+                        max_count = 500,
+                        accel_memory =50, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=0.5, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=2
+                        )
+    
+    if sol.status == 'failed': 
+        print('trying safer')
+        sol, sol_c = fixed_point_solver_with_fdi(p,
+                                                 x0=p.guess,
+                                                 # x0=None,
+                                # context = 'counterfactual',
+                                context = 'calibration',
+                                cobweb_anim=False,tol =1e-3,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='l_R',
+                                plot_convergence=True,
+                                plot_cobweb=True,
+                                safe_convergence=0.001,
+                                disp_summary=True,
+                                damping = 5,
+                                max_count = 500,
+                                accel_memory =50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=2
+                                )
+    
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    m.compute_moments(sol_c,p)
+    m.compute_FDI_FLOW_N(sol_c, p)
+    m.compute_FDI_ELAST(sol_c, p)
     m.compute_moments_deviations()
     if hist is not None:
         if hist.count%1 == 0:
@@ -5938,6 +6043,422 @@ def find_coop_eq_with_entry_costs(p_baseline,aggregation_method,
     else:
         return p, sol_c    
 
+
+#%% compute cooperative equilibrium for deltas with fdi
+
+def minus_world_welfare_of_delta_with_fdi(deltas,p,sol_baseline,dynamics,aggregation_method,
+                                 custom_weights=None,custom_sol_options=None,
+                                 custom_dyn_sol_options=None):
+    p.delta[...,1] = deltas
+    print(p.delta[...,1])
+    if custom_sol_options is None:
+        custom_sol_options = dict(cobweb_anim=False,tol =1e-6,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 5,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=2
+                                )
+    sol, sol_c = fixed_point_solver_with_fdi(p,x0=p.guess,
+                                    context = 'counterfactual',
+                            **custom_sol_options
+                            )
+    if sol.status == 'successful':
+        p.guess = sol_c.vector_from_var()
+    else:
+        print(p.delta,'failed')
+        sol, sol_c = fixed_point_solver_with_fdi(p,x0=p.guess,
+                                context = 'counterfactual',
+                                cobweb_anim=False,tol =1e-6,
+                                accelerate=False,
+                                accelerate_when_stable=False,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5
+                                )
+        if sol.status == 'successful':
+            p.guess = sol_c.vector_from_var()
+        else:
+            print(p.delta,'failed2')
+            p.guess = None
+    # p.guess = sol_c.vector_from_var()
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p,sol_baseline)
+    sol_c.compute_world_welfare_changes(p, sol_baseline)
+    
+    if aggregation_method == 'custom_weights':
+        sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
+
+    if aggregation_method == 'negishi':
+        welfare = sol_c.cons_eq_negishi_welfare_change
+    if aggregation_method == 'pop_weighted':
+        welfare = sol_c.cons_eq_pop_average_welfare_change
+    if aggregation_method == 'custom_weights':
+        welfare = sol_c.cons_eq_custom_weights_welfare_change
+    
+    if dynamics:
+        if custom_dyn_sol_options is None:
+            custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+            accelerate=False,
+            accelerate_when_stable=False,
+            cobweb_qty='l_R',
+            plot_convergence=False,
+            plot_cobweb=False,
+            plot_live = False,
+            safe_convergence=1e-8,
+            disp_summary=False,
+            damping = 60,
+            max_count = 50000,
+            accel_memory =5, 
+            accel_type1=True, 
+            accel_regularization=1e-10,
+            accel_relaxation=1, 
+            accel_safeguard_factor=1, 
+            accel_max_weight_norm=1e6,
+            damping_post_acceleration=10)
+        # if np.all(deltas>5):
+        #     custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+        #     accelerate=False,
+        #     accelerate_when_stable=False,
+        #     cobweb_qty='l_R',
+        #     plot_convergence=False,
+        #     plot_cobweb=False,
+        #     plot_live = False,
+        #     safe_convergence=1e-8,
+        #     disp_summary=False,
+        #     damping = 0,
+        #     max_count = 50000,
+        #     accel_memory =5, 
+        #     accel_type1=True, 
+        #     accel_regularization=1e-10,
+        #     accel_relaxation=1, 
+        #     accel_safeguard_factor=1, 
+        #     accel_max_weight_norm=1e6,
+        #     damping_post_acceleration=10)
+        sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_init=sol_baseline, Nt=23,
+                                                x0 = p.dyn_guess,
+                                              t_inf=500,
+                                **custom_dyn_sol_options
+                                )
+        if sol.status == 'failed':
+            p.dyn_guess=None
+            sol, dyn_sol_c = dyn_fixed_point_solver(p, sol_init=sol_baseline, Nt=23,
+                                                    x0 = p.dyn_guess,
+                                                  t_inf=500,
+                                    cobweb_anim=False,tol =1e-6,
+                                    accelerate=False,
+                                    accelerate_when_stable=False,
+                                    cobweb_qty='l_R',
+                                    plot_convergence=False,
+                                    plot_cobweb=False,
+                                    plot_live = False,
+                                    safe_convergence=1e-8,
+                                    disp_summary=False,
+                                    damping = 60,
+                                    max_count = 50000,
+                                    accel_memory =5, 
+                                    accel_type1=True, 
+                                    accel_regularization=1e-10,
+                                    accel_relaxation=1, 
+                                    accel_safeguard_factor=1, 
+                                    accel_max_weight_norm=1e6,
+                                    damping_post_acceleration=10
+                                    )
+            
+        dyn_sol_c.compute_non_solver_quantities(p)
+        p.dyn_guess = dyn_sol_c.vector_from_var()
+        if aggregation_method == 'custom_weights':
+            dyn_sol_c.compute_world_welfare_changes_custom_weights(p, custom_weights)
+
+        if aggregation_method == 'negishi':
+            welfare = dyn_sol_c.cons_eq_negishi_welfare_change
+        if aggregation_method == 'pop_weighted':
+            welfare = dyn_sol_c.cons_eq_pop_average_welfare_change
+        if aggregation_method == 'custom_weights':
+            welfare = dyn_sol_c.cons_eq_custom_weights_welfare_change
+    
+    print(deltas,welfare)
+    
+    return -welfare
+
+def find_coop_eq_with_fdi(p_baseline,aggregation_method,
+                 lb_delta=0.01,ub_delta=12,dynamics=False,
+                 solver_options=None,tol=1e-15,
+                 static_eq_deltas = None,custom_weights=None,
+                 custom_x0 = None,max_workers=6,
+                 custom_dyn_sol_options=None, displays = True,
+                 parallel=True):
+    
+    if solver_options is None:
+        solver_options = dict(cobweb_anim=False,tol =1e-6,
+                                accelerate=False,
+                                accelerate_when_stable=True,
+                                cobweb_qty='phi',
+                                plot_convergence=False,
+                                plot_cobweb=False,
+                                safe_convergence=0.001,
+                                disp_summary=False,
+                                damping = 10,
+                                max_count = 1e4,
+                                accel_memory = 50, 
+                                accel_type1=True, 
+                                accel_regularization=1e-10,
+                                accel_relaxation=0.5, 
+                                accel_safeguard_factor=1, 
+                                accel_max_weight_norm=1e6,
+                                damping_post_acceleration=5)
+        
+    custom_sol_options = solver_options
+    
+    if custom_dyn_sol_options is None:
+        custom_dyn_sol_options = dict(cobweb_anim=False,tol =1e-6,
+        accelerate=False,
+        accelerate_when_stable=False,
+        cobweb_qty='l_R',
+        plot_convergence=False,
+        plot_cobweb=False,
+        plot_live = False,
+        safe_convergence=1e-8,
+        disp_summary=False,
+        damping = 60,
+        max_count = 50000,
+        accel_memory =5, 
+        accel_type1=True, 
+        accel_regularization=1e-10,
+        accel_relaxation=1, 
+        accel_safeguard_factor=1, 
+        accel_max_weight_norm=1e6,
+        damping_post_acceleration=10)
+    
+    sol, sol_baseline = fixed_point_solver_with_fdi(p_baseline,x0=p_baseline.guess,
+                                    context = 'counterfactual',
+                            **solver_options
+                            )
+    
+    sol_baseline.scale_P(p_baseline)
+    sol_baseline.compute_non_solver_quantities(p_baseline) 
+    
+    p = p_baseline.copy()
+    
+    if dynamics and static_eq_deltas is not None:
+        x0 = static_eq_deltas
+    else:
+        x0 = p.delta[...,1]
+        
+    if custom_x0 is not None:
+        x0 = custom_x0
+    
+    bounds = [(lb_delta,ub_delta)]*len(p.countries)
+    # bounds = (lb_delta,ub_delta)
+
+    if parallel:
+        print('parallel')
+        sol = minimize_parallel(fun = minus_world_welfare_of_delta_with_fdi,
+                                x0 = x0,
+                                tol = tol,
+                                args=(p,sol_baseline,dynamics,aggregation_method,
+                                      custom_weights,custom_sol_options,custom_dyn_sol_options),
+                                # options = {'disp':True},
+                                bounds=bounds, 
+                                parallel={'max_workers':max_workers,
+                                          'loginfo': displays,
+                                          'time':displays,
+                                          'verbose':displays}
+            )
+    else:
+        print('not parallel')
+        sol = optimize.minimize(fun = minus_world_welfare_of_delta_with_fdi,
+                                x0 = x0,
+                                tol = tol,
+                                args=(p,sol_baseline,dynamics,aggregation_method,
+                                      custom_weights,custom_sol_options),
+                                options = {'disp':True},
+                                bounds=bounds)
+        
+    
+    # sol = optimize.shgo(func=minus_world_welfare_of_delta,
+    #                                       # sampling_method='halton',
+    #                                       bounds=bounds,
+    #                                       args = (p,sol_baseline,dynamics,aggregation_method,
+    #                                             custom_weights,custom_sol_options),
+    #                                       options={'disp':True},
+    #                                        # tol=1e-8,
+    #                                       workers=-1
+    #                                       )
+
+    p.delta[...,1] = sol.x
+    solution_welfare = -sol.fun
+    
+    #make a 'corner check'
+    corner_corrected_deltas = p.delta[...,1].copy()
+    for i,c in enumerate(p_baseline.countries):
+        if p.delta[i,1] > 1 or c=='MEX':
+            print('checking on ',c)
+            p_corner = p.copy()
+            p_corner.delta[i,1] = ub_delta
+            
+            sol, sol_corner = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
+                                            context = 'counterfactual',
+                                            **solver_options
+                                            )
+            sol_corner.compute_non_solver_quantities(p_corner)
+            sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+            sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+            
+            if aggregation_method == 'negishi':
+                corner_welfare = sol_corner.cons_eq_negishi_welfare_change
+            if aggregation_method == 'pop_weighted':
+                corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
+            if aggregation_method == 'custom_weights':
+                sol_corner.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
+                corner_welfare = sol_corner.cons_eq_custom_weights_welfare_change
+            
+            if dynamics:
+                sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
+                                                             sol_fin=sol_corner,
+                                                             Nt=23,
+                                                      t_inf=500,
+                                        **custom_dyn_sol_options
+                                        )
+        
+                dyn_sol_corner.compute_non_solver_quantities(p)
+                
+                if aggregation_method == 'negishi':
+                    corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
+                if aggregation_method == 'pop_weighted':
+                    corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
+                # if aggregation_method == 'custom_weights':
+                #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
+            
+            if corner_welfare > solution_welfare:
+                print('upper corner was better for ',c)
+                corner_corrected_deltas[i] = ub_delta
+    
+    p.delta[...,1] = corner_corrected_deltas
+    
+    sol, sol_c = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
+                                    context = 'counterfactual',
+                                    **solver_options
+                                    )
+    sol_c.compute_non_solver_quantities(p_corner)
+    sol_c.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+    sol_c.compute_world_welfare_changes(p_corner,sol_baseline)
+    
+    if aggregation_method == 'negishi':
+        solution_welfare = sol_c.cons_eq_negishi_welfare_change
+    if aggregation_method == 'pop_weighted':
+        solution_welfare = sol_c.cons_eq_pop_average_welfare_change
+    if aggregation_method == 'custom_weights':
+        sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
+        solution_welfare = sol_c.cons_eq_custom_weights_welfare_change
+    
+    if dynamics:
+        sol, dyn_sol = dyn_fixed_point_solver(p, sol_init=sol_baseline, 
+                                                     Nt=23,
+                                              t_inf=500,
+                                **custom_dyn_sol_options
+                                )
+    
+        dyn_sol.compute_non_solver_quantities(p)
+        
+        if aggregation_method == 'negishi':
+            solution_welfare = dyn_sol.cons_eq_negishi_welfare_change
+        if aggregation_method == 'pop_weighted':
+            solution_welfare = dyn_sol.cons_eq_pop_average_welfare_change
+    
+    # corner_corrected_deltas = p.delta[...,1].copy()
+    for i,c in enumerate(p_baseline.countries):
+        if p.delta[i,1] < 2*lb_delta or c=='MEX':
+            print('checking on ',c)
+            p_corner = p.copy()
+            p_corner.delta[i,1] = lb_delta
+            
+            sol, sol_corner = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
+                                            context = 'counterfactual',
+                                            **solver_options
+                                            )
+            sol_corner.compute_non_solver_quantities(p_corner)
+            sol_corner.compute_consumption_equivalent_welfare(p_corner,sol_baseline)
+            sol_corner.compute_world_welfare_changes(p_corner,sol_baseline)
+            
+            if aggregation_method == 'negishi':
+                corner_welfare = sol_corner.cons_eq_negishi_welfare_change
+            if aggregation_method == 'pop_weighted':
+                corner_welfare = sol_corner.cons_eq_pop_average_welfare_change
+            if aggregation_method == 'custom_weights':
+                sol_corner.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
+                corner_welfare = sol_corner.cons_eq_custom_weights_welfare_change
+            
+            if dynamics:
+                sol, dyn_sol_corner = dyn_fixed_point_solver(p_corner, sol_init=sol_baseline, 
+                                                             sol_fin=sol_corner,
+                                                             Nt=23,
+                                                      t_inf=500,
+                                        **custom_dyn_sol_options
+                                        )
+        
+                dyn_sol_corner.compute_non_solver_quantities(p)
+                
+                if aggregation_method == 'negishi':
+                    corner_welfare = dyn_sol_corner.cons_eq_negishi_welfare_change
+                if aggregation_method == 'pop_weighted':
+                    corner_welfare = dyn_sol_corner.cons_eq_pop_average_welfare_change
+                # if aggregation_method == 'custom_weights':
+                #     corner_welfare = dyn_sol_corner.cons_eq_custom_weights_welfare_change
+            
+            # print(corner_welfare,solution_welfare)
+            if corner_welfare > solution_welfare:
+                print('lower corner was better for ',c)
+                corner_corrected_deltas[i] = lb_delta
+            
+    p.delta[...,1] = corner_corrected_deltas
+    
+    sol, sol_c = fixed_point_solver_with_fdi(p,x0=p.guess,
+                                    context = 'counterfactual',
+                            **solver_options
+                            )
+    sol_c.scale_P(p)
+    sol_c.compute_non_solver_quantities(p)
+    sol_c.compute_consumption_equivalent_welfare(p, sol_baseline)
+    sol_c.compute_world_welfare_changes(p,sol_baseline)
+    if aggregation_method == 'custom_weights':
+        sol_c.compute_world_welfare_changes_custom_weights(p, sol_baseline, custom_weights)
+    
+    if dynamics:
+        sol, dyn_sol_c = c(p,  sol_baseline, sol_fin=sol_c, Nt=25,
+                                              t_inf=500,
+                                **custom_dyn_sol_options
+                                )
+        dyn_sol_c.compute_non_solver_quantities(p)
+
+    if dynamics:
+        return p, dyn_sol_c
+    else:
+        return p, sol_c    
+
 #%% compute cooperative equilibrium with double delta
 
 def minus_world_welfare_of_delta_double_delta(deltas,p,sol_baseline,dynamics,aggregation_method,
@@ -6211,7 +6732,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
     #         p_corner = p.copy()
     #         p_corner.delta[i,1] = ub_delta
             
-    #         sol, sol_corner = fixed_point_solver_with_entry_costs(p_corner,x0=p_corner.guess,
+    #         sol, sol_corner = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
     #                                         context = 'counterfactual',
     #                                         **solver_options
     #                                         )
@@ -6250,7 +6771,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
     
     # p.delta[...,1] = corner_corrected_deltas
     
-    # sol, sol_c = fixed_point_solver_with_entry_costs(p_corner,x0=p_corner.guess,
+    # sol, sol_c = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
     #                                 context = 'counterfactual',
     #                                 **solver_options
     #                                 )
@@ -6287,7 +6808,7 @@ def find_coop_eq_double_delta(p_baseline,aggregation_method,
     #         p_corner = p.copy()
     #         p_corner.delta[i,1] = lb_delta
             
-    #         sol, sol_corner = fixed_point_solver_with_entry_costs(p_corner,x0=p_corner.guess,
+    #         sol, sol_corner = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
     #                                         context = 'counterfactual',
     #                                         **solver_options
     #                                         )
@@ -6624,7 +7145,7 @@ def find_coop_eq_double_diffusion(p_baseline,aggregation_method,
     #         p_corner = p.copy()
     #         p_corner.delta[i,1] = ub_delta
             
-    #         sol, sol_corner = fixed_point_solver_with_entry_costs(p_corner,x0=p_corner.guess,
+    #         sol, sol_corner = fixed_point_solver_with_fdi(p_corner,x0=p_corner.guess,
     #                                         context = 'counterfactual',
     #                                         **solver_options
     #                                         )

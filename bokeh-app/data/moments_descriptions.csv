@@ -2,6 +2,7 @@ moment;description
 GPDIFF;Price growth difference (non-patenting minus patenting)
 GROWTH;Aggregate growth rate
 KM;Value of patents relative toRD expenditure in US
+KM_DD_DD;Value of patents relative toRD expenditure in US
 KMPHARMA;Value of patents relative toRD expenditure in US in pharma sector
 KMPHARMACHEM;Value of patents relative toRD expenditure in US in pharma and chemicals sector
 KMCHEM;Value of patents relative toRD expenditure in US in chemicals sector
@@ -38,6 +39,8 @@ JUPCOSTRD;Ratio of patenting cost in Japan for the US to RD in the US
 TP;Total number of patents in the world
 inter_TP;Total number of international patents in the world
 Z;country expenditure
+FDI_FLOW_N;fdi flows at destination N
+FDI_ELAST;fdi elasticity to tariffs
 SDOMTFLOW;Sector specific domestic trade flows as shares of total economy
 STFLOWSDOM;Trade flows as ratio to the domestic trade flow
 SINNOVPATEU; Share of innovations patented in Europe

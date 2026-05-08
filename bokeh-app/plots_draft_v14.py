@@ -10,8 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from classes import moments, parameters, var, dynamic_var, var_with_entry_costs
+from classes import moments, parameters, var, dynamic_var, var_with_entry_costs, var_double_diff_double_delta, dynamic_var_double_diff_double_delta
 from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs, dyn_fixed_point_solver
+from solver_funcs import fixed_point_solver_double_diff_double_delta, dyn_fixed_point_solver_double_diff_double_delta
 from solver_funcs import dyn_fixed_point_solver_exog_lr, dyn_fixed_point_solver_exog_patent_thresholds, dyn_fixed_point_solver_exog_lr_and_patent_thresholds
 import matplotlib.pylab as pylab
 from data_funcs import write_calibration_results
@@ -120,6 +121,20 @@ pre_trips_variation_with_entry_costs = '11.92'
 # variation_with_ten_times_tariffs = '10.5'
 variation_with_doubled_nu = '2.0'
 variation_with_no_obsolescence = '12.0'
+variation_with_SGDP_and_RGDPPC = '13.0'
+
+double_diff_double_delta_baseline = '2003'
+
+variations_of_double_diff = {
+    'baseline':'Baseline',
+    '2.02':'2.02 : nu=1e-2',
+    '2.03':'2.03 : nu=3e-2',
+    '2.04':'2.04 : nu=5e-2',
+    '2.05':'2.05 : nu=7e-2',
+    '2.06':'2.06 : nu=8e-2',
+    '2.07':'2.07 : nu=1e-1',
+    }
+
 
 multi_sector_variation = '14.0'
 
@@ -286,6 +301,18 @@ try:
 except:
     pass
 
+double_diff_path = save_path+'double_diff/'
+try:
+    os.mkdir(double_diff_path )
+except:
+    pass
+
+double_delta_path = save_path+'double_delta/'
+try:
+    os.mkdir(double_delta_path )
+except:
+    pass
+
 #%% Stylized fact about patent flows / trade flows
 
 data = m_baseline.cc_moments.reset_index().pivot(index='destination_code',
@@ -426,6 +453,31 @@ plt.show()
 
 from data_funcs import write_calibration_results
 write_calibration_results(calibration_path+'baseline',p_baseline,m_baseline,sol_baseline,commentary = '')
+
+
+#%% write version calibrating SGDP and RGDPPC instead
+
+run_path = f'calibration_results_matched_economy/baseline_{baseline}_variations/{variation_with_SGDP_and_RGDPPC}/'
+
+p_with_SGDP_and_RGDPPC = parameters()
+p_with_SGDP_and_RGDPPC.load_run(run_path)
+
+m_with_SGDP_and_RGDPPC = moments()
+m_with_SGDP_and_RGDPPC.load_run(run_path)
+
+sol_with_SGDP_and_RGDPPC = var.var_from_vector(p_with_SGDP_and_RGDPPC.guess, p_with_SGDP_and_RGDPPC, 
+                                               compute=True, context = 'counterfactual')
+sol_with_SGDP_and_RGDPPC.scale_P(p_with_SGDP_and_RGDPPC)
+sol_with_SGDP_and_RGDPPC.compute_non_solver_quantities(p_with_SGDP_and_RGDPPC)
+
+m_with_SGDP_and_RGDPPC.compute_moments(sol_with_SGDP_and_RGDPPC,p_with_SGDP_and_RGDPPC)
+m_with_SGDP_and_RGDPPC.compute_moments_deviations()
+
+write_calibration_results(calibration_path+'targeting_SGDP_and_RGDPPC',
+                          p_with_SGDP_and_RGDPPC,
+                          m_with_SGDP_and_RGDPPC,
+                          sol_with_SGDP_and_RGDPPC,
+                          commentary = '')
 
 #%% Compute patenting quantities with production patents
 
@@ -7319,3 +7371,539 @@ df.style.format(precision=5).to_latex(with_entry_costs_path+'pre_trips.tex',
                   )
 
 df.to_csv(with_entry_costs_path+'pre_trips.csv',float_format='%.5f')
+
+
+#%% Double delta
+
+#%% Calibrations
+
+from data_funcs import write_calibration_results
+
+double_diff_double_delta_baseline = '2003'
+
+variations_of_double_delta = {
+    'baseline':'Baseline',
+    '1.0':'all delta_dom calibrated',
+    '1.01':'delta_dom CHN calibrated',
+    }
+
+for variation in variations_of_double_delta:
+
+    if variation == 'baseline':
+        run_path = results_path+double_diff_double_delta_baseline+'/'
+    else:
+        run_path = f'calibration_results_matched_economy/baseline_{double_diff_double_delta_baseline}_variations/{variation}/'
+    
+    p = parameters()
+    p.load_run(run_path)
+    
+    m = moments()
+    m.load_run(run_path)
+    
+    sol  = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+    sol.scale_P(p)
+    sol.compute_non_solver_quantities(p)
+    
+    m.compute_moments(sol,p)
+    m.compute_moments_deviations()
+    
+    write_calibration_results(double_delta_path+variations_of_double_delta[variation],p,m,sol,commentary = '')
+
+#%% Nash table with transitional dynamics -- double delta
+
+double_delta_run_path = results_path+double_diff_double_delta_baseline+'/'
+
+p_double_delta = parameters()
+p_double_delta.load_run(double_delta_run_path)
+
+sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+sol_baseline_double_delta.scale_P(p_double_delta)
+sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+
+double_delta_sector_nash_path = f'coop_eq_direct_saves/dyn_{double_diff_double_delta_baseline}_baseline_nash/'
+p_nash = parameters()
+p_nash.load_run(double_delta_sector_nash_path)
+
+sol, dyn_sol_nash = dyn_fixed_point_solver_double_diff_double_delta(p_nash, sol_init=sol_baseline_double_delta,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_nash.compute_non_solver_quantities(p_nash)
+dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_baseline_double_delta)
+dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_baseline_double_delta)
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta domestic$'] = p_nash.delta_dom[i,1]
+    df.loc[countries_names[c],r'$\delta international$'] = p_nash.delta_int[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+df.to_csv(double_delta_path+'dyn_Nash_table.csv',float_format='%.5f')
+
+
+#%% Coop equal weights table with transitional dynamics -- double delta
+
+double_delta_run_path = results_path+double_diff_double_delta_baseline+'/'
+
+p_double_delta = parameters()
+p_double_delta.load_run(double_delta_run_path)
+
+sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+sol_baseline_double_delta.scale_P(p_double_delta)
+sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+
+double_delta_sector_equal_path = f'coop_eq_direct_saves/dyn_{double_diff_double_delta_baseline}_baseline_pop_weighted/'
+p_equal = parameters()
+p_equal.load_run(double_delta_sector_equal_path)
+
+sol, dyn_sol_equal = dyn_fixed_point_solver_double_diff_double_delta(p_equal, sol_init=sol_baseline_double_delta,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_equal.compute_non_solver_quantities(p_equal)
+dyn_sol_equal.sol_fin.compute_consumption_equivalent_welfare(p_equal,sol_baseline_double_delta)
+dyn_sol_equal.sol_fin.compute_world_welfare_changes(p_equal,sol_baseline_double_delta)
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta domestic$'] = p_equal.delta_dom[i,1]
+    df.loc[countries_names[c],r'$\delta international$'] = p_equal.delta_int[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+df.to_csv(double_delta_path+'dyn_Equal_table.csv',float_format='%.5f')
+
+
+
+#%% Coop negishi weights table with transitional dynamics -- double delta
+
+double_delta_run_path = results_path+double_diff_double_delta_baseline+'/'
+
+p_double_delta = parameters()
+p_double_delta.load_run(double_delta_run_path)
+
+sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+sol_baseline_double_delta.scale_P(p_double_delta)
+sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+
+double_delta_sector_equal_path = f'coop_eq_direct_saves/dyn_{double_diff_double_delta_baseline}_baseline_negishi/'
+p_equal = parameters()
+p_equal.load_run(double_delta_sector_equal_path)
+
+sol, dyn_sol_equal = dyn_fixed_point_solver_double_diff_double_delta(p_equal, sol_init=sol_baseline_double_delta,Nt=25,
+                                      t_inf=500,
+                        cobweb_anim=False,tol =1e-14,
+                        accelerate=False,
+                        accelerate_when_stable=False,
+                        cobweb_qty='l_R',
+                        plot_convergence=False,
+                        plot_cobweb=False,
+                        plot_live = False,
+                        safe_convergence=1e-8,
+                        disp_summary=False,
+                        damping = 60,
+                        max_count = 50000,
+                        accel_memory =5, 
+                        accel_type1=True, 
+                        accel_regularization=1e-10,
+                        accel_relaxation=1, 
+                        accel_safeguard_factor=1, 
+                        accel_max_weight_norm=1e6,
+                        damping_post_acceleration=10
+                        )
+dyn_sol_equal.compute_non_solver_quantities(p_equal)
+dyn_sol_equal.sol_fin.compute_consumption_equivalent_welfare(p_equal,sol_baseline_double_delta)
+dyn_sol_equal.sol_fin.compute_world_welfare_changes(p_equal,sol_baseline_double_delta)
+
+df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                   +['World aggregate according to Negishi weights',
+                                     'World aggregate according to population weights',
+                                     'Growth rate (%)'],
+                                   name = 'Countries'),
+                  columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                             'Welfare change, steady state only']
+                  )
+    
+for i,c in enumerate(p_baseline.countries):
+    df.loc[countries_names[c],r'$\delta domestic$'] = p_equal.delta_dom[i,1]
+    df.loc[countries_names[c],r'$\delta international$'] = p_equal.delta_int[i,1]
+    df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_welfare[i]
+    df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_welfare[i]
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to Negishi weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_negishi_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_pop_average_welfare_change
+
+df.loc['World aggregate according to population weights',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_pop_average_welfare_change
+
+df.loc['Growth rate (%)',
+       'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.g*100
+
+for col in df.columns:
+    df[col] = df[col].astype(float)
+
+df.to_csv(double_delta_path+'dyn_Negishi_table.csv',float_format='%.5f')
+
+#%% Double diffusion
+
+double_diff_double_delta_baseline = '2003'
+
+variations_of_double_diff = {
+    '2.02':'2.02 : nu=1e-2',
+    '2.03':'2.03 : nu=3e-2',
+    '2.04':'2.04 : nu=5e-2',
+    '2.05':'2.05 : nu=7e-2',
+    '2.06':'2.06 : nu=8e-2',
+    '2.07':'2.07 : nu=1e-1',
+    }
+
+for variation in variations_of_double_diff:
+
+    if variation == 'baseline':
+        run_path = results_path+double_diff_double_delta_baseline+'/'
+    else:
+        run_path = f'calibration_results_matched_economy/baseline_{double_diff_double_delta_baseline}_variations/{variation}/'
+    
+    p = parameters()
+    p.load_run(run_path)
+    
+    m = moments()
+    m.load_run(run_path)
+    
+    sol  = var_double_diff_double_delta.var_from_vector(p.guess, p, compute=True, context = 'counterfactual')
+    sol.scale_P(p)
+    sol.compute_non_solver_quantities(p)
+    
+    m.compute_moments(sol,p)
+    m.compute_moments_deviations()
+    
+    save_double_diff_path = double_diff_path+variations_of_double_diff[variation]+'/'
+    
+    try:
+        os.mkdir(save_double_diff_path)
+    except:
+        pass
+    
+    write_calibration_results(save_double_diff_path+variations_of_double_diff[variation],p,m,sol,commentary = '')
+
+    # Nash table with transitional dynamics -- double diffusion
+    
+    double_diff_run_path = run_path
+    
+    p_double_delta = parameters()
+    p_double_delta.load_run(double_diff_run_path)
+    
+    sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+    sol_baseline_double_delta.scale_P(p_double_delta)
+    sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+    
+    double_delta_sector_nash_path = f'coop_eq_direct_saves/{double_diff_double_delta_baseline}_{variation}_nash/'
+    p_nash = parameters()
+    p_nash.load_run(double_delta_sector_nash_path)
+    p_nash.update_delta_eff()
+    
+    sol, dyn_sol_nash = dyn_fixed_point_solver_double_diff_double_delta(p_nash, sol_init=sol_baseline_double_delta,Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=False,
+                            damping = 60,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol_nash.compute_non_solver_quantities(p_nash)
+    dyn_sol_nash.sol_fin.compute_consumption_equivalent_welfare(p_nash,sol_baseline_double_delta)
+    dyn_sol_nash.sol_fin.compute_world_welfare_changes(p_nash,sol_baseline_double_delta)
+    
+    df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                       +['World aggregate according to Negishi weights',
+                                         'World aggregate according to population weights',
+                                         'Growth rate (%)'],
+                                       name = 'Countries'),
+                      columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                                 'Welfare change, steady state only']
+                      )
+        
+    for i,c in enumerate(p_baseline.countries):
+        df.loc[countries_names[c],r'$\delta domestic$'] = p_nash.delta_dom[i,1]
+        df.loc[countries_names[c],r'$\delta international$'] = p_nash.delta_int[i,1]
+        df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_welfare[i]
+        df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_welfare[i]
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change with transition dynamics'] = dyn_sol_nash.cons_eq_pop_average_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.cons_eq_pop_average_welfare_change
+    
+    df.loc['Growth rate (%)',
+           'Welfare change, steady state only'] = dyn_sol_nash.sol_fin.g*100
+    
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+    
+    df.to_csv(save_double_diff_path+'dyn_Nash_table.csv',float_format='%.5f')
+    
+    
+    # Coop equal weights table with transitional dynamics -- double diffusion
+    
+    p_double_delta = parameters()
+    p_double_delta.load_run(double_diff_run_path)
+    
+    sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+    sol_baseline_double_delta.scale_P(p_double_delta)
+    sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+    
+    double_delta_sector_equal_path = f'coop_eq_direct_saves/dyn_double_diff_{double_diff_double_delta_baseline}_{variation}_pop_weighted/'
+    p_equal = parameters()
+    p_equal.load_run(double_delta_sector_equal_path)
+    p_equal.delta_int[:,1][p_equal.delta_int[:,1]>1] = 12.0
+    p_equal.delta_dom = p_equal.delta_int.copy()
+    p_equal.update_delta_eff()
+    
+    sol, dyn_sol_equal = dyn_fixed_point_solver_double_diff_double_delta(p_equal, sol_init=sol_baseline_double_delta,Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=False,
+                            damping = 60,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol_equal.compute_non_solver_quantities(p_equal)
+    dyn_sol_equal.sol_fin.compute_consumption_equivalent_welfare(p_equal,sol_baseline_double_delta)
+    dyn_sol_equal.sol_fin.compute_world_welfare_changes(p_equal,sol_baseline_double_delta)
+    
+    df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                       +['World aggregate according to Negishi weights',
+                                         'World aggregate according to population weights',
+                                         'Growth rate (%)'],
+                                       name = 'Countries'),
+                      columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                                 'Welfare change, steady state only']
+                      )
+        
+    for i,c in enumerate(p_baseline.countries):
+        df.loc[countries_names[c],r'$\delta domestic$'] = p_equal.delta_dom[i,1]
+        df.loc[countries_names[c],r'$\delta international$'] = p_equal.delta_int[i,1]
+        df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_welfare[i]
+        df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_welfare[i]
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_pop_average_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_pop_average_welfare_change
+    
+    df.loc['Growth rate (%)',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.g*100
+    
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+    
+    df.to_csv(save_double_diff_path+'dyn_Equal_table.csv',float_format='%.5f')
+    
+    # Coop negishi weights table with transitional dynamics -- double diffusion
+    
+    p_double_delta = parameters()
+    p_double_delta.load_run(double_diff_run_path)
+    
+    sol_baseline_double_delta = var_double_diff_double_delta.var_from_vector(p_double_delta.guess, p_double_delta, compute=True, context = 'counterfactual')
+    sol_baseline_double_delta.scale_P(p_double_delta)
+    sol_baseline_double_delta.compute_non_solver_quantities(p_double_delta)
+    
+    double_delta_sector_equal_path = f'coop_eq_direct_saves/dyn_double_diff_{double_diff_double_delta_baseline}_{variation}_negishi/'
+    p_equal = parameters()
+    p_equal.load_run(double_delta_sector_equal_path)
+    p_equal.delta_int[:,1][p_equal.delta_int[:,1]>1] = 12.0
+    p_equal.delta_dom = p_equal.delta_int.copy()
+    p_equal.update_delta_eff()
+    
+    sol, dyn_sol_equal = dyn_fixed_point_solver_double_diff_double_delta(p_equal, sol_init=sol_baseline_double_delta,Nt=25,
+                                          t_inf=500,
+                            cobweb_anim=False,tol =1e-14,
+                            accelerate=False,
+                            accelerate_when_stable=False,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=False,
+                            plot_live = False,
+                            safe_convergence=1e-8,
+                            disp_summary=False,
+                            damping = 60,
+                            max_count = 50000,
+                            accel_memory =5, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=1, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=10
+                            )
+    dyn_sol_equal.compute_non_solver_quantities(p_equal)
+    dyn_sol_equal.sol_fin.compute_consumption_equivalent_welfare(p_equal,sol_baseline_double_delta)
+    dyn_sol_equal.sol_fin.compute_world_welfare_changes(p_equal,sol_baseline_double_delta)
+    
+    df = pd.DataFrame(index = pd.Index([countries_names[c] for c in p_baseline.countries]\
+                                       +['World aggregate according to Negishi weights',
+                                         'World aggregate according to population weights',
+                                         'Growth rate (%)'],
+                                       name = 'Countries'),
+                      columns = [r'$\delta domestic$',r'$\delta international$','Welfare change with transition dynamics',
+                                 'Welfare change, steady state only']
+                      )
+        
+    for i,c in enumerate(p_baseline.countries):
+        df.loc[countries_names[c],r'$\delta domestic$'] = p_equal.delta_dom[i,1]
+        df.loc[countries_names[c],r'$\delta international$'] = p_equal.delta_int[i,1]
+        df.loc[countries_names[c],'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_welfare[i]
+        df.loc[countries_names[c],'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_welfare[i]
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to Negishi weights',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_negishi_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change with transition dynamics'] = dyn_sol_equal.cons_eq_pop_average_welfare_change
+    
+    df.loc['World aggregate according to population weights',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.cons_eq_pop_average_welfare_change
+    
+    df.loc['Growth rate (%)',
+           'Welfare change, steady state only'] = dyn_sol_equal.sol_fin.g*100
+    
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+    
+    df.to_csv(save_double_diff_path+'dyn_Negishi_table.csv',float_format='%.5f')

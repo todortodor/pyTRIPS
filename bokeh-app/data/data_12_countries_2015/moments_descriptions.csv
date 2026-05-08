@@ -2,6 +2,7 @@ moment;description
 GPDIFF;Price growth difference (non-patenting minus patenting)
 GROWTH;Aggregate growth rate
 KM;Value of patents relative toRD expenditure in US
+KM_DD_DD;Value of patents relative toRD expenditure in US
 KM_GDP;Kogan Moment relative to GDP of the US
 OUT;World output
 RD;RD expenditures relative to GDP
@@ -15,7 +16,9 @@ SPFLOWDOM;Ratio of patent flows to world patenting
 SPFLOWDOM_US;Ratio of patent flows to the US to world patenting
 SPFLOWDOM_RUS;Ratio of patent flows to world patenting, ratio to the US-US patent flow
 SRDUS;Market share of innovative firms in US
+RGDPPC;Real gdp per capita
 SRGDP;World real GDP shares
+SGDP;World GDP shares
 SRGDP_US;US share of world real GDP 
 SRGDP_RUS;Share of world real GDP, ratio with the US
 STFLOW;Ratio of bilateral trade flow to world output
@@ -35,7 +38,10 @@ SINNOVPATEU; Share of innovations patented in Europe
 SINNOVPATUS; Share of innovations patented in US
 NUR; Ratio of diffusion : Nu_tilde/Nu
 RDGDPUS; RD spending as share of gdp in the US
+FDI_FLOW_N;fdi flows at destination N
+FDI_ELAST;fdi elasticity to tariffs
 TO; Turnover in US imports
+TO_DD_DD; Turnover in US imports
 TE; Trade elasticity in patenting sector
 DOMPATRATUSEU; domestic patent applications as share of total patent applications lodged in US and in EUR
 SPATORIG; total patent applications made by each origin country as share of world total
@@ -46,5 +52,6 @@ DOMPATEU; domestic patent EU as share of patents from EU
 DOMPATUS; domestic patent US as share of patents from US
 DOMPATINEU; Share of domestic patentsin inward patents in Europe
 DOMPATINUS; Share of domestic patentsin inward patents in US
+DOMPATINCHN; Share of domestic patentsin inward patents in China
 PROBINNOVENT; Probability that an innovator enters
 ERDUS; semi elasticity of RD with respect to delta in the US

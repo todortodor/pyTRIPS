@@ -12,24 +12,53 @@ from solver_funcs import fixed_point_solver, fixed_point_solver_with_entry_costs
 import numpy as np
 import pandas as pd
 
-p = parameters()
-p.load_run('calibration_results_matched_economy/2000/')
-# # p.delta_dom = p.delta_dom/2
-# p.update_delta_eff()
-# # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-# # p.k = np.array([p.k]*p.S)
-# sol, sol_init_dd = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
+# p = parameters()
+# p.load_run('calibration_results_matched_economy/2000/')
+# # # p.delta_dom = p.delta_dom/2
+# # p.update_delta_eff()
+# # # p.load_run('coop_eq_direct_saves/4003_baseline_nash/')
+# # # p.k = np.array([p.k]*p.S)
+# # sol, sol_init_dd = fixed_point_solver_double_diff_double_delta(p,x0=p.guess,
+# #                                 # context = 'counterfactual',
+# #                                 context = 'calibration',
+# #                         cobweb_anim=False,tol =1e-14,
+# #                         accelerate=False,
+# #                         accelerate_when_stable=True,
+# #                         cobweb_qty='l_R',
+# #                         plot_convergence=True,
+# #                         plot_cobweb=False,
+# #                         safe_convergence=0.001,
+# #                         disp_summary=True,
+# #                         damping = 10,
+# #                         max_count = 10000,
+# #                         accel_memory =50, 
+# #                         accel_type1=True, 
+# #                         accel_regularization=1e-10,
+# #                         accel_relaxation=0.5, 
+# #                         accel_safeguard_factor=1, 
+# #                         accel_max_weight_norm=1e6,
+# #                         damping_post_acceleration=2
+# #                         # damping=10
+# #                           # apply_bound_psi_star=True
+# #                         )
+# # sol_init_dd.scale_P(p)
+# # sol_init_dd.compute_non_solver_quantities(p)
+
+# # #%%
+# # import pandas as pd
+
+# sol, sol_init = fixed_point_solver(p,x0=p.guess,
 #                                 # context = 'counterfactual',
 #                                 context = 'calibration',
 #                         cobweb_anim=False,tol =1e-14,
-#                         accelerate=False,
+#                         accelerate=True,
 #                         accelerate_when_stable=True,
 #                         cobweb_qty='l_R',
 #                         plot_convergence=True,
 #                         plot_cobweb=False,
 #                         safe_convergence=0.001,
 #                         disp_summary=True,
-#                         damping = 10,
+#                         damping = 100,
 #                         max_count = 10000,
 #                         accel_memory =50, 
 #                         accel_type1=True, 
@@ -41,64 +70,35 @@ p.load_run('calibration_results_matched_economy/2000/')
 #                         # damping=10
 #                           # apply_bound_psi_star=True
 #                         )
-# sol_init_dd.scale_P(p)
-# sol_init_dd.compute_non_solver_quantities(p)
+# sol_init.scale_P(p)
+# sol_init.compute_non_solver_quantities(p)
 
-# #%%
-# import pandas as pd
+# p_cf_init = p.copy()
+# p_cf_init.delta[0,1] = 0.01
 
-sol, sol_init = fixed_point_solver(p,x0=p.guess,
-                                # context = 'counterfactual',
-                                context = 'calibration',
-                        cobweb_anim=False,tol =1e-14,
-                        accelerate=True,
-                        accelerate_when_stable=True,
-                        cobweb_qty='l_R',
-                        plot_convergence=True,
-                        plot_cobweb=False,
-                        safe_convergence=0.001,
-                        disp_summary=True,
-                        damping = 100,
-                        max_count = 10000,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
-                        # damping=10
-                          # apply_bound_psi_star=True
-                        )
-sol_init.scale_P(p)
-sol_init.compute_non_solver_quantities(p)
+# sol, sol_cf_init = fixed_point_solver(p_cf_init,x0=None,
+#                         context = 'counterfactual',
+#                         cobweb_anim=False,tol =1e-12,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='l_R',
+#                         plot_convergence=True,
+#                         plot_cobweb=True,
+#                         safe_convergence=0.1,
+#                         disp_summary=True,
+#                         damping = 2,
+#                         max_count = 300,
+#                         accel_memory =50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=2
+#                         )
 
-p_cf_init = p.copy()
-p_cf_init.delta[0,1] = 0.01
-
-sol, sol_cf_init = fixed_point_solver(p_cf_init,x0=None,
-                        context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-12,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='l_R',
-                        plot_convergence=True,
-                        plot_cobweb=True,
-                        safe_convergence=0.1,
-                        disp_summary=True,
-                        damping = 2,
-                        max_count = 300,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
-                        )
-
-sol_cf_init.compute_non_solver_quantities(p)
-sol_cf_init.compute_consumption_equivalent_welfare(p, sol_init)
+# sol_cf_init.compute_non_solver_quantities(p)
+# sol_cf_init.compute_consumption_equivalent_welfare(p, sol_init)
 
 # # df = pd.DataFrame(index=p.countries)
 # # df['L_o_over_L_R'] = (sol_init.w*sol_init.l_Ao[:,1]
@@ -244,27 +244,33 @@ sol_cf_init.compute_consumption_equivalent_welfare(p, sol_init)
 #%%
 
 
-from classes import moments, parameters, var, var_with_fdi
-from solver_funcs import fixed_point_solver, fixed_point_solver_with_fdi
+from classes import moments, parameters, var_with_fdi
+from solver_funcs import fixed_point_solver_with_fdi
 
 p = parameters()
-p.load_run('calibration_results_matched_economy/2000/')
+p.load_run('calibration_results_matched_economy/baseline_2000_variations/15.0/')
 # sol_c = var_with_fdi.var_from_vector(p.guess, p, context='counterfactual')
 
-p.a = 1
+p.a = 0.50
+p.d = 0.15
+p.power_fdi = 1.0
+p.guess = None
 
-sol, sol_c = fixed_point_solver_with_fdi(p,x0=None,
+sol, sol_c = fixed_point_solver_with_fdi(p,
+                                         x0=p.guess,
+                                         # x0=None,
                         context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-12,
+                        # context = 'calibration',
+                        cobweb_anim=False,tol =1e-8,
                         accelerate=False,
-                        accelerate_when_stable=True,
+                        accelerate_when_stable=False,
                         cobweb_qty='l_R',
                         plot_convergence=True,
                         plot_cobweb=True,
-                        safe_convergence=0.1,
+                        safe_convergence=0.001,
                         disp_summary=True,
-                        damping = 2,
-                        max_count = 300,
+                        damping = 5,
+                        max_count = 500,
                         accel_memory =50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
@@ -275,33 +281,74 @@ sol, sol_c = fixed_point_solver_with_fdi(p,x0=None,
                         )
 
 sol_c.compute_non_solver_quantities(p)
-sol_c.compute_consumption_equivalent_welfare(p, sol_init)
 
-p.delta[0,1] = 0.01
 
-sol, sol_cf = fixed_point_solver_with_fdi(p,x0=None,
-                        context = 'counterfactual',
-                        cobweb_anim=False,tol =1e-12,
-                        accelerate=False,
-                        accelerate_when_stable=True,
-                        cobweb_qty='l_R',
-                        plot_convergence=True,
-                        plot_cobweb=True,
-                        safe_convergence=0.1,
-                        disp_summary=True,
-                        damping = 2,
-                        max_count = 300,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
-                        )
 
-sol_cf.compute_non_solver_quantities(p)
-sol_cf.compute_consumption_equivalent_welfare(p, sol_c)
+print('case2 any:', sol_c.case2.any())
+print('a range:', sol_c.a[...,1].min(), sol_c.a[...,1].max())
+print('V_NP_F - V_NP (off-diag, s=1):')
+diff = (sol_c.V_NP_F - sol_c.V_NP)[...,1]
+print('  min:', diff[sol_c.off_diag_mask[...,1]].min())
+print('  max:', diff[sol_c.off_diag_mask[...,1]].max())
+print('a_NPF_NPO (off-diag, s=1):')
+a_thresh = sol_c.a_NPF_NPO[...,1]
+print('  min:', a_thresh[sol_c.off_diag_mask[...,1]].min())
+print('  max:', a_thresh[sol_c.off_diag_mask[...,1]].max())
+# sol_c.compute_consumption_equivalent_welfare(p, sol_init)
+
+# sol, sol_c = fixed_point_solver_with_fdi(p,
+#                                          x0=p.guess,
+#                                          # x0=None,
+#                         context = 'counterfactual',
+#                         # context = 'calibration',
+#                         cobweb_anim=False,tol =1e-4,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='l_R',
+#                         plot_convergence=True,
+#                         plot_cobweb=True,
+#                         safe_convergence=0.001,
+#                         disp_summary=True,
+#                         damping = 5,
+#                         max_count = 500,
+#                         accel_memory =50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=2
+#                         )
+
+# sol_c.compute_non_solver_quantities(p)
+
+# print('here')
+
+# p.delta[0,1] = 0.01
+
+# sol, sol_cf = fixed_point_solver_with_fdi(p,x0=p.guess,
+#                         context = 'counterfactual',
+#                         cobweb_anim=False,tol =1e-12,
+#                         accelerate=False,
+#                         accelerate_when_stable=True,
+#                         cobweb_qty='l_R',
+#                         plot_convergence=True,
+#                         plot_cobweb=True,
+#                         safe_convergence=0.001,
+#                         disp_summary=True,
+#                         damping = 2,
+#                         max_count = 300,
+#                         accel_memory =50, 
+#                         accel_type1=True, 
+#                         accel_regularization=1e-10,
+#                         accel_relaxation=0.5, 
+#                         accel_safeguard_factor=1, 
+#                         accel_max_weight_norm=1e6,
+#                         damping_post_acceleration=2
+#                         )
+
+# sol_cf.compute_non_solver_quantities(p)
+# sol_cf.compute_consumption_equivalent_welfare(p, sol_c)
 
 
 #%%
