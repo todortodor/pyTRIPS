@@ -8434,30 +8434,34 @@ class moments:
             self.TWSPFLOWDOM_target = self.SPFLOWDOM_target*self.ccs_moments.loc[:,:,1]['trade'].values.reshape((N,N))\
                 /self.ccs_moments.loc[:,:,1]['trade'].sum()
                 
-        self.fdi_flows = pd.read_csv('data/fdi_longformat_2015_AAMNE.csv').set_index(
-            ['Rep_ccode', 'File_ccode']
-        ).rename_axis(
-            ['destination', 'origin']
-        ).sort_index(
-        )
-        fdi_matrix = np.zeros((N, N))
-        for i_dest, dest in enumerate(self.countries):
-            for i_orig, orig in enumerate(self.countries):
-                try:
-                    fdi_matrix[i_dest, i_orig] = self.fdi_flows.loc[(dest, orig), 'FileToRep_Flow']
-                except KeyError:
-                    fdi_matrix[i_dest, i_orig] = 0.0
-        self.fdi_matrix = fdi_matrix  # store for access by parameters
-        # FDI_FLOW_N target: sum_i X^{M,F}_{ni} / (X_nn - sum_i X^{M,F}_{ni})
-        # = fdi_flow[n,:].sum() / (diag(trade_flows[:,:,1]) - fdi_flow[n,:].sum())
-        trade_flows_mat = self.ccs_moments.trade.values.reshape(N, N, S)
-        X_nn = np.einsum('nns->n', trade_flows_mat[:, :, 1:2]).squeeze()  # domestic absorption, sector 1
-        fdi_sum_n = fdi_matrix.sum(axis=1)  # total FDI received by each n
-        denom = X_nn / self.unit - fdi_sum_n / self.unit
-        ratio_target = np.where(denom > 0, (fdi_sum_n / self.unit) / denom, 1e-6)
-        self.FDI_FLOW_N_target = np.maximum(ratio_target, 1e-6)
-        # FDI_ELAST target: from Blonigen (2002), semi-elasticity = 0.08
-        self.FDI_ELAST_target = np.array([0.08])
+        try:
+            self.fdi_flows = pd.read_csv('data/fdi_longformat_2015_AAMNE.csv').set_index(
+                ['Rep_ccode', 'File_ccode']
+            ).rename_axis(
+                ['destination', 'origin']
+            ).sort_index(
+            )
+            fdi_matrix = np.zeros((N, N))
+            for i_dest, dest in enumerate(self.countries):
+                for i_orig, orig in enumerate(self.countries):
+                    try:
+                        fdi_matrix[i_dest, i_orig] = self.fdi_flows.loc[(dest, orig), 'FileToRep_Flow']
+                    except KeyError:
+                        fdi_matrix[i_dest, i_orig] = 0.0
+            self.fdi_matrix = fdi_matrix  # store for access by parameters
+            # FDI_FLOW_N target: sum_i X^{M,F}_{ni} / (X_nn - sum_i X^{M,F}_{ni})
+            # = fdi_flow[n,:].sum() / (diag(trade_flows[:,:,1]) - fdi_flow[n,:].sum())
+            trade_flows_mat = self.ccs_moments.trade.values.reshape(N, N, S)
+            X_nn = np.einsum('nns->n', trade_flows_mat[:, :, 1:2]).squeeze()  # domestic absorption, sector 1
+            fdi_sum_n = fdi_matrix.sum(axis=1)  # total FDI received by each n
+            denom = X_nn / self.unit - fdi_sum_n / self.unit
+            ratio_target = np.where(denom > 0, (fdi_sum_n / self.unit) / denom, 1e-6)
+            self.FDI_FLOW_N_target = np.maximum(ratio_target, 1e-6)
+            # FDI_ELAST target: from Blonigen (2002), semi-elasticity = 0.08
+            self.FDI_ELAST_target = np.array([0.08])
+        except:
+            pass
+        
             
         self.idx = {'GPDIFF':pd.Index(['scalar']), 
                     'GROWTH':pd.Index(['scalar']), 

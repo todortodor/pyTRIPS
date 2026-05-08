@@ -653,7 +653,11 @@ comments_dic = {}
 
 comments_dic['2000'] = {
     "baseline":"baseline",
-    '1.0':'1.0:old baseline with TO typo',
+    # '1.0':'1.0:old baseline with TO typo',
+    '99.6':'99.6: Low Sigma',
+    '99.7':'99.7: High Sigma',
+    '199.6':'199.6: Low Sigma 1992',
+    '199.7':'199.7: High Sigma 1992',
     # '1.1':'1.1:new compute, new target:6.896%'
     }
 
