@@ -60,8 +60,8 @@ class parameters:
                         'nu_tilde':cou,
                         'kappa':1-co,
                         'k':2,
-                        'a':10,
-                        'power_fdi':cou,
+                        'a':0.3,
+                        'power_fdi':2.0,
                         'fe':cou,
                         'fo':cou,
                         'delta':10,
@@ -74,7 +74,7 @@ class parameters:
                          'eta':cou,
                          'khi':1,
                          'r_hjort':cou,
-                         'd':10}
+                         'd':2}
         
         self.calib_parameters = None
         self.guess = None
@@ -530,1154 +530,13 @@ class cobweb:
             plt.title(self.name+''+str(count))
         plt.show()
         time.sleep(pause)
-        # ── integral and shared denominators (unchanged) ─────────────────────
-# integral_k_d = self.hypergeometric_integral(
-#     lb=self.psi_m_star_O[...,1], ub=self.psi_MP_star[...,1],
-#     alpha=self.V_P[...,1], beta=self.w*p.fe[1]*p.r_hjort, y=k, z=d)
 
-# def _hypergeometric_integral(lb, ub, alpha, beta, y, z):
-#     """
-#     Compute  ∫_{lb}^{ub}  x^{-y} (alpha*x - beta)^z  dx
-#     using the incomplete Beta function identity.
- 
-#     Parameters
-#     ----------
-#     lb, ub : array_like   — lower / upper integration limits (shapes broadcastable)
-#     alpha  : array_like   — coefficient of x inside the bracket  (shape n,n or n,n,s)
-#     beta   : array_like   — offset (shape n or n,s depending on context)
-#     y      : float        — power of x
-#     z      : float        — power of the bracket
-#     """
-#     t_ub = 1 - beta[:, None] / ub / alpha
-#     t_lb = 1 - beta[:, None] / lb / alpha
-#     integral = (beta[:, None] ** (1 - y + z) / alpha ** (1 - y)
-#                 ) * np.vectorize(
-#                     lambda a, b, x1, x2: float(betainc(a, b, x1, x2, regularized=False))
-#                 )(z + 1, y - z - 1, t_lb, t_ub)
-#     return integral
- 
- 
-# # def _betainc_vec(a, b, t1, t2):
-# #     """Vectorised non-regularised incomplete Beta function."""
-# #     return np.vectorize(
-# #         lambda aa, bb, x1, x2: float(betainc(aa, bb, max(0.0,min(1.0,float(x1))), max(0.0,min(1.0,float(x2))), regularized=False).real)
-# #     )(a, b, t1, t2)
-
-# def _betainc_vec(a, b, t1, t2):
-#     """Vectorised non-regularised incomplete Beta function."""
-#     return np.vectorize(
-#         lambda aa, bb, x1, x2: float(betainc(aa, bb, 
-#                                               max(0.0, min(1.0, float(x1))), 
-#                                               max(0.0, min(1.0, float(x2))), 
-#                                               regularized=False).real)
-#     )(a, b, t1, t2)
-
-# # ─────────────────────────────────────────────────────────────────────────────
-# # var_with_fdi
-# # ─────────────────────────────────────────────────────────────────────────────
-
-# class var_with_fdi:
-#     """
-#     Variable container for the steady-state solver with entry costs AND FDI.
- 
-#     Methods identical to var_with_entry_costs are reproduced verbatim.
-#     Methods that differ are annotated with  # [FDI].
-#     """
- 
-#     # ── construction ────────────────────────────────────────────────────────
- 
-#     def __init__(self, context, N=7, S=2):
-#         m = np.ones((N, N, S), bool).ravel()
-#         m[np.s_[::(N + 1) * S]] = False
-#         m[np.s_[1::(N + 1) * S]] = False
-#         self.off_diag_mask = m.reshape((N, N, S))
-#         self.diag_mask = ~self.off_diag_mask
-#         self.context = context
- 
-#     # ── guess setters ────────────────────────────────────────────────────────
- 
-#     def guess_profit(self, v):        self.profit = v
-#     def guess_wage(self, v):          self.w = v
-#     def guess_Z(self, v):             self.Z = v
-#     def guess_labor_research(self, v):self.l_R = v
-#     def guess_phi(self, v):           self.phi = v
-#     def guess_price_indices(self, v): self.price_indices = v
-#     def guess_pi_F(self, v):          self.pi_F = v   # [FDI]
- 
-#     def elements(self):
-#         for key, item in sorted(self.__dict__.items()):
-#             print(key, ',', str(type(item))[8:-2])
- 
-#     def copy(self):
-#         return deepcopy(self)
- 
-#     # ── vector ↔ var  [FDI: adds pi_F block] ────────────────────────────────
- 
-#     @staticmethod
-#     def var_from_vector(vec, p, context, compute=True):
-#         """
-#         Vector layout (lengths):
-#             w             N
-#             Z             N
-#             l_R           N*(S-1)          sector 0 excluded
-#             profit        N*N*(S-1)        sector 0 excluded
-#             phi           N*N*S
-#             price_indices N
-#             pi_F          N*N*(S-1)        sector 0 excluded   [FDI]
-#         """
-#         N, S = p.N, p.S
-#         v = var_with_fdi(context=context, N=N, S=S)
-#         i0 = 0
- 
-#         v.guess_wage(vec[i0:i0+N]);                                        i0 += N
-#         v.guess_Z(vec[i0:i0+N]);                                           i0 += N
-#         v.guess_labor_research(
-#             np.insert(vec[i0:i0+N*(S-1)].reshape((N, S-1)),
-#                       0, np.zeros(N), axis=1));                            i0 += N*(S-1)
-#         v.guess_profit(
-#             np.insert(vec[i0:i0+N*N*(S-1)].reshape((N, N, S-1)),
-#                       0, np.zeros(N), axis=2));                            i0 += N*N*(S-1)
-#         v.guess_phi(vec[i0:i0+N*N*S].reshape((N, N, S)));                 i0 += N*N*S
-#         v.guess_price_indices(vec[i0:i0+N]);                               i0 += N
- 
-#         # [FDI] pi_F block — may be absent if vec comes from a legacy
-#         # var_with_entry_costs guess (e.g. loaded via p.guess).
-#         # In that case default to zeros (Case 1 starting point).
-#         remaining = vec[i0:]
-#         pi_F_size = N * N * (S - 1)
-#         if len(remaining) >= pi_F_size:
-#             pi_F_flat = remaining[:pi_F_size]
-#         else:
-#             pi_F_flat = np.zeros(pi_F_size)
-#         v.guess_pi_F(
-#             np.insert(pi_F_flat.reshape((N, N, S-1)),
-#                       0, np.zeros(N), axis=2))
- 
-#         if compute:
-#             v.compute_solver_quantities(p)
-#         return v
- 
-#     def vector_from_var(self):
-#         return np.concatenate([
-#             self.w,
-#             self.Z,
-#             self.l_R[..., 1:].ravel(),
-#             self.profit[..., 1:].ravel(),
-#             self.phi.ravel(),
-#             self.price_indices,
-#             self.pi_F[..., 1:].ravel(),    # [FDI]
-#         ])
- 
-#     # ── hypergeometric integral (unchanged) ─────────────────────────────────
- 
-#     @staticmethod
-#     def hypergeometric_integral(lb, ub, alpha, beta, y, z):
-#         t_ub = 1 - beta[:, None] / ub / alpha
-#         t_lb = 1 - beta[:, None] / lb / alpha
-#         # print(type(t_lb), type(t_ub))
-#         return (beta[:, None]**(1-y+z) / alpha**(1-y)) * _betainc_vec(
-#             z+1, y-z-1, t_lb, t_ub)
- 
-#     # ── compute_growth (unchanged) ───────────────────────────────────────────
- 
-#     def compute_growth(self, p):
-#         self.g_s = (p.k * np.einsum('is,is->s', p.eta, self.l_R**(1-p.kappa))
-#                     / (p.k-1) - p.zeta)
-#         self.g_s[0] = p.g_0
-#         self.g = (p.beta * self.g_s / (p.sigma-1)).sum() / (p.beta * p.alpha).sum()
-#         self.r = p.rho + self.g / p.gamma
-#         self.G = self.r + p.zeta - self.g + self.g_s + p.nu
- 
-#     # ── compute_entry_costs (unchanged) ─────────────────────────────────────
- 
-#     def compute_entry_costs(self, p):
-#         if self.context == 'calibration':
-#             self.a = p.a *np.maximum( 
-#                 np.einsum(
-#                 'is,nis,nis,is,is->nis',
-#                 p.T**(1/p.theta[None,:]), 1/self.phi, 1/(1+p.tariff),
-#                 self.w[:,None]**-p.alpha[None,:],
-#                 self.price_indices[:,None]**(p.alpha[None,:]-1))
-#                 ,1)**p.power_fdi
-#             np.einsum('nns->ns', self.a)[:] = 0
-#         elif self.context == 'counterfactual':
-#             self.a = p.a * np.maximum(p.tau,1)**p.power_fdi
-#             np.einsum('nns->ns', self.a)[:] = 0
-            
-#     # def compute_entry_costs(self, p):
-#     #     if self.context == 'calibration':
-#     #         # Export entry costs (unchanged)
-#     #         self.a = p.a * np.einsum(
-#     #             'is,nis,nis,is,is->nis',
-#     #             p.T**(1/p.theta[None,:]), 1/self.phi, 1/(1+p.tariff),
-#     #             self.w[:,None]**-p.alpha[None,:],
-#     #             self.price_indices[:,None]**(p.alpha[None,:]-1))
-#     #         np.einsum('nns->ns', self.a)[:] = 0
-    
-#     #         # Point 15: solve for a_{nis} to match FDI share data
-#     #         if hasattr(p, 'fdi_flow') and p.fdi_flow is not None:
-#     #             for s in range(1, p.S):
-#     #                 # Data: within-destination FDI shares by origin
-#     #                 fdi_sum_n = p.fdi_flow.sum(axis=1)             # (N,)
-#     #                 safe_sum  = np.where(fdi_sum_n > 0, fdi_sum_n, 1.0)
-#     #                 fdi_share_data = p.fdi_flow / safe_sum[:, None] # (N,N)
-    
-#     #                 def model_fdi_shares(log_a_flat):
-#     #                     # Set a, recompute the FDI quality stocks, return shares
-#     #                     a_trial = self.a[:, :, s].copy()
-#     #                     a_trial[self.off_diag_mask[:, :, s]] = np.exp(log_a_flat)
-#     #                     self.a[:, :, s] = a_trial
-    
-#     #                     # Recompute the FDI-relevant quantities for sector s only
-#     #                     self.compute_V(p)
-#     #                     self.compute_case_indicator(p)
-#     #                     self.compute_auxiliary_thresholds(p)
-#     #                     self.compute_patenting_thresholds(p)
-#     #                     self.compute_mass_innovations(p)
-#     #                     self.compute_aggregate_qualities(p)
-    
-#     #                     PSI_F = self.PSI_M_F[:, :, s]              # (N,N)
-#     #                     PSI_F_sum = PSI_F.sum(axis=1)               # (N,)
-#     #                     safe = np.where(PSI_F_sum > 0, PSI_F_sum, 1.0)
-#     #                     share_model = PSI_F / safe[:, None]          # (N,N)
-    
-#     #                     # Residual on off-diagonal pairs only
-#     #                     residual = (share_model - fdi_share_data)[self.off_diag_mask[:, :, s]]
-#     #                     return residual
-    
-#     #                 # Initial guess: log of current a, off-diagonal only
-#     #                 a0 = self.a[:, :, s][self.off_diag_mask[:, :, s]]
-#     #                 a0 = np.where(a0 > 0, a0, 1e-4)
-#     #                 log_a0 = np.log(a0)
-    
-#     #                 sol = root(model_fdi_shares, x0=log_a0, tol=1e-10)
-#     #                 self.a[:, :, s][self.off_diag_mask[:, :, s]] = np.exp(sol.x)
-#     #                 np.einsum('nns->ns', self.a[:, :, s:s+1])[:] = 0
-    
-#     #     elif self.context == 'counterfactual':
-#     #         self.a = p.a * p.tau
-#     #         np.einsum('nns->ns', self.a)[:] = 0
- 
-#     # ── compute_V  [FDI: adds V_NP_F, V_P_F] ───────────────────────────────
- 
-#     def compute_V(self, p):
-#         # Export value functions (unchanged)
-#         self.V_NP = np.einsum('nis,i,s->nis', self.profit, self.w, 1/self.G)
-#         self.V_P  = np.einsum(
-#             'nis,i,ns->nis', self.profit, self.w,
-#             1/(self.G[None,:]-p.nu[None,:]+p.delta)
-#             - 1/(self.G[None,:]+p.delta) + 1/self.G[None,:])
- 
-#         # FDI value functions: driven by pi_F, wage is w_n  [FDI]
-#         self.V_NP_F = np.einsum('nis,n,s->nis', self.pi_F, self.w, 1/self.G)
-#         self.V_P_F  = np.einsum(
-#             'nis,n,ns->nis', self.pi_F, self.w,
-#             1/(self.G[None,:]-p.nu[None,:]+p.delta)
-#             - 1/(self.G[None,:]+p.delta) + 1/self.G[None,:])
- 
-#     # ── compute_case_indicator  [FDI] ───────────────────────────────────────
- 
-#     # def compute_case_indicator(self, p):
-#     #     """Case 2: w_i*pi^w < w_n*Pi^{w,F}, off-diagonal, patenting sectors."""
-#     #     self.case2 = np.zeros((p.N, p.N, p.S), bool)
-#     #     self.case2[..., 1:] = (
-#     #         (self.w[None,:,None] * self.profit[...,1:]
-#     #          < self.w[:,None,None] * self.pi_F[...,1:])
-#     #         & self.off_diag_mask[...,1:])
-        
-#     def compute_case_indicator(self, p):
-#         self.case2 = np.zeros((p.N, p.N, p.S), bool)
-#         self.case2[..., 1:] = (
-#             (self.w[None,:,None] * self.profit[...,1:]
-#              < self.w[:,None,None] * self.pi_F[...,1:])
-#             & (self.pi_F[...,1:] > 0)
-#             & self.off_diag_mask[...,1:]
-#         )
-        
-#     # def compute_case_indicator(self, p):
-#     #     """
-#     #     In the solver we always treat off-diagonal patenting sector pairs as
-#     #     Case 2 (potential FDI). The gamma_PF / gamma_NPF fractions naturally
-#     #     go to zero when FDI is dominated by exports (large a_{nis} or small
-#     #     pi_F), so there is no need to hard-gate on the profit comparison.
-#     #     The profit comparison case2: w_i*pi^w < w_n*Pi^{w,F} is only
-#     #     meaningful once the fixed point is solved; using it as a gate during
-#     #     iteration prevents Case 2 from ever being triggered from a cold start.
-#     #     """
-#     #     self.case2 = np.zeros((p.N, p.N, p.S), bool)
-#     #     self.case2[..., 1:] = self.off_diag_mask[..., 1:]
- 
-#     # # ── compute_auxiliary_thresholds  [FDI] ─────────────────────────────────
- 
-#     def compute_auxiliary_thresholds(self, p):
-#         """Eqs (6)-(7) of main_3_.tex.  All np.inf in Case 1."""
-#         # w_n * h_n * fe_s  shape (N, S-1)
-#         w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])
-#         eps = 1e-30
- 
-#         dNP     = self.V_NP_F[...,1:] - self.V_NP[...,1:]
-#         dP      = self.V_P_F[...,1:]  - self.V_P[...,1:]
-#         dPF_NPO = self.V_P_F[...,1:]  - self.V_NP[...,1:]
-#         mask    = self.case2[...,1:]
-#         w_a     = self.w[:,None,None] * self.a[...,1:]
- 
-#         def _thresh(num, den):
-#             out = np.full(num.shape, np.inf)
-#             out[mask] = num[mask] / (den[mask] + eps)
-#             return out
- 
-#         self.a_NPF_NPO = np.full((p.N,p.N,p.S), np.inf)
-#         self.a_NPF_NPO[...,1:] = _thresh(w_a, dNP)
- 
-#         self.a_PF_PO = np.full((p.N,p.N,p.S), np.inf)
-#         self.a_PF_PO[...,1:] = _thresh(w_a, dP)
- 
-#         self.a_PF_NPO = np.full((p.N,p.N,p.S), np.inf)
-#         self.a_PF_NPO[...,1:] = _thresh(w_a + w_fe_h[:,None,:], dPF_NPO)
- 
-#         self.psi_bar_NPO_PF = np.full((p.N,p.N,p.S), np.inf)
-#         self.psi_bar_NPO_PF[...,1:] = _thresh(
-#             np.broadcast_to(w_fe_h[:,None,:], w_a.shape).copy(), dPF_NPO)
- 
-#     # ── compute_patenting_thresholds  [FDI: extended] ───────────────────────
- 
-#     def compute_patenting_thresholds(self, p):
-#         """
-#         Adds psi^{*,F} (FDI threshold, Case 2) and computes separate
-#         effective thresholds psi^{m*,O} and psi^{m*,F}.
-#         psi_star and psi_m_star are kept as aliases for backward compatibility.
-#         """
-#         w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])  # (N,S-1)
- 
-#         # ── a_NP_star, a_P_star (unchanged) ─────────────────────────────────
-#         self.a_NP_star = np.ones((p.N,p.N,p.S))
-#         self.a_NP_star[...,1:] = np.maximum(
-#             np.einsum('i,nis,nis->nis', self.w, self.a[...,1:], 1/self.V_NP[...,1:]), 1)
- 
-#         self.a_P_star = np.ones((p.N,p.N,p.S))
-#         self.a_P_star[...,1:] = np.maximum(
-#             np.einsum('i,nis,nis->nis',
-#                       self.w, self.a[...,1:],
-#                       1/(self.V_P[...,1:] - w_fe_h[:,None,:])), 1)
- 
-#         # ── psi^{*,O} ────────────────────────────────────────────────────────
-#         # Case 1: same formula as var_with_entry_costs
-#         psi_C1 = np.full((p.N,p.N,p.S), np.inf)
-#         psi_C1[...,1:] = (
-#             w_fe_h[:,None,:] /
-#             (self.profit[...,1:] * self.w[None,:,None]
-#              * (1/(self.G[None,:]+p.delta-p.nu[None,:])
-#                 - 1/(self.G[None,:]+p.delta))[:,None,1:]))
-#         # Case 2: psi^{C,O} = w_n h_n fe_s / (V_P_O - V_NP_O)
-#         psi_C2_O = np.full((p.N,p.N,p.S), np.inf)
-#         psi_C2_O[...,1:] = np.where(
-#             self.case2[...,1:],
-#             w_fe_h[:,None,:] / (self.V_P[...,1:] - self.V_NP[...,1:] + 1e-30),
-#             np.inf)
-#         self.psi_star_O = np.maximum(np.where(self.case2, psi_C2_O, psi_C1), 1)
-#         self.psi_star   = self.psi_star_O   # backward-compat alias
- 
-#         # ── psi^{*,F}  [FDI] ────────────────────────────────────────────────
-#         self.psi_star_F = np.full((p.N,p.N,p.S), np.inf)
-#         self.psi_star_F[...,1:] = np.where(
-#             self.case2[...,1:],
-#             w_fe_h[:,None,:] / (self.V_P_F[...,1:] - self.V_NP_F[...,1:] + 1e-30),
-#             np.inf)
-#         self.psi_star_F = np.maximum(self.psi_star_F, 1)
- 
-#         # ── psi^{o*} (unchanged logic, uses psi_star_O) ─────────────────────
-#         self.psi_o_star = np.full((p.N,p.S), np.inf)
- 
-#         def aleph_P_star(pso):
-#             return np.maximum(
-#                 np.einsum('i,nis,nis->nis', self.w, self.a[...,1:],
-#                           1/(pso[None,...]*self.V_P[...,1:] - w_fe_h[:,None,:])), 1)
- 
-#         def aleph_NP_star(pso):
-#             return np.maximum(
-#                 np.einsum('i,nis,is,nis->nis',
-#                           self.w, self.a[...,1:], 1/pso, 1/self.V_NP[...,1:]), 1)
- 
-#         def func_to_solve(pso):
-#             pso = pso[:,None]
-#             sig = pso[None,...] >= self.psi_star_O[...,1:]
-#             A = (np.einsum('is,nis->nis', pso, self.V_P[...,1:]) - w_fe_h[:,None,:]
-#                  ) * aleph_P_star(pso)**(-p.d)
-#             B = np.einsum('i,nis,,nis->nis',
-#                           self.w, self.a[...,1:], p.d/(p.d+1),
-#                           aleph_P_star(pso)**(-p.d-1))
-#             C = np.einsum('is,nis->nis', pso, self.V_NP[...,1:]
-#                           ) * aleph_NP_star(pso)**(-p.d)
-#             D = np.einsum('i,nis,,nis->nis',
-#                           self.w, self.a[...,1:], p.d/(p.d+1),
-#                           aleph_NP_star(pso)**(-p.d-1))
-#             res = ((sig*(A-B-(C-D))).sum(axis=0)
-#                    - self.w[:,None]*p.fo[None,1:]*p.r_hjort[:,None])
-#             return res.ravel() / pso.ravel()
- 
-#         x0 = np.min(self.psi_star_O[...,1], axis=0)
-#         roots = root(func_to_solve, x0=x0, tol=1e-15)
-#         self.psi_o_star[:,1] = roots.x
- 
-#         # equality condition
-#         sig = np.isclose(self.psi_star_O[...,1:], 1)
-#         A = (self.V_P[...,1:] - w_fe_h[:,None,:]) * self.a_P_star[...,1:]**(-p.d)
-#         B = np.einsum('i,nis,,nis->nis', self.w, self.a[...,1:],
-#                       p.d/(p.d+1), self.a_P_star[...,1:]**(-p.d-1))
-#         C = self.V_NP[...,1:] * self.a_NP_star[...,1:]**(-p.d)
-#         D = np.einsum('i,nis,,nis->nis', self.w, self.a[...,1:],
-#                       p.d/(p.d+1), self.a_NP_star[...,1:]**(-p.d-1))
-#         res = ((sig*(A-B-(C-D))).sum(axis=0)
-#                - self.w[:,None]*p.fo[None,1:]*p.r_hjort[:,None])
-#         self.psi_o_star[...,1:][res > 0] = 1
- 
-#         # ── effective thresholds  [FDI] ──────────────────────────────────────
-#         self.psi_m_star_O = np.maximum(self.psi_star_O, self.psi_o_star[None,:,:])
-#         self.psi_m_star_F = np.maximum(self.psi_star_F, self.psi_o_star[None,:,:])
-#         self.psi_m_star   = self.psi_m_star_O   # backward-compat alias
- 
-#         self.psi_MP_star = np.full((p.N,p.N,p.S), np.inf)
-#         self.psi_MP_star[...,1:] = np.maximum(
-#             self.psi_m_star_O[...,1:],
-#             (self.w[None,:,None]*self.a[...,1:]
-#              + self.w[:,None,None]*p.fe[None,None,1:]*p.r_hjort[:,None,None]
-#              ) / self.V_P[...,1:])
- 
-#         self.psi_MNP_star = np.full((p.N,p.N,p.S), np.inf)
-#         self.psi_MNP_star[...,1:] = np.maximum(
-#             self.psi_m_star_O[...,1:],
-#             self.w[None,:,None]*self.a[...,1:] / self.V_NP[...,1:])
- 
-#     # ── compute_mass_innovations  [FDI: adds gamma fractions] ───────────────
- 
-#     def compute_mass_innovations(self, p):
-#         """
-#         mu_MNE/MPND/MNP: unchanged from var_with_entry_costs.
-#         gamma_PO/PF/NPO/NPF: quality fractions from eqs (21)-(26) of main_3_.tex.
-#         In Case 1 all gamma_?_F = 0 and the _O fractions reduce to the
-#         no-FDI k/(k-1) formulas.
-#         """
-#         k = p.k[1]; d = p.d
-        
- 
-#         # ── integral and shared denominators (unchanged) ─────────────────────
-#         integral_k_d = self.hypergeometric_integral(
-#             lb=self.psi_m_star_O[...,1], ub=self.psi_MP_star[...,1],
-#             alpha=self.V_P[...,1], beta=self.w*p.fe[1]*p.r_hjort, y=k, z=d)
-        
-        
-#         self.integral_k_d = integral_k_d
- 
-#         temp_w_a_d = np.divide(
-#             1, (self.w[None,:,None]*self.a[...,1:])**d,
-#             out=np.zeros_like(self.a[...,1:]), where=self.a[...,1:]!=0)
-        
-        
-#         # ── mu quantities (unchanged) ────────────────────────────────────────
-#         A = k*(1 - np.minimum(self.psi_m_star_O[...,1:],self.a_NP_star[...,1:])**(1-k)
-#                + self.psi_m_star_O[...,1:]**(1-k)
-#                - self.psi_MP_star[...,1:]**(1-k)) / (k-1)
-#         B = k*np.einsum('nis,nis->nis',
-#                         temp_w_a_d/self.V_NP[...,1:]**(-d),
-#                         np.minimum(self.psi_m_star_O[...,1:],
-#                                    self.a_NP_star[...,1:])**(d-k+1)-1) / (d-k+1)
-#         C = k*np.einsum('nis,ni->nis', temp_w_a_d, integral_k_d)
- 
-#         self.mu_MNE  = np.zeros((p.N,p.N,p.S)); self.mu_MNE[...,1:]  = A-B-C
-#         self.mu_MPND = np.zeros((p.N,p.N,p.S))
-#         self.mu_MPND[...,1:] = C + k*self.psi_MP_star[...,1:]**(1-k)/(k-1)
-#         D_ = k*(np.minimum(self.psi_m_star_O[...,1:],self.a_NP_star[...,1:])**(1-k)
-#                 - self.psi_m_star_O[...,1:]**(1-k)) / (k-1)
-#         self.mu_MNP  = np.zeros((p.N,p.N,p.S)); self.mu_MNP[...,1:]  = B+D_
-        
- 
-#         # ── gamma fractions  [FDI] ────────────────────────────────────────────
-#         psi_mO = self.psi_m_star_O[...,1:]
-#         psi_mF = self.psi_m_star_F[...,1:]
-#         a_po   = self.a_PF_PO[...,1:]
-#         a_npo  = self.a_PF_NPO[...,1:]
-#         a_npf  = self.a_NPF_NPO[...,1:]
-#         psi_bar= self.psi_bar_NPO_PF[...,1:]
-#         a_nis  = self.a[...,1:]
-#         c2     = self.case2[...,1:]
-        
-#         a_po   = np.where(np.isfinite(a_po)   & (a_po   > 0), a_po,   np.inf)
-#         a_npo  = np.where(np.isfinite(a_npo)  & (a_npo  > 0), a_npo,  np.inf)
-#         a_npf  = np.where(np.isfinite(a_npf)  & (a_npf  > 0), a_npf,  np.inf)
-#         psi_bar= np.where(np.isfinite(psi_bar) & (psi_bar > 0), psi_bar, 0.0)
-#         psi_mO = np.where(np.isfinite(psi_mO) & (psi_mO > 1), psi_mO, 1.0)
-#         psi_mF = np.where(np.isfinite(psi_mF) & (psi_mF > 1), psi_mF, 1.0)
-        
-        
-#         # w_n * h_n * fe_s with shape (N,1,S-1) for broadcasting
-#         w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])[:,None,:]
- 
-#         # safe a_nis for division
-#         a_safe = np.where(a_nis > 0, a_nis, 1.0)
- 
-#         # ---------- gamma^{P,O}  (eq 21) ----------
-#         # = k/(k-1)*psi_mO^{1-k}
-#         #   - k/(k-d-1)*a_PF_PO^d * [psi_mO^{1-k-d} - max(a_PF_PO,psi_mO)^{1-k-d}]
-#         g_PO_c2 = (
-#             k/(k-1) * psi_mO**(1-k)
-#             - k/(k-d-1) * a_po**d * (
-#                 psi_mO**(1-k-d) - np.maximum(a_po, psi_mO)**(1-k-d)))
-#         g_PO_c1 = k/(k-1) * psi_mO**(1-k)
-#         self.gamma_PO = np.zeros((p.N,p.N,p.S))
-#         self.gamma_PO[...,1:] = np.where(c2, g_PO_c2, g_PO_c1)
- 
-#         # ---------- gamma^{P,F}  (eq 22) — zero in Case 1 ----------
-#         # = k/(k-d-1)*a_po^d*[psi_mO^{1-k-d}-max(a_po,psi_mO)^{1-k-d}]
-#         #   + k/(k-1)*max(a_po,psi_mO)^{1-k}
-#         #   + 1[a_PF_NPO<psi_mO] * k*(w_n h_n fe_s / a_nis)^d * psi_bar^k
-#         #     * B(1-psibar/psi_mO, 1-psibar/a_PF_NPO ; d+2, d+k-1)
-#         ind_PF = c2 & (a_npo < psi_mO)
-#         g_PF = np.where(c2,
-#             k/(k-d-1)*a_po**d*(psi_mO**(1-k-d)-np.maximum(a_po,psi_mO)**(1-k-d))
-#             + k/(k-1)*np.maximum(a_po,psi_mO)**(1-k),
-#             0.0)
-#         t1_PF = np.where(ind_PF, 1-psi_bar/psi_mO,  0.0)
-#         t2_PF = np.where(ind_PF, 1-psi_bar/a_npo,   0.0)
-#         B_PF  = np.where(ind_PF, _betainc_vec(d+2, d+k-1, t1_PF, t2_PF), 0.0)
-#         pre_PF = np.where(ind_PF & (a_nis>0),
-#                           k*(w_fe_h/a_safe)**d * psi_bar**k, 0.0)
-#         self.gamma_PF = np.zeros((p.N,p.N,p.S))
-#         self.gamma_PF[...,1:] = g_PF + pre_PF*B_PF
- 
-#         # ---------- gamma^{NP,O}  (eq 24) ----------
-#         # Case 2:
-#         # = k/(k-1)*[1-psi_mF^{1-k}]
-#         #   - 1[a_NPF_NPO>1]*k*a_npf^d/(k-d-1)*[1-min(a_npf,psi_mF)^{d+1-k}]
-#         #   + 1[a_PF_NPO>psi_mF]*{k/(k-1)*[psi_mF^{1-k}-min(a_npo,psi_mO)^{1-k}]
-#         #     - k*(w_n h_n fe_s/a_nis)^d*psi_bar^k
-#         #       * B(1-psibar/psi_mF, 1-psibar/min(a_npo,psi_mO); d+2, d+k-1)}
-#         g_NPO_c2 = (
-#             k/(k-1)*(1-psi_mF**(1-k))
-#             - np.where(a_npf > 1,
-#                        k*a_npf**d/(k-d-1)*(1-np.minimum(a_npf,psi_mF)**(d+1-k)), 0.0))
-#         ind_NPO  = c2 & (a_npo > psi_mF)
-#         min_apo_mO = np.minimum(a_npo, psi_mO)
-#         t1_NPO = np.where(ind_NPO, 1-psi_bar/psi_mF,     0.0)
-#         t2_NPO = np.where(ind_NPO, 1-psi_bar/min_apo_mO, 0.0)
-#         B_NPO  = np.where(ind_NPO, _betainc_vec(d+2, d+k-1, t1_NPO, t2_NPO), 0.0)
-#         pre_NPO = np.where(ind_NPO & (a_nis>0),
-#                            k*(w_fe_h/a_safe)**d * psi_bar**k, 0.0)
-#         g_NPO_c2 += np.where(ind_NPO,
-#             k/(k-1)*(psi_mF**(1-k)-min_apo_mO**(1-k)) - pre_NPO*B_NPO, 0.0)
-#         # Case 1: no-FDI formula
-#         g_NPO_c1 = (
-#             k/(k-1)*(1-psi_mO**(1-k))
-#             - k*temp_w_a_d/self.V_NP[...,1:]**(-d)
-#               * (np.minimum(psi_mO,self.a_NP_star[...,1:])**(d-k+1)-1) / (d-k+1))
-#         self.gamma_NPO = np.zeros((p.N,p.N,p.S))
-#         self.gamma_NPO[...,1:] = np.where(c2, g_NPO_c2, g_NPO_c1)
- 
-#         # ---------- gamma^{NP,F}  (eq 26) — zero in Case 1 ----------
-#         # = 1[a_npf>=psi_mF] * k*a_npf^d/(k-d-1)*[1-psi_mF^{d+1-k}]
-#         #   + 1[1<=a_npf<psi_mF] * {k*a_npf^d/(k-d-1)*[1-a_npf^{d+1-k}]
-#         #                           + k/(k-1)*[a_npf^{1-k}-psi_mF^{1-k}]}
-#         #   + 1[a_npf<1] * k/(k-1)*[1-psi_mF^{1-k}]
-#         g_NPF = (
-#             np.where(c2 & (a_npf >= psi_mF),
-#                      k*a_npf**d/(k-d-1)*(1-psi_mF**(d+1-k)), 0.0)
-#             + np.where(c2 & (a_npf >= 1) & (a_npf < psi_mF),
-#                        k*a_npf**d/(k-d-1)*(1-a_npf**(d+1-k))
-#                        + k/(k-1)*(a_npf**(1-k)-psi_mF**(1-k)), 0.0)
-#             + np.where(c2 & (a_npf < 1),
-#                        k/(k-1)*(1-psi_mF**(1-k)), 0.0))
-#         self.gamma_NPF = np.zeros((p.N,p.N,p.S))
-#         self.gamma_NPF[...,1:] = g_NPF
- 
-#     # ── compute_aggregate_qualities  [FDI] ──────────────────────────────────
- 
-#     def compute_aggregate_qualities(self, p):
-#         """
-#         Eqs (27)-(35) of main_3_.tex.
-#         Six quality stocks (O and F versions of P_ND, P_D, NP) instead of four.
-#         In Case 1 all F stocks are zero and the O stocks match var_with_entry_costs.
-#         """
-#         prefact = p.eta[None,:,1:] * self.l_R[None,:,1:]**(1-p.kappa)  # (N,N,S-1)
-#         gs  = self.g_s[1:]; nu = p.nu[1:]; ze = p.zeta[1:]
-#         de  = p.delta[:,1:]   # (N,S-1) destination-specific obsolescence
-#         A_NE  = gs + nu + ze
-#         A_PND = gs[None,:] + de + nu + ze    # (N,S-1)
-#         A_PD  = gs[None,:] + de + ze         # (N,S-1)
- 
-#         # Export stocks
-#         self.PSI_M_P_ND_O = np.zeros((p.N,p.N,p.S))
-#         self.PSI_M_P_ND_O[...,1:] = np.einsum(
-#             'nis,nis->nis', prefact * self.gamma_PO[...,1:], 1/A_PND[:,None,:])
- 
-#         self.PSI_M_P_D_O = np.zeros((p.N,p.N,p.S))
-#         self.PSI_M_P_D_O[...,1:] = np.einsum(
-#             'nis,ns->nis', self.PSI_M_P_ND_O[...,1:], nu/A_PD)
- 
-#         self.PSI_M_NP_O = np.zeros((p.N,p.N,p.S))
-#         num_O = (np.einsum('nis,nis->nis', prefact, self.gamma_NPO[...,1:])
-#                  + np.einsum('ns,nis->nis', de, self.PSI_M_P_ND_O[...,1:]))
-#         self.PSI_M_NP_O[...,1:] = np.einsum('nis,s->nis', num_O, 1/A_NE)
- 
-#         # FDI stocks  [FDI]
-#         self.PSI_M_P_ND_F = np.zeros((p.N,p.N,p.S))
-#         self.PSI_M_P_ND_F[...,1:] = np.einsum(
-#             'nis,nis->nis', prefact * self.gamma_PF[...,1:], 1/A_PND[:,None,:])
- 
-#         self.PSI_M_P_D_F = np.zeros((p.N,p.N,p.S))
-#         self.PSI_M_P_D_F[...,1:] = np.einsum(
-#             'nis,ns->nis', self.PSI_M_P_ND_F[...,1:], nu/A_PD)
- 
-#         self.PSI_M_NP_F = np.zeros((p.N,p.N,p.S))
-#         num_F = (np.einsum('nis,nis->nis', prefact, self.gamma_NPF[...,1:])
-#                  + np.einsum('ns,nis->nis', de, self.PSI_M_P_ND_F[...,1:]))
-#         self.PSI_M_NP_F[...,1:] = np.einsum('nis,s->nis', num_F, 1/A_NE)
- 
-#         # Aggregates
-#         self.PSI_M_O = self.PSI_M_P_ND_O + self.PSI_M_P_D_O + self.PSI_M_NP_O
-#         self.PSI_M_F = self.PSI_M_P_ND_F + self.PSI_M_P_D_F + self.PSI_M_NP_F
- 
-#         # Backward-compat aliases (PSI_ME = export mass, used for export trade flows)
-#         self.PSI_ME   = self.PSI_M_O
-#         self.PSI_MPND = self.PSI_M_P_ND_O
-#         self.PSI_MPD  = self.PSI_M_P_D_O
-#         self.PSI_MNP  = self.PSI_M_NP_O
- 
-#         # Non-entering stock (same formula as var_with_entry_costs)
-#         self.PSI_MNE = np.zeros((p.N,p.N,p.S))
-#         self.PSI_MNE[...,1:] = prefact * self.mu_MNE[...,1:] / A_NE[None,None,:]
- 
-#         self.PSI_M  = self.PSI_M_O + self.PSI_M_F + self.PSI_MNE
- 
-#         self.PSI_CD = np.ones((p.N,p.S))
-#         self.PSI_CD[:,1:] = 1 - self.PSI_M[...,1:].sum(axis=1)
- 
-#     # ── compute_sectoral_prices  [FDI: FDI mass in denominator D] ───────────
- 
-#     def compute_sectoral_prices(self, p):
-#         """
-#         Eqs (36)-(39) of main_3_.tex.  The common denominator D_ns now
-#         includes the FDI mass PSI_M_F weighted by phi_{nns} (destination's
-#         own productivity).
-#         """
-#         power = p.sigma - 1
-#         phi_nn = np.einsum('nns->ns', self.phi)   # (N,S) diagonal phi
- 
-#         A_exp = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None,1:] * (
-#             self.PSI_ME[...,1:] * self.phi[...,1:]**power[None,None,1:]
-#         ).sum(axis=1)    # (N,S-1)
- 
-#         # FDI: affiliate sells in n using destination's technology phi_{nns}  [FDI]
-#         A_fdi = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None,1:] * (
-#             self.PSI_M_F[...,1:] * phi_nn[:,None,1:]**power[None,None,1:]
-#         ).sum(axis=1)    # (N,S-1)
- 
-#         B_cd = self.PSI_CD[:,1:] * (
-#             self.phi[...,1:]**p.theta[None,None,1:]
-#         ).sum(axis=1)**((power/p.theta)[None,1:])
- 
-#         D = A_exp + A_fdi + B_cd
- 
-#         self.P_M = np.full((p.N,p.S), np.inf)
-#         self.P_M[:,1:] = (A_exp/D)**(1/(1-p.sigma[None,1:]))
- 
-#         self.P_M_F = np.full((p.N,p.S), np.inf)    # [FDI]
-#         self.P_M_F[:,1:] = (A_fdi/D)**(1/(1-p.sigma[None,1:]))
- 
-#         self.P_CD = np.ones((p.N,p.S))
-#         self.P_CD[:,1:] = (B_cd/D)**(1/(1-p.sigma[None,1:]))
- 
-#     # ── compute_labor_allocations  [FDI: adds l_F] ──────────────────────────
- 
-#     def compute_labor_allocations(self, p):
-#         """
-#         l_Ao, l_Ae, l_Aa: unchanged from var_with_entry_costs.
-#         l_F: FDI setup labour, eq (41) of main_3_.tex.  [FDI]
-#         """
-#         k = p.k[1]; d = p.d
-#         w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])  # (N,S-1)
- 
-#         # l_Ao (unchanged)
-#         self.l_Ao = np.zeros((p.N,p.S))
-#         self.l_Ao[...,1:] = np.einsum(
-#             'i,s,is,is,is->is',
-#             p.r_hjort, p.fo[1:], p.eta[...,1:],
-#             self.l_R[...,1:]**(1-p.kappa),
-#             self.psi_o_star[...,1:]**(-k))
- 
-#         # Shared integrals
-#         temp_w_a_d = np.divide(
-#             1, (self.w[None,:,None]*self.a[...,1:])**d,
-#             out=np.zeros_like(self.a[...,1:]), where=self.a[...,1:]!=0)
-#         temp_w_a_d1 = np.divide(
-#             1, (self.w[None,:,None]*self.a[...,1:])**(d+1),
-#             out=np.zeros_like(self.a[...,1:]), where=self.a[...,1:]!=0)
- 
-#         integral_k1_d = self.hypergeometric_integral(
-#             lb=self.psi_m_star_O[...,1], ub=self.psi_MP_star[...,1],
-#             alpha=self.V_P[...,1], beta=self.w*p.fe[1]*p.r_hjort, y=k+1, z=d)
-#         self.integral_k_plus_un_d = integral_k1_d
- 
-#         # l_Ae (unchanged)
-#         self.l_Ae = np.zeros((p.N,p.N,p.S))
-#         self.l_Ae[...,1:] = np.einsum(
-#             'n,s,is,is,nis->ins',
-#             p.r_hjort, p.fe[1:], p.eta[...,1:],
-#             self.l_R[...,1:]**(1-p.kappa),
-#             k*temp_w_a_d*integral_k1_d[...,None] + self.psi_MP_star[...,1:]**(-k))
- 
-#         # l_Aa (unchanged)
-#         A_aa = k*np.einsum('nis,nis,nis->nis',
-#                            temp_w_a_d1, 1/self.V_NP[...,1:]**(-d-1),
-#                            np.minimum(self.psi_m_star_O[...,1:],
-#                                       self.a_NP_star[...,1:])**(d-k+1)-1) / (d-k+1)
-#         B_aa = (self.psi_MP_star[...,1:]**(-k)
-#                 - self.psi_m_star_O[...,1:]**(-k)
-#                 + np.minimum(self.psi_m_star_O[...,1:],
-#                              self.a_NP_star[...,1:])**(-k))
-#         lb_ = self.psi_m_star_O[...,1]; ub_ = self.psi_MP_star[...,1]
-#         al_ = self.V_P[...,1];          be_ = self.w*p.fe[1]*p.r_hjort
-#         tlb = lb_**(-k)*(al_*lb_-be_[:,None])**(d+1)/k
-#         tub = ub_**(-k)*(al_*ub_-be_[:,None])**(d+1)/k
-#         integral_k1_d1 = tlb - tub + al_*(d+1)*self.integral_k_d/k
-#         self.integral_k_plus_un_d_plus_un = integral_k1_d1
-#         C_aa = k*temp_w_a_d1*integral_k1_d1[...,None]
-#         self.l_Aa = np.zeros((p.N,p.N,p.S))
-#         self.l_Aa[...,1:] = d*np.einsum(
-#             'is,is,nis,nis->nis',
-#             p.eta[:,1:], self.l_R[...,1:]**(1-p.kappa),
-#             self.a[...,1:], A_aa+B_aa+C_aa) / (d+1)
- 
-#         # l_F: FDI setup labour  [FDI]
-#         # L^F_{ins} = eta_is*(L^R_is)^{1-kappa} * a_nis^d/(d+1) * Lambda^F_nis
-#         # Lambda^F using the gamma route (equivalent to the piecewise integral):
-#         #   Lambda^F = (gamma_NPF + gamma_PF) * (k-1)/k
-#         Lambda_F = ((self.gamma_NPF[...,1:] + self.gamma_PF[...,1:])
-#                     * (k-1)/k)
-#         self.l_F = np.zeros((p.N,p.N,p.S))
-#         self.l_F[...,1:] = np.where(
-#             self.case2[...,1:],
-#             np.einsum('is,is,nis,nis->nis',
-#                       p.eta[:,1:], self.l_R[...,1:]**(1-p.kappa),
-#                       self.a[...,1:]**d/(d+1), Lambda_F),
-#             0.0)
- 
-#         # l_P includes l_F  [FDI]
-#         self.l_P = p.labor - (
-#             self.l_Ao + self.l_R
-#             + self.l_Ae.sum(axis=0)
-#             + self.l_Aa.sum(axis=0)
-#             + self.l_F.sum(axis=0)
-#         ).sum(axis=1)
- 
-#     # ── compute_trade_flows_and_shares  [FDI: adds X_M_F] ───────────────────
- 
-#     def compute_trade_flows_and_shares(self, p, assign=True):
-#         """
-#         X_M, X_CD unchanged (use PSI_ME = PSI_M_O).
-#         X_M_F: FDI affiliate sales, uses PSI_M_F and phi_{nns}.  [FDI]
-#         """
-#         # Export monopolist flows (unchanged)
-#         temp_exp = (self.PSI_ME[...,1:]*self.phi[...,1:]**(p.sigma-1)[None,None,1:]
-#                     ).sum(axis=1)
-#         X_M = np.zeros((p.N,p.N,p.S))
-#         X_M[...,1:] = (
-#             self.phi[...,1:]**(p.sigma-1)[None,None,1:]
-#             * self.PSI_ME[...,1:]
-#             / temp_exp[:,None,:]
-#             * self.P_M[:,None,1:]**(1-p.sigma[None,1:])
-#             * p.beta[None,None,1:]
-#             * self.Z[None,:,None])
- 
-#         # FDI affiliate flows  [FDI]
-#         # Affiliates in n from origin i sell using phi_{nns}
-#         phi_nn = np.einsum('nns->ns', self.phi)     # (N,S)
-#         temp_fdi = (self.PSI_M_F[...,1:]
-#                     * phi_nn[:,None,1:]**(p.sigma-1)[None,None,1:]
-#                     ).sum(axis=1)                    # (N,S-1)
-#         X_M_F = np.zeros((p.N,p.N,p.S))
-#         safe_fdi = np.where(temp_fdi > 0, temp_fdi, 1.0)
-#         X_M_F[...,1:] = np.where(
-#             temp_fdi[:,None,:] > 0,
-#             (self.PSI_M_F[...,1:]
-#              * phi_nn[:,None,1:]**(p.sigma-1)[None,None,1:]
-#              / safe_fdi[:,None,:]
-#              * p.beta[None,None,1:]
-#              * self.Z[None,:,None])
-#             * self.P_M_F[:,None,1:]**(1-p.sigma[None,1:]),
-#             0.0)
- 
-#         # Competitive goods (unchanged)
-#         X_CD = (
-#             self.phi**p.theta[None,None,:]
-#             / (self.phi**p.theta[None,None,:]).sum(axis=1)[:,None,:]
-#             * self.P_CD[:,None,:]**(1-p.sigma[None,None,:])
-#             * p.beta[None,None,:]
-#             * self.Z[None,:,None])
- 
-#         X = X_M + X_CD
-#         if assign:
-#             self.X_M=X_M; self.X_M_F=X_M_F; self.X_CD=X_CD; self.X=X
-#         else:
-#             return X_M, X_M_F, X_CD, X
- 
-#     # ── solver pipeline ──────────────────────────────────────────────────────
- 
-#     def compute_solver_quantities(self, p):
-#         # print('start')
-#         self.compute_growth(p)
-#         self.compute_entry_costs(p)
-#         self.compute_V(p)
-#         self.compute_case_indicator(p)           # [FDI]
-#         self.compute_auxiliary_thresholds(p)     # [FDI]
-#         self.compute_patenting_thresholds(p)
-#         # print('here')
-#         self.compute_mass_innovations(p)
-#         self.compute_aggregate_qualities(p)
-#         self.compute_sectoral_prices(p)
-#         self.compute_labor_allocations(p)
-#         self.compute_trade_flows_and_shares(p)
- 
-#     # ── update equations ─────────────────────────────────────────────────────
- 
-#     def compute_price_indices(self, p):
-#         """Eq (29) extended with FDI mass.  [FDI]"""
-#         power = p.sigma-1
-#         phi_nn = np.einsum('nns->ns', self.phi)
-#         A_exp = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None,:] * (
-#             self.PSI_ME * self.phi**power[None,None,:]).sum(axis=1)
-#         A_fdi = ((p.sigma/(p.sigma-1))**(1-p.sigma))[None,:] * (
-#             self.PSI_M_F * phi_nn[:,None,:]**power[None,None,:]).sum(axis=1)
-#         B = self.PSI_CD*(self.phi**p.theta[None,None,:]).sum(axis=1)**(
-#             power/p.theta)[None,:]
-#         temp = gamma((p.theta+1-p.sigma)/p.theta)[None,:]*(A_exp+A_fdi+B)
-#         one_over = np.divide(1,temp,out=np.full_like(temp,np.inf),where=temp>0)
-#         return (one_over**(p.beta[None,:]/(p.sigma[None,:]-1))).prod(axis=1)
- 
-#     def compute_wage(self, p):
-#         """Eq (32) — unchanged."""
-#         return (p.alpha[None,:] * (
-#             (self.X - self.X_M/p.sigma[None,None,:])/(1+p.tariff)
-#         ).sum(axis=0)).sum(axis=1) / self.l_P
- 
-#     def compute_expenditure(self, p):
-#         """Eq (33) extended with FDI labour and profit flows.  [FDI]"""
-#         A1 = np.einsum('nis,nis->i', self.X, 1/(1+p.tariff))
-#         A2 = np.einsum('ins,ins,ins->i', self.X, p.tariff, 1/(1+p.tariff))
-#         B  = np.einsum('i,nis->i', self.w, self.l_Ae)
-#         C  = p.deficit_share_world_output*np.einsum('nis,nis->',self.X,1/(1+p.tariff))
-#         D  = np.einsum('n,ins->i', self.w, self.l_Ae)
-#         # FDI labour: borne by innovator i, paid to workers in n  [FDI]
-#         B_F = np.einsum('i,nis->i', self.w, self.l_F)
-#         D_F = np.einsum('n,ins->i', self.w, self.l_F)
-#         # FDI profit repatriation  [FDI]
-#         FDI_in  = np.einsum('nis,s->i', self.X_M_F[...,1:], 1/p.sigma[1:])
-#         FDI_out = np.einsum('ins,s->i', self.X_M_F[...,1:], 1/p.sigma[1:])
-#         return A1+A2+B+B_F+FDI_in - (C+D+D_F+FDI_out)
- 
-#     def compute_profit(self, p):
-#         """Eq (31) export normalised profits — unchanged."""
-#         profit = np.zeros((p.N,p.N,p.S))
-#         profit[...,1:] = np.einsum(
-#             'nis,s,i,nis,nis->nis',
-#             self.X_M[...,1:], 1/p.sigma[1:], 1/self.w,
-#             1/self.PSI_ME[...,1:], 1/(1+p.tariff[...,1:]))
-#         return profit
- 
-#     # def compute_pi_F(self, p):
-#     #     """[FDI] Pi^{w,F}_{nis} = X_M_F_{nis} / (sigma_s * Psi_M_F_{nis} * w_n)"""
-#     #     pi_F = np.zeros((p.N,p.N,p.S))
-#     #     safe = np.where(self.PSI_M_F[...,1:]>0, self.PSI_M_F[...,1:], 1.0)
-#     #     pi_F[...,1:] = np.einsum(
-#     #         'nis,s,n,nis->nis',
-#     #         self.X_M_F[...,1:], 1/p.sigma[1:], 1/self.w, 1/safe)
-#     #     self.safe=safe
-#     #     pi_F[self.PSI_M_F==0] = 0.0
-#     #     return pi_F
-    
-#     # def compute_pi_F(self, p):
-#     #     pi_F = self.pi_F.copy()  # start from current guess, not zero
-#     #     mask = self.PSI_M_F[...,1:] > 0
-#     #     safe = np.where(mask, self.PSI_M_F[...,1:], 1.0)
-#     #     pi_F[...,1:] = np.where(
-#     #         mask,
-#     #         np.einsum('nis,s,n,nis->nis',
-#     #                   self.X_M_F[...,1:], 1/p.sigma[1:], 1/self.w, 1/safe),
-#     #         self.pi_F[...,1:])  # keep current value where PSI_M_F = 0
-#     #     return pi_F
-    
-#     def compute_pi_F(self, p):
-#         pi_F = np.zeros((p.N, p.N, p.S))
-#         mask = self.PSI_M_F[...,1:] > 0
-#         safe = np.where(mask, self.PSI_M_F[...,1:], 1.0)
-#         pi_F[...,1:] = np.where(
-#             mask,
-#             np.einsum('nis,s,n,nis->nis',
-#                       self.X_M_F[...,1:], 1/p.sigma[1:], 1/self.w, 1/safe),
-#             0.0)
-#         return pi_F
- 
-#     def compute_labor_research(self, p):
-#         """Eq (30) — identical to var_with_entry_costs."""
-#         k=p.k[1]; d=p.d
-#         w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])
-#         temp_w_a_d = np.divide(
-#             1,(self.w[None,:,None]*self.a[...,1:])**d,
-#             out=np.zeros_like(self.a[...,1:]),where=self.a[...,1:]!=0)
-#         A1=k*np.einsum('nis,i,nis->nis',self.V_NP[...,1:],1/self.w,
-#                        self.a_NP_star[...,1:])/(k-1)
-#         A =np.einsum('nis,nis->nis',A1-d*self.a[...,1:]/(d+1),
-#                      self.a_NP_star[...,1:]**(-k))
-#         B1=k*np.einsum('nis,i,nis->nis',self.V_NP[...,1:],1/self.w,
-#                        self.psi_MNP_star[...,1:])/(k-1)
-#         B =np.einsum('nis,nis->nis',B1-d*self.a[...,1:]/(d+1),
-#                      self.psi_MNP_star[...,1:]**(-k))
-#         sigC=np.einsum('i,nis,nis->nis',self.w,self.a[...,1:],
-#                        1/self.V_NP[...,1:])>1
-#         C=k*np.einsum('nis,i,nis,nis,nis->nis',
-#                       temp_w_a_d,1/self.w,self.V_NP[...,1:]**(d+1),sigC,
-#                       np.minimum(self.psi_m_star_O[...,1:],
-#                                  self.a_NP_star[...,1:])**(d-k+1)-1
-#                       )/((d+1)*(d-k+1))
-#         D1=k*np.einsum('nis,i,nis->nis',self.V_P[...,1:],1/self.w,
-#                        self.psi_MP_star[...,1:])/(k-1)
-#         D2=(self.w[:,None,None]*p.fe[None,None,1:]*p.r_hjort[:,None,None]
-#             /self.w[None,:,None] + d*self.a[...,1:]/(d+1))
-#         D =np.einsum('nis,nis->nis',D1-D2,self.psi_MP_star[...,1:]**(-k))
-#         sigE=((self.w[None,:,None]*self.a[...,1:]
-#                +self.w[:,None,None]*p.fe[None,None,1:]*p.r_hjort[:,None,None])
-#               /self.V_P[...,1:] > self.psi_o_star[None,:,1:])
-#         E=k*np.einsum('nis,nis,i,ni->nis',sigE,temp_w_a_d,1/self.w,
-#                       self.integral_k_plus_un_d_plus_un)/(d+1)
-#         l_R=np.zeros((p.N,p.S))
-#         temp=((A-B+C+D+E).sum(axis=0)
-#               - p.fo[None,1:]*p.r_hjort[:,None]*self.psi_o_star[...,1:]**(-k))
-#         l_R[...,1:]=(temp*p.eta[...,1:])**(1/p.kappa)
-#         return l_R
- 
-#     def compute_phi(self, p):
-#         """Calibration / counterfactual phi — unchanged."""
-#         if self.context=='calibration':
-#             denom_M=np.zeros((p.N,p.N,p.S))
-#             # print((1/((self.PSI_ME[...,1:]*self.phi[...,1:]**(p.sigma-1)[None,None,1:]
-#             #     ).sum(axis=1))).shape)
-#             denom_M[...,1:]=np.einsum(
-#                 'nis,nis,ns,ns->nis',
-#                 self.PSI_ME[...,1:],
-#                 self.phi[...,1:]**((p.sigma-1)-p.theta)[None,None,1:],
-#                 1/((self.PSI_ME[...,1:]*self.phi[...,1:]**(p.sigma[None,None,1:]-1)
-#                     ).sum(axis=1)),
-#                 self.P_M[:,1:]**(1-p.sigma[None,1:])
-#                 )
-#             denom_CD=np.einsum(
-#                 'ns,ns->ns',
-#                 1/(self.phi**p.theta[None,None,:]).sum(axis=1),
-#                 self.P_CD[:,:]**(1-p.sigma[None,:]).squeeze())
-#             f_phi=np.einsum(
-#                 'nis,nis,nis->nis',
-#                 p.trade_shares,1+p.tariff,
-#                 1/(denom_M+denom_CD[:,None,:]))
-#             return np.einsum(
-#                 'nis,nns,ns,ns,ns->nis',
-#                 f_phi**(1/p.theta)[None,None,:],
-#                 f_phi**(-1/p.theta)[None,None,:],
-#                 p.T**(1/p.theta[None,:]),
-#                 self.w[:,None]**(-p.alpha[None,:]),
-#                 self.price_indices[:,None]**(p.alpha[None,:]-1))
-#         elif self.context=='counterfactual':
-#             return np.einsum(
-#                 'is,nis,nis,is,is->nis',
-#                 p.T**(1/p.theta[None,:]),
-#                 1/p.tau, 1/(1+p.tariff),
-#                 self.w[:,None]**(-p.alpha[None,:]),
-#                 self.price_indices[:,None]**(p.alpha[None,:]-1))
- 
-#     # ── non-solver quantities ────────────────────────────────────────────────
- 
-#     def scale_P(self, p):
-#         """Normalise all nominal quantities.  [FDI: adds X_M_F]"""
-#         num=self.price_indices[0]
-#         self.w/=num; self.Z/=num; self.X/=num
-#         self.X_CD/=num; self.X_M/=num; self.X_M_F/=num   # [FDI]
-#         self.phi*=num; self.price_indices/=num
-#         self.compute_sectoral_prices(p)
- 
-#     def compute_tau(self, p, assign=True):
-#         tau=np.einsum('is,nis,nis,is,is->nis',
-#                       p.T**(1/p.theta[None,:]),1/self.phi,1/(1+p.tariff),
-#                       self.w[:,None]**-p.alpha[None,:],
-#                       self.price_indices[:,None]**(p.alpha[None,:]-1))
-#         if assign: self.tau=tau
-#         else: return tau
- 
-#     def compute_nominal_value_added(self,p):
-#         self.nominal_value_added=(
-#             p.alpha[None,:]*((self.X-self.X_M/p.sigma[None,None,:])
-#                              /(1+p.tariff)).sum(axis=0))
- 
-#     def compute_nominal_intermediate_input(self,p):
-#         self.nominal_intermediate_input=np.einsum(
-#             's,is->is',(1-p.alpha)/p.alpha,self.nominal_value_added)
- 
-#     def compute_nominal_final_consumption(self,p):
-#         self.nominal_final_consumption=(
-#             self.Z-self.nominal_intermediate_input.sum(axis=1))
-#         self.cons=self.nominal_final_consumption/self.price_indices
- 
-#     def compute_gdp(self,p):
-#         """Eq (37) extended with l_F.  [FDI]"""
-#         self.gdp=(
-#             self.nominal_final_consumption
-#             +p.deficit_share_world_output*np.einsum('nis,nis->',self.X,1/(1+p.tariff))
-#             +self.w*np.einsum('is->i',self.l_R+self.l_Ao)
-#             +np.einsum('n,ins->i',self.w,self.l_Ae)
-#             +np.einsum('n,nis->i',self.w,self.l_Aa)
-#             +np.einsum('n,nis->i',self.w,self.l_F))    # [FDI]
- 
-#     def compute_pflow(self,p):
-#         k=p.k[1]; d=p.d
-#         temp_w_a_d=np.divide(1,(self.w[None,:,None]*self.a[...,1:])**d,
-#                               out=np.zeros_like(self.a[...,1:]),
-#                               where=self.a[...,1:]!=0)
-#         bracket=(k*np.einsum('nis,ni->nis',temp_w_a_d,self.integral_k_plus_un_d)
-#                  +self.psi_MP_star[...,1:]**(-k))
-#         self.pflow=np.einsum('nis,is,is->nis',bracket,p.eta[...,1:],
-#                              self.l_R[...,1:]**(1-p.kappa)).squeeze()
- 
-#     def compute_share_of_innovations_patented(self,p):
-#         self.share_innov_patented=self.psi_m_star_O[...,1:]**(-p.k[1])
- 
-#     def compute_non_solver_quantities(self,p):
-#         self.compute_tau(p)
-#         self.compute_nominal_value_added(p)
-#         self.compute_nominal_intermediate_input(p)
-#         self.compute_nominal_final_consumption(p)
-#         self.compute_gdp(p)
-#         self.compute_pflow(p)
-#         self.compute_share_of_innovations_patented(p)
- 
-#     def compute_consumption_equivalent_welfare(self,p,baseline):
-#         self.cons_eq_welfare=(
-#             self.cons
-#             *((p.rho-baseline.g*(1-1/p.gamma))
-#               /(p.rho-self.g*(1-1/p.gamma)))**(p.gamma/(p.gamma-1))
-#             /baseline.cons)
- 
-#     def compute_world_welfare_changes(self,p,baseline):
-#         one_ov_g=1/p.gamma
-#         n=(p.labor**one_ov_g*self.cons**((p.gamma-1)*one_ov_g)).sum()*(
-#             p.rho-baseline.g*(1-one_ov_g))
-#         d=(p.labor**one_ov_g*baseline.cons**((p.gamma-1)*one_ov_g)).sum()*(
-#             p.rho-self.g*(1-one_ov_g))
-#         self.cons_eq_pop_average_welfare_change=(n/d)**(p.gamma/(p.gamma-1))
-#         n2=(baseline.cons**one_ov_g*self.cons**((p.gamma-1)*one_ov_g)).sum()*(
-#             p.rho-baseline.g*(1-one_ov_g))
-#         d2=baseline.cons.sum()*(p.rho-self.g*(1-one_ov_g))
-#         self.cons_eq_negishi_welfare_change=(n2/d2)**(p.gamma/(p.gamma-1))
 
 def _betainc_vec(a, b, t1, t2):
-    """Vectorised non-regularised incomplete Beta function.
-
-    Computed as: B_unreg(a, b, t1, t2) = [I_reg(a,b,t2) - I_reg(a,b,t1)] * B(a,b)
-    where I_reg is scipy's regularized incomplete beta (fast C code).
-    """
-    import scipy.special as sp
-    a = np.asarray(a, dtype=float); b = np.asarray(b, dtype=float)
-    t1 = np.clip(np.asarray(t1, dtype=float), 0.0, 1.0)
-    t2 = np.clip(np.asarray(t2, dtype=float), 0.0, 1.0)
-    # Broadcast scalars to array shapes
-    if np.ndim(a) == 0 and np.ndim(t1) > 0:
-        a = np.broadcast_to(a, t1.shape)
-    if np.ndim(b) == 0 and np.ndim(t1) > 0:
-        b = np.broadcast_to(b, t1.shape)
-    # Need a > 0 and b > 0 for scipy's betainc/beta to be well-defined.
-    # If a<=0 or b<=0, fall back to mpmath element-wise (slow path).
-    bad = (a <= 0) | (b <= 0)
-    if bad.any():
-        return _betainc_vec_mpmath(a, b, t1, t2)
-    # Fast path: regularized betainc * full beta
-    res = (sp.betainc(a, b, t2) - sp.betainc(a, b, t1)) * sp.beta(a, b)
-    res = np.where(np.isfinite(res), res, 0.0)
-    return res
-
-
-def _betainc_vec_mpmath(a, b, t1, t2):
-    """Slow mpmath fallback for non-positive shape parameters."""
+    """Vectorised non-regularised incomplete Beta function."""
     return np.vectorize(
-        lambda aa, bb, x1, x2: float(betainc(aa, bb,
-            max(0.0, min(1.0, float(x1))),
-            max(0.0, min(1.0, float(x2))), regularized=False).real)
+        lambda aa, bb, x1, x2: float(betainc(aa, bb, max(0.0,min(1.0,float(x1))), max(0.0,min(1.0,float(x2))), regularized=False).real)
     )(a, b, t1, t2)
- 
- 
-# def _betainc_vec(a, b, t1, t2):
-#     """Vectorised non-regularised incomplete Beta function."""
-#     return np.vectorize(
-#         lambda aa, bb, x1, x2: float(betainc(aa, bb, 
-#                                               max(0.0, min(1.0, float(x1))), 
-#                                               max(0.0, min(1.0, float(x2))), 
-#                                               regularized=False).real)
-#     )(a, b, t1, t2)
-# ─────────────────────────────────────────────────────────────────────────────
-# var_with_fdi
-# ─────────────────────────────────────────────────────────────────────────────
- 
-# ─────────────────────────────────────────────────────────────────────────────
-# var_with_fdi  (CORRECTED VERSION — May 2026)
-#
-# This file rewrites the `var_with_fdi` class to match algorithm_corrected.tex.
-# To use it: replace the existing var_with_fdi class definition (lines
-# 1595-2753 of classes.py) with this entire block. Imports (numpy, betainc,
-# _betainc_vec, etc.) must already be in scope from the surrounding classes.py.
-#
-# === KEY CORRECTIONS APPLIED (vs the previous version) ======================
-#  1.  ValmidPs / ValnoorigPs (eqs 15', 17') now include the missing factor
-#      psi multiplying V^{NP,O} and V^{NP,F}.  Previous code had
-#      V_NPO*(1 - e^{-d}) and V_NPF*e^{-d} without psi.
-#  2.  The original-patent threshold psi^{o*} solves a SINGLE MIXED Case 1 /
-#      Case 2 equation (eqs 14', 18', 19'). For each origin i the sum runs
-#      over destinations n, each in its own case (diagonal n=i is always
-#      Case 1).
-#  3.  gamma quality shares now use beta-function shape (d+1, k-d-1) and
-#      prefactor psi_bar^{1-k} (eqs 21'-26'). Previous code had
-#      (d+2, d+k-1) and psi_bar^k.
-#  4.  Aggregate qualities (eqs 28', 31', 32') drop the extra k/(k-1)
-#      multiplying gamma (already done correctly in the previous code, kept).
-#  5.  Patent-application labor L^e is the mixed Case 1 / Case 2 expression
-#      (eq 40') with beta-shape (d+1, k-d). Previously L^e (alias l_Ae) used
-#      the Case-1-only formula (k * w_a^{-d} * integral_{k+1,d} + psi_MP^{-k}).
-#  6.  Affiliate-labor Lambda^F (eq 42) uses beta-shape (d+2, k-d-1).
-#      Previously (d+2, d+k-1).
-#  7.  Innovation-value RHS (eq 49') has NO leading no-FDI sum. The full
-#      IntVNorigP + IntVorigP^{A,B,C,D} block (eqs 50'-54') is the complete
-#      value of innovation. Previous code disabled this block and used the
-#      old Case-1-only formula for all pairs.
-#  8.  IntV blocks (50'-54') use negative-exponent probability terms psi^{-k}
-#      (not psi^k); denominator (d-k+1) where appropriate; beta-shape
-#      (d+2, k-d-1) in IntVorigP^C.
-#  9.  Wage equation (eq 57') divides X by (1+b) AND subtracts
-#      -sigma^{-1} sum_j X^{M,F}_{ijs}. Previous code missed the FDI-profit
-#      term in compute_wage (returned per-origin wage without it).
-# 10.  Income/spending (eq 58') now includes L^F service flows on BOTH sides
-#      (exports and imports); affiliate-profit signs corrected (FDI_in
-#      = profits earned ABROAD by i is POSITIVE; FDI_out = profits earned
-#      in i by foreign affiliates is NEGATIVE).
-#
-# === REMOVED (unnecessary in the corrected formulation) =====================
-#   - mu_MNE, mu_MPND, mu_MNP  (replaced by gamma's which already are mu)
-#   - PSI_MNE
-#   - psi_MP_star, psi_MNP_star, a_NP_star, a_P_star  (Case-1 aleph thresholds
-#     used by the old Case-1-only labor formulas)
-#   - integral_k_d, integral_k_plus_un_d, integral_k_plus_un_d_plus_un
-#   - hypergeometric_integral static method
-#   - l_Aa  (legacy patent-application "additional" labor; only L^e, L^F,
-#     L^o, L^R survive in the corrected algorithm)
-#
-# === KEPT ALIASES (used by moments code in classes.py lines 6301-6303,
-#                   7292-7295, 8979-9018) =====================================
-#   - PSI_ME   = PSI_M_O      (alias for export mass, used internally)
-#   - PSI_MPND = PSI_M_P_ND_O
-#   - PSI_MPD  = PSI_M_P_D_O
-#   - PSI_MNP  = PSI_M_NP_O
-# ─────────────────────────────────────────────────────────────────────────────
 
 class var_with_fdi:
     """
@@ -1874,112 +733,89 @@ class var_with_fdi:
         self.psi_star_F = np.maximum(self.psi_star_F, 1)
 
         # ── psi^{o*}_{is}: MIXED Case 1 / Case 2 root solve (eq 18'/19') ────
-        # Fully vectorized implementation:
-        # For each (i, s) the LHS is sum_n {...} where each term depends only
-        # on a single scalar psi = psi_o[i, s] and per-(n,i,s) constants.
-        # We broadcast psi to shape (N, N, S-1) using psi_b[n, i, s] = psi[i, s].
         d = p.d; k = p.k[1]
         self.psi_o_star = np.full((p.N, p.S), 1.0)
 
-        # Precompute per-(n,i,s) constants (slice to sector >= 1)
-        c2_b    = self.case2[..., 1:]                        # (N, N, S-1)
-        psi_O_b = self.psi_star_O[..., 1:]
-        psi_F_b = self.psi_star_F[..., 1:]
-        a_npf_b = self.a_NPF_NPO[..., 1:]
-        a_pf_npo_b = self.a_PF_NPO[..., 1:]
-        psi_bar_b  = self.psi_bar_NPO_PF[..., 1:]
-        a_pf_po_b  = self.a_PF_PO[..., 1:]
-        V_NP_b   = self.V_NP[..., 1:]
-        V_NP_F_b = self.V_NP_F[..., 1:]
-        V_P_b    = self.V_P[..., 1:]
-        V_P_F_b  = self.V_P_F[..., 1:]
-        w_a_b    = (self.w[:, None, None] * self.a[..., 1:])      # (N, N, S-1)
-        w_n_fe_h_b = np.einsum('n,n,s->ns', self.w, p.r_hjort,
-                                p.fe[1:])[:, None, :]              # (N, 1, S-1)
+        # CORRECTED Val functions (eqs 15', 16, 17'): factor psi on V^{NP,O},
+        # V^{NP,F}, V^{P,O}, V^{P,F}; entry cost has no psi factor.
+        def _eps_NPO_NPF(psi, n, i, s):
+            a = self.a_NPF_NPO[n,i,s]
+            if not np.isfinite(a): return 1.0
+            return max(1.0, a/psi) if psi > 0 else 1.0
 
-        # epsilon helpers as fully vectorized arrays of psi
-        def _eps_NPO_NPF_v(psi_b):
-            # eps = max(1, a_npf/psi); a_npf=inf in Case1 -> use 1
-            out = np.ones_like(a_npf_b)
-            mask = np.isfinite(a_npf_b)
-            out = np.where(mask & (psi_b > 0),
-                            np.maximum(1.0, a_npf_b / np.where(psi_b > 0, psi_b, 1.0)),
-                            1.0)
+        def _eps_NPO_PF(psi, n, i, s):
+            a = self.a_PF_NPO[n,i,s]; pb = self.psi_bar_NPO_PF[n,i,s]
+            if not (np.isfinite(a) and np.isfinite(pb)): return 1.0
+            denom = psi - pb
+            if denom <= 0: return np.inf
+            return max(1.0, (a - pb)/denom)
+
+        def _eps_PO_PF(psi, n, i, s):
+            a = self.a_PF_PO[n,i,s]
+            if not np.isfinite(a): return 1.0
+            return max(1.0, a/psi) if psi > 0 else 1.0
+
+        def _ValmidPs(psi, n, i, s):
+            e = _eps_NPO_PF(psi, n, i, s)
+            V_NPO = float(self.V_NP[n,i,s]); V_PF = float(self.V_P_F[n,i,s])
+            w_n_fe_h_s = float(self.w[n]*p.r_hjort[n]*p.fe[s])
+            w_n_a = float(self.w[n]*self.a[n,i,s])
+            # CORRECTED: psi * V_NPO  (was V_NPO without psi)
+            return (psi*V_NPO*(1 - e**(-d))
+                    + (psi*V_PF - w_n_fe_h_s)*e**(-d)
+                    - d/(d+1)*w_n_a*e**(-d-1))
+
+        def _ValhighPs(psi, n, i, s):
+            e = _eps_PO_PF(psi, n, i, s)
+            V_PO = float(self.V_P[n,i,s]); V_PF = float(self.V_P_F[n,i,s])
+            w_n_fe_h_s = float(self.w[n]*p.r_hjort[n]*p.fe[s])
+            w_n_a = float(self.w[n]*self.a[n,i,s])
+            return ((psi*V_PO - w_n_fe_h_s)*(1 - e**(-d))
+                    + (psi*V_PF - w_n_fe_h_s)*e**(-d)
+                    - d/(d+1)*w_n_a*e**(-d-1))
+
+        def _ValnoorigPs(psi, n, i, s):
+            e = _eps_NPO_NPF(psi, n, i, s)
+            V_NPO = float(self.V_NP[n,i,s]); V_NPF = float(self.V_NP_F[n,i,s])
+            w_n_a = float(self.w[n]*self.a[n,i,s])
+            # CORRECTED: psi factor on BOTH V_NPO and V_NPF
+            return (psi*V_NPO*(1 - e**(-d))
+                    + psi*V_NPF*e**(-d)
+                    - d/(d+1)*w_n_a*e**(-d-1))
+
+        # Mixed Case 1 / Case 2 LHS-RHS function (eq 19')
+        def lhs_minus_rhs(psi_arr):
+            """psi_arr shape (N, S-1). Returns (N, S-1) of LHS - RHS."""
+            out = np.zeros((p.N, p.S-1))
+            for s_idx in range(p.S-1):
+                s_full = s_idx + 1
+                for i in range(p.N):
+                    psi = float(psi_arr[i, s_idx])
+                    val = 0.0
+                    for n in range(p.N):
+                        psi_O = float(self.psi_star_O[n, i, s_full])
+                        psi_F = float(self.psi_star_F[n, i, s_full])
+                        if not self.case2[n, i, s_full]:
+                            # Case 1 branch (eq 19' first line):
+                            #   1[psi>=psi^{*,O}] * (psi(V_P_O - V_NP_O) - w_n h_n fe_s)
+                            if psi >= psi_O:
+                                V_diff = float(self.V_P[n,i,s_full] - self.V_NP[n,i,s_full])
+                                w_n_fe_h_s = float(self.w[n]*p.r_hjort[n]*p.fe[s_full])
+                                val += psi * V_diff - w_n_fe_h_s
+                        else:
+                            # Case 2 branches:
+                            if psi_F <= psi < psi_O:
+                                val += _ValmidPs(psi, n, i, s_full)
+                            if psi >= psi_O:
+                                val += _ValhighPs(psi, n, i, s_full)
+                            if psi >= psi_F:
+                                val -= _ValnoorigPs(psi, n, i, s_full)
+                    rhs = float(self.w[i] * p.r_hjort[i] * p.fo[s_full])
+                    out[i, s_idx] = val - rhs
             return out
-
-        def _eps_NPO_PF_v(psi_b):
-            # eps = max(1, (a_pf_npo - psi_bar)/(psi - psi_bar))
-            denom = psi_b - psi_bar_b
-            num = a_pf_npo_b - psi_bar_b
-            ok = np.isfinite(a_pf_npo_b) & np.isfinite(psi_bar_b) & (denom > 0)
-            ratio = np.where(ok, num / np.where(denom > 0, denom, 1.0), 1.0)
-            return np.where(ok, np.maximum(1.0, ratio), 1.0)
-
-        def _eps_PO_PF_v(psi_b):
-            ok = np.isfinite(a_pf_po_b)
-            out = np.where(ok & (psi_b > 0),
-                            np.maximum(1.0, a_pf_po_b / np.where(psi_b > 0, psi_b, 1.0)),
-                            1.0)
-            return out
-
-        def _ValmidPs_v(psi_b):
-            e = _eps_NPO_PF_v(psi_b)
-            return (psi_b * V_NP_b * (1 - e**(-d))
-                    + (psi_b * V_P_F_b - w_n_fe_h_b) * e**(-d)
-                    - d/(d+1) * w_a_b * e**(-d-1))
-
-        def _ValhighPs_v(psi_b):
-            e = _eps_PO_PF_v(psi_b)
-            return ((psi_b * V_P_b - w_n_fe_h_b) * (1 - e**(-d))
-                    + (psi_b * V_P_F_b - w_n_fe_h_b) * e**(-d)
-                    - d/(d+1) * w_a_b * e**(-d-1))
-
-        def _ValnoorigPs_v(psi_b):
-            e = _eps_NPO_NPF_v(psi_b)
-            return (psi_b * V_NP_b * (1 - e**(-d))
-                    + psi_b * V_NP_F_b * e**(-d)
-                    - d/(d+1) * w_a_b * e**(-d-1))
-
-        def lhs_minus_rhs_vec(psi_arr):
-            """
-            Fully vectorized LHS - RHS.
-            psi_arr: shape (N, S-1) — psi candidate per (i, s).
-            Returns: shape (N, S-1) of LHS - RHS.
-            """
-            # Broadcast psi to (N, N, S-1): psi_b[n, i, s] = psi_arr[i, s]
-            psi_b = psi_arr[None, :, :]                          # (1, N, S-1)
-            # Case 1 contribution: 1[psi >= psi_O*] * (psi (V_P - V_NP) - w_n_fe_h_s)
-            case1_active = (~c2_b) & (psi_b >= psi_O_b)
-            case1_term = case1_active * (psi_b * (V_P_b - V_NP_b) - w_n_fe_h_b)
-
-            # Case 2 contributions:
-            c2_mid_active  = c2_b & (psi_b >= psi_F_b) & (psi_b < psi_O_b)
-            c2_high_active = c2_b & (psi_b >= psi_O_b)
-            c2_noorig_active = c2_b & (psi_b >= psi_F_b)
-
-            # Compute Val* using vectorized helpers (safe: returns finite even
-            # in branches where the indicator is 0; we mask after).
-            # We need to be careful: psi_b may equal 0 etc.
-            psi_b_safe = np.where(psi_b > 0, psi_b, 1e-30)
-            psi_b3 = np.broadcast_to(psi_b_safe, (p.N, p.N, p.S-1))
-
-            mid_v   = _ValmidPs_v(psi_b3)
-            high_v  = _ValhighPs_v(psi_b3)
-            noorig_v= _ValnoorigPs_v(psi_b3)
-
-            mid_term   = c2_mid_active * mid_v
-            high_term  = c2_high_active * high_v
-            noorig_term= c2_noorig_active * noorig_v
-
-            terms = case1_term + mid_term + high_term - noorig_term
-            terms = np.where(np.isfinite(terms), terms, 0.0)
-            lhs = terms.sum(axis=0)                              # (N, S-1)
-
-            rhs = (self.w * p.r_hjort)[:, None] * p.fo[None, 1:]  # (N, S-1)
-            return lhs - rhs
 
         # Step 1: check whether psi^{o*}=1 (eq 18'): LHS at psi=1 >= RHS
-        eq1 = lhs_minus_rhs_vec(np.ones((p.N, p.S-1)))
+        eq1 = lhs_minus_rhs(np.ones((p.N, p.S-1)))
         need_solve = (eq1 < 0)
 
         # Step 2: where eq1 < 0, solve LHS - RHS = 0 numerically (eq 19')
@@ -1989,13 +825,14 @@ class var_with_fdi:
 
             def func_to_solve(psi_flat):
                 psi_arr = psi_flat.reshape(p.N, p.S-1).copy()
+                # Hold fixed-at-1 pairs at 1 by returning 0 for them
                 psi_arr = np.where(need_solve, psi_arr, 1.0)
-                psi_arr = np.maximum(psi_arr, 1.0)  # keep in domain
-                res = lhs_minus_rhs_vec(psi_arr)
+                res = lhs_minus_rhs(psi_arr)
+                # Return 0 residual for fixed-at-1 pairs so they don't move
                 res = np.where(need_solve, res, 0.0)
                 return res.ravel()
             try:
-                sol = root(func_to_solve, x0=x0, tol=1e-10)
+                sol = root(func_to_solve, x0=x0, tol=1e-12)
                 psi_sol = sol.x.reshape(p.N, p.S-1)
                 psi_sol = np.where(need_solve, np.maximum(psi_sol, 1.0), 1.0)
             except Exception:
@@ -2012,16 +849,8 @@ class var_with_fdi:
 
     def compute_mass_innovations(self, p):
         """
-        gamma^{P,O}, gamma^{P,F}, gamma^{NP,O}, gamma^{NP,F}.
-
-        CORRECTED per FDI_algorithm_remaining_errors_report.tex (Edit 1):
-          - All a-thresholds enter as a^{-d}  (NOT a^d)
-          - psi exponents in high regions are d-k+1  (NOT 1-k-d)
-          - gamma^{P,O} subtracts max(a^{PF,PO}, psi^{m*,O})^{1-k}
-          - gamma^{P,F} has explicit 4-branch indicator structure on a^{PF_NPO}
-          - The four shares partition the Pareto mean: 
-            gamma^{P,O} + gamma^{P,F} + gamma^{NP,O} + gamma^{NP,F} = k/(k-1)
-        Beta shape is (d+1, k-d-1), prefactor (h_n f^e_s / a_nis)^d * psi_bar^{1-k}.
+        gamma^{P,O}, gamma^{P,F}, gamma^{NP,O}, gamma^{NP,F} = TeX mu integrals.
+        CORRECTED: beta-shape (d+1, k-d-1), prefactor psi_bar^{1-k}.
         """
         k = p.k[1]; d = p.d
         psi_mO = self.psi_m_star_O[...,1:]
@@ -2034,135 +863,64 @@ class var_with_fdi:
         c2     = self.case2[...,1:]
         self.c2 = c2
 
-        # h_n * fe_s (no w_n — w_n absorbed into psi_bar definition)
-        h_fe = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])[:,None,:]
+        w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])[:,None,:]
         a_safe = np.where(a_nis > 0, a_nis, 1.0)
 
-        # Safe versions for use in branches where the threshold may be inf
-        max_apo_mO = np.maximum(a_po, psi_mO)
-
-        # ──────────────────────────────────────────────────────────────────
-        # gamma^{P,O}  (eq 21' of corrected algorithm)
-        # gamma^{P,O} = k/(k-1) [psi^{m*,O}^{1-k} - max(a^{PF,PO}, psi^{m*,O})^{1-k}]
-        #             - k a^{-d}/(k-d-1) [psi^{m*,O}^{d-k+1} - max(...)^{d-k+1}]
-        # In Case 1 (no FDI), gamma^{P,O} = k/(k-1) psi^{m*,O}^{1-k}
-        # (the second bracket vanishes because a_po -> inf -> max = a_po,
-        # and the resulting expression collapses).
-        # ──────────────────────────────────────────────────────────────────
+        # ── gamma^{P,O}  (eq 21') ──────────────────────────────────────────
         g_PO_c2 = (
-            k/(k-1) * (psi_mO**(1-k) - max_apo_mO**(1-k))
-            - k * a_po**(-d) / (k-d-1) * (
-                psi_mO**(d-k+1) - max_apo_mO**(d-k+1)))
+            k/(k-1) * psi_mO**(1-k)
+            - k/(k-d-1) * a_po**d * (
+                psi_mO**(1-k-d) - np.maximum(a_po, psi_mO)**(1-k-d)))
         g_PO_c1 = k/(k-1) * psi_mO**(1-k)
         self.gamma_PO = np.zeros((p.N,p.N,p.S))
         self.gamma_PO[...,1:] = np.where(c2, g_PO_c2, g_PO_c1)
 
-        # ──────────────────────────────────────────────────────────────────
-        # gamma^{P,F}  (eq 22') — zero in Case 1
-        #   Term A:  k a^{-d}/(k-d-1) [psi^{m*,O}^{d-k+1} - max(...)^{d-k+1}]
-        #            + k/(k-1) max(...)^{1-k}
-        #   Plus three indicator terms over a^{PF_NPO}:
-        #   Branch 1 [a^{PF_NPO} <= psi^{m*,F}]:  k/(k-1) [psi^{m*,F}^{1-k} - psi^{m*,O}^{1-k}]
-        #   Branch 2 [psi^{m*,F} < a^{PF_NPO} < psi^{m*,O}]:
-        #       k(h_n fe_s/a)^d psi_bar^{1-k}
-        #         * B(1 - psi_bar/psi^{m*,F}, 1 - psi_bar/a^{PF_NPO}; d+1, k-d-1)
-        #       + k/(k-1) [a^{PF_NPO}^{1-k} - psi^{m*,O}^{1-k}]
-        #   Branch 3 [a^{PF_NPO} >= psi^{m*,O}]:
-        #       k(h_n fe_s/a)^d psi_bar^{1-k}
-        #         * B(1 - psi_bar/psi^{m*,F}, 1 - psi_bar/psi^{m*,O}; d+1, k-d-1)
-        # ──────────────────────────────────────────────────────────────────
-        g_PF_base = np.where(c2,
-            k * a_po**(-d) / (k-d-1) * (
-                psi_mO**(d-k+1) - max_apo_mO**(d-k+1))
-            + k/(k-1) * max_apo_mO**(1-k),
+        # ── gamma^{P,F}  (eq 22') — zero in Case 1 ────────────────────────
+        # CORRECTED: beta-shape (d+1, k-d-1), prefactor psi_bar^{1-k}
+        ind_PF = c2 & (a_npo < psi_mO)
+        g_PF = np.where(c2,
+            k/(k-d-1)*a_po**d*(psi_mO**(1-k-d)-np.maximum(a_po,psi_mO)**(1-k-d))
+            + k/(k-1)*np.maximum(a_po,psi_mO)**(1-k),
             0.0)
-
-        # Branch 1: a^{PF_NPO} <= psi^{m*,F}
-        ind_PF_b1 = c2 & (a_npo <= psi_mF)
-        g_PF_b1 = np.where(ind_PF_b1,
-            k/(k-1) * (psi_mF**(1-k) - psi_mO**(1-k)),
-            0.0)
-
-        # Branch 2: psi^{m*,F} < a^{PF_NPO} < psi^{m*,O}
-        ind_PF_b2 = c2 & (a_npo > psi_mF) & (a_npo < psi_mO)
-        psi_bar_safe = np.where((psi_bar > 0) & np.isfinite(psi_bar), psi_bar, 1.0)
-        t1_PFb2 = np.where(ind_PF_b2, 1 - psi_bar_safe/psi_mF, 0.0)
-        t2_PFb2 = np.where(ind_PF_b2, 1 - psi_bar_safe/np.where(a_npo>0,a_npo,1.0), 0.0)
-        B_PF_b2 = np.where(ind_PF_b2,
-                           _betainc_vec(d+1, k-d-1, t1_PFb2, t2_PFb2), 0.0)
-        pre_PF = np.where(c2 & (a_nis > 0),
-                          k * (h_fe / a_safe)**d * psi_bar_safe**(1-k),
-                          0.0)
-        g_PF_b2 = np.where(ind_PF_b2,
-            pre_PF * B_PF_b2
-            + k/(k-1) * (a_npo**(1-k) - psi_mO**(1-k)),
-            0.0)
-
-        # Branch 3: a^{PF_NPO} >= psi^{m*,O}
-        ind_PF_b3 = c2 & (a_npo >= psi_mO)
-        t1_PFb3 = np.where(ind_PF_b3, 1 - psi_bar_safe/psi_mF, 0.0)
-        t2_PFb3 = np.where(ind_PF_b3, 1 - psi_bar_safe/psi_mO, 0.0)
-        B_PF_b3 = np.where(ind_PF_b3,
-                           _betainc_vec(d+1, k-d-1, t1_PFb3, t2_PFb3), 0.0)
-        g_PF_b3 = np.where(ind_PF_b3, pre_PF * B_PF_b3, 0.0)
-
+        t1_PF = np.where(ind_PF, 1-psi_bar/psi_mO,  0.0)
+        t2_PF = np.where(ind_PF, 1-psi_bar/a_npo,   0.0)
+        B_PF  = np.where(ind_PF, _betainc_vec(d+1, k-d-1, t1_PF, t2_PF), 0.0)
+        pre_PF = np.where(ind_PF & (a_nis>0),
+                          k*(w_fe_h/a_safe)**d * psi_bar**(1-k), 0.0)
         self.gamma_PF = np.zeros((p.N,p.N,p.S))
-        self.gamma_PF[...,1:] = g_PF_base + g_PF_b1 + g_PF_b2 + g_PF_b3
+        self.gamma_PF[...,1:] = g_PF + pre_PF*B_PF
 
-        # ──────────────────────────────────────────────────────────────────
-        # gamma^{NP,O}  (eq 24')
-        #   Term 1 [a^{NPF_NPO} > 1]:
-        #       k/(k-1) [1 - min(a^{NPF_NPO}, psi^{m*,F})^{1-k}]
-        #       - k a^{-d}/(k-d-1) [1 - min(...)^{d-k+1}]
-        #   Term 2 [a^{PF_NPO} > psi^{m*,F}]:
-        #       k/(k-1) [psi^{m*,F}^{1-k} - min(a^{PF_NPO}, psi^{m*,O})^{1-k}]
-        #       - k (h_n fe_s/a)^d psi_bar^{1-k}
-        #         * B(1 - psi_bar/psi^{m*,F}, 1 - psi_bar/min(a^{PF_NPO}, psi^{m*,O}); d+1, k-d-1)
-        # In Case 1: gamma^{NP,O} = k/(k-1) [1 - psi^{m*,O}^{1-k}]
-        # ──────────────────────────────────────────────────────────────────
-        ind_NPO_t1 = c2 & (a_npf > 1)
-        min_anpf_mF = np.minimum(a_npf, psi_mF)
-        g_NPO_t1 = np.where(ind_NPO_t1,
-            k/(k-1) * (1 - min_anpf_mF**(1-k))
-            - k * a_npf**(-d) / (k-d-1) * (1 - min_anpf_mF**(d-k+1)),
-            0.0)
-
-        ind_NPO_t2 = c2 & (a_npo > psi_mF)
+        # ── gamma^{NP,O}  (eq 24') ─────────────────────────────────────────
+        # CORRECTED: beta-shape (d+1, k-d-1), prefactor psi_bar^{1-k}
+        g_NPO_c2 = (
+            k/(k-1)*(1-psi_mF**(1-k))
+            - np.where(a_npf > 1,
+                       k*a_npf**d/(k-d-1)*(1-np.minimum(a_npf,psi_mF)**(d+1-k)), 0.0))
+        ind_NPO  = c2 & (a_npo > psi_mF)
         min_apo_mO = np.minimum(a_npo, psi_mO)
-        t1_NPO = np.where(ind_NPO_t2, 1 - psi_bar_safe/psi_mF, 0.0)
-        t2_NPO = np.where(ind_NPO_t2, 1 - psi_bar_safe/min_apo_mO, 0.0)
-        B_NPO = np.where(ind_NPO_t2, _betainc_vec(d+1, k-d-1, t1_NPO, t2_NPO), 0.0)
-        g_NPO_t2 = np.where(ind_NPO_t2,
-            k/(k-1) * (psi_mF**(1-k) - min_apo_mO**(1-k))
-            - pre_PF * B_NPO,
-            0.0)
-
-        g_NPO_c2 = g_NPO_t1 + g_NPO_t2
-        g_NPO_c1 = k/(k-1) * (1 - psi_mO**(1-k))
+        t1_NPO = np.where(ind_NPO, 1-psi_bar/psi_mF,     0.0)
+        t2_NPO = np.where(ind_NPO, 1-psi_bar/min_apo_mO, 0.0)
+        B_NPO  = np.where(ind_NPO, _betainc_vec(d+1, k-d-1, t1_NPO, t2_NPO), 0.0)
+        pre_NPO = np.where(ind_NPO & (a_nis>0),
+                           k*(w_fe_h/a_safe)**d * psi_bar**(1-k), 0.0)
+        g_NPO_c2 += np.where(ind_NPO,
+            k/(k-1)*(psi_mF**(1-k)-min_apo_mO**(1-k)) - pre_NPO*B_NPO, 0.0)
+        # Case 1 — pure no-FDI: k/(k-1) [1 - psi_mO^{1-k}]
+        g_NPO_c1 = k/(k-1)*(1-psi_mO**(1-k))
         self.gamma_NPO = np.zeros((p.N,p.N,p.S))
         self.gamma_NPO[...,1:] = np.where(c2, g_NPO_c2, g_NPO_c1)
 
-        # ──────────────────────────────────────────────────────────────────
-        # gamma^{NP,F}  (eq 26') — zero in Case 1
-        # Branch 1 [a^{NPF_NPO} < 1]: k/(k-1) [1 - psi^{m*,F}^{1-k}]
-        # Branch 2 [1 <= a^{NPF_NPO} < psi^{m*,F}]:
-        #     k a^{-d}/(k-d-1) [1 - a^{NPF_NPO}^{d-k+1}]
-        #     + k/(k-1) [a^{NPF_NPO}^{1-k} - psi^{m*,F}^{1-k}]
-        # Branch 3 [a^{NPF_NPO} >= psi^{m*,F}]:
-        #     k a^{-d}/(k-d-1) [1 - psi^{m*,F}^{d-k+1}]
-        # ──────────────────────────────────────────────────────────────────
-        g_NPF_b1 = np.where(c2 & (a_npf < 1),
-                            k/(k-1) * (1 - psi_mF**(1-k)),
-                            0.0)
-        g_NPF_b2 = np.where(c2 & (a_npf >= 1) & (a_npf < psi_mF),
-                            k * a_npf**(-d) / (k-d-1) * (1 - a_npf**(d-k+1))
-                            + k/(k-1) * (a_npf**(1-k) - psi_mF**(1-k)),
-                            0.0)
-        g_NPF_b3 = np.where(c2 & (a_npf >= psi_mF),
-                            k * a_npf**(-d) / (k-d-1) * (1 - psi_mF**(d-k+1)),
-                            0.0)
+        # ── gamma^{NP,F}  (eq 26') — zero in Case 1 ────────────────────────
+        g_NPF = (
+            np.where(c2 & (a_npf >= psi_mF),
+                     k*a_npf**d/(k-d-1)*(1-psi_mF**(d+1-k)), 0.0)
+            + np.where(c2 & (a_npf >= 1) & (a_npf < psi_mF),
+                       k*a_npf**d/(k-d-1)*(1-a_npf**(d+1-k))
+                       + k/(k-1)*(a_npf**(1-k)-psi_mF**(1-k)), 0.0)
+            + np.where(c2 & (a_npf < 1),
+                       k/(k-1)*(1-psi_mF**(1-k)), 0.0))
         self.gamma_NPF = np.zeros((p.N,p.N,p.S))
-        self.gamma_NPF[...,1:] = g_NPF_b1 + g_NPF_b2 + g_NPF_b3
+        self.gamma_NPF[...,1:] = g_NPF
 
         # Sanitise: gamma's must be non-negative and finite
         for _g in ['gamma_PO','gamma_PF','gamma_NPO','gamma_NPF']:
@@ -2170,15 +928,24 @@ class var_with_fdi:
             arr[~np.isfinite(arr)] = 0.0
             arr[arr < 0] = 0.0
 
-        # Enforce overall Pareto partition: the four gamma's sum to at most k/(k-1)
-        bound_total = k/(k-1)
-        g_sum = (self.gamma_PO[...,1:] + self.gamma_PF[...,1:]
-                 + self.gamma_NPO[...,1:] + self.gamma_NPF[...,1:])
-        over = g_sum > bound_total
-        if over.any():
-            scale = np.where(over & (g_sum > 0), bound_total / (g_sum + 1e-30), 1.0)
-            self.gamma_PO[...,1:]  *= scale
-            self.gamma_PF[...,1:]  *= scale
+        # Enforce Pareto partition bounds:
+        #   gamma_PO + gamma_PF   <= k/(k-1) * psi_mO^{1-k}
+        #   gamma_NPO + gamma_NPF <= k/(k-1) * (1 - psi_mF^{1-k})
+        bound_P  = k/(k-1) * np.where(np.isfinite(psi_mO), psi_mO**(1-k), 0.0)
+        bound_NP = k/(k-1) * np.maximum(
+            1 - np.where(np.isfinite(psi_mF), psi_mF**(1-k), 1.0), 0.0)
+
+        gP_sum = self.gamma_PO[...,1:] + self.gamma_PF[...,1:]
+        over_P = gP_sum > bound_P
+        if over_P.any():
+            scale = np.where(over_P & (gP_sum > 0), bound_P / (gP_sum + 1e-30), 1.0)
+            self.gamma_PO[...,1:] *= scale
+            self.gamma_PF[...,1:] *= scale
+
+        gNP_sum = self.gamma_NPO[...,1:] + self.gamma_NPF[...,1:]
+        over_NP = gNP_sum > bound_NP
+        if over_NP.any():
+            scale = np.where(over_NP & (gNP_sum > 0), bound_NP / (gNP_sum + 1e-30), 1.0)
             self.gamma_NPO[...,1:] *= scale
             self.gamma_NPF[...,1:] *= scale
 
@@ -2359,73 +1126,35 @@ class var_with_fdi:
             self.l_R[...,1:]**(1-p.kappa),
             Le_total)
 
-        # ────────────────────────────────────────────────────────────────────
-        # L^F_{ins}  (eq LF/LambdaF of corrected algorithm — Edit 2 of report)
-        #
-        # CORRECTED:
-        #   - Outside prefactor is d * a_nis / (d+1)  (NOT a_nis^d / (d+1))
-        #   - All a-thresholds enter as a^{-(d+1)}  (NOT a^{d-1})
-        #   - psi exponents in low/high regions are d-k+1  (NOT -dk+1)
-        #   - Middle region (a^{PF_NPO} <= psi^{m*,F}) simplifies to
-        #     (psi^{m*,F})^{-k} - (psi^{m*,O})^{-k}  (the spurious psi_mF^{-k}
-        #     factor is gone).
-        #   - Beta shape is (d+2, k-d-1).
-        #
-        # Lambda^F has 8 terms (matches algorithm lines 299-305):
-        #   T1 [a^{NPF_NPO} < 1]: 1 - psi^{m*,F}^{-k}
-        #   T2 [1 <= a^{NPF_NPO} < psi^{m*,F}]:
-        #         k a^{-(d+1)}/(k-d-1) [1 - a^{NPF_NPO}^{d-k+1}]
-        #         + a^{NPF_NPO}^{-k} - psi^{m*,F}^{-k}
-        #   T3 [a^{NPF_NPO} >= psi^{m*,F}]:
-        #         k a^{-(d+1)}/(k-d-1) [1 - psi^{m*,F}^{d-k+1}]
-        #   T4 [a^{PF_NPO} <= psi^{m*,F}]:
-        #         psi^{m*,F}^{-k} - psi^{m*,O}^{-k}
-        #   T5 [psi^{m*,F} < a^{PF_NPO} < psi^{m*,O}]:
-        #         k (h_n fe_s / a)^{d+1} psi_bar^{-k}
-        #           * B(1 - psi_bar/psi^{m*,F}, 1 - psi_bar/a^{PF_NPO}; d+2, k-d-1)
-        #         + a^{PF_NPO}^{-k} - psi^{m*,O}^{-k}
-        #   T6 [a^{PF_NPO} >= psi^{m*,O}]:
-        #         k (h_n fe_s / a)^{d+1} psi_bar^{-k}
-        #           * B(1 - psi_bar/psi^{m*,F}, 1 - psi_bar/psi^{m*,O}; d+2, k-d-1)
-        #   T7: max(a^{PF,PO}, psi^{m*,O})^{-k}
-        #   T8 [a^{PF,PO} > psi^{m*,O}]:
-        #         k a^{PF,PO,-(d+1)}/(k-d-1) [psi^{m*,O}^{d-k+1} - a^{PF,PO,d-k+1}]
-        # ────────────────────────────────────────────────────────────────────
-        psi_bar_safe = np.where((psi_bar > 0) & np.isfinite(psi_bar), psi_bar, 1.0)
-        h_fe_only = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])[:,None,:]
-
+        # ── L^F_{ins}  (eq 42 — corrected beta-shape (d+2, k-d-1)) ──────────
         T1 = np.where(c2 & (a_npf < 1), 1 - psi_mF**(-k), 0.0)
         T2 = np.where(c2 & (a_npf >= 1) & (a_npf < psi_mF),
-                      k * a_npf**(-(d+1)) / (k-d-1) * (1 - a_npf**(d-k+1))
+                      k*a_npf**(d-1)/(k-d-1)*(1 - a_npf**(-d*k+1))
                       + a_npf**(-k) - psi_mF**(-k), 0.0)
         T3 = np.where(c2 & (a_npf >= psi_mF),
-                      k * a_npf**(-(d+1)) / (k-d-1) * (1 - psi_mF**(d-k+1)), 0.0)
-        T4 = np.where(c2 & (a_npo <= psi_mF),
-                      psi_mF**(-k) - psi_mO**(-k), 0.0)
-
-        # T5: middle region (psi_mF < a_npo < psi_mO)
-        ind_t5 = c2 & (a_npo > psi_mF) & (a_npo < psi_mO)
-        t1_lF5 = np.where(ind_t5, 1 - psi_bar_safe/psi_mF, 0.0)
-        t2_lF5 = np.where(ind_t5, 1 - psi_bar_safe/np.where(a_npo>0,a_npo,1.0), 0.0)
-        B_lF5 = np.where(ind_t5, _betainc_vec(d+2, k-d-1, t1_lF5, t2_lF5), 0.0)
-        pre_lF = np.where(c2 & (a_nis > 0),
-                          k * (h_fe_only / a_safe)**(d+1) * psi_bar_safe**(-k),
-                          0.0)
-        T5 = np.where(ind_t5,
-                      pre_lF * B_lF5 + a_npo**(-k) - psi_mO**(-k),
+                      k*a_npf**(d-1)/(k-d-1)*(1 - psi_mF**(-d*k+1)), 0.0)
+        T4 = np.where(c2 & (a_npo < psi_mF),
+                      psi_mF**(-k) * (np.maximum(a_npo, psi_mF)**(-k) - psi_mO**(-k)),
                       0.0)
-
-        # T6: high region (a_npo >= psi_mO)
+        # CORRECTED beta-shape: (d+2, k-d-1) NOT (d+2, d+k-1)
+        ind_t5 = c2 & (a_npo >= psi_mF) & (a_npo < psi_mO)
         ind_t6 = c2 & (a_npo >= psi_mO)
-        t1_lF6 = np.where(ind_t6, 1 - psi_bar_safe/psi_mF, 0.0)
-        t2_lF6 = np.where(ind_t6, 1 - psi_bar_safe/psi_mO, 0.0)
+        t1_lF5 = np.where(ind_t5, 1-psi_bar/psi_mF,  0.0)
+        t2_lF5 = np.where(ind_t5, 1-psi_bar/a_npo,   0.0)
+        t1_lF6 = np.where(ind_t6, 1-psi_bar/psi_mF,  0.0)
+        t2_lF6 = np.where(ind_t6, 1-psi_bar/psi_mO,  0.0)
+        B_lF5 = np.where(ind_t5, _betainc_vec(d+2, k-d-1, t1_lF5, t2_lF5), 0.0)
         B_lF6 = np.where(ind_t6, _betainc_vec(d+2, k-d-1, t1_lF6, t2_lF6), 0.0)
+        pre_lF = np.where(c2 & (a_nis > 0),
+                          k*(w_fe_h/a_safe)**(d+1)
+                          / np.where(np.isfinite(psi_bar) & (psi_bar > 0),
+                                     psi_bar, 1.0)**k,
+                          0.0)
+        T5 = np.where(ind_t5, pre_lF * B_lF5 + a_npo**(-k) - psi_mO**(-k), 0.0)
         T6 = np.where(ind_t6, pre_lF * B_lF6, 0.0)
-
         T7 = np.where(c2, np.maximum(a_po, psi_mO)**(-k), 0.0)
         T8 = np.where(c2 & (a_po > psi_mO),
-                      k * a_po**(-(d+1)) / (k-d-1)
-                      * (psi_mO**(d-k+1) - a_po**(d-k+1)), 0.0)
+                      k*a_po**(d-1)/(k-d-1)*(psi_mO**(-d*k+1) - a_po**(-d*k+1)), 0.0)
 
         Lambda_F = T1 + T2 + T3 + T4 + T5 + T6 + T7 + T8
         Lambda_F = np.where(c2, Lambda_F, 0.0)
@@ -2433,12 +1162,11 @@ class var_with_fdi:
         Lambda_F = np.maximum(Lambda_F, 0.0)
 
         # Axis convention: l_F[i, n, s]  (origin i, destination n)
-        # CORRECTED: outside prefactor is d*a/(d+1)  (NOT a^d/(d+1))
         self.l_F = np.zeros((p.N,p.N,p.S))
         self.l_F[...,1:] = np.einsum(
             'is,is,nis,nis->ins',
             p.eta[:,1:], self.l_R[...,1:]**(1-p.kappa),
-            d * self.a[...,1:] / (d+1), Lambda_F)
+            self.a[...,1:]**d/(d+1), Lambda_F)
         self.l_F = np.maximum(self.l_F, 0.0)
 
         # ── L^P_i  (l_Aa dropped — not in the corrected algorithm) ──────────
@@ -2606,52 +1334,50 @@ class var_with_fdi:
 
     def compute_pi_F(self, p):
         """
-        FDI profits: Pi^{w,F} is a DESTINATION-SECTOR object (not origin-specific).
-
-        Per algorithm_corrected.tex eq (\\ref{eq:Piupd}):
-          Primary (when sum_i Psi^{M,F}_{nis} > 0):
-              Pi^{w,F}_{ns} = sum_i X^{M,F}_{nis} / (sigma_s * w_n * sum_i Psi^{M,F}_{nis})
-          Fallback (sum_i Psi^{M,F}_{nis} = 0; e.g. Case 1, or zero-FDI start):
-              Pi^{w,F}_{ns} = X^{M,O}_{nns} / (sigma_s * Psi^{M,O}_{nns} * w_n)
-          Then broadcast to (n, i, s):
-              Pi^{w,F}_{nis} = Pi^{w,F}_{ns}  for all i.
-
-        The fallback uses the domestic monopolist's per-unit profit as the
-        natural extrapolation when there are no affiliates: a hypothetical FDI
-        unit would face the same domestic demand and capture the same per-unit
-        profit as the domestic non-FDI monopolist.
+        FDI profits: Pi^{w,F}_{nis} = X^{M,F}_{nis} / (sigma * PSI_M_F * w_n).
+        When PSI_M_F = 0, falls back to the value an FDI unit WOULD earn
+        (using the X^{M,F} formula with phi_nn^{sigma-1} structure), so the
+        iteration can escape the zero-FDI self-fulfilling equilibrium.
         """
         pi_F = np.zeros((p.N, p.N, p.S))
 
-        # Sums over origins (axis=1 in (n, i, s))
-        psi_F_sum_i = self.PSI_M_F[..., 1:].sum(axis=1)             # (N, S-1)
-        X_F_sum_i   = self.X_M_F[..., 1:].sum(axis=1)               # (N, S-1)
-
-        # Primary: aggregate FDI-sales ratio
-        mask_primary = psi_F_sum_i > 0
-        safe_psi = np.where(mask_primary, psi_F_sum_i, 1.0)
-        pi_F_ns_primary = np.einsum(
-            'ns,s,n,ns->ns',
-            X_F_sum_i, 1/p.sigma[1:], 1/self.w, 1/safe_psi)
-
-        # Fallback: domestic monopolist sales (n == n diagonal of X^{M,O})
-        # Note: self.X_M is the export (origin-mode) flow X^{M,O}; the
-        # affiliate (FDI) flow is self.X_M_F.
-        X_M_O_diag   = np.einsum('nns->ns', self.X_M[..., 1:])      # (N, S-1)
-        PSI_M_O_diag = np.einsum('nns->ns', self.PSI_M_O[..., 1:])  # (N, S-1)
-        mask_dom = PSI_M_O_diag > 0
-        safe_psi_dom = np.where(mask_dom, PSI_M_O_diag, 1.0)
-        pi_F_ns_fallback = np.where(
-            mask_dom,
-            np.einsum('ns,s,ns,n->ns',
-                      X_M_O_diag, 1/p.sigma[1:], 1/safe_psi_dom, 1/self.w),
+        # Primary formula where PSI_M_F > 0
+        mask = self.PSI_M_F[..., 1:] > 0
+        safe_psi = np.where(mask, self.PSI_M_F[..., 1:], 1.0)
+        pi_F[..., 1:] = np.where(
+            mask,
+            np.einsum('nis,s,n,nis->nis',
+                      self.X_M_F[..., 1:], 1/p.sigma[1:], 1/self.w, 1/safe_psi),
             0.0)
 
-        # Choose primary where it's defined; otherwise fallback
-        pi_F_ns = np.where(mask_primary, pi_F_ns_primary, pi_F_ns_fallback)
-
-        # Broadcast to (n, i, s): same value for all origins i
-        pi_F[..., 1:] = pi_F_ns[:, None, :].repeat(p.N, axis=1)
+        # Fallback for PSI_M_F = 0 pairs.  X^{M,F} structure:
+        #   X^{M,F}_{nis} = PSI_M_F * phi_nn^{sigma-1} / sum_j(...) * (P_M_F/P)^{1-sigma} * beta * Z
+        # Pi^{w,F}_{nis} = X^{M,F}/(sigma * PSI_M_F * w_n)
+        # When PSI_M_F=0, use the "potential" version where PSI_M_F cancels:
+        #   Pi^{w,F}_{potential} = (1/(sigma * w_n)) * markup * phi_nn^{sigma-1}/D * beta * Z
+        # with markup = (sigma/(sigma-1))^{1-sigma} and D = full price index denom.
+        if (~mask).any():
+            power = p.sigma - 1
+            markup = (p.sigma / (p.sigma - 1))**(1 - p.sigma)
+            phi_nn = np.einsum('nns->ns', self.phi)
+            # numerator: markup * phi_nn^{sigma-1}  (n, s)
+            numer = markup[None, 1:] * phi_nn[:, 1:]**power[None, 1:]
+            A_exp = markup[None, 1:] * (
+                self.PSI_M_O[..., 1:] * self.phi[..., 1:]**power[None, None, 1:]
+            ).sum(axis=1)
+            A_fdi = markup[None, 1:] * (
+                self.PSI_M_F[..., 1:] * phi_nn[:, None, 1:]**power[None, None, 1:]
+            ).sum(axis=1)
+            B_cd = self.PSI_CD[:, 1:] * (
+                self.phi[..., 1:]**p.theta[None, None, 1:]
+            ).sum(axis=1)**((p.sigma - 1) / p.theta)[None, 1:]
+            D = A_exp + A_fdi + B_cd
+            PsCs = p.beta[None, 1:] * self.Z[:, None]
+            safe_D = np.where(D > 0, D, np.inf)
+            # Pi_F_fb shape (n, s) -> broadcast to (n, i, s) (same value for all origins i)
+            pi_F_fb = (numer / safe_D * PsCs / p.sigma[None, 1:]
+                       )[:, None, :] / self.w[:, None, None]
+            pi_F[..., 1:] = np.where(mask, pi_F[..., 1:], pi_F_fb)
 
         return pi_F
 
@@ -2660,203 +1386,153 @@ class var_with_fdi:
         Eq (49'):  (L^R_is)^kappa / eta_is
                    = (1/w_i) * sum_n [IntVNorigP + IntVorigP^A + B + C + D]
                      - h_i f^o_s (psi^{o*}_{is})^{-k}
-
-        Fully vectorized: broadcasts psi_o[i,s] -> psi_o_b[n,i,s] and computes
-        IntVN/A/B/C/D over (N, N, S-1) using masked np.where operations.
+        IntV blocks per eqs (50')-(54') of algorithm_corrected.tex.
         """
-        import scipy.special as _sp
         k = p.k[1]; d = p.d
         N, S = p.N, p.S
+        c2 = self.case2[...,1:]
+        a_nis = self.a[...,1:]
+        psi_bar = self.psi_bar_NPO_PF[...,1:]
+        w_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort, p.fe[1:])
 
-        # Per-(n, i, s>=1) constants
-        c2_full = self.case2[..., 1:]                 # (N, N, S-1)
-        # Diagonal n==i is Case 1 by construction (case2 already excludes diag)
-        c2 = c2_full
-        c1 = ~c2
+        IntV_sum = np.zeros((N, S-1))   # accumulator: sum over n of value contributions
 
-        a_nis      = self.a[..., 1:]
-        psi_bar    = self.psi_bar_NPO_PF[..., 1:]
-        V_NPO      = self.V_NP[..., 1:]
-        V_NPF      = self.V_NP_F[..., 1:]
-        V_PO       = self.V_P[..., 1:]
-        V_PF       = self.V_P_F[..., 1:]
-        psi_O      = self.psi_star_O[..., 1:]
-        psi_F      = self.psi_star_F[..., 1:]
-        a_bar      = self.a_NPF_NPO[..., 1:]
-        a_hat      = self.a_PF_NPO[..., 1:]
-        a_chk      = self.a_PF_PO[..., 1:]
+        for s_idx in range(S-1):
+            s_full = s_idx + 1
+            for i in range(N):
+                psi_o = float(self.psi_o_star[i, s_full])
+                for n in range(N):
+                    is_c2 = bool(c2[n, i, s_idx]) and (n != i)
 
-        # In Case 1, V_NPF and V_PF are meaningless; substitute 0 so they
-        # never enter any active branch (we only use them where c2 is True).
-        V_NPF_safe = np.where(c2, V_NPF, 0.0)
-        V_PF_safe  = np.where(c2, V_PF,  0.0)
+                    V_NPO = float(self.V_NP[n,i,s_full])
+                    V_NPF = float(self.V_NP_F[n,i,s_full]) if is_c2 else 0.0
+                    V_PO  = float(self.V_P[n,i,s_full])
+                    V_PF  = float(self.V_P_F[n,i,s_full])  if is_c2 else 0.0
+                    w_n   = float(self.w[n])
+                    a_val = float(a_nis[n,i,s_idx])
+                    w_n_a = w_n * a_val
+                    w_n_fe_h_s = float(w_fe_h[n, s_idx])
 
-        # Broadcast psi_o[i, s] to (n, i, s) so we can do element-wise math.
-        psi_o = np.broadcast_to(self.psi_o_star[None, :, 1:], (N, N, S-1))
-        psi_o = np.maximum(psi_o, 1.0)   # safety
+                    psi_O = float(self.psi_star_O[n,i,s_full])
+                    psi_F = float(self.psi_star_F[n,i,s_full]) if is_c2 else np.inf
+                    a_bar = float(self.a_NPF_NPO[n,i,s_full]) if is_c2 else np.inf
+                    a_hat = float(self.a_PF_NPO[n,i,s_full])  if is_c2 else np.inf
+                    a_chk = float(self.a_PF_PO[n,i,s_full])   if is_c2 else np.inf
+                    psib  = float(psi_bar[n,i,s_idx])
 
-        w_n   = np.broadcast_to(self.w[:, None, None], (N, N, S-1))
-        w_n_a = w_n * a_nis                                       # (N,N,S-1)
-        w_n_fe_h = np.einsum('n,n,s->ns', self.w, p.r_hjort,
-                              p.fe[1:])[:, None, :]                # (N,1,S-1)
-        w_n_fe_h_b = np.broadcast_to(w_n_fe_h, (N, N, S-1))
+                    # ── IntVNorigP (eq 50') ─────────────────────────────────
+                    if not is_c2:
+                        # Case 1: V_NPO * k/(k-1) * (1 - psi_o^{1-k})
+                        IntVN = V_NPO * k/(k-1) * (1 - psi_o**(1-k))
+                    else:
+                        if 1 >= a_bar:
+                            IntVN = (V_NPF * k/(k-1) * (1 - psi_o**(1-k))
+                                     - (1 - psi_o**(-k)) * w_n_a * d/(d+1))
+                        else:
+                            mb = min(psi_o, a_bar)
+                            t1 = k/(k-1) * (1 - mb**(1-k)) * V_NPO
+                            t2 = (k * (mb**(d-k+1) - 1) / (d-k+1)
+                                  * a_bar**(-d) / (d+1)
+                                  * (V_NPF - V_NPO))
+                            t3 = V_NPF * k/(k-1) * (mb**(1-k) - psi_o**(1-k))
+                            t4 = -w_n_a * d/(d+1) * (mb**(-k) - psi_o**(-k))
+                            IntVN = t1 + t2 + t3 + t4
 
-        # =============================================================
-        # IntVNorigP  (eq 50')
-        # =============================================================
-        # Case 1: V_NPO * k/(k-1) * (1 - psi_o^{1-k})
-        IntVN_c1 = V_NPO * k/(k-1) * (1 - psi_o**(1-k))
+                    # ── IntVorigP^A (eq 51') — Case 1 only ──────────────────
+                    if not is_c2:
+                        if psi_o < psi_O:
+                            IntVA = (k/(k-1) * psi_o**(1-k) * V_NPO
+                                     + k/(k-1) * psi_O**(1-k) * (V_PO - V_NPO)
+                                     - psi_O**(-k) * w_n_fe_h_s)
+                        else:
+                            IntVA = (k/(k-1) * psi_o**(1-k) * V_PO
+                                     - w_n_fe_h_s * psi_o**(-k))
+                    else:
+                        IntVA = 0.0
 
-        # Case 2, sub-branch a: 1 >= a_bar
-        IntVN_c2a = (V_NPF_safe * k/(k-1) * (1 - psi_o**(1-k))
-                     - (1 - psi_o**(-k)) * w_n_a * d/(d+1))
-        # Case 2, sub-branch b: 1 < a_bar
-        # Use safe a_bar > 0 in division
-        a_bar_safe = np.where(np.isfinite(a_bar) & (a_bar > 0), a_bar, 1.0)
-        mb = np.minimum(psi_o, a_bar_safe)
-        mb = np.maximum(mb, 1e-30)
-        t1 = k/(k-1) * (1 - mb**(1-k)) * V_NPO
-        t2 = (k * (mb**(d-k+1) - 1) / (d-k+1)
-              * a_bar_safe**(-d) / (d+1)
-              * (V_NPF_safe - V_NPO))
-        t3 = V_NPF_safe * k/(k-1) * (mb**(1-k) - psi_o**(1-k))
-        t4 = -w_n_a * d/(d+1) * (mb**(-k) - psi_o**(-k))
-        IntVN_c2b = t1 + t2 + t3 + t4
+                    # ── IntVorigP^B (eq 52') — Case 2, psi_o < psi_F ────────
+                    IntVB = 0.0
+                    if is_c2 and psi_o < psi_F:
+                        if a_bar < psi_o:
+                            IntVB = (k/(k-1) * V_NPF * (psi_o**(1-k) - psi_F**(1-k))
+                                     - w_n_a * d/(d+1) * (psi_o**(-k) - psi_F**(-k)))
+                        elif psi_o <= a_bar < psi_F:
+                            t1 = V_NPO * k/(k-1) * (psi_o**(1-k) - a_bar**(1-k))
+                            t2 = (w_n_a / (d+1) * a_bar**(-(d+1)) * k / (k-1-d)
+                                  * (psi_o**(d-k+1) - a_bar**(d-k+1)))
+                            t3 = V_NPF * k/(k-1) * (a_bar**(1-k) - psi_F**(1-k))
+                            t4 = -w_n_a * d/(d+1) * (a_bar**(-k) - psi_F**(-k))
+                            IntVB = t1 + t2 + t3 + t4
+                        else:  # a_bar >= psi_F
+                            t1 = V_NPO * k/(k-1) * (psi_o**(1-k) - psi_F**(1-k))
+                            t2 = (w_n_a / (d+1) * a_bar**(-(d+1)) * k / (k-1-d)
+                                  * (psi_o**(d-k+1) - psi_F**(d-k+1)))
+                            IntVB = t1 + t2
 
-        # Combine: Case 1 if not c2; Case 2a if c2 and 1>=a_bar; else 2b
-        IntVN = np.where(c1, IntVN_c1,
-                np.where(1 >= a_bar, IntVN_c2a, IntVN_c2b))
+                    # ── IntVorigP^C (eq 53') — Case 2 only ──────────────────
+                    IntVC = 0.0
+                    if is_c2 and a_val > 0 and np.isfinite(psib) and psib > 0:
+                        max_o_F   = max(psi_o, psi_F)
+                        max_F_O_o = max(psi_F, psi_O, psi_o)
+                        if a_hat <= max_o_F:
+                            IntVC = (V_PF * k/(k-1)
+                                     * (max_o_F**(1-k) - max_F_O_o**(1-k))
+                                     - (w_n_fe_h_s + w_n_a * d/(d+1))
+                                     * (max_o_F**(-k) - max_F_O_o**(-k)))
+                        elif max_o_F < a_hat < max_F_O_o:
+                            t1 = V_NPO * k/(k-1) * (max_o_F**(1-k) - a_hat**(1-k))
+                            # Beta term with shape (d+2, k-d-1)
+                            x1 = max(0.0, min(1.0, 1 - psib/max_o_F))
+                            x2 = max(0.0, min(1.0, 1 - psib/a_hat))
+                            B_C = float(betainc(d+2, k-d-1, x1, x2,
+                                                regularized=False).real)
+                            t2 = (k/(d+1) * (w_n_fe_h_s/a_val)**d
+                                  * w_n_fe_h_s * psib**(-k) * B_C)
+                            t3 = V_PF * k/(k-1) * (a_hat**(1-k) - max_F_O_o**(1-k))
+                            t4 = -(w_n_fe_h_s + w_n_a * d/(d+1)) * (
+                                a_hat**(-k) - max_F_O_o**(-k))
+                            IntVC = t1 + t2 + t3 + t4
+                        else:  # a_hat >= max_F_O_o
+                            t1 = V_NPO * k/(k-1) * (max_o_F**(1-k) - max_F_O_o**(1-k))
+                            x1 = max(0.0, min(1.0, 1 - psib/max_o_F))
+                            x2 = max(0.0, min(1.0, 1 - psib/max_F_O_o))
+                            B_C = float(betainc(d+2, k-d-1, x1, x2,
+                                                regularized=False).real)
+                            # (w_n_fe_h_s)^{d+1} = (w_n * h_n * fe_s)^{d+1}
+                            # The term reads: k (h_n fe_s)^{d+1}/(d+1) * w_n * a^{-d} * psib^{-k} B_C
+                            h_fe = w_n_fe_h_s / w_n if w_n > 0 else 0.0
+                            t2 = (k * h_fe**(d+1) / (d+1)
+                                  * w_n * a_val**(-d) * psib**(-k) * B_C)
+                            IntVC = t1 + t2
 
-        # =============================================================
-        # IntVorigP^A  (eq 51')  — Case 1 only
-        # =============================================================
-        psi_O_safe = np.where(np.isfinite(psi_O) & (psi_O > 0), psi_O, np.inf)
-        IntVA_lo = (k/(k-1) * psi_o**(1-k) * V_NPO
-                    + k/(k-1) * np.where(np.isfinite(psi_O_safe),
-                                          psi_O_safe**(1-k), 0.0)
-                      * (V_PO - V_NPO)
-                    - np.where(np.isfinite(psi_O_safe),
-                               psi_O_safe**(-k), 0.0) * w_n_fe_h_b)
-        IntVA_hi = (k/(k-1) * psi_o**(1-k) * V_PO
-                    - w_n_fe_h_b * psi_o**(-k))
-        IntVA = np.where(c1,
-                          np.where(psi_o < psi_O_safe, IntVA_lo, IntVA_hi),
-                          0.0)
+                    # ── IntVorigP^D (eq 54') — Case 2 only ──────────────────
+                    IntVD = 0.0
+                    if is_c2:
+                        max_o_O = max(psi_o, psi_O)
+                        if a_chk <= max_o_O:
+                            IntVD = max_o_O**(-k) * (
+                                V_PF * k/(k-1) * max_o_O
+                                - (w_n_fe_h_s + w_n_a * d/(d+1)))
+                        else:
+                            t1 = V_PO * k/(k-1) * (max_o_O**(1-k) - a_chk**(1-k))
+                            t2 = -w_n_fe_h_s * (max_o_O**(-k) - a_chk**(-k))
+                            t3 = (w_n_a / (d+1) * a_chk**(-d-1) * k / (k-1-d)
+                                  * (max_o_O**(d-k+1) - a_chk**(d-k+1)))
+                            t4 = a_chk**(-k) * (V_PF * k/(k-1) * a_chk
+                                                - (w_n_fe_h_s + w_n_a * d/(d+1)))
+                            IntVD = t1 + t2 + t3 + t4
 
-        # =============================================================
-        # IntVorigP^B  (eq 52')  — Case 2, psi_o < psi_F
-        # =============================================================
-        psi_F_safe = np.where(np.isfinite(psi_F) & (psi_F > 0), psi_F, np.inf)
-        active_B = c2 & (psi_o < psi_F_safe)
-        # sub a) a_bar < psi_o
-        IntVB_a = (k/(k-1) * V_NPF_safe * (psi_o**(1-k) - psi_F_safe**(1-k))
-                   - w_n_a * d/(d+1) * (psi_o**(-k) - psi_F_safe**(-k)))
-        # sub b) psi_o <= a_bar < psi_F
-        IntVB_b = (V_NPO * k/(k-1) * (psi_o**(1-k) - a_bar_safe**(1-k))
-                   + w_n_a / (d+1) * a_bar_safe**(-(d+1)) * k / (k-1-d)
-                     * (psi_o**(d-k+1) - a_bar_safe**(d-k+1))
-                   + V_NPF_safe * k/(k-1) * (a_bar_safe**(1-k) - psi_F_safe**(1-k))
-                   - w_n_a * d/(d+1) * (a_bar_safe**(-k) - psi_F_safe**(-k)))
-        # sub c) a_bar >= psi_F
-        IntVB_c = (V_NPO * k/(k-1) * (psi_o**(1-k) - psi_F_safe**(1-k))
-                   + w_n_a / (d+1) * a_bar_safe**(-(d+1)) * k / (k-1-d)
-                     * (psi_o**(d-k+1) - psi_F_safe**(d-k+1)))
-        IntVB = np.where(
-            active_B,
-            np.where(a_bar_safe < psi_o, IntVB_a,
-            np.where(a_bar_safe < psi_F_safe, IntVB_b, IntVB_c)),
-            0.0)
-
-        # =============================================================
-        # IntVorigP^C  (eq 53')  — Case 2 only
-        # =============================================================
-        psib       = psi_bar
-        psib_safe  = np.where(np.isfinite(psib) & (psib > 0), psib, 1.0)
-        a_safe     = np.where(a_nis > 0, a_nis, 1.0)
-        a_hat_safe = np.where(np.isfinite(a_hat) & (a_hat > 0), a_hat, np.inf)
-        active_C   = c2 & (a_nis > 0) & np.isfinite(psib) & (psib > 0)
-
-        max_o_F   = np.maximum(psi_o, psi_F_safe)
-        max_F_O_o = np.maximum(np.maximum(psi_F_safe, psi_O_safe), psi_o)
-
-        # sub a) a_hat <= max_o_F
-        IntVC_a = (V_PF_safe * k/(k-1)
-                   * (max_o_F**(1-k) - max_F_O_o**(1-k))
-                   - (w_n_fe_h_b + w_n_a * d/(d+1))
-                   * (max_o_F**(-k) - max_F_O_o**(-k)))
-
-        # Vectorized incomplete beta for (d+2, k-d-1)
-        # Compute once for both sub-branches b and c using their respective bounds
-        if (d + 2) > 0 and (k - d - 1) > 0:
-            x1_b = np.clip(1 - psib_safe / np.maximum(max_o_F, 1e-30), 0.0, 1.0)
-            x2_b = np.clip(1 - psib_safe / np.maximum(a_hat_safe, 1e-30), 0.0, 1.0)
-            beta_full = float(_sp.beta(d+2, k-d-1))
-            B_C_b = (_sp.betainc(d+2, k-d-1, x2_b)
-                     - _sp.betainc(d+2, k-d-1, x1_b)) * beta_full
-
-            x1_c = x1_b
-            x2_c = np.clip(1 - psib_safe / np.maximum(max_F_O_o, 1e-30), 0.0, 1.0)
-            B_C_c = (_sp.betainc(d+2, k-d-1, x2_c)
-                     - _sp.betainc(d+2, k-d-1, x1_c)) * beta_full
-        else:
-            # mpmath fallback (rarely needed)
-            x1_b = np.clip(1 - psib_safe / np.maximum(max_o_F, 1e-30), 0.0, 1.0)
-            x2_b = np.clip(1 - psib_safe / np.maximum(a_hat_safe, 1e-30), 0.0, 1.0)
-            x2_c = np.clip(1 - psib_safe / np.maximum(max_F_O_o, 1e-30), 0.0, 1.0)
-            B_C_b = _betainc_vec_mpmath(d+2, k-d-1, x1_b, x2_b)
-            B_C_c = _betainc_vec_mpmath(d+2, k-d-1, x1_b, x2_c)
-
-        IntVC_b = (V_NPO * k/(k-1) * (max_o_F**(1-k) - a_hat_safe**(1-k))
-                   + k/(d+1) * (w_n_fe_h_b / a_safe)**d
-                     * w_n_fe_h_b * psib_safe**(-k) * B_C_b
-                   + V_PF_safe * k/(k-1) * (a_hat_safe**(1-k) - max_F_O_o**(1-k))
-                   - (w_n_fe_h_b + w_n_a * d/(d+1)) * (
-                       a_hat_safe**(-k) - max_F_O_o**(-k)))
-
-        # sub c) a_hat >= max_F_O_o
-        # (w_n_fe_h_b / w_n) = h_n * fe_s
-        h_fe = np.where(w_n > 0, w_n_fe_h_b / np.where(w_n > 0, w_n, 1.0), 0.0)
-        IntVC_c = (V_NPO * k/(k-1) * (max_o_F**(1-k) - max_F_O_o**(1-k))
-                   + k * h_fe**(d+1) / (d+1)
-                     * w_n * a_safe**(-d) * psib_safe**(-k) * B_C_c)
-
-        IntVC = np.where(
-            active_C,
-            np.where(a_hat_safe <= max_o_F, IntVC_a,
-            np.where(a_hat_safe < max_F_O_o, IntVC_b, IntVC_c)),
-            0.0)
-
-        # =============================================================
-        # IntVorigP^D  (eq 54')  — Case 2 only
-        # =============================================================
-        a_chk_safe = np.where(np.isfinite(a_chk) & (a_chk > 0), a_chk, np.inf)
-        max_o_O = np.maximum(psi_o, psi_O_safe)
-
-        IntVD_a = max_o_O**(-k) * (
-            V_PF_safe * k/(k-1) * max_o_O
-            - (w_n_fe_h_b + w_n_a * d/(d+1)))
-        IntVD_b = (V_PO * k/(k-1) * (max_o_O**(1-k) - a_chk_safe**(1-k))
-                   - w_n_fe_h_b * (max_o_O**(-k) - a_chk_safe**(-k))
-                   + w_n_a / (d+1) * a_chk_safe**(-d-1) * k / (k-1-d)
-                     * (max_o_O**(d-k+1) - a_chk_safe**(d-k+1))
-                   + a_chk_safe**(-k) * (V_PF_safe * k/(k-1) * a_chk_safe
-                                          - (w_n_fe_h_b + w_n_a * d/(d+1))))
-        IntVD = np.where(c2,
-                          np.where(a_chk_safe <= max_o_O, IntVD_a, IntVD_b),
-                          0.0)
-
-        # Aggregate
-        contrib = IntVN + IntVA + IntVB + IntVC + IntVD
-        contrib = np.where(np.isfinite(contrib), contrib, 0.0)
-        IntV_sum = contrib.sum(axis=0)                            # (N, S-1)
+                    contrib = IntVN + IntVA + IntVB + IntVC + IntVD
+                    if np.isfinite(contrib):
+                        IntV_sum[i, s_idx] += contrib
 
         # Eq (49'): divide by w_i, subtract patenting-cost
         l_R = np.zeros((p.N, p.S))
-        rhs = (IntV_sum / self.w[:, None]
-               - p.fo[None, 1:] * p.r_hjort[:, None]
-                 * self.psi_o_star[:, 1:]**(-k))
+        rhs = (IntV_sum / self.w[:,None]
+               - p.fo[None,1:] * p.r_hjort[:,None]
+                 * self.psi_o_star[:,1:]**(-k))
         rhs = np.maximum(rhs, 0.0)
-        l_R[..., 1:] = (rhs * p.eta[..., 1:])**(1/p.kappa)
+        l_R[...,1:] = (rhs * p.eta[...,1:])**(1/p.kappa)
         return l_R
 
     def compute_phi(self, p):
@@ -3012,7 +1688,6 @@ class var_with_fdi:
             p.rho - baseline.g*(1-one_ov_g))
         d2 = baseline.cons.sum() * (p.rho - self.g*(1-one_ov_g))
         self.cons_eq_negishi_welfare_change = (n2/d2)**(p.gamma/(p.gamma-1))
-
 
 class var_with_entry_costs:
     def __init__(self, context, N = 7, S = 2):
@@ -9327,92 +8002,6 @@ class moments:
         self.num_TO_C = num_brack_C                                                            
         self.num_TO_E = num_brack_E                                                     
         self.denom_TO = denom 
-        
-    # def compute_TO_DD_DD(self,var,p):
-    #     delt = 5
-    #     self.delta_t = delt
-    #     PHI = var.phi**p.theta[None,None,:]
-        
-    #     num_brack_B = var.PSI_MNP*eps(p.nu_tilde*delt)[None,None,:]
-    #     num_brack_C = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
-    #     num_brack_B = var.PSI_MNP*eps(p.nu_tilde*delt)[None,None,:]
-    #     num_brack_C = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
-    #     num_brack_D = var.PSI_MPD*eps(p.delta_eff*delt)
-    #     num_brack_E = var.PSI_MPL*(eps(p.delta_eff*delt)*eps(p.nu_tilde*delt)[None,None,:])
-    #     num_brack_F = var.PSI_CL*eps(p.nu_tilde*delt)[None,None,:]
-        
-    #     num_brack = (num_brack_B + num_brack_C + num_brack_D + num_brack_E + num_brack_F)
-        
-    #     num_sum = np.einsum('nis,njs->ns',
-    #                         num_brack,
-    #                         PHI
-    #                         ) - \
-    #               np.einsum('ns,njs->ns',
-    #                         np.diagonal(num_brack).transpose(),
-    #                         PHI
-    #                         ) - \
-    #               np.einsum('nis,ns->ns',
-    #                         num_brack,
-    #                         np.diagonal(PHI).transpose()
-    #                         ) + \
-    #               np.einsum('ns,ns->ns',
-    #                         np.diagonal(num_brack).transpose(),
-    #                         np.diagonal(PHI).transpose()
-    #                         )
-
-    #     num = np.einsum('ns,ns->ns',
-    #                     PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
-    #                     num_sum
-    #                     )
-        
-    #     denom_A = np.einsum('nis,ns,ns->nis',
-    #                               PHI,
-    #                               var.PSI_CD,
-    #                               PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:]
-    #                               )
-        
-    #     denom_B_a = var.PSI_MNP*np.exp(-delt*(p.nu+p.nu_tilde))[None,None,:]
-    #     denom_B_b = var.PSI_MPND*(np.exp(-delt*p.delta_eff)
-    #                               +np.exp(-(p.nu+p.nu_tilde)*delt)[None,None,:]*eps(delt*p.delta_eff))
-    #     denom_B_c = (var.PSI_MPD+var.PSI_MPL)*np.exp(-delt*p.delta_eff)
-    #     denom_B = np.einsum('nis,nis,s->nis',
-    #                         denom_B_a + denom_B_b + denom_B_c,
-    #                         var.phi**(p.sigma-1)[None,None,:],
-    #                         (p.sigma/(p.sigma-1))**(1-p.sigma)
-    #                         )
-        
-    #     denom_C_a = var.PSI_MNP*eps(p.nu)[None,None,:]
-    #     denom_C_b = var.PSI_MPND*(eps(p.delta_eff*delt)*eps(p.nu*delt)[None,None,:])
-    #     denom_C_c = var.PSI_MPL*eps(p.delta_eff*delt)
-    #     denom_C = np.einsum('s,nis,nis,s->nis',
-    #                         np.exp(-delt*p.nu_tilde),
-    #                         denom_C_a + denom_C_b + denom_C_c,
-    #                         var.phi**(p.sigma-1)[None,None,:],
-    #                         (p.sigma/(p.sigma-1))**(1-p.sigma)
-    #                         )
-        
-    #     denom_D_sum = np.einsum('nis,njs->nis',
-    #                             num_brack,
-    #                             PHI
-    #                             ) - \
-    #                   np.einsum('nis,ns->nis',
-    #                             num_brack,
-    #                             np.diagonal(PHI).transpose()
-    #                             )
-        
-    #     denom_D = np.einsum('ns,nis->nis',
-    #                     PHI.sum(axis=1)**((p.sigma-1)/p.theta-1)[None,:],
-    #                     denom_D_sum
-    #                     )
-        
-    #     denom = np.einsum('nis->ns',
-    #                       denom_A + denom_B + denom_C + denom_D
-    #                       ) - np.einsum('nns->ns',
-    #                                         denom_A + denom_B + denom_C + denom_D
-    #                                         ) 
-        
-    #     self.turnover_DD_DD = num/denom
-    #     self.TO_DD_DD = self.turnover_DD_DD[0,1]
     
     def compute_TO_DD_DD(self,var,p):
         delt = 5
@@ -9659,39 +8248,74 @@ class moments:
             pass
         
     def compute_FDI_FLOW_N(self, var, p):
-        """
-        TeX (lines 5070-5087): destination-aggregated affiliate-sales ratio
-            FDI_FLOW_N_n = sum_i X^{M,F}_{ni,s=1} / (X_{nn,s=1} - sum_i X^{M,F}_{ni,s=1})
-        X_nn includes sum_i X^{M,F}_{ni} on its diagonal per eq 47, so the
-        subtraction gives pure (X^{M,O}_{nn} + X^{CD}_{nn}) absorption.
-        Floor at 1e-6 keeps log(.) finite in the calibration loss.
-        """
-        X_M_F_sum_n = var.X_M_F[:, :, 1:].sum(axis=(1, 2))
+        X_M_F_sum_n = var.X_M_F[:, :, 1:].sum(axis=(1, 2))   # (N,)
         X_nn = np.einsum('nns->n', var.X[:, :, 1:2]).squeeze()
         denom = X_nn - X_M_F_sum_n
         ratio = np.where(denom > 0, X_M_F_sum_n / denom, 1e-6)
         self.FDI_FLOW_N = np.maximum(ratio, 1e-6)
 
-    def _vartheta_from_thresholds(self, p, c2, psi_mO, psi_mF, a_npf, a_npo,
-                                   a_po, psi_bar, a_nis):
+
+    def _vartheta_ni(self, var, p, var_for_dagger=None):
         """
-        Probability of FDI by origin i in destination n, given thresholds.
-
-        Implements eq (\\ref{eq:varthetaABs}) of algorithm_corrected.tex
-        (7 terms A1, A2, A3, B1, B2, B3, B4 with beta-shape (d+1, k-d) and
-        d-k exponents — matches RomerEKnewversionwithFDI3.tex lines 5298-5334).
-
-        Inputs are arrays of shape (N, N, S-1). Pairs not in Case 2 return 0.
-        This function is used twice: once with BASELINE thresholds for theta_n,
-        and once with PERTURBED thresholds (eqs \\ref{eq:adag1}-\\ref{eq:adag2})
-        for theta_n^dagger in the partial-equilibrium FDI elasticity.
+        Compute the probability of FDI for each (n, i, s) pair (sector index
+        s = 0 for the patenting sector in the slice [..., 1:]).
+     
+        Implements TeX equation block on lines 5298-5334:
+     
+          vartheta_{ni}^s
+            = 1[a_NPF_NPO >= max(psi^orig, psi^F*)]
+                * k * a_NPF_NPO^{-d} / (k-d)
+                * [1 - max(psi^orig, psi^F*)^{d-k}]
+     
+            + 1[1 < a_NPF_NPO < max(psi^orig, psi^F*)]
+                * { k * a_NPF_NPO^{-d}/(k-d) * [1 - a_NPF_NPO^{d-k}]
+                    + [a_NPF_NPO^{-k} - max(psi^orig, psi^F*)^{-k}] }
+     
+            + 1[a_NPF_NPO < 1]
+                * [1 - max(psi^orig, psi^F*)^{-k}]
+     
+            + 1[a_PF_NPO < max(psi^O*, psi^orig)]
+                * [ max(a_PF_NPO, psi^F*, psi^orig)^{-k}
+                    - max(psi^O*, psi^orig)^{-k} ]
+     
+            + 1[max(psi^F*, psi^orig) <= a_PF_NPO]
+                * (f_n^e / a_ni)^d / psi_bar_NPO_PF^k * k
+                * B(1 - psi_bar_NPO_PF/max(psi^orig, psi^F*),
+                    1 - psi_bar_NPO_PF/min(a_PF_NPO, max(psi^O*, psi^orig));
+                    d+1, k-d)
+     
+            + k/(k-d) * [max(psi^O*, psi^orig)^{d-k}
+                         - max(psi^O*, psi^orig, a_PF_PO)^{d-k}] * a_PF_PO^{-d}
+     
+            + max(a_PF_PO, psi^O*, psi^orig)^{-k}
+     
+        In our code:
+          max(psi^O*, psi^orig) = psi_m_star_O
+          max(psi^F*, psi^orig) = psi_m_star_F
+          f_n^e               = r_hjort[n] * fe[s]  (no w_n: in the
+                               algorithm-doc normalization the w_n cancels
+                               because psi_bar already contains it.)
+     
+        Returns array of shape (N, N, S-1) with sector 0 excluded.
+        Pairs that are NOT in Case 2 (n==i, or Case 1 due to profit comparison)
+        have vartheta = 0.
         """
         k = p.k[1]; d = p.d
-        h_fe = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])[:, None, :]
+        psi_mO = var.psi_m_star_O[..., 1:]                    # (N, N, 1)
+        psi_mF = var.psi_m_star_F[..., 1:]
+        a_npf  = var.a_NPF_NPO[..., 1:]
+        a_npo  = var.a_PF_NPO[..., 1:]
+        a_po   = var.a_PF_PO[..., 1:]
+        psi_bar = var.psi_bar_NPO_PF[..., 1:]
+        a_nis  = var.a[..., 1:]
+        c2     = var.case2[..., 1:]                            # (N, N, S-1)
+     
+        # h_n * fe_s (entry cost in algorithm-doc units, no w_n)
+        h_fe = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])[:, None, :]   # (N,1,S-1)
         a_safe = np.where(a_nis > 0, a_nis, 1.0)
-        psi_bar_safe = np.where((psi_bar > 0) & np.isfinite(psi_bar), psi_bar, 1.0)
-
-        # NP-O -> NP-F integrals
+     
+        # ---- Part A: integrals over [1, max(psi^orig, psi^F*)] -----------------
+        # These are the NP-O -> NP-F transitions (TeX lines 5300-5314)
         A1 = np.where(
             c2 & (a_npf >= psi_mF),
             k * a_npf**(-d) / (k - d) * (1 - psi_mF**(d - k)),
@@ -9705,228 +8329,131 @@ class moments:
             c2 & (a_npf <= 1),
             1 - psi_mF**(-k),
             0.0)
-
-        # NP-O -> P-F (transition strip)
+     
+        # ---- Part B: integrals over [max(psi^F*, psi^orig), max(psi^O*, psi^orig)] +
+        #              integrals over [max(psi^O*, psi^orig), infinity]
+        # (TeX lines 5315-5333)
+     
+        # B1: NP-O -> P-F region with a_PF_NPO < psi_mO
         B1 = np.where(
             c2 & (a_npo < psi_mO),
-            np.maximum(a_npo, psi_mF)**(-k) - psi_mO**(-k),
+            np.maximum.reduce([a_npo, psi_mF])**(-k) - psi_mO**(-k),
             0.0)
-
-        # NP-O -> P-F beta term
+     
+        # B2: NP-O -> P-F region with a_PF_NPO >= psi_mF (beta-function term)
         ind_B2 = c2 & (a_npo >= psi_mF)
+        psi_bar_safe = np.where((psi_bar > 0) & np.isfinite(psi_bar), psi_bar, 1.0)
         upper_min = np.minimum(a_npo, psi_mO)
-        t1_B2 = np.where(ind_B2, 1 - psi_bar_safe / psi_mF, 0.0)
-        t2_B2 = np.where(ind_B2,
-                         1 - psi_bar_safe / np.where(upper_min > 0, upper_min, 1.0),
-                         0.0)
+        t1_B2 = np.where(ind_B2, 1 - psi_bar / psi_mF, 0.0)
+        t2_B2 = np.where(ind_B2, 1 - psi_bar / upper_min, 0.0)
+        # Clamp to [0, 1] inside _betainc_vec already; pass through
         B_B2 = np.where(ind_B2, _betainc_vec(d + 1, k - d, t1_B2, t2_B2), 0.0)
         B2 = np.where(
             ind_B2 & (a_nis > 0),
             (h_fe / a_safe)**d * k / psi_bar_safe**k * B_B2,
             0.0)
-
-        # P-O -> P-F region
+     
+        # B3: P-O -> P-F region, ψ in [psi_mO, max(psi_mO, a_PF_PO)]
         max_top = np.maximum(psi_mO, a_po)
         B3 = np.where(
             c2,
             k / (k - d) * (psi_mO**(d - k) - max_top**(d - k)) * a_po**(-d),
             0.0)
-
-        # Tail (a^{PF,PO} above max)
+     
+        # B4: tail, ψ in [max(a_PF_PO, psi_mO), infinity]
         B4 = np.where(c2, max_top**(-k), 0.0)
-
+     
         vartheta = A1 + A2 + A3 + B1 + B2 + B3 + B4
         vartheta = np.where(c2, vartheta, 0.0)
         vartheta = np.where(np.isfinite(vartheta), vartheta, 0.0)
-        return np.clip(vartheta, 0.0, 1.0)
-
-    def _vartheta_ni(self, var, p):
-        """Baseline FDI probability — uses var's pre-computed thresholds."""
-        return self._vartheta_from_thresholds(
-            p,
-            c2     = var.case2[..., 1:],
-            psi_mO = var.psi_m_star_O[..., 1:],
-            psi_mF = var.psi_m_star_F[..., 1:],
-            a_npf  = var.a_NPF_NPO[..., 1:],
-            a_npo  = var.a_PF_NPO[..., 1:],
-            a_po   = var.a_PF_PO[..., 1:],
-            psi_bar= var.psi_bar_NPO_PF[..., 1:],
-            a_nis  = var.a[..., 1:])
-
-    def _vartheta_ni_perturbed(self, var, p, n_idx, delta_b):
+        vartheta = np.clip(vartheta, 0.0, 1.0)  # probability lies in [0, 1]
+        return vartheta
+     
+     
+    def _theta_n(self, var, p, n_idx):
         """
-        Partial-equilibrium perturbed FDI probability.
-
-        Implements section "FDI tariff semi-elasticity --- partial equilibrium"
-        of algorithm_corrected.tex (eqs \\ref{eq:lamdag}-\\ref{eq:varthetaABs}).
-
-        Tariff b_{n,i,s=1} -> b_{n,i,s=1} + delta_b for destination n=n_idx,
-        for all origins i, s=1. All baseline aggregates (wages, expenditures,
-        qualities, prices, phi, pi_F) are held fixed at var. Only the export-
-        side per-quality profit pi^{w,dag}_{nis} = lambda^dag_{ni} * pi^w_{nis}
-        with lambda^dag_{ni} = ((1+b+delta_b)/(1+b))^{-sigma_s} changes.
-
-        That rescales V^{NP,dag}, V^{P,dag}, V^{P,D,dag} (export-side V's),
-        the Case 2 indicator, and the four auxiliary thresholds. Affiliate-
-        side V^{P,F}, V^{NP,F}, V^{P,D,F} are unchanged.
-
-        Returns vartheta^dag of shape (N, N, S-1) — only column n_idx is
-        meaningful; other destinations are NOT perturbed and return baseline.
+        Eq from TeX, lines 5593-5597:
+     
+           bar_vartheta_n^s = sum_{i!=n} eta_i^s (L^R_i)^{1-kappa} vartheta_{ni}^s
+                              ---------------------------------------------------
+                              sum_{i!=n} eta_i^s (L^R_i)^{1-kappa}
+     
+        Returns a scalar (sector 1 only, which is the FDI-relevant sector).
+        Returns 0.0 if no origins contribute.
         """
-        sigma_s = p.sigma[1:]                    # (S-1,)
-        k = p.k[1]; d = p.d
-
-        # ---- Tariff scaling lambda^dag ----
-        # Apply ONLY to destination n_idx, all origins, sector 1.
-        # Build full (N, N, S-1) lambda where most entries are 1 (no perturbation),
-        # and entries with n == n_idx get the scaling factor.
-        b_old = p.tariff[..., 1:]                              # (N, N, S-1)
-        # Only destination n_idx, all origins i, gets the perturbation
-        b_new = b_old.copy()
-        b_new[n_idx, :, :] = b_old[n_idx, :, :] + delta_b
-        lam_dag = ((1 + b_new) / (1 + b_old))**(-sigma_s[None, None, :])  # (N, N, S-1)
-
-        # ---- Perturbed export-side profit: pi^{w,dag}_{nis} = lambda^dag * pi^w_{nis} ----
-        # var.profit shape (N, N, S); slice sector 1.
-        profit_dag = lam_dag * var.profit[..., 1:]            # (N, N, S-1)
-
-        # ---- Perturbed V's (export side only; FDI side unchanged) ----
-        # Match var_with_fdi.compute_V: V_NP = profit * w_i / G; V_P_F similar with w_n.
-        # G shape (S-1,) for sector >= 1
-        G = var.G[1:]                                          # (S-1,)
-        # G_post_P_D = G + delta - nu (denominator (G - nu + delta) in compute_V)
-        # Use the same formula as compute_V:
-        #   V_NP = profit * w_i / G
-        #   V_P  = profit * w_i * (1/(G-nu+delta) - 1/(G+delta) + 1/G)
-        # The perturbed V's just rescale these by lambda^dag.
-        w_i = var.w[None, :, None]                             # (1, N, 1) — broadcast over s
-        V_NP_dag = profit_dag * w_i / G[None, None, :]
-        # V_P_dag uses the same triple-term coefficient as baseline V_P
-        coef_P = (1.0 / (G[None, None, :] - p.nu[1:][None, None, :]
-                          + p.delta[:, 1:][:, None, :])
-                  - 1.0 / (G[None, None, :] + p.delta[:, 1:][:, None, :])
-                  + 1.0 / G[None, None, :])
-        V_P_dag = profit_dag * w_i * coef_P
-
-        # Baseline FDI-side V's (UNCHANGED in partial equilibrium)
-        V_NP_F = var.V_NP_F[..., 1:]
-        V_P_F  = var.V_P_F[..., 1:]
-
-        # ---- Perturbed Case 2 indicator ----
-        # Case 2: tilde_w_n * Pi^{w,F}_{nis} > tilde_w_i * pi^{w,dag}_{nis}
-        # var.pi_F is Pi^{w,F}_{nis}; var.profit is pi^w_{nis}; profit_dag is the scaled version.
-        off_diag = np.ones((p.N, p.N, p.S-1), dtype=bool)
-        for n in range(p.N): off_diag[n, n, :] = False
-        c2_dag = (
-            (var.w[:, None, None] * var.pi_F[..., 1:]
-             > var.w[None, :, None] * profit_dag)
-            & off_diag)
-
-        # ---- Perturbed auxiliary thresholds (eqs adag1-adag2) ----
-        # a_NPF_NPO_dag = w_n * a_nis / (V_NP_F - V_NP_dag)
-        # a_PF_PO_dag   = w_n * a_nis / (V_P_F  - V_P_dag)
-        # a_PF_NPO_dag  = w_n * (a_nis + h_n fe_s) / (V_P_F - V_NP_dag)
-        # psi_bar_dag   = w_n * h_n fe_s         / (V_P_F - V_NP_dag)
-        a_nis = var.a[..., 1:]
-        w_n = var.w[:, None, None]
-        h_fe = np.einsum('n,s->ns', p.r_hjort * var.w, p.fe[1:])[:, None, :]
-        # ^ matches compute_auxiliary_thresholds convention: w_n * h_n * fe_s
-
-        def _thr(num, den):
-            return np.where(np.abs(den) > 0,
-                            num / np.where(np.abs(den) > 0, den, 1.0),
-                            np.inf)
-
-        a_NPF_NPO_dag = _thr(w_n * a_nis, V_NP_F - V_NP_dag)
-        a_PF_PO_dag   = _thr(w_n * a_nis, V_P_F  - V_P_dag)
-        a_PF_NPO_dag  = _thr(w_n * a_nis + h_fe, V_P_F - V_NP_dag)
-        psi_bar_dag   = _thr(h_fe, V_P_F - V_NP_dag)
-
-        # ---- Perturbed entry-cost cutoffs psi^{m*,O,dag}, psi^{m*,F,dag} ----
-        # These come from the entry-cost equations applied with the perturbed V's.
-        # In Case 2: define them analogously to compute_patenting_thresholds.
-        # We keep the BASELINE entry-cost cutoffs psi_m_star_O, psi_m_star_F
-        # because they're aggregate equilibrium objects (entry of marginal
-        # innovators is governed by w_i, expected V across destinations, and
-        # the marginal-firm break-even), and in PARTIAL EQUILIBRIUM these are
-        # treated as FIXED at their baseline values, per the spec
-        # (held-fixed list in eq \\ref{eq:lamdag} discussion).
-        psi_mO = var.psi_m_star_O[..., 1:]
-        psi_mF = var.psi_m_star_F[..., 1:]
-
-        return self._vartheta_from_thresholds(
-            p, c2=c2_dag,
-            psi_mO=psi_mO, psi_mF=psi_mF,
-            a_npf=a_NPF_NPO_dag, a_npo=a_PF_NPO_dag, a_po=a_PF_PO_dag,
-            psi_bar=psi_bar_dag, a_nis=a_nis)
-
-    def _theta_n(self, var, p, n_idx, vartheta=None):
-        """
-        Aggregated FDI propensity for destination n (sector 1, the FDI sector).
-
-        Implements eq (\\ref{eq:thetabar}) of algorithm_corrected.tex:
-            bar_vartheta_n = sum_{i!=n} eta_i (L^R_i)^{1-kappa} vartheta_{ni}
-                              / sum_{i!=n} eta_i (L^R_i)^{1-kappa}
-
-        Weights are baseline R&D shares. Setting vartheta=None uses baseline
-        thresholds via _vartheta_ni; pass a precomputed vartheta (e.g. the
-        perturbed one) to evaluate at non-baseline thresholds.
-        """
-        if vartheta is None:
-            vartheta = self._vartheta_ni(var, p)
-        eta_lR   = p.eta[..., 1:] * var.l_R[..., 1:]**(1 - p.kappa)
+        vartheta = self._vartheta_ni(var, p)                # (N, N, S-1)
+        eta_lR   = p.eta[..., 1:] * var.l_R[..., 1:]**(1 - p.kappa)  # (N, S-1)
+        # Weight is eta_i (L^R_i)^{1-k}; exclude i = n
         w = np.broadcast_to(eta_lR[None, :, :], vartheta.shape).copy()
-        w[n_idx, n_idx, :] = 0.0   # exclude self
-        num = (vartheta[n_idx, :, :] * w[n_idx, :, :]).sum(axis=0)
+        w[n_idx, n_idx, :] = 0.0
+        num = (vartheta[n_idx, :, :] * w[n_idx, :, :]).sum(axis=0)   # (S-1,)
         den = w[n_idx, :, :].sum(axis=0)
         theta = np.where(den > 0, num / den, 0.0)
-        return float(theta[0])
-
+        return float(theta[0])   # sector 1
+     
+     
     def compute_FDI_ELAST(self, var, p):
         """
-        PARTIAL-EQUILIBRIUM FDI tariff semi-elasticity.
-
-        Implements section "FDI tariff semi-elasticity --- partial equilibrium"
-        of algorithm_corrected.tex, eq (\\ref{eq:FDIELAST}):
-
-            FDI_ELAST_n = (bar_vartheta^dagger_n - bar_vartheta_n) / Delta_b
-
-        with n = US, Delta_b = 0.1, sector s = 1, applied to all origins i.
-
-        Procedure:
-        1. baseline vartheta_{ni} from var (no perturbation).
-        2. Apply tariff perturbation b_{n,i,1} -> b_{n,i,1} + Delta_b
-           ONLY to destination n = US, ALL origins, sector 1.
-        3. Recompute the export-side V's (V^NP, V^P, V^{P,D}) by scaling
-           pi^w with lambda^dag = ((1+b+dag)/(1+b))^{-sigma}. The FDI-side
-           V's (V^{NP,F}, V^{P,F}, V^{P,D,F}) are UNCHANGED.
-        4. Recompute Case 2 indicator and the four auxiliary thresholds
-           (a_NPF_NPO, a_PF_PO, a_PF_NPO, psi_bar) with the perturbed V's.
-        5. Evaluate vartheta^dag at the perturbed thresholds (entry-cost
-           cutoffs psi^{m*,O}, psi^{m*,F} are HELD FIXED at baseline as part
-           of the partial-equilibrium assumption).
-        6. Aggregate both vartheta and vartheta^dag with baseline R&D weights
-           and take the level difference / Delta_b.
-
-        NO full GE re-solve — just a threshold rebuild from the same var.
+        Eq from TeX, line 5614:
+     
+             theta_n_dagger - theta_n
+             ------------------------ = 0.08
+                    Delta b
+     
+        Implements the LEVEL semi-elasticity (NOT log). Perturbs b_{i,US} for all
+        origins i, re-solves the model, and computes the difference per unit Δb.
+     
+        Target: 0.08 (Blonigen 2002), set into m.FDI_ELAST_target.
         """
-        us_idx = 0
+        try:
+            from solver_funcs import fixed_point_solver_with_fdi
+        except ImportError:
+            self.FDI_ELAST = np.array([0.0])
+            return
+     
+        us_idx = 0          # destination = US
         delta_b = 0.1
-
-        # Baseline aggregated FDI propensity
-        vartheta_base = self._vartheta_ni(var, p)
-        theta_base = self._theta_n(var, p, us_idx, vartheta=vartheta_base)
-
-        # Perturbed aggregated FDI propensity (column n=US only is affected)
-        vartheta_pert = self._vartheta_ni_perturbed(var, p, us_idx, delta_b)
-        theta_pert = self._theta_n(var, p, us_idx, vartheta=vartheta_pert)
-
+     
+        # Baseline theta
+        theta_base = self._theta_n(var, p, us_idx)
+     
+        # Perturbed parameters: b_{i, US, s>=1} += delta_b for all i
+        p_perturb = p.copy()
+        p_perturb.tariff = p.tariff.copy()
+        p_perturb.tariff[us_idx, :, 1:] += delta_b
+     
+        # Re-solve perturbed system
+        try:
+            sol_pert, var_pert = fixed_point_solver_with_fdi(
+                p_perturb,
+                context='counterfactual',
+                x0=var.vector_from_var(),
+                tol=1e-10,
+                damping=5,
+                max_count=500,
+                accelerate=False,
+                accelerate_when_stable=True,
+                safe_convergence=0.01,
+                disp_summary=False,
+            )
+            var_pert.scale_P(p_perturb)
+            var_pert.compute_non_solver_quantities(p_perturb)
+        except Exception:
+            self.FDI_ELAST = np.array([0.0])
+            return
+     
+        theta_pert = self._theta_n(var_pert, p_perturb, us_idx)
+     
+        # LEVEL semi-elasticity: (theta_pert - theta_base) / Delta_b
+        # (NO division by theta_base — that would be log semi-elasticity)
         if np.isfinite(theta_pert) and np.isfinite(theta_base):
             self.FDI_ELAST = np.array([(theta_pert - theta_base) / delta_b])
         else:
             self.FDI_ELAST = np.array([0.0])
+ 
 
-
+        
+        
     def compute_moments(self,var,p):
         if p.S == 2:
             self.compute_STFLOW(var, p)
@@ -10233,3 +8760,4 @@ class history_nash:
         self.current_deltas = new_deltas
     def update_current_welfare(self,new_welfare):
         self.current_welfare = new_welfare
+
