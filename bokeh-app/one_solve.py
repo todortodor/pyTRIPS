@@ -251,26 +251,26 @@ p = parameters()
 p.load_run('calibration_results_matched_economy/baseline_2000_variations/15.0/')
 # sol_c = var_with_fdi.var_from_vector(p.guess, p, context='counterfactual')
 
-p.a = 0.50
+p.a = 0.10
 p.d = 0.15
 p.power_fdi = 1.0
 p.guess = None
 
 sol, sol_c = fixed_point_solver_with_fdi(p,
-                                         x0=p.guess,
-                                         # x0=None,
+                                         # x0=p.guess,
+                                         x0=None,
                         context = 'counterfactual',
                         # context = 'calibration',
                         cobweb_anim=False,tol =1e-8,
                         accelerate=False,
-                        accelerate_when_stable=False,
+                        accelerate_when_stable=True,
                         cobweb_qty='l_R',
                         plot_convergence=True,
                         plot_cobweb=True,
-                        safe_convergence=0.001,
+                        safe_convergence=0.01,
                         disp_summary=True,
                         damping = 5,
-                        max_count = 500,
+                        max_count = 5000,
                         accel_memory =50, 
                         accel_type1=True, 
                         accel_regularization=1e-10,
@@ -281,74 +281,6 @@ sol, sol_c = fixed_point_solver_with_fdi(p,
                         )
 
 sol_c.compute_non_solver_quantities(p)
-
-
-
-print('case2 any:', sol_c.case2.any())
-print('a range:', sol_c.a[...,1].min(), sol_c.a[...,1].max())
-print('V_NP_F - V_NP (off-diag, s=1):')
-diff = (sol_c.V_NP_F - sol_c.V_NP)[...,1]
-print('  min:', diff[sol_c.off_diag_mask[...,1]].min())
-print('  max:', diff[sol_c.off_diag_mask[...,1]].max())
-print('a_NPF_NPO (off-diag, s=1):')
-a_thresh = sol_c.a_NPF_NPO[...,1]
-print('  min:', a_thresh[sol_c.off_diag_mask[...,1]].min())
-print('  max:', a_thresh[sol_c.off_diag_mask[...,1]].max())
-# sol_c.compute_consumption_equivalent_welfare(p, sol_init)
-
-# sol, sol_c = fixed_point_solver_with_fdi(p,
-#                                          x0=p.guess,
-#                                          # x0=None,
-#                         context = 'counterfactual',
-#                         # context = 'calibration',
-#                         cobweb_anim=False,tol =1e-4,
-#                         accelerate=False,
-#                         accelerate_when_stable=True,
-#                         cobweb_qty='l_R',
-#                         plot_convergence=True,
-#                         plot_cobweb=True,
-#                         safe_convergence=0.001,
-#                         disp_summary=True,
-#                         damping = 5,
-#                         max_count = 500,
-#                         accel_memory =50, 
-#                         accel_type1=True, 
-#                         accel_regularization=1e-10,
-#                         accel_relaxation=0.5, 
-#                         accel_safeguard_factor=1, 
-#                         accel_max_weight_norm=1e6,
-#                         damping_post_acceleration=2
-#                         )
-
-# sol_c.compute_non_solver_quantities(p)
-
-# print('here')
-
-# p.delta[0,1] = 0.01
-
-# sol, sol_cf = fixed_point_solver_with_fdi(p,x0=p.guess,
-#                         context = 'counterfactual',
-#                         cobweb_anim=False,tol =1e-12,
-#                         accelerate=False,
-#                         accelerate_when_stable=True,
-#                         cobweb_qty='l_R',
-#                         plot_convergence=True,
-#                         plot_cobweb=True,
-#                         safe_convergence=0.001,
-#                         disp_summary=True,
-#                         damping = 2,
-#                         max_count = 300,
-#                         accel_memory =50, 
-#                         accel_type1=True, 
-#                         accel_regularization=1e-10,
-#                         accel_relaxation=0.5, 
-#                         accel_safeguard_factor=1, 
-#                         accel_max_weight_norm=1e6,
-#                         damping_post_acceleration=2
-#                         )
-
-# sol_cf.compute_non_solver_quantities(p)
-# sol_cf.compute_consumption_equivalent_welfare(p, sol_c)
 
 
 #%%

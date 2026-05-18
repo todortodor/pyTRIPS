@@ -797,10 +797,15 @@ def fixed_point_solver_with_fdi(
             
         # if plot_convergence:
         #     # norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
-        #     if count%1==0:
+        #     if count%10==0:
         #         plt.plot(convergence)
         #         plt.yscale('log')
         #         plt.show()
+                
+    # if plot_convergence:
+    #     plt.plot(convergence)
+    #     plt.yscale('log')
+    #     plt.show()
  
     finish = time.perf_counter()
  
@@ -2886,47 +2891,48 @@ def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0)
         v0 = p.guess
     except:
         pass
+    print(hist.count)
     sol, sol_c = fixed_point_solver_with_fdi(p,
-                                         x0=p.guess,
-                                         # x0=None,
-                        # context = 'counterfactual',
-                        context = 'calibration',
-                        cobweb_anim=False,tol =1e-3,
-                        accelerate=False,
-                        accelerate_when_stable=False,
-                        cobweb_qty='l_R',
-                        plot_convergence=False,
-                        plot_cobweb=True,
-                        safe_convergence=0.001,
-                        disp_summary=False,
-                        damping = 5,
-                        max_count = 500,
-                        accel_memory =50, 
-                        accel_type1=True, 
-                        accel_regularization=1e-10,
-                        accel_relaxation=0.5, 
-                        accel_safeguard_factor=1, 
-                        accel_max_weight_norm=1e6,
-                        damping_post_acceleration=2
-                        )
+                                             x0=p.guess,
+                                             # x0=None,
+                            context = 'counterfactual',
+                            # context = 'calibration',
+                            cobweb_anim=False,tol =1e-8,
+                            accelerate=False,
+                            accelerate_when_stable=True,
+                            cobweb_qty='l_R',
+                            plot_convergence=False,
+                            plot_cobweb=True,
+                            safe_convergence=0.01,
+                            disp_summary=False,
+                            damping = 5,
+                            max_count = 5000,
+                            accel_memory =50, 
+                            accel_type1=True, 
+                            accel_regularization=1e-10,
+                            accel_relaxation=0.5, 
+                            accel_safeguard_factor=1, 
+                            accel_max_weight_norm=1e6,
+                            damping_post_acceleration=2
+                            )
     
     if sol.status == 'failed': 
-        print('trying safer')
+        print('failed')
         sol, sol_c = fixed_point_solver_with_fdi(p,
                                                  x0=p.guess,
                                                  # x0=None,
-                                # context = 'counterfactual',
-                                context = 'calibration',
-                                cobweb_anim=False,tol =1e-3,
+                                context = 'counterfactual',
+                                # context = 'calibration',
+                                cobweb_anim=False,tol =1e-8,
                                 accelerate=False,
-                                accelerate_when_stable=False,
+                                accelerate_when_stable=True,
                                 cobweb_qty='l_R',
                                 plot_convergence=True,
                                 plot_cobweb=True,
-                                safe_convergence=0.001,
-                                disp_summary=True,
+                                safe_convergence=0.01,
+                                disp_summary=False,
                                 damping = 5,
-                                max_count = 500,
+                                max_count = 5000,
                                 accel_memory =50, 
                                 accel_type1=True, 
                                 accel_regularization=1e-10,
@@ -2957,7 +2963,7 @@ def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0)
                   , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
                   'a :', p.a)
     hist.count += 1
-    # print(hist.count)
+    
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')

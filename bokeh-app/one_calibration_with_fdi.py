@@ -42,10 +42,10 @@ p.calib_parameters.append('a')
 p.calib_parameters.append('d')
 p.calib_parameters.append('power_fdi')
 
-p.a = 0.5
+p.a = 0.1
 p.d = 0.15
 p.power_fdi = 1.0
-# p.guess = None
+p.guess = None
 
 # if 'PROBINNOVENT' not in m.list_of_moments:
 #     m.list_of_moments.append('PROBINNOVENT')
