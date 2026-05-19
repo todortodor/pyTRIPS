@@ -50,7 +50,8 @@ class parameters:
                          'eta':co,
                          'khi':0,
                          'r_hjort':co,
-                         'd':co}
+                         'd':co,
+                         'd_frac':co}
         self.ub_dict = {'sigma':5,
                         'theta':12,
                         'rho':0.5,
@@ -74,7 +75,8 @@ class parameters:
                          'eta':cou,
                          'khi':1,
                          'r_hjort':cou,
-                         'd':10}
+                         'd':10,
+                         'd_frac':1-co}
         
         self.calib_parameters = None
         self.guess = None
@@ -91,6 +93,17 @@ class parameters:
         self.a = np.float64(0.0)
         self.rho = 0.02
         self.d = np.float64(1.0)
+        # d_frac: reparameterization for FDI-model calibration enforcing k > d + 1.
+        # When 'd_frac' is in calib_parameters, sync rule is:
+        #     self.d = self.d_frac * (self.k[1] - 1)   (k[1] is the FDI sector's
+        #                                                Pareto tail index)
+        # so 0 < d_frac < 1 implies 0 < d < k[1] - 1, automatically respecting
+        # the constraint that scoping the gamma and Lambda^F denominators
+        # k - d - 1 stay positive. See update_parameters / make_p_vector for
+        # the bidirectional sync.
+        # var_with_entry_costs (a different model) reads p.d directly and is
+        # not affected unless 'd_frac' is the calibrated parameter.
+        self.d_frac = np.float64(0.5)
         self.data_path = None
         self.unit = 1e6
     
@@ -195,6 +208,7 @@ class parameters:
                     'nu_tilde':pd.Index(self.sectors, name='sector'),
                     'kappa':pd.Index(['scalar']),
                     'd':pd.Index(['scalar']),
+                    'd_frac':pd.Index(['scalar']),
                     'khi':pd.Index(['scalar']),
                     # 'k':pd.Index(['scalar']),
                     'k':pd.Index(self.sectors, name='sector'),
@@ -244,6 +258,7 @@ class parameters:
                     # 'delta_int':[np.s_[np.r_[0:7, 8:N*S]]],#,np.s_[S-1]],
                     'g_0':None,
                     'd':None,
+                    'd_frac':None,
                     'khi':None,
                     'alpha':None,
                     'beta':None,
@@ -261,7 +276,7 @@ class parameters:
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',
-                         'g_0','kappa','gamma','delta','delta_dom','delta_int','nu','nu_tilde','d','khi',
+                         'g_0','kappa','gamma','delta','delta_dom','delta_int','nu','nu_tilde','d','d_frac','khi',
                          'r_hjort','a','power_fdi']:
             par = getattr(self,par_name)
             if sl_non_calib[par_name] is not None:
@@ -314,6 +329,7 @@ class parameters:
 
         if list_of_params is None:
             list_of_params = self.get_list_of_params()
+        _d_frac_loaded = False  # track for backward-compat sync at end
         for pa_name in list_of_params:
             # if pa_name == 'k':
             #     df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
@@ -325,6 +341,8 @@ class parameters:
                     setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
                 else:
                     setattr(self,pa_name,df.values.squeeze())
+                if pa_name == 'd_frac':
+                    _d_frac_loaded = True
             except:
                 # if pa_name == 'd':
                 #     self.d = np.array(1.0)
@@ -354,7 +372,13 @@ class parameters:
         if self.k.shape[0] != self.mask['k'].shape[0]:
             self.mask['k'] = np.array([True]*self.S)
         
-        self.update_delta_eff()            
+        self.update_delta_eff()
+        # Backward compatibility: if the checkpoint pre-dates d_frac (no
+        # d_frac.csv on disk), derive d_frac from the loaded d and current
+        # k[1] so the FDI calibration can still warm-start cleanly. If the
+        # checkpoint did save d_frac, trust the saved value as authoritative.
+        if not _d_frac_loaded:
+            self._sync_dfrac_from_d()            
         
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -373,7 +397,7 @@ class parameters:
     @staticmethod
     def get_list_of_params():
         return ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta','g_0',
-         'kappa','gamma','delta','delta_dom','delta_int','nu','nu_tilde','d','khi','r_hjort',
+         'kappa','gamma','delta','delta_dom','delta_int','nu','nu_tilde','d','d_frac','khi','r_hjort',
          'tau','tariff','a','power_fdi']
             
     def guess_from_params(self,for_solver_with_entry_costs=False):
@@ -390,18 +414,63 @@ class parameters:
                 ,axis=0)
         return vec
     
+    # ──────────────────────────────────────────────────────────────────────
+    # d <-> d_frac sync helpers
+    # ──────────────────────────────────────────────────────────────────────
+    # When the FDI model is calibrated, 'd_frac' is the free parameter and
+    #   d = d_frac * (k[1] - 1)        # enforces k > d + 1 structurally
+    # The two attributes are kept in sync explicitly in update_parameters and
+    # make_p_vector; reads of `p.d` elsewhere (including in var_with_entry_costs)
+    # see the plain float, so other models that store a different scalar in
+    # `p.d` are unaffected as long as 'd_frac' isn't in calib_parameters.
+    def _d_safe_range(self):
+        """Returns max admissible d so that k - d - 1 > 0 for sector 1."""
+        # Use a small numerical margin (co = 1e-6) so denominators don't underflow.
+        return max(float(self.k[1]) - 1.0 - 1e-6, 1e-12)
+
+    def _sync_d_from_dfrac(self):
+        """Set self.d from self.d_frac and current k[1]."""
+        self.d = np.float64(float(self.d_frac) * self._d_safe_range())
+
+    def _sync_dfrac_from_d(self):
+        """Set self.d_frac from self.d and current k[1] (inverse map, clamped)."""
+        safe = self._d_safe_range()
+        if safe > 0:
+            frac = float(self.d) / safe
+            self.d_frac = np.float64(min(max(frac, 1e-6), 1.0 - 1e-6))
+
     def make_p_vector(self):
+        # NOTE: when 'd_frac' is in calib_parameters, the *caller* is expected
+        # to set self.d_frac to a sensible value (e.g. p.d_frac = 0.6) before
+        # the first least_squares iteration. We do NOT auto-sync from self.d
+        # here, because that would silently overwrite the user's d_frac seed
+        # with a value derived from p.d (which may be stale or zero in a
+        # freshly-loaded checkpoint).
+        # If you only have self.d and want d_frac to track it, call
+        # self._sync_dfrac_from_d() explicitly before make_p_vector.
         vec = np.concatenate([np.array(getattr(self,p))[self.mask[p]].ravel() for p in self.calib_parameters])
         return vec
-    
+
     def update_parameters(self,vec):
         idx_from = 0
+        # Track whether we need a final d<->d_frac sync.
+        # If both 'd' and 'd_frac' are in calib_parameters, 'd_frac' wins
+        # (i.e. the FDI calibration is taking precedence).
+        sync_d_from_dfrac = False
         for par in self.calib_parameters:
             param = np.array(getattr(self,par))
             size = param[self.mask[par]].size
             param[self.mask[par]] = vec[idx_from:idx_from+size]
             setattr(self,par,param)
             idx_from += size
+            if par == 'd_frac':
+                sync_d_from_dfrac = True
+        # If 'd_frac' is being calibrated (or 'k' moved while 'd_frac' is the
+        # underlying free var), recompute d from d_frac so the model sees the
+        # constraint-respecting d. Skipped when only 'd' is calibrated, to
+        # preserve backward compatibility with var_with_entry_costs runs.
+        if sync_d_from_dfrac or ('d_frac' in self.calib_parameters and 'k' in self.calib_parameters):
+            self._sync_d_from_dfrac()
         self.delta_eff = np.where(
                                 np.eye(self.delta_dom.shape[0], dtype=bool)[:, :, None],
                                 self.delta_dom[:, None, :],
@@ -2556,41 +2625,62 @@ class var_with_fdi:
 
     def compute_expenditure(self, p):
         """
-        Income/spending (eq 58'):
-        Z_i = sum_{s,n} X_{nis}/(1+b)                    # net sales received
-              + sum_{s,n} X_{ins} b_{ins}/(1+b_{ins})     # tariff revenue
-              - tb_i * total trade                        # trade balance
-              + sum_{s,n} w_i (L^e_{nis} + L^F_{nis})    # service EXPORTS
-              - sum_{s,n} w_n (L^e_{ins} + L^F_{ins})    # service IMPORTS
-              + sum_s sigma^{-1} [sum_n X^{M,F}_{nis} - sum_n X^{M,F}_{ins}]
-                                                          # net affiliate profits
-        Axis convention: l_Ae, l_F are [i, n, s] (origin, destination, sector).
+        Income/spending (eq Z of FDI_algorithm_fixed.tex, new derivation):
+
+          Z_i = sum_{s,n} X_{nis}/(1+b_{nis})                  # tariff-net sales
+              + sum_{s,n} X_{ins} b_{ins}/(1+b_{ins})          # tariff revenue
+              - tb_i * sum_{s,n} X_{nis}/(1+b_{nis})           # trade balance,
+                                                                 # scaled by i's
+                                                                 # tariff-net sales
+              + sum_{s,n} w_i (L^e_{nis} + L^F_{nis})          # i's L receipts
+              - sum_{s,n} w_n (L^e_{ins} + L^F_{ins})          # i's L payments
+
+        with tb_i = (TB_i / X^W)^{DATA} = p.deficit_share_world_output.
+
+        NO separate FDI-profit term: trade flows X already enter net of
+        tariffs, and affiliate sales are subsumed into X^{M,F} components
+        of the bilateral X used above (see compute_trade_flows_and_shares,
+        which folds X^{M,F}.sum(axis=1) into the diagonal of X).
+
+        Axis conventions:
+          self.X[n, i, s]:  destination n, origin i  -> X_{nis}
+          self.l_Ae, self.l_F[i, n, s]: origin i, destination n  -> L^e_{nis}
+
+        Notation in the eq above: X_{nis} has n=destination, i=origin (doc
+        convention), so:
+          - X_{nis} / (1+b_{nis}) summed over (n,s) = i's tariff-net SALES
+            received  (i is origin, n is destination)
+          - X_{ins} b_{ins}/(1+b_{ins}) summed over (n,s) = i's tariff
+            revenue on its IMPORTS  (i is destination, n is origin)
+          - L^e_{nis} (n=destination, i=origin) = i's firms operating in n,
+            paid at w_i  (so w_i * L^e_{nis} is i's RECEIPTS)
+          - L^e_{ins} (i=destination, n=origin) = n's firms operating in i,
+            paid at w_n  (so w_n * L^e_{ins} is i's PAYMENTS abroad)
         """
-        # Trade/tariff terms
+        # i's tariff-net SALES received: sum over (n=dest, s) of X[n, i, s]/(1+b[n,i,s])
         A1 = np.einsum('nis,nis->i', self.X, 1/(1+p.tariff))
+
+        # i's tariff revenue on its IMPORTS: sum over (n=origin, s) of
+        # X[i, n, s] * b[i, n, s] / (1+b[i, n, s])
+        # In numpy axis order ('i' is destination here, 'n' is origin):
         A2 = np.einsum('ins,ins,ins->i', self.X, p.tariff, 1/(1+p.tariff))
-        TB = p.deficit_share_world_output * np.einsum(
-            'nis,nis->', self.X, 1/(1+p.tariff))
+
+        # Trade balance term: tb_i * (i's tariff-net sales)
+        # tb_i is per-country: p.deficit_share_world_output[i]
+        TB = p.deficit_share_world_output * A1
 
         # Service flows
-        # l_Ae[i, n, s] = labor service from origin i to destination n
-        # Income to i from EXPORTS of patenting+FDI services: w_i * sum_n l[i,n,s]
+        # i's RECEIPTS for its own L (w_i * L^{e/F}_{nis}, n=dest, i=origin):
+        #   sum_n l_Ae[i, n, s] = i's firms operating abroad, paid at w_i
         B_e = np.einsum('i,ins->i', self.w, self.l_Ae)
         B_F = np.einsum('i,ins->i', self.w, self.l_F)
-        # Outflow from i for IMPORTS of services (i is destination, n is origin):
-        # w_n * sum_n l[n,i,s]
+
+        # i's PAYMENTS for foreign L operating in i (w_n * L^{e/F}_{ins}):
+        #   sum_n l_Ae[n, i, s] with destination i; pay at w_n
         D_e = np.einsum('n,nis->i', self.w, self.l_Ae)
         D_F = np.einsum('n,nis->i', self.w, self.l_F)
 
-        # Affiliate profit flows (only sector 1+ has FDI)
-        # FDI_in: profits earned ABROAD by i's affiliates (positive for i)
-        #   = sum_n X^{M,F}_{nis} / sigma   (i is origin, n is destination)
-        FDI_in  = np.einsum('nis,s->i', self.X_M_F[...,1:], 1/p.sigma[1:])
-        # FDI_out: profits earned IN i by foreign affiliates (negative for i)
-        #   = sum_n X^{M,F}_{ins} / sigma   (i is destination, n is origin)
-        FDI_out = np.einsum('ins,s->i', self.X_M_F[...,1:], 1/p.sigma[1:])
-
-        return A1 + A2 - TB + B_e + B_F - D_e - D_F + FDI_in - FDI_out
+        return A1 + A2 - TB + B_e + B_F - D_e - D_F
 
     def compute_profit(self, p):
         """Export profits: pi^w_{nis} = X^{M,O}_{nis} / (sigma * PSI_M_O * w_i * (1+b))."""
@@ -9842,23 +9932,179 @@ class moments:
         a_PF_NPO_dag  = _thr(w_n * a_nis + h_fe, V_P_F - V_NP_dag)
         psi_bar_dag   = _thr(h_fe, V_P_F - V_NP_dag)
 
-        # ---- Perturbed entry-cost cutoffs psi^{m*,O,dag}, psi^{m*,F,dag} ----
-        # These come from the entry-cost equations applied with the perturbed V's.
-        # In Case 2: define them analogously to compute_patenting_thresholds.
-        # We keep the BASELINE entry-cost cutoffs psi_m_star_O, psi_m_star_F
-        # because they're aggregate equilibrium objects (entry of marginal
-        # innovators is governed by w_i, expected V across destinations, and
-        # the marginal-firm break-even), and in PARTIAL EQUILIBRIUM these are
-        # treated as FIXED at their baseline values, per the spec
-        # (held-fixed list in eq \\ref{eq:lamdag} discussion).
-        psi_mO = var.psi_m_star_O[..., 1:]
-        psi_mF = var.psi_m_star_F[..., 1:]
+        # ---- Perturbed Case-2 patenting cutoffs psi^{*,O,dag}, psi^{*,F,dag} ----
+        # For destination n != US: V's are unchanged, so these equal baseline.
+        # For destination n = US: V_NP, V_P change to V_NP_dag, V_P_dag.
+        # FDI-side V's (V_P_F, V_NP_F) are unchanged at all destinations.
+        w_fe_h_nis = np.einsum('n,n,s->ns', var.w, p.r_hjort,
+                                p.fe[1:])[:, None, :]   # (N, 1, S-1)
+        psi_star_O_dag = var.psi_star_O[..., 1:].copy()
+        psi_star_F_dag = var.psi_star_F[..., 1:].copy()
+        # Update only the n=US row using daggered V's (Case-2 formula)
+        c2_us = c2_dag[n_idx, :, :]                     # (N, S-1)
+        psi_C2_O_us = np.where(
+            c2_us,
+            w_fe_h_nis[n_idx, 0, :][None, :]
+              / (V_P_dag[n_idx, :, :] - V_NP_dag[n_idx, :, :] + 1e-30),
+            np.inf)
+        psi_C2_O_us = np.maximum(psi_C2_O_us, 1.0)
+        psi_star_O_dag[n_idx, :, :] = psi_C2_O_us
+        psi_C2_F_us = np.where(
+            c2_us,
+            w_fe_h_nis[n_idx, 0, :][None, :]
+              / (V_P_F[n_idx, :, :] - V_NP_dag[n_idx, :, :] + 1e-30),
+            np.inf)
+        psi_C2_F_us = np.maximum(psi_C2_F_us, 1.0)
+        psi_star_F_dag[n_idx, :, :] = psi_C2_F_us
+
+        # ---- Perturbed psi^{o*,dag}_{is}: root-find with only n=US daggered ----
+        # Mixed (N, N, S-1) arrays: baseline for n != US, daggered for n == US.
+        def _mix_us(base_arr, dag_arr):
+            """Replace n=US slice of base_arr with dag_arr's n=US slice."""
+            out = base_arr.copy()
+            out[n_idx, :, :] = dag_arr[n_idx, :, :]
+            return out
+
+        V_NP_mix    = _mix_us(var.V_NP[..., 1:],      V_NP_dag)
+        V_P_mix     = _mix_us(var.V_P[..., 1:],       V_P_dag)
+        # FDI-side V's are baseline at every n (no dagger):
+        V_NP_F_mix  = var.V_NP_F[..., 1:]
+        V_P_F_mix   = var.V_P_F[..., 1:]
+        # Thresholds (a's and psi_bar): baseline for n != US, daggered for n == US
+        c2_mix         = _mix_us(var.case2[..., 1:],            c2_dag)
+        psi_star_O_mix = _mix_us(var.psi_star_O[..., 1:],       psi_star_O_dag)
+        psi_star_F_mix = _mix_us(var.psi_star_F[..., 1:],       psi_star_F_dag)
+        a_NPF_NPO_mix  = _mix_us(var.a_NPF_NPO[..., 1:],        a_NPF_NPO_dag)
+        a_PF_NPO_mix   = _mix_us(var.a_PF_NPO[..., 1:],         a_PF_NPO_dag)
+        a_PF_PO_mix    = _mix_us(var.a_PF_PO[..., 1:],          a_PF_PO_dag)
+        psi_bar_mix    = _mix_us(var.psi_bar_NPO_PF[..., 1:],   psi_bar_dag)
+
+        psi_o_star_dag = self._solve_psi_o_star_perturbed(
+            var, p, c2_mix, psi_star_O_mix, psi_star_F_mix,
+            a_NPF_NPO_mix, a_PF_NPO_mix, a_PF_PO_mix,
+            psi_bar_mix, V_NP_mix, V_NP_F_mix, V_P_mix, V_P_F_mix)
+
+        # ---- psi^{m*,O/F,dag}_{nis} = max(psi^{*,O/F,dag}, psi^{o*,dag}_{is}) ----
+        # psi_o_star_dag shape: (N, S-1)
+        psi_mO = np.maximum(psi_star_O_mix, psi_o_star_dag[None, :, :])
+        psi_mF = np.maximum(psi_star_F_mix, psi_o_star_dag[None, :, :])
 
         return self._vartheta_from_thresholds(
             p, c2=c2_dag,
             psi_mO=psi_mO, psi_mF=psi_mF,
             a_npf=a_NPF_NPO_dag, a_npo=a_PF_NPO_dag, a_po=a_PF_PO_dag,
             psi_bar=psi_bar_dag, a_nis=a_nis)
+
+    def _solve_psi_o_star_perturbed(
+            self, var, p, c2_b, psi_O_b, psi_F_b,
+            a_npf_b, a_pf_npo_b, a_pf_po_b, psi_bar_b,
+            V_NP_b, V_NP_F_b, V_P_b, V_P_F_b):
+        """
+        Root-solve for psi^{o*,dag}_{is} given MIXED baseline/perturbed
+        per-(n, i, s) constants. Mirrors compute_patenting_thresholds's
+        lhs_minus_rhs_vec but with arrays passed in (not self.*).
+        """
+        from scipy.optimize import root
+        d = p.d; k = p.k[1]
+
+        w_a_b      = (var.w[:, None, None] * var.a[..., 1:])
+        w_n_fe_h_b = np.einsum('n,n,s->ns', var.w, p.r_hjort,
+                                p.fe[1:])[:, None, :]
+
+        def _eps_NPO_NPF_v(psi_b):
+            mask = np.isfinite(a_npf_b)
+            return np.where(mask & (psi_b > 0),
+                            np.maximum(1.0, a_npf_b
+                                       / np.where(psi_b > 0, psi_b, 1.0)),
+                            1.0)
+
+        def _eps_NPO_PF_v(psi_b):
+            denom = psi_b - psi_bar_b
+            num = a_pf_npo_b - psi_bar_b
+            ok = np.isfinite(a_pf_npo_b) & np.isfinite(psi_bar_b) & (denom > 0)
+            ratio = np.where(ok, num / np.where(denom > 0, denom, 1.0), 1.0)
+            return np.where(ok, np.maximum(1.0, ratio), 1.0)
+
+        def _eps_PO_PF_v(psi_b):
+            ok = np.isfinite(a_pf_po_b)
+            return np.where(ok & (psi_b > 0),
+                            np.maximum(1.0, a_pf_po_b
+                                       / np.where(psi_b > 0, psi_b, 1.0)),
+                            1.0)
+
+        def _ValmidPs_v(psi_b):
+            e = _eps_NPO_PF_v(psi_b)
+            return (psi_b * V_NP_b * (1 - e**(-d))
+                    + (psi_b * V_P_F_b - w_n_fe_h_b) * e**(-d)
+                    - d/(d+1) * w_a_b * e**(-d-1))
+
+        def _ValhighPs_v(psi_b):
+            e = _eps_PO_PF_v(psi_b)
+            return ((psi_b * V_P_b - w_n_fe_h_b) * (1 - e**(-d))
+                    + (psi_b * V_P_F_b - w_n_fe_h_b) * e**(-d)
+                    - d/(d+1) * w_a_b * e**(-d-1))
+
+        def _ValnoorigPs_v(psi_b):
+            e = _eps_NPO_NPF_v(psi_b)
+            return (psi_b * V_NP_b * (1 - e**(-d))
+                    + psi_b * V_NP_F_b * e**(-d)
+                    - d/(d+1) * w_a_b * e**(-d-1))
+
+        def lhs_minus_rhs_vec(psi_arr):
+            psi_b = psi_arr[None, :, :]
+            case1_active = (~c2_b) & (psi_b >= psi_O_b)
+            case1_term = case1_active * (psi_b * (V_P_b - V_NP_b) - w_n_fe_h_b)
+
+            c2_mid_active   = c2_b & (psi_b >= psi_F_b) & (psi_b < psi_O_b)
+            c2_high_active  = c2_b & (psi_b >= psi_O_b)
+            c2_noorig_active = c2_b & (psi_b >= psi_F_b)
+
+            psi_b_safe = np.where(psi_b > 0, psi_b, 1e-30)
+            psi_b3 = np.broadcast_to(psi_b_safe, (p.N, p.N, p.S-1))
+
+            mid_v    = _ValmidPs_v(psi_b3)
+            high_v   = _ValhighPs_v(psi_b3)
+            noorig_v = _ValnoorigPs_v(psi_b3)
+
+            terms = (case1_term
+                     + c2_mid_active   * mid_v
+                     + c2_high_active  * high_v
+                     - c2_noorig_active * noorig_v)
+            terms = np.where(np.isfinite(terms), terms, 0.0)
+            lhs = terms.sum(axis=0)
+
+            rhs = (var.w * p.r_hjort)[:, None] * p.fo[None, 1:]
+            return lhs - rhs
+
+        # Start from baseline psi_o_star
+        psi_o_star = np.full((p.N, p.S - 1), 1.0)
+        psi_o_baseline = var.psi_o_star[:, 1:]
+
+        # Step 1: check whether psi^{o*}=1 at this perturbed system
+        eq1 = lhs_minus_rhs_vec(np.ones((p.N, p.S - 1)))
+        need_solve = (eq1 < 0)
+
+        if need_solve.any():
+            x0 = np.where(np.isfinite(psi_o_baseline) & (psi_o_baseline > 1.0),
+                          psi_o_baseline, 1.0).ravel()
+
+            def func_to_solve(psi_flat):
+                psi_arr = psi_flat.reshape(p.N, p.S - 1).copy()
+                psi_arr = np.where(need_solve, psi_arr, 1.0)
+                psi_arr = np.maximum(psi_arr, 1.0)
+                res = lhs_minus_rhs_vec(psi_arr)
+                res = np.where(need_solve, res, 0.0)
+                return res.ravel()
+            try:
+                sol = root(func_to_solve, x0=x0, tol=1e-8)
+                psi_sol = sol.x.reshape(p.N, p.S - 1)
+                psi_sol = np.where(need_solve, np.maximum(psi_sol, 1.0), 1.0)
+            except Exception:
+                psi_sol = np.where(need_solve,
+                                   x0.reshape(p.N, p.S - 1), 1.0)
+            psi_o_star = psi_sol
+
+        return psi_o_star
 
     def _theta_n(self, var, p, n_idx, vartheta=None):
         """
@@ -10233,3 +10479,4 @@ class history_nash:
         self.current_deltas = new_deltas
     def update_current_welfare(self,new_welfare):
         self.current_welfare = new_welfare
+

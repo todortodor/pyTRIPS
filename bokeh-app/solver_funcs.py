@@ -641,26 +641,25 @@ def fixed_point_solver_exog_lr_and_patent_thresholds(p, p_old, context, x0=None,
 
     return sol_inst, init
 
-
 def get_vec_qty_fdi(x, p):
     """Decompose the solver vector — mirrors get_vec_qty in solver_funcs.py."""
     N, S = p.N, p.S
-    i0=0
-    w      =x[i0:i0+N];                    i0+=N
-    Z      =x[i0:i0+N];                    i0+=N
-    l_R    =x[i0:i0+N*(S-1)];              i0+=N*(S-1)
-    profit =x[i0:i0+N*N*(S-1)];            i0+=N*N*(S-1)
-    phi    =x[i0:i0+N*N*S];                i0+=N*N*S
-    pi_idx =x[i0:i0+N];                    i0+=N
-    pi_F   =x[i0:]
-    return {'w':w,'Z':Z,'l_R':l_R,'profit':profit,
-            'phi':phi,'price_indices':pi_idx,'pi_F':pi_F}
- 
- 
+    i0 = 0
+    w = x[i0:i0 + N];                                i0 += N
+    Z = x[i0:i0 + N];                                i0 += N
+    l_R = x[i0:i0 + N * (S - 1)];                    i0 += N * (S - 1)
+    profit = x[i0:i0 + N * N * (S - 1)];             i0 += N * N * (S - 1)
+    phi = x[i0:i0 + N * N * S];                      i0 += N * N * S
+    pi_idx = x[i0:i0 + N];                           i0 += N
+    pi_F = x[i0:]
+    return {'w': w, 'Z': Z, 'l_R': l_R, 'profit': profit,
+            'phi': phi, 'price_indices': pi_idx, 'pi_F': pi_F}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # fixed_point_solver_with_fdi
 # ─────────────────────────────────────────────────────────────────────────────
- 
+
 def fixed_point_solver_with_fdi(
         p, context, x0=None, tol=1e-15, damping=10, max_count=1e4,
         accelerate=False, safe_convergence=0.001, accelerate_when_stable=True,
@@ -672,7 +671,7 @@ def fixed_point_solver_with_fdi(
         disp_summary=False, damping_post_acceleration=5):
     """
     Fixed-point solver for var_with_fdi.
- 
+
     Identical in structure to fixed_point_solver_with_entry_costs; the only
     differences are:
       1. Uses var_with_fdi instead of var_with_entry_costs.
@@ -680,22 +679,17 @@ def fixed_point_solver_with_fdi(
       3. compute_pi_F() is called each iteration alongside compute_profit().
       4. Convergence is checked on pi_F as well as the standard quantities.
     """
-    from classes import sol_class, cobweb
- 
-    # ── initial guess ────────────────────────────────────────────────────────
-    # if x0 is not None:
-    #     x_old = x0.copy()
-    # else:
-    #     x_old = None
+    from classes import sol_class, cobweb, var_with_fdi
 
     condition = True
-    
+
     pi_F_size = p.N * p.N * (p.S - 1)
-    entry_costs_size = 2*p.N + p.N*(p.S-1) + p.N**2*(p.S-1) + p.N**2*p.S + p.N
+    entry_costs_size = 2 * p.N + p.N * (p.S - 1) + p.N**2 * (p.S - 1) + p.N**2 * p.S + p.N
     full_size = entry_costs_size + pi_F_size
 
     if x0 is None:
-        base = p.guess if p.guess is not None else p.guess_from_params(for_solver_with_entry_costs=True)
+        base = (p.guess if p.guess is not None
+                else p.guess_from_params(for_solver_with_entry_costs=True))
     else:
         base = x0
 
@@ -710,11 +704,12 @@ def fixed_point_solver_with_fdi(
     # Strip any existing pi_F tail, then rebuild from export profits
     base_core = base[:entry_costs_size]
     # Export profits sit at offset 2N + N*(S-1) with length N²*(S-1)
-    profit_offset = 2*p.N + p.N*(p.S-1)
-    profit_flat = base_core[profit_offset : profit_offset + pi_F_size]
+    profit_offset = 2 * p.N + p.N * (p.S - 1)
+    profit_flat = base_core[profit_offset: profit_offset + pi_F_size]
     # Init pi_F = profit so case2 fires for pairs where w_n > w_i.
-    # compute_pi_F uses the useful expression (always non-zero), so pi_F
-    # self-corrects after the first iteration.
+    # compute_pi_F uses the destination-sector expression (always non-zero
+    # under the domestic-monopolist fallback), so pi_F self-corrects after
+    # the first iteration.
     pi_F_init = np.where(profit_flat > 0, profit_flat, 1e-4)
     x0 = np.concatenate([base_core, pi_F_init])
 
@@ -724,109 +719,102 @@ def fixed_point_solver_with_fdi(
     hit_the_bound_count = 0
     x_new = None
     l_R_0 = None
- 
+
+    import aa
     aa_wrk = aa.AndersonAccelerator(
         dim=len(x_old), mem=accel_memory, type1=accel_type1,
         regularization=accel_regularization, relaxation=accel_relaxation,
-        safeguard_factor=accel_safeguard_factor, max_weight_norm=accel_max_weight_norm)
-    cob   = cobweb(cobweb_qty)
+        safeguard_factor=accel_safeguard_factor,
+        max_weight_norm=accel_max_weight_norm)
+    cob = cobweb(cobweb_qty)
     start = time.perf_counter()
- 
+
     while condition and count < max_count and np.all(x_old < 1e40):
-        # print(count, len(x_old))
         if count != 0:
             if accelerate:
                 aa_wrk.apply(x_new, x_old)
-            x_old = (x_new + (damping-1)*x_old) / damping
- 
+            x_old = (x_new + (damping - 1) * x_old) / damping
+
         if apply_bound_zero:
             if np.any(x_old <= 0):
                 x_old[x_old <= 0] = 1e-12
                 hit_the_bound_count += 1
- 
+
         init = var_with_fdi.var_from_vector(x_old, p, context=context, compute=False)
- 
+
         if count == 0 and keep_l_R_fixed:
             init.compute_solver_quantities(p)
-            l_R_0 = init.l_R[...,1:].ravel().copy()
- 
+            l_R_0 = init.l_R[..., 1:].ravel().copy()
+
         init.compute_solver_quantities(p)
- 
+
         # update
-        # print('updating')
-        w             = init.compute_wage(p)
-        Z             = init.compute_expenditure(p)
-        l_R           = init.compute_labor_research(p)[...,1:].ravel()
-        profit        = init.compute_profit(p)[...,1:].ravel()
-        phi           = init.compute_phi(p).ravel()
+        w = init.compute_wage(p)
+        Z = init.compute_expenditure(p)
+        l_R = init.compute_labor_research(p)[..., 1:].ravel()
+        profit = init.compute_profit(p)[..., 1:].ravel()
+        # [FDI] floor: under the new gamma formulas a few far-from-frontier
+        # (n, i) pairs can have profit underflow to ~1e-58. Without a floor,
+        # the status check `np.all(x_new > 0)` reports "failed" even when
+        # the solve is otherwise fine.
+        profit = np.maximum(profit, 1e-10)
+        phi = init.compute_phi(p).ravel()
         price_indices = init.compute_price_indices(p)
-        pi_F          = init.compute_pi_F(p)[...,1:].ravel()   # [FDI]
+        pi_F = init.compute_pi_F(p)[..., 1:].ravel()        # [FDI]
         pi_F = np.maximum(pi_F, 1e-10)
-        # print('updated')
- 
+
         if keep_l_R_fixed and l_R_0 is not None:
             l_R = l_R_0.copy()
- 
+
         P0 = price_indices[0]
         x_new = np.concatenate([
-            w/P0, Z/P0, l_R, profit, phi*P0, price_indices/P0,
+            w / P0, Z / P0, l_R, profit, phi * P0, price_indices / P0,
             pi_F,   # not rescaled — it is a dimensionless ratio
         ])
- 
+
         # convergence
         xn = get_vec_qty_fdi(x_new, p)
         xo = get_vec_qty_fdi(x_old, p)
-        # if count < 2:
-        #     print('x_old shape:', len(x_old), 'x_new shape:', len(x_new))
         conds = [
-            np.linalg.norm(xn[q]-xo[q]) / (np.linalg.norm(xo[q])+1e-30) > tol
-            for q in ['w','Z','profit','l_R','phi','pi_F']
+            np.linalg.norm(xn[q] - xo[q]) / (np.linalg.norm(xo[q]) + 1e-30) > tol
+            for q in ['w', 'Z', 'profit', 'l_R', 'phi', 'pi_F']
         ]
         condition = np.any(conds)
         convergence.append(
-            np.linalg.norm(x_new-x_old) / (np.linalg.norm(x_old)+1e-30))
- 
+            np.linalg.norm(x_new - x_old) / (np.linalg.norm(x_old) + 1e-30))
+
         count += 1
         if np.all(np.array(convergence[-5:]) < safe_convergence):
             if accelerate_when_stable:
                 accelerate = True
-                damping    = damping_post_acceleration
- 
-        if plot_live and count>500 and count%500==0:
+                damping = damping_post_acceleration
+
+        if plot_live and count > 500 and count % 500 == 0:
+            import matplotlib.pyplot as plt
             plt.plot(convergence); plt.yscale('log'); plt.show()
-            
-        # if plot_convergence:
-        #     # norm.append( (get_vec_qty(x_new,p)[cobweb_qty]).mean() )
-        #     if count%10==0:
-        #         plt.plot(convergence)
-        #         plt.yscale('log')
-        #         plt.show()
-                
-    # if plot_convergence:
-    #     plt.plot(convergence)
-    #     plt.yscale('log')
-    #     plt.show()
- 
+
     finish = time.perf_counter()
- 
+
     if (x_new is not None and count < max_count
-            and np.isnan(x_new).sum()==0
-            and np.all(x_new<1e40) and np.all(x_new>0)):
+            and np.isnan(x_new).sum() == 0
+            and np.all(x_new < 1e40) and np.all(x_new > 0)):
         status = 'successful'
     else:
         status = 'failed'
- 
+
     sol_inst = sol_class(
-        x_new, p, solving_time=finish-start, iterations=count,
+        x_new, p, solving_time=finish - start, iterations=count,
         deviation_norm='TODO', status=status,
         hit_the_bound_count=hit_the_bound_count, x0=x0, tol=tol)
- 
+
     if disp_summary:
         sol_inst.run_summary()
- 
+
     if plot_convergence:
-        plt.semilogy(convergence, label='convergence'); plt.legend(); plt.show()
- 
+        import matplotlib.pyplot as plt
+        plt.semilogy(convergence, label='convergence')
+        plt.legend(); plt.show()
+
     return sol_inst, init
  
 
@@ -2883,7 +2871,98 @@ def calibration_func_with_entry_costs(vec_parameters,p,m,v0=None,hist=None,start
     else:
         return m.deviation_vector() 
     
-def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+# def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0):
+#     p.update_parameters(vec_parameters)
+#     if 'khi' in p.calib_parameters:
+#         p.update_khi_and_r_hjort(p.khi)
+#     try:
+#         v0 = p.guess
+#     except:
+#         pass
+#     print(hist.count)
+#     sol, sol_c = fixed_point_solver_with_fdi(p,
+#                                              x0=p.guess,
+#                                              # x0=None,
+#                             context = 'counterfactual',
+#                             # context = 'calibration',
+#                             cobweb_anim=False,tol =1e-8,
+#                             accelerate=False,
+#                             accelerate_when_stable=True,
+#                             cobweb_qty='l_R',
+#                             plot_convergence=False,
+#                             plot_cobweb=True,
+#                             safe_convergence=0.01,
+#                             disp_summary=False,
+#                             damping = 5,
+#                             max_count = 5000,
+#                             accel_memory =50, 
+#                             accel_type1=True, 
+#                             accel_regularization=1e-10,
+#                             accel_relaxation=0.5, 
+#                             accel_safeguard_factor=1, 
+#                             accel_max_weight_norm=1e6,
+#                             damping_post_acceleration=2
+#                             )
+    
+#     if sol.status == 'failed': 
+#         print('failed')
+#         sol, sol_c = fixed_point_solver_with_fdi(p,
+#                                                  x0=p.guess,
+#                                                  # x0=None,
+#                                 context = 'counterfactual',
+#                                 # context = 'calibration',
+#                                 cobweb_anim=False,tol =1e-8,
+#                                 accelerate=False,
+#                                 accelerate_when_stable=False,
+#                                 cobweb_qty='l_R',
+#                                 plot_convergence=True,
+#                                 plot_cobweb=True,
+#                                 safe_convergence=0.01,
+#                                 disp_summary=False,
+#                                 damping = 5,
+#                                 max_count = 5000,
+#                                 accel_memory =50, 
+#                                 accel_type1=True, 
+#                                 accel_regularization=1e-10,
+#                                 accel_relaxation=0.5, 
+#                                 accel_safeguard_factor=1, 
+#                                 accel_max_weight_norm=1e6,
+#                                 damping_post_acceleration=2
+#                                 )
+#         if sol.status == 'failed': 
+#             print('failed for good')
+    
+#     sol_c.scale_P(p)
+#     sol_c.compute_non_solver_quantities(p)
+#     m.compute_moments(sol_c,p)
+#     m.compute_FDI_FLOW_N(sol_c, p)
+#     m.compute_FDI_ELAST(sol_c, p)
+#     m.compute_moments_deviations()
+#     if hist is not None:
+#         if hist.count%1 == 0:
+#             hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
+#             hist_dic['objective'] = np.linalg.norm(m.deviation_vector())
+#             hist.append(**hist_dic)
+#             hist.time = time.perf_counter() - start_time
+#         if hist.count%100 == 0:
+#             hist.plot()
+#         if hist.count%100==0:
+#             print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
+#                   , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
+#                   , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
+#                   , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
+#                   'a :', p.a)
+#     hist.count += 1
+    
+#     p.guess = sol_c.vector_from_var()
+#     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
+#         print('failed')
+#         p.guess = None
+#         return np.full_like(m.deviation_vector(),1e10)
+#     else:
+#         return m.deviation_vector() 
+    
+def calibration_func_with_fdi(vec_parameters, p, m, v0=None, hist=None, start_time=0):
     p.update_parameters(vec_parameters)
     if 'khi' in p.calib_parameters:
         p.update_khi_and_r_hjort(p.khi)
@@ -2892,86 +2971,116 @@ def calibration_func_with_fdi(vec_parameters,p,m,v0=None,hist=None,start_time=0)
     except:
         pass
     print(hist.count)
-    sol, sol_c = fixed_point_solver_with_fdi(p,
-                                             x0=p.guess,
-                                             # x0=None,
-                            context = 'counterfactual',
-                            # context = 'calibration',
-                            cobweb_anim=False,tol =1e-8,
-                            accelerate=False,
-                            accelerate_when_stable=True,
-                            cobweb_qty='l_R',
-                            plot_convergence=False,
-                            plot_cobweb=True,
-                            safe_convergence=0.01,
-                            disp_summary=False,
-                            damping = 5,
-                            max_count = 5000,
-                            accel_memory =50, 
-                            accel_type1=True, 
-                            accel_regularization=1e-10,
-                            accel_relaxation=0.5, 
-                            accel_safeguard_factor=1, 
-                            accel_max_weight_norm=1e6,
-                            damping_post_acceleration=2
-                            )
-    
-    if sol.status == 'failed': 
+    sol, sol_c = fixed_point_solver_with_fdi(
+        p,
+        x0=p.guess,
+        context='counterfactual',
+        cobweb_anim=False, tol=1e-8,
+        accelerate=False,
+        accelerate_when_stable=True,
+        cobweb_qty='l_R',
+        plot_convergence=False,
+        plot_cobweb=True,
+        safe_convergence=0.01,
+        disp_summary=False,
+        damping=5,
+        max_count=1500,                  # reduced from 5000 (5000-iter
+                                         # fallback below covers hard cases)
+        accel_memory=50,
+        accel_type1=True,
+        accel_regularization=1e-10,
+        accel_relaxation=0.5,
+        accel_safeguard_factor=1,
+        accel_max_weight_norm=1e6,
+        damping_post_acceleration=2,
+    )
+ 
+    if sol.status == 'failed':
         print('failed')
-        sol, sol_c = fixed_point_solver_with_fdi(p,
-                                                 x0=p.guess,
-                                                 # x0=None,
-                                context = 'counterfactual',
-                                # context = 'calibration',
-                                cobweb_anim=False,tol =1e-8,
-                                accelerate=False,
-                                accelerate_when_stable=True,
-                                cobweb_qty='l_R',
-                                plot_convergence=True,
-                                plot_cobweb=True,
-                                safe_convergence=0.01,
-                                disp_summary=False,
-                                damping = 5,
-                                max_count = 5000,
-                                accel_memory =50, 
-                                accel_type1=True, 
-                                accel_regularization=1e-10,
-                                accel_relaxation=0.5, 
-                                accel_safeguard_factor=1, 
-                                accel_max_weight_norm=1e6,
-                                damping_post_acceleration=2
-                                )
-    
+        sol, sol_c = fixed_point_solver_with_fdi(
+            p,
+            x0=p.guess,
+            context='counterfactual',
+            cobweb_anim=False, tol=1e-8,
+            accelerate=False,
+            accelerate_when_stable=True,
+            cobweb_qty='l_R',
+            plot_convergence=True,
+            plot_cobweb=True,
+            safe_convergence=0.01,
+            disp_summary=False,
+            damping=5,
+            max_count=5000,
+            accel_memory=50,
+            accel_type1=True,
+            accel_regularization=1e-10,
+            accel_relaxation=0.5,
+            accel_safeguard_factor=1,
+            accel_max_weight_norm=1e6,
+            damping_post_acceleration=2,
+        )
+        if sol.status == 'failed':
+            print('failed for good')
+ 
     sol_c.scale_P(p)
     sol_c.compute_non_solver_quantities(p)
-    m.compute_moments(sol_c,p)
-    m.compute_FDI_FLOW_N(sol_c, p)
-    m.compute_FDI_ELAST(sol_c, p)
+    m.compute_moments(sol_c, p)
     m.compute_moments_deviations()
+ 
     if hist is not None:
-        if hist.count%1 == 0:
-            hist_dic = {mom : np.linalg.norm(getattr(m,mom+'_deviation')) for mom in m.list_of_moments}
+        if hist.count % 1 == 0:
+            hist_dic = {mom: np.linalg.norm(getattr(m, mom + '_deviation'))
+                        for mom in m.list_of_moments}
             hist_dic['objective'] = np.linalg.norm(m.deviation_vector())
             hist.append(**hist_dic)
             hist.time = time.perf_counter() - start_time
-        if hist.count%100 == 0:
+        if hist.count % 100 == 0:
             hist.plot()
-        if hist.count%100==0:
-            print('fe : ',p.fe[1],'fo : ',p.fo[1], 'delta : ', p.delta[:,1]
-                  , 'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k
-                  , 'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1]
-                  , 'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d, 'r_hjort : ', p.r_hjort,
-                  'a :', p.a)
+        if hist.count % 100 == 0:
+            print('fe : ', p.fe[1], 'fo : ', p.fo[1], 'delta : ', p.delta[:, 1],
+                  'nu : ', p.nu[1], 'nu_tilde : ', p.nu_tilde[1], 'k :', p.k,
+                  'theta :', p.theta[1], 'sigma :', p.sigma[1], 'zeta :', p.zeta[1],
+                  'rho :', p.rho, 'kappa :', p.kappa, 'd : ', p.d,
+                  'r_hjort : ', p.r_hjort, 'a :', p.a)
+ 
+        # ── In-call checkpoint: track best-so-far and write to disk ──
+        # If CALIB_CKPT_PATH is set, every time the objective improves we
+        # write p.write_params() + m.write_moments() to that directory.
+        # This gives us a usable result even if the outer process is killed.
+        import os as _os
+        ckpt_path = _os.environ.get('CALIB_CKPT_PATH', None)
+        if ckpt_path is not None:
+            obj = float(np.linalg.norm(m.deviation_vector()))
+            best = getattr(hist, '_best_obj', np.inf)
+            if obj < best and np.isfinite(obj):
+                hist._best_obj = obj
+                hist._best_p = p.copy()
+                hist._best_m = m  # moments object is mutated; deep-copy if needed
+                try:
+                    _os.makedirs(ckpt_path, exist_ok=True)
+                    p.write_params(ckpt_path)
+                    try:
+                        m.write_moments(ckpt_path)
+                    except Exception:
+                        pass
+                    with open(_os.path.join(ckpt_path, 'checkpoint.txt'), 'w') as _f:
+                        _f.write(f"hist.count={hist.count}\n"
+                                 f"objective={obj:.6f}\n"
+                                 f"time_elapsed={hist.time:.1f}s\n")
+                except Exception as _e:
+                    print(f'  [ckpt] write failed: {_e}')
+ 
     hist.count += 1
-    
+ 
     p.guess = sol_c.vector_from_var()
     if np.any(np.isnan(p.guess)) or sol.status == 'failed':
         print('failed')
         p.guess = None
-        return np.full_like(m.deviation_vector(),1e10)
+        return np.full_like(m.deviation_vector(), 1e10)
     else:
-        return m.deviation_vector() 
-    
+        return m.deviation_vector()
+
+
 def calibration_func_double_diff_double_delta(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     p.update_parameters(vec_parameters)
     p.delta_dom = p.delta_int.copy()

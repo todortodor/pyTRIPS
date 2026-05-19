@@ -1,0 +1,6 @@
+iter=2
+cost=1.016706e+02
+||dev||=15.761785
+nfev=16
+status=3
+message=`xtol` termination condition is satisfied.
