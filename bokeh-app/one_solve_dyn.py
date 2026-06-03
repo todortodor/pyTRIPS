@@ -18,8 +18,8 @@ df = pd.DataFrame()
 p_init = parameters()
 
 # p_init.load_run('coop_eq_direct_saves/4003_baseline_nash/')
-# p_init.load_run('calibration_results_matched_economy/1300/')
-p_init.load_run('coop_eq_direct_saves/dyn_2000_14.0_negishi/')
+p_init.load_run('calibration_results_matched_economy/2000/')
+# p_init.load_run('coop_eq_direct_saves/dyn_2000_14.0_negishi/')
 # p_init.delta[1,2] = 12
 # p_init.delta[:,1] = np.array([1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01, 1.2e+01, 1.0e-02,
 #        1.0e-02, 1.0e-02, 1.0e-02, 1.2e+01, 1.2e+01])
@@ -52,11 +52,11 @@ sol_init.compute_export_price_index(p_init)
 
 # sol_init.export_price_index[1,0,0] = 10
 
-# df = pd.DataFrame(index=p_init.countries,
-#                   columns=p_init.countries,
-#                   data=sol_init.export_price_index[...,0])
+df = pd.DataFrame(index=p_init.countries,
+                  columns=p_init.countries,
+                  data=sol_init.export_price_index[...,0])
 
-# df.to_csv('export_price_index.csv')
+df.to_csv('export_price_index.csv')
 
 #%%
 

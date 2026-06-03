@@ -135,6 +135,11 @@ for iteration in range(MAX_ITER):
             bounds=bounds,
             max_nfev=MAX_NFEV_PER_OUTER,
             xtol=xtol,
+            x_scale='jac',     # rescale Jacobian columns to equal magnitude;
+                               # critical because parameters span ~10 orders
+                               # (T ~ 1e4, delta ~ 1e-2, d_frac ~ 1).
+                               # Without this, xtol convergence triggers
+                               # prematurely on a degenerate step.
             verbose=2,
         )
     except Exception as e:
@@ -169,7 +174,7 @@ sol, sol_c = fixed_point_solver_with_fdi(
     p, context='counterfactual',
     x0=p.guess,
     cobweb_anim=False, tol=1e-10, accelerate=False,
-    accelerate_when_stable=True,
+    accelerate_when_stable=False,
     cobweb_qty='phi',
     plot_convergence=False, plot_cobweb=False,
     safe_convergence=0.001, disp_summary=True,

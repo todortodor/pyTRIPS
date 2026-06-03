@@ -90,7 +90,18 @@ class parameters:
         self.gamma = 0.5 
         self.power_fdi = 1.0
         self.k = np.array([1.3,1.3])
+        # FDI setup cost magnitude.  Two modes:
+        #   - SCALAR (default): self.a is a scalar; broadcasts to (N,N,S) in
+        #     compute_entry_costs via   var.a[n,i,s] = p.a * supply_potential.
+        #     Single free parameter for the entire FDI cost matrix.
+        #   - BILATERAL: self.a is a (N,N,S) array.  Each off-diagonal sector-1
+        #     entry is an independent calibration parameter, allowing the FDI
+        #     cost to vary by origin-destination pair.  Sector 0 and diagonal
+        #     entries are held at zero.  Activated by parameters.enable_bilateral_a().
+        # Both modes use the same multiplicative form in compute_entry_costs;
+        # numpy broadcasting handles scalar transparently.  See compute_entry_costs.
         self.a = np.float64(0.0)
+        self.bilateral_a = False  # default: scalar a
         self.rho = 0.02
         self.d = np.float64(1.0)
         # d_frac: reparameterization for FDI-model calibration enforcing k > d + 1.
@@ -149,6 +160,29 @@ class parameters:
         self.trade_flows = pd.read_csv(data_path+'country_country_sector_moments.csv',index_col=[1,0,2]).sort_index().values.squeeze()/self.unit
         self.trade_flows = self.trade_flows.reshape((N,N,S))
         self.trade_shares = self.trade_flows/self.trade_flows.sum()
+
+        # FDI affiliate sales (model X^{M,F,data}_{nis}, sector 1 only):
+        #   - CSV uses 1-based integer country codes positionally matching
+        #     self.countries (code k → self.countries[k-1]).
+        #   - Diagonal entries (e.g. US affiliates in US) zeroed — the model
+        #     X^{M,F} is foreign affiliate sales only (n != j).
+        # Result stored at p.X_F_data with shape (N, N, S), [dest, origin, s],
+        # in the same units as p.trade_flows.
+        self.X_F_data = np.zeros((N, N, S))
+        try:
+            _fdi = pd.read_csv(dir_path+'data/fdi_longformat_2015_AAMNE.csv')
+            _piv = (_fdi.pivot_table(index='Rep_ccode', columns='File_ccode',
+                                     values='FileToRep_Flow', aggfunc='sum')
+                       .reindex(index=range(1, N+1),
+                                columns=range(1, N+1))
+                       .fillna(0.0))
+            _fdi_mat = _piv.values / self.unit
+            np.fill_diagonal(_fdi_mat, 0.0)
+            if S >= 2:
+                self.X_F_data[..., 1] = _fdi_mat
+        except FileNotFoundError:
+            pass  # leave self.X_F_data as zeros
+
         try:
             self.tariff = pd.read_csv(data_path+'tariff.csv',index_col=[1,0,2]).sort_index().values.squeeze().reshape((N,N,S))
         except:
@@ -337,7 +371,20 @@ class parameters:
             #     print(np.array(getattr(self,pa_name)).shape)
             try:
                 df = pd.read_csv(path+pa_name+'.csv',header=None,index_col=0)
-                if pa_name != 'k':
+                if pa_name == 'a':
+                    # Backwards-compat: detect whether this checkpoint stored
+                    # scalar 'a' or bilateral (N, N, S) 'a'.  If bilateral and
+                    # current self.a is scalar, auto-promote before reshaping.
+                    n_vals = df.values.size
+                    if n_vals == self.N * self.N * self.S and not self.bilateral_a:
+                        self.enable_bilateral_a(init_value=0.0)  # placeholder; values come from disk
+                    if self.bilateral_a:
+                        setattr(self, 'a',
+                                df.values.squeeze().reshape((self.N, self.N, self.S)))
+                    else:
+                        # scalar mode — extract first value
+                        setattr(self, 'a', np.float64(df.values.squeeze()))
+                elif pa_name != 'k':
                     setattr(self,pa_name,df.values.squeeze().reshape(np.array(getattr(self,pa_name)).shape))
                 else:
                     setattr(self,pa_name,df.values.squeeze())
@@ -418,15 +465,17 @@ class parameters:
     # d <-> d_frac sync helpers
     # ──────────────────────────────────────────────────────────────────────
     # When the FDI model is calibrated, 'd_frac' is the free parameter and
-    #   d = d_frac * (k[1] - 1)        # enforces k > d + 1 structurally
-    # The two attributes are kept in sync explicitly in update_parameters and
-    # make_p_vector; reads of `p.d` elsewhere (including in var_with_entry_costs)
-    # see the plain float, so other models that store a different scalar in
-    # `p.d` are unaffected as long as 'd_frac' isn't in calib_parameters.
+    #   d = d_frac * (k[1] - 1 - D_MARGIN)
+    # so that k - d - 1 >= D_MARGIN always. The margin must be large enough
+    # to keep the gamma and Lambda^F denominators 1/(k-d-1) well-bounded;
+    # with margin = 0.05, those terms are at most 20, which is fine. The
+    # previous tiny margin (1e-6) let the optimizer drift to k-d-1 ~ 0.07
+    # where the model became numerically fragile and the solver started
+    # failing systematically. See _D_MARGIN below.
+    _D_MARGIN = 0.05
     def _d_safe_range(self):
-        """Returns max admissible d so that k - d - 1 > 0 for sector 1."""
-        # Use a small numerical margin (co = 1e-6) so denominators don't underflow.
-        return max(float(self.k[1]) - 1.0 - 1e-6, 1e-12)
+        """Returns max admissible d so that k - d - 1 >= _D_MARGIN."""
+        return max(float(self.k[1]) - 1.0 - self._D_MARGIN, 1e-12)
 
     def _sync_d_from_dfrac(self):
         """Set self.d from self.d_frac and current k[1]."""
@@ -493,6 +542,119 @@ class parameters:
         self.r_hjort = ((self.data.gdp.iloc[0]*np.array(self.data.labor)*self.data.price_level
                         /(self.data.labor.iloc[0]*self.data.price_level.iloc[0]*np.array(self.data.gdp))
                         )**(1-self.khi)).values.copy()
+
+    def enable_bilateral_a(self, init_value=None):
+        """
+        Promote self.a from scalar to a bilateral (N, N, S) array, with
+        per-pair calibration of the FDI setup cost.
+
+        Each off-diagonal sector-1 entry becomes an independent free parameter:
+            self.a[n, i, 1]  for all n != i,   n, i = 0..N-1
+        Diagonal entries (n == i) and sector-0 entries are held at 0
+        (they have no effect since FDI applies only to sector 1 and only
+        across distinct origin/destination pairs).
+
+        After this call:
+          - self.a has shape (N, N, S).
+          - self.mask['a'] selects only off-diagonal sector-1 entries.
+          - self.shapes['a'] becomes a (dest, origin, sector) MultiIndex.
+          - self.bilateral_a = True.
+          - The corresponding moment FDI_FLOW (bilateral) should be added
+            to moments.list_of_moments instead of (or in addition to)
+            FDI_FLOW_N (destination-aggregated).
+
+        Parameters
+        ----------
+        init_value : float or None
+            Value to broadcast into all off-diagonal sector-1 entries.
+            If None, uses the current scalar self.a (or 0.1 if a is zero/missing).
+            Typical: 0.1 (the same starting value used in scalar-a runs).
+
+        Notes
+        -----
+        Idempotent: calling twice is harmless (preserves current values).
+        Backwards-compatible: existing code paths that read self.a continue
+        to work via numpy broadcasting (scalar -> broadcasts; array ->
+        element-wise).  compute_entry_costs needs no change.
+        """
+        N, S = self.N, self.S
+        # If already bilateral with the correct shape, preserve loaded values
+        # (truly idempotent). Just refresh the mask and idx in case those
+        # weren't set yet (e.g., after a bare load_run that promoted a but
+        # didn't rebuild the mask). Reshape-safe: a (1,)->shape() arrays
+        # are treated as scalar.
+        cur = np.asarray(self.a)
+        if self.bilateral_a and cur.shape == (N, N, S):
+            # Already bilateral: keep values. Just (re)build mask + idx.
+            pass
+        else:
+            # Promote scalar (or wrong-shape) self.a to bilateral.
+            if init_value is None:
+                scalar = float(cur.reshape(-1)[0]) if cur.size > 0 else 0.0
+                init_value = scalar if scalar > 0 else 0.1
+            a_arr = np.zeros((N, N, S))
+            if S >= 2:
+                a_arr[..., 1] = init_value
+                np.fill_diagonal(a_arr[..., 1], 0.0)
+            self.a = a_arr
+            self.bilateral_a = True
+        # Update idx (used for serialization) for bilateral shape
+        self.idx['a'] = pd.MultiIndex.from_product(
+            [self.countries, self.countries, self.sectors],
+            names=['destination', 'origin', 'sector'])
+        # Build calib mask: True only on off-diagonal sector-1 entries
+        mask = np.zeros((N, N, S), bool)
+        if S >= 2:
+            mask[..., 1] = True
+            np.fill_diagonal(mask[..., 1], False)
+        self.mask['a'] = mask
+
+    def mask_a_from_fdi_flow_mask(self, m):
+        """
+        Synchronize self.mask['a'] (bilateral FDI cost calibration mask)
+        with moments.FDI_FLOW_mask: drop a^s_{ni} entries whose FDI_FLOW
+        cell is excluded from the residual.
+
+        Rationale: if we don't target FDI_FLOW_{ni} (because the data is at
+        the noise floor), the bilateral cost a^s_{ni} for that pair is
+        unidentified and should be held fixed rather than calibrated as a
+        free direction the optimizer is free to wander in.
+
+        After this call:
+          - self.mask['a'][n, i, 1] = True   iff   moments.FDI_FLOW_mask[n, i]
+            (and the pair is off-diagonal).
+          - sector 0 and diagonal stay False as before.
+
+        The held-fixed a values keep whatever value they had when the call
+        was made (typically the warm-start values from the previous run).
+        If you want them at a neutral starting value, set p.a[mask_False]
+        before calling.
+
+        Parameters
+        ----------
+        m : moments
+            Instance with FDI_FLOW_mask attribute populated (typically by
+            m.set_fdi_flow_zero_threshold).
+        """
+        if not self.bilateral_a:
+            raise RuntimeError("mask_a_from_fdi_flow_mask requires "
+                               "bilateral_a; call enable_bilateral_a first.")
+        if not hasattr(m, 'FDI_FLOW_mask') or m.FDI_FLOW_mask is None:
+            raise RuntimeError("moments.FDI_FLOW_mask is not set; call "
+                               "m.set_fdi_flow_zero_threshold(...) first.")
+        N, S = self.N, self.S
+        if m.FDI_FLOW_mask.shape != (N, N):
+            raise ValueError(f"FDI_FLOW_mask shape {m.FDI_FLOW_mask.shape} "
+                             f"!= expected ({N}, {N})")
+        mask = np.zeros((N, N, S), bool)
+        if S >= 2:
+            mask[..., 1] = m.FDI_FLOW_mask
+            np.fill_diagonal(mask[..., 1], False)  # belt and suspenders
+        self.mask['a'] = mask
+        n_free = int(mask.sum())
+        n_max = N * (N - 1)
+        print(f"[a] mask synced with FDI_FLOW_mask: {n_free} of {n_max} "
+              f"off-diagonal entries free ({n_max - n_free} held fixed)")
             
     def compare_two_params(self,p2):
         commonKeys = set(vars(self).keys()) - (set(vars(self).keys()) - set(vars(p2).keys()))
@@ -1846,16 +2008,22 @@ class var_with_fdi:
     # ── compute_entry_costs ─────────────────────────────────────────────────
 
     def compute_entry_costs(self, p):
-        if self.context == 'calibration':
-            self.a = p.a * np.einsum(
-                'is,nis,nis,is,is->nis',
-                p.T**(1/p.theta[None,:]), 1/self.phi, 1/(1+p.tariff),
-                self.w[:,None]**-p.alpha[None,:],
-                self.price_indices[:,None]**(p.alpha[None,:]-1))
-            np.einsum('nns->ns', self.a)[:] = 0
-        elif self.context == 'counterfactual':
-            self.a = p.a * p.tau
-            np.einsum('nns->ns', self.a)[:] = 0
+        # FDI setup cost is the bilateral calibrated parameter a^s_{ni} directly:
+        #     var.a[n, i, s] = p.a[n, i, s]
+        # No supply-potential proxy, no power_fdi.  The previous formula
+        #   self.a = p.a * max(supply_potential, 1)**p.power_fdi
+        # was a parsimonious proxy used when p.a was a single scalar; it
+        # served to spread one number across (n, i, s) using trade-resistance
+        # information. With bilateral calibration, p.a has N*N*S entries and
+        # IS the structural FDI cost matrix — no further multiplicative
+        # wrapping is appropriate. p.power_fdi is therefore unused.
+        # The diagonal (n == i) is enforced to zero (no FDI to self).
+        # Sector-0 entries are also zero since FDI applies only to sector 1.
+        # Both contexts share the same formula.
+        self.a = np.broadcast_to(np.asarray(p.a), (p.N, p.N, p.S)).copy()
+        np.einsum('nns->ns', self.a)[:] = 0
+        if p.S >= 2:
+            self.a[..., 0] = 0
 
     # ── compute_V ───────────────────────────────────────────────────────────
 
@@ -2406,8 +2574,15 @@ class var_with_fdi:
                          1 - psi_bar/np.minimum(a_npo, psi_mO), 0.0)
         # CORRECTED beta-shape (d+1, k-d)
         B_iv = np.where(ind_iv, _betainc_vec(d+1, k-d, t1_iv, t2_iv), 0.0)
+        # FIX 1.5: per algorithm eq (38) and RomerEK eq (88), the inner Pareto
+        # ratio is (h_n f^e_s / a_{nis})^d with NO w_n inside the d-th power.
+        # The wage is already embodied in psi_bar and the thresholds; (h f^e
+        # / a) is dimensionally a ratio of labor quantities and is wage-free.
+        # Previously: (w_fe_h / a)^d  =  (w_n h_n f^e_s / a)^d, which inserted
+        # an extra w_n^d factor into the patent-application probability.
+        h_fe_only = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])[:,None,:]
         pre_iv = np.where(ind_iv & (a_nis > 0),
-                          k * (w_fe_h/a_safe)**d
+                          k * (h_fe_only/a_safe)**d
                           / np.where(np.isfinite(psi_bar) & (psi_bar > 0),
                                      psi_bar, 1.0)**k,
                           0.0)
@@ -2511,10 +2686,15 @@ class var_with_fdi:
         self.l_F = np.maximum(self.l_F, 0.0)
 
         # ── L^P_i  (l_Aa dropped — not in the corrected algorithm) ──────────
+        # FIX 1.1: l_Ae and l_F are indexed [origin i, destination n, sector s].
+        # L^P_i needs labor USED IN country i = sum over origins n at fixed
+        # destination=i.  That is sum(axis=0), NOT sum(axis=1).  The previous
+        # code summed destinations at fixed origin, which gave each country's
+        # firms' labor abroad rather than each country's labor stock.
         self.l_P = p.labor - (
             self.l_Ao + self.l_R
-            + self.l_Ae.sum(axis=1)
-            + self.l_F.sum(axis=1)
+            + self.l_Ae.sum(axis=0)
+            + self.l_F.sum(axis=0)
         ).sum(axis=1)
 
     # ── compute_trade_flows_and_shares  (eqs 43-47) ─────────────────────────
@@ -2618,8 +2798,13 @@ class var_with_fdi:
         A1 = (self.X / (1 + p.tariff)).sum(axis=0)              # (i, s)
         # sum_n X^{M,O}_{nis} / (sigma (1+b))
         A2 = (self.X_M / (1 + p.tariff)).sum(axis=0) / p.sigma[None,:]
-        # sum_j X^{M,F}_{ijs} / sigma   (affiliates owned by i selling abroad)
-        A3 = self.X_M_F.sum(axis=0) / p.sigma[None,:]           # (i, s)
+        # sum_j X^{M,F}_{ijs} / sigma   (affiliates LOCATED in country i)
+        # FIX 1.2: X_M_F is indexed [destination n, origin i, sector s].  We
+        # need sales LOCATED in destination=i (affiliates produce where they
+        # sell), summed over origin axis.  That is axis=1.  The previous
+        # axis=0 summed destinations at fixed origin, giving country-i firms'
+        # affiliate sales abroad — wrong for production-labor accounting.
+        A3 = self.X_M_F.sum(axis=1) / p.sigma[None,:]           # (i, s)
         per_sector = A1 - A2 - A3                                # (i, s)
         return (p.alpha[None,:] * per_sector).sum(axis=1) / self.l_P
 
@@ -2629,9 +2814,9 @@ class var_with_fdi:
 
           Z_i = sum_{s,n} X_{nis}/(1+b_{nis})                  # tariff-net sales
               + sum_{s,n} X_{ins} b_{ins}/(1+b_{ins})          # tariff revenue
-              - tb_i * sum_{s,n} X_{nis}/(1+b_{nis})           # trade balance,
-                                                                 # scaled by i's
-                                                                 # tariff-net sales
+              - tb_i * sum_{n,i,s} X_{nis}/(1+b_{nis})         # trade balance,
+                                                                 # scaled by GLOBAL
+                                                                 # tariff-net X^W
               + sum_{s,n} w_i (L^e_{nis} + L^F_{nis})          # i's L receipts
               - sum_{s,n} w_n (L^e_{ins} + L^F_{ins})          # i's L payments
 
@@ -2652,10 +2837,12 @@ class var_with_fdi:
             received  (i is origin, n is destination)
           - X_{ins} b_{ins}/(1+b_{ins}) summed over (n,s) = i's tariff
             revenue on its IMPORTS  (i is destination, n is origin)
-          - L^e_{nis} (n=destination, i=origin) = i's firms operating in n,
-            paid at w_i  (so w_i * L^e_{nis} is i's RECEIPTS)
-          - L^e_{ins} (i=destination, n=origin) = n's firms operating in i,
-            paid at w_n  (so w_n * L^e_{ins} is i's PAYMENTS abroad)
+          - L^e_{nis} with l_Ae[origin, destination, s]: workers in country i
+            employed by foreign/domestic firms = sum over origin axis at
+            destination=i, paid at local wage w_i.  This is i's RECEIPTS.
+          - L^e_{ins}: workers in destination n employed by i's firms = sum
+            over destination axis at origin=i, paid at w_n.  This is i's
+            PAYMENTS abroad.
         """
         # i's tariff-net SALES received: sum over (n=dest, s) of X[n, i, s]/(1+b[n,i,s])
         A1 = np.einsum('nis,nis->i', self.X, 1/(1+p.tariff))
@@ -2665,20 +2852,26 @@ class var_with_fdi:
         # In numpy axis order ('i' is destination here, 'n' is origin):
         A2 = np.einsum('ins,ins,ins->i', self.X, p.tariff, 1/(1+p.tariff))
 
-        # Trade balance term: tb_i * (i's tariff-net sales)
-        # tb_i is per-country: p.deficit_share_world_output[i]
-        TB = p.deficit_share_world_output * A1
+        # FIX 1.3: Trade balance is tb_i (per-country share) * GLOBAL X^W,
+        # not tb_i * country-i's own tariff-net sales A1[i].  Global X^W is
+        # exactly A1.sum() (sum over all (i,s) of country-i's tariff-net sales
+        # = sum over all (n,i,s) of X/(1+b)).  Previously: TB = p.deficit_*
+        # A1, which scaled by each country's own A1 — inconsistent with the
+        # algorithm doc eq (60) which uses world output.
+        TB = p.deficit_share_world_output * A1.sum()
 
-        # Service flows
-        # i's RECEIPTS for its own L (w_i * L^{e/F}_{nis}, n=dest, i=origin):
-        #   sum_n l_Ae[i, n, s] = i's firms operating abroad, paid at w_i
-        B_e = np.einsum('i,ins->i', self.w, self.l_Ae)
-        B_F = np.einsum('i,ins->i', self.w, self.l_F)
-
-        # i's PAYMENTS for foreign L operating in i (w_n * L^{e/F}_{ins}):
-        #   sum_n l_Ae[n, i, s] with destination i; pay at w_n
-        D_e = np.einsum('n,nis->i', self.w, self.l_Ae)
-        D_F = np.einsum('n,nis->i', self.w, self.l_F)
+        # FIX 1.4: Service flows.
+        # Convention: l_Ae[i_origin, n_destination, s], wages paid at the
+        # destination's wage rate (workers paid where they work).
+        # RECEIPTS by country i = workers IN country i paid by any firm,
+        # i.e. destination=i, summed over origins (axis=0 of l_Ae), times w_i.
+        B_e = np.einsum('i,jis->i', self.w, self.l_Ae)
+        B_F = np.einsum('i,jis->i', self.w, self.l_F)
+        # PAYMENTS by country i = country-i firms paying workers in n,
+        # i.e. origin=i, summed over destinations (axis=1 of l_Ae), each term
+        # weighted by destination's w_n.
+        D_e = np.einsum('n,ins->i', self.w, self.l_Ae)
+        D_F = np.einsum('n,ins->i', self.w, self.l_F)
 
         return A1 + A2 - TB + B_e + B_F - D_e - D_F
 
@@ -2896,8 +3089,18 @@ class var_with_fdi:
             B_C_b = _betainc_vec_mpmath(d+2, k-d-1, x1_b, x2_b)
             B_C_c = _betainc_vec_mpmath(d+2, k-d-1, x1_b, x2_c)
 
+        # FIX 1.6: per algorithm eq (53), the middle sub-case's prefactor is
+        #     (k/(d+1)) * (h_n f^e_s / a_{nis})^d * (h_n f^e_s w_n) * psi_bar^{-k}
+        # i.e. w_n appears EXACTLY ONCE (in the outer patent-cost factor),
+        # not inside the d-th power.  Previously the code used
+        #     (w_n_fe_h_b / a)^d  =  (w_n h_n f^e_s / a)^d
+        # giving w_n^{d+1} total instead of w_n^1.  The high sub-case
+        # IntVC_c (below) already has the correct (h_fe)^{d+1} * w_n
+        # structure; this fix brings the middle sub-case in line.
+        h_fe_b = np.where(w_n > 0,
+                          w_n_fe_h_b / np.where(w_n > 0, w_n, 1.0), 0.0)
         IntVC_b = (V_NPO * k/(k-1) * (max_o_F**(1-k) - a_hat_safe**(1-k))
-                   + k/(d+1) * (w_n_fe_h_b / a_safe)**d
+                   + k/(d+1) * (h_fe_b / a_safe)**d
                      * w_n_fe_h_b * psib_safe**(-k) * B_C_b
                    + V_PF_safe * k/(k-1) * (a_hat_safe**(1-k) - max_F_O_o**(1-k))
                    - (w_n_fe_h_b + w_n_a * d/(d+1)) * (
@@ -2951,47 +3154,58 @@ class var_with_fdi:
 
     def compute_phi(self, p):
         """
-        Calibration:  phi from trade-share inversion (eq 56' — note:
-        the corrected document additionally suggests dividing the domestic
-        denominator by (1 - sum_j fdi_data[n,j,s]) to net out affiliate sales,
-        and using the R_nis bracket. With current data inputs this refinement
-        is left for a follow-up; the present implementation uses the same
-        trade-share inversion as the entry-cost class.
-        Counterfactual: standard supply-potential formula.
+        phi calibration update — algorithm eq (57) of FDI_algorithm_fixed.tex.
+
+          phi^theta_{nis} = T_n * (w_n^alpha P_n^{1-alpha})^{-theta_s}
+                          * R_{nis} * (1 + b_{nis})
+                          * X^data_{nis} / (X^data_{nn,s}
+                                            - sum_j X^{M,F,data}_{nj,s})
+
+        R_{nis} is the price/quality bracket ratio (eq 58), structurally
+        (A + B_{nn,s}) / (A + B_{ni,s}) where A is the (P^CD/P) common term
+        and B = PSI^{M,O} * phi^{sigma-1-theta} * (P^{M,O}/P)^{1-sigma}
+              / sum_j PSI^{M,O}_{njs} phi^{sigma-1}_{njs}.
+
+        Sector 0 handles itself: PSI^{M,O}_{*,*,0} = 0 ⇒ B = 0 ⇒ R = 1, and
+        the FDI sum is zero, so the formula collapses to the standard EK
+        inversion.
+
+        Counterfactual branch unchanged.
         """
-        if self.context == 'calibration':
-            denom_M = np.zeros((p.N,p.N,p.S))
-            denom_M[...,1:] = (
-                self.PSI_M_O[...,1:]
-                * self.phi[...,1:]**((p.sigma-1)-p.theta)[None,None,1:]
-                / (self.PSI_M_O[...,1:]*self.phi[...,1:]**(p.sigma-1)[None,None,1:]
-                   ).sum(axis=1)[:,None,:]
-                * np.where(self.P_M[:,None,1:] > 0,
-                           self.P_M[:,None,1:]**(1-p.sigma[None,None,1:]), 0.0))
-            safe_P_CD = np.where(self.P_CD > 0, self.P_CD, 1.0)
-            denom_CD = (
-                1/(self.phi**p.theta[None,None,:]).sum(axis=1)
-                * np.where(self.P_CD > 0,
-                           safe_P_CD**(1-p.sigma[None,:]), 0.0))
-            denom_total = denom_M + denom_CD[:,None,:]
-            f_phi = np.einsum(
-                'nis,nis,nis->nis',
-                p.trade_shares, 1+p.tariff,
-                np.where(denom_total > 0, 1/denom_total, 0.0))
-            return np.einsum(
-                'nis,nns,ns,ns,ns->nis',
-                f_phi**(1/p.theta)[None,None,:],
-                f_phi**(-1/p.theta)[None,None,:],
-                p.T**(1/p.theta[None,:]),
-                self.w[:,None]**(-p.alpha[None,:]),
-                self.price_indices[:,None]**(p.alpha[None,:]-1))
-        elif self.context == 'counterfactual':
+        if self.context != 'calibration':
             return np.einsum(
                 'is,nis,nis,is,is->nis',
                 p.T**(1/p.theta[None,:]),
                 1/p.tau, 1/(1+p.tariff),
                 self.w[:,None]**(-p.alpha[None,:]),
                 self.price_indices[:,None]**(p.alpha[None,:]-1))
+
+        # Data ratio: X_{nis} / (X_{nn,s} - sum_j X^{M,F,data}_{nj,s})
+        denom_data = (np.einsum('nns->ns', p.trade_flows)
+                      - p.X_F_data.sum(axis=1))                    # (N, S)
+        data_ratio = p.trade_flows / denom_data[:, None, :]        # (N, N, S)
+
+        # R_{nis} bracket — only sector >= 1 has monopolistic mass; for
+        # sector 0, PSI^{M,O} = 0 and P_M = 0, so R collapses to 1.
+        sigma_m1   = (p.sigma - 1)[None, None, :]
+        sigma_m1_t = (p.sigma - 1 - p.theta)[None, None, :]
+        R = np.ones((p.N, p.N, p.S))
+        s1 = slice(1, None)
+        A = (self.P_CD[:, s1]**(1 - p.sigma[None, s1])
+             / (self.phi[..., s1]**p.theta[None, None, s1]).sum(axis=1))  # (N, S-1)
+        B = (self.PSI_M_O[..., s1] * self.phi[..., s1]**sigma_m1_t[..., s1]
+             * (self.P_M[:, s1]**(1 - p.sigma[None, s1]))[:, None, :]
+             / (self.PSI_M_O[..., s1] * self.phi[..., s1]**sigma_m1[..., s1]
+                ).sum(axis=1)[:, None, :])                                # (N,N,S-1)
+        B_diag = np.einsum('nns->ns', B)                                  # (N, S-1)
+        R[..., s1] = (A[:, None, :] + B_diag[:, None, :]) / (A[:, None, :] + B)
+
+        # Assemble phi^theta and take the theta-th root
+        wP = (self.w[:, None]**p.alpha[None, :]
+              * self.price_indices[:, None]**(1 - p.alpha[None, :]))
+        phi_theta_new = ((p.T * wP**(-p.theta[None, :]))[:, None, :]
+                         * R * (1 + p.tariff) * data_ratio)
+        return phi_theta_new**(1 / p.theta[None, None, :])
 
     # ── non-solver quantities ───────────────────────────────────────────────
 
@@ -3020,7 +3234,11 @@ class var_with_fdi:
         """
         A1 = (self.X / (1+p.tariff)).sum(axis=0)
         A2 = (self.X_M / (1+p.tariff)).sum(axis=0) / p.sigma[None,:]
-        A3 = self.X_M_F.sum(axis=0) / p.sigma[None,:]
+        # FIX 1.2 (mirror of compute_wage): X_M_F is [n_dest, i_origin, s];
+        # the production-labor equation needs affiliate sales LOCATED in
+        # destination=i, so sum the origin axis (axis=1), not the destination
+        # axis (axis=0).
+        A3 = self.X_M_F.sum(axis=1) / p.sigma[None,:]
         self.nominal_value_added = p.alpha[None,:] * (A1 - A2 - A3)
 
     def compute_nominal_intermediate_input(self, p):
@@ -3059,18 +3277,42 @@ class var_with_fdi:
     def compute_pflow(self, p):
         """
         Aggregate flow of patent applications (used by moments).
-        Simplified to psi_m_star_O^{-k} * eta * L_R^{1-kappa} — this is the
-        Case-1 probability of patenting times innovation rate.  In Case 2 the
-        exact pflow contains beta-function corrections, but these are not
-        currently consumed by any external code path; the simple proxy
-        suffices for moment-matching of patent counts.
+
+        FIX 1.8: was previously a Case-1-only proxy
+            psi_m_star_O^{-k} * eta * L_R^{1-kappa},
+        but pflow IS consumed by moments (SPFLOW, TP, JUPCOST, PCOST,
+        DOMPATRATUSEU, ...), so the proxy biased every patent-flow moment.
+
+        Per algorithm eq (38), the patent-application labor is
+            L^e_{ins} = h_n * f^e_s * eta_{is} * L_R^{1-kappa} *
+                        [full Case 1/Case 2 patent probability].
+        The number of patent applications by origin i in destination n is
+            P^s_{ni} = L^e_{ins} / (h_n * f^e_s)
+                     = eta_{is} * L_R^{1-kappa} * [full patent probability].
+
+        In the code, l_Ae[i_origin, n_destination, s] already contains the
+        full mixed expression (constructed in compute_labor_allocations).
+        Divide by h_n * f^e_s and transpose to (n_dest, i_origin, s) to
+        match the moments-class indexing convention.
         """
-        k = p.k[1]
-        self.pflow = np.einsum(
-            'nis,is,is->nis',
-            self.psi_m_star_O[...,1:]**(-k),
-            p.eta[...,1:],
-            self.l_R[...,1:]**(1-p.kappa)).squeeze()
+        N, S = p.N, p.S
+        # h_n * f^e_s for s >= 1 (sector 0 excluded from patenting)
+        h_fe = np.einsum('n,s->ns', p.r_hjort, p.fe[1:])  # (N, S-1)
+        safe_hfe = np.where(h_fe > 0, h_fe, 1.0)
+
+        # l_Ae axes: [origin i, destination n, sector s]
+        # P^s_{ni}: index [destination n, origin i, sector s]
+        # So divide l_Ae by h_n * f^e_s broadcasting on (i_origin, n_dest, s),
+        # then transpose (i, n) -> (n, i).
+        # h_fe is (n, s); broadcast as (1, n, s) along origin axis.
+        pflow_ins = np.where(
+            h_fe[None, :, :] > 0,
+            self.l_Ae[..., 1:] / safe_hfe[None, :, :],
+            0.0)  # shape (N, N, S-1), indexed [i_origin, n_dest, s]
+        pflow_nis = np.transpose(pflow_ins, (1, 0, 2))  # -> [n_dest, i_origin, s]
+        # Preserve previous behavior: squeeze trailing length-1 sector axis
+        # (for S=2 the moments code expects a 2D (N,N) array).
+        self.pflow = pflow_nis.squeeze()
 
     def compute_share_of_innovations_patented(self, p):
         self.share_innov_patented = self.psi_m_star_O[...,1:]**(-p.k[1])
@@ -5197,37 +5439,92 @@ class var:
                 1/np.einsum('nis->i',A+prefactor[None,None,:]*B)
                 )
 
+    # def compute_export_price_index(self,p)  :
+    #     numeratorA = np.einsum('s,nis,nis,s->nis',
+    #         gamma((p.theta+2-p.sigma)/p.theta)[1:],
+    #         self.PSI_M[...,1:],
+    #         self.phi[...,1:]**(p.sigma[None,None,1:]-2),
+    #         ((p.sigma/(p.sigma-1))**(2-p.sigma))[1:]
+    #         )          
+    #     numeratorB = np.einsum('nis,ns,ns->nis',
+    #         self.phi[...,1:]**(p.theta[None,None,1:]),
+    #         self.PSI_CD[...,1:],
+    #         (
+    #             (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
+    #         )**((p.sigma[None,1:]-2)/p.theta[None,1:]-1)
+    #         )
+        
+    #     denominatorA = np.einsum('s,nis,nis,s->nis',
+    #         gamma((p.theta+1-p.sigma)/p.theta)[1:],
+    #         self.PSI_M[...,1:],
+    #         self.phi[...,1:]**(p.sigma[None,None,1:]-1),
+    #         ((p.sigma/(p.sigma-1))**(1-p.sigma))[1:]
+    #         )          
+    #     denominatorB = np.einsum('nis,ns,ns->nis',
+    #         self.phi[...,1:]**(p.theta[None,None,1:]),
+    #         self.PSI_CD[...,1:],
+    #         (
+    #             (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
+    #         )**((p.sigma[None,1:]-1)/p.theta[None,1:]-1)
+    #         ) 
+        
+    #     self.export_price_index = (numeratorA + numeratorB) / (denominatorA + denominatorB)
     def compute_export_price_index(self,p)  :
+        # Gamma((theta+2-sigma)/theta) / Gamma((theta+1-sigma)/theta)
+        # multiplies the WHOLE ratio (both monopolistic and competitive
+        # parts of the avg-price formula). The previous code applied the
+        # numerator's Gamma only to the monopolistic term and similarly
+        # for the denominator, so the competitive-only limit dropped the
+        # Gamma factor. Apply both Gammas to both A and B contributions.
+        gamma_num = gamma((p.theta+2-p.sigma)/p.theta)[1:]   # (S-1,)
+        gamma_den = gamma((p.theta+1-p.sigma)/p.theta)[1:]   # (S-1,)
+
         numeratorA = np.einsum('s,nis,nis,s->nis',
-            gamma((p.theta+2-p.sigma)/p.theta)[1:],
+            gamma_num,
             self.PSI_M[...,1:],
             self.phi[...,1:]**(p.sigma[None,None,1:]-2),
             ((p.sigma/(p.sigma-1))**(2-p.sigma))[1:]
-            )          
-        numeratorB = np.einsum('nis,ns,ns->nis',
+            )
+        numeratorB = np.einsum('s,nis,ns,ns->nis',
+            gamma_num,
             self.phi[...,1:]**(p.theta[None,None,1:]),
             self.PSI_CD[...,1:],
             (
                 (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
             )**((p.sigma[None,1:]-2)/p.theta[None,1:]-1)
             )
-        
+
         denominatorA = np.einsum('s,nis,nis,s->nis',
-            gamma((p.theta+1-p.sigma)/p.theta)[1:],
+            gamma_den,
             self.PSI_M[...,1:],
             self.phi[...,1:]**(p.sigma[None,None,1:]-1),
             ((p.sigma/(p.sigma-1))**(1-p.sigma))[1:]
-            )          
-        denominatorB = np.einsum('nis,ns,ns->nis',
+            )
+        denominatorB = np.einsum('s,nis,ns,ns->nis',
+            gamma_den,
             self.phi[...,1:]**(p.theta[None,None,1:]),
             self.PSI_CD[...,1:],
             (
                 (self.phi[...,1:]**(p.theta[None,1:])).sum(axis=1)
             )**((p.sigma[None,1:]-1)/p.theta[None,1:]-1)
-            ) 
-        
-        self.export_price_index = (numeratorA + numeratorB) / (denominatorA + denominatorB)
-                                     
+            )
+
+        raw_pi = (numeratorA + numeratorB) / (denominatorA + denominatorB)
+
+        # Normalize each destination's bilateral price index by the
+        # trade-weighted average across origins (i != n), using total
+        # bilateral trade X = X_M + X_CD as weights. Excluding own
+        # destination (i = n) from the weighted average matches the
+        # definition in the tex note.
+        weights = (self.X_M[..., 1:] + self.X_CD[..., 1:])  # (N, N, S-1)
+        N = weights.shape[0]
+        off_diag = (~np.eye(N, dtype=bool))[..., None]      # (N, N, 1)
+        w_off = weights * off_diag
+        num_avg = (w_off * raw_pi).sum(axis=1)              # (N, S-1)
+        den_avg = w_off.sum(axis=1)                         # (N, S-1)
+        avg_pi = num_avg / np.where(den_avg > 0, den_avg, 1.0)  # (N, S-1)
+
+        self.export_price_index = raw_pi / avg_pi[:, None, :]                                 
                                                                      
     def compute_non_solver_quantities(self,p):
         self.compute_tau(p)
@@ -8454,7 +8751,7 @@ class moments:
                                'TE','TECHEM','TEPHARMA','TEPHARMACHEM',
                                'DOMPATRATUSEU','DOMPATUS','DOMPATEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                                'DOMPATINUS','DOMPATINCHN','DOMPATINEU','SPATORIG','SPATDEST','TWSPFLOW','TWSPFLOWDOM','ERDUS',
-                               'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW','FDI_FLOW_N','FDI_ELAST']
+                               'PROBINNOVENT','SHAREEXPMON','SGDP','RGDPPC','SDFLOW','FDI_FLOW_N','FDI_FLOW','FDI_ELAST']
         else:
             self.list_of_moments = list_of_moments
         self.weights_dict = {'GPDIFF': 1,
@@ -8529,6 +8826,12 @@ class moments:
                              'ERDUS': 3,
                              'PROBINNOVENT': 5,
                              'FDI_FLOW_N': 1,
+                             # FDI_FLOW is bilateral (N*N entries) — per-entry
+                             # weight 1 makes its aggregate contribution
+                             # dominate other moments by ~N. Keep per-entry
+                             # weight at 1; tune externally via list_of_moments
+                             # or by overriding weights_dict after init.
+                             'FDI_FLOW': 1,
                              'FDI_ELAST': 5,
                              'SHAREEXPMON': 5
                              }
@@ -8568,7 +8871,7 @@ class moments:
                 'SINNOVPATEU','SINNOVPATUS','TO','TO_DD_DD','TOCHEM','TOPHARMA','TOPHARMACHEM','TOPATENT',
                 'TE','TECHEM','TEPHARMA','TEPHARMACHEM','NUR','DOMPATRATUSEU','AGGAVMARKUP','AVMARKUPPHARCHEM',
                 'SPATDEST','SPATORIG','TWSPFLOW','TWSPFLOWDOM','ERDUS','PROBINNOVENT',
-                'SHAREEXPMON','SGDP','RGDPPC','SDFLOW','FDI_FLOW_N','FDI_ELAST']
+                'SHAREEXPMON','SGDP','RGDPPC','SDFLOW','FDI_FLOW_N','FDI_FLOW','FDI_ELAST']
     
     def elements(self):
         for key, item in sorted(self.__dict__.items()):
@@ -8787,29 +9090,69 @@ class moments:
                 /self.ccs_moments.loc[:,:,1]['trade'].sum()
                 
         try:
-            self.fdi_flows = pd.read_csv('data/fdi_longformat_2015_AAMNE.csv').set_index(
-                ['Rep_ccode', 'File_ccode']
-            ).rename_axis(
-                ['destination', 'origin']
-            ).sort_index(
-            )
-            fdi_matrix = np.zeros((N, N))
-            for i_dest, dest in enumerate(self.countries):
-                for i_orig, orig in enumerate(self.countries):
-                    try:
-                        fdi_matrix[i_dest, i_orig] = self.fdi_flows.loc[(dest, orig), 'FileToRep_Flow']
-                    except KeyError:
-                        fdi_matrix[i_dest, i_orig] = 0.0
-            self.fdi_matrix = fdi_matrix  # store for access by parameters
-            # FDI_FLOW_N target: sum_i X^{M,F}_{ni} / (X_nn - sum_i X^{M,F}_{ni})
-            # = fdi_flow[n,:].sum() / (diag(trade_flows[:,:,1]) - fdi_flow[n,:].sum())
+            # FDI affiliate-sales matrix.  CSV uses 1-based integer country
+            # codes (File_ccode = origin, Rep_ccode = destination)
+            # positionally matching self.countries.  Diagonal zeroed (model
+            # X^{M,F}_{njs} is foreign affiliates only, n != j).
+            _fdi = pd.read_csv('data/fdi_longformat_2015_AAMNE.csv')
+            _piv = (_fdi.pivot_table(index='Rep_ccode', columns='File_ccode',
+                                     values='FileToRep_Flow', aggfunc='sum')
+                       .reindex(index=range(1, N+1),
+                                columns=range(1, N+1))
+                       .fillna(0.0))
+            fdi_matrix = _piv.values / self.unit       # [dest, origin]
+            np.fill_diagonal(fdi_matrix, 0.0)
+            self.fdi_matrix = fdi_matrix
+            # FDI_FLOW_N target (sector 1):
+            #   sum_i X^{M,F}_{ni} / (X_{nn} - sum_i X^{M,F}_{ni})
             trade_flows_mat = self.ccs_moments.trade.values.reshape(N, N, S)
-            X_nn = np.einsum('nns->n', trade_flows_mat[:, :, 1:2]).squeeze()  # domestic absorption, sector 1
-            fdi_sum_n = fdi_matrix.sum(axis=1)  # total FDI received by each n
-            denom = X_nn / self.unit - fdi_sum_n / self.unit
-            ratio_target = np.where(denom > 0, (fdi_sum_n / self.unit) / denom, 1e-6)
-            self.FDI_FLOW_N_target = np.maximum(ratio_target, 1e-6)
-            # FDI_ELAST target: from Blonigen (2002), semi-elasticity = 0.08
+            X_nn = np.einsum('nns->n', trade_flows_mat[:, :, 1:2]).squeeze()
+            fdi_sum_n = fdi_matrix.sum(axis=1)
+            denom = X_nn / self.unit - fdi_sum_n
+            self.FDI_FLOW_N_target = np.maximum(
+                np.where(denom > 0, fdi_sum_n / denom, 1e-6), 1e-6)
+            # FDI_FLOW target (bilateral, sector 1):
+            #   X^{M,F}_{ni} / (X_{nn} - sum_j X^{M,F}_{nj})
+            # Same denominator as FDI_FLOW_N (net domestic absorption);
+            # bilateral numerator. Diagonal forced to 1.0 (matches model-side
+            # convention in compute_FDI_FLOW) so that log(1/1)=0 contributes
+            # zero to the residual without NaNs.
+            safe_denom = np.where(denom > 0, denom, 1.0)
+            fdi_flow_target = np.where(
+                denom[:, None] > 0,
+                fdi_matrix / safe_denom[:, None],
+                1e-6)
+            fdi_flow_target = np.maximum(fdi_flow_target, 1e-6)
+            np.fill_diagonal(fdi_flow_target, 1.0)
+            self.FDI_FLOW_target = fdi_flow_target
+            # ── FDI_FLOW_mask  (N, N) bool ─────────────────────────────────
+            # True  -> include this cell in the calibration residual
+            # False -> exclude (set both model and target to 1.0 at
+            #          compute_FDI_FLOW time, so log(1/1)=0 contributes
+            #          nothing).
+            # Two natural reasons to exclude:
+            #   (a) the cell is on the diagonal (n == i, no domestic FDI by
+            #       construction);
+            #   (b) the data is "effectively zero": fdi_matrix[n, i] is at
+            #       the noise floor (raw value below FDI_FLOW_zero_threshold
+            #       times its row sum, or the denominator was non-positive
+            #       so we floored the target to 1e-6).
+            # The threshold (set by set_fdi_flow_zero_threshold below) is 0
+            # by default => only the diagonal is masked, preserving prior
+            # behaviour. Setting a positive threshold drops near-zero data
+            # cells from the residual; the corresponding bilateral-a entries
+            # should also be dropped from calibration via
+            # parameters.mask_a_from_fdi_flow_mask(m).
+            self.FDI_FLOW_mask = np.ones((N, N), bool)
+            np.fill_diagonal(self.FDI_FLOW_mask, False)
+            # Store the raw data-implied flow ratio (pre-floor, pre-diag
+            # rewrite) so the data-zero detection can use it later. This is
+            # what would have gone into FDI_FLOW_target before flooring.
+            self._FDI_FLOW_raw_data = np.where(
+                denom[:, None] > 0,
+                fdi_matrix / safe_denom[:, None], 0.0)
+            np.fill_diagonal(self._FDI_FLOW_raw_data, 0.0)
+            # FDI_ELAST target: Blonigen (2002), semi-elasticity = 0.08
             self.FDI_ELAST_target = np.array([0.08])
         except:
             pass
@@ -8883,6 +9226,9 @@ class moments:
                     'SINNOVPATEU':pd.Index(['scalar']),
                     'SINNOVPATUS':pd.Index(['scalar']),
                     'FDI_FLOW_N': pd.Index(self.countries, name='country'),
+                    'FDI_FLOW': pd.MultiIndex.from_product(
+                        [self.countries, self.countries],
+                        names=['destination', 'origin']),
                     'FDI_ELAST': pd.Index(['scalar']),
                     'TO':pd.Index(['scalar']),
                     'TO_DD_DD':pd.Index(['scalar']),
@@ -8930,6 +9276,13 @@ class moments:
                        'STFLOWSDOM':(len(self.countries),len(self.countries),len(self.sectors)),
                        'TWSPFLOW':(len(self.countries),len(self.countries)-1),
                        'TWSPFLOWDOM':(len(self.countries),len(self.countries)),
+                       # Bilateral FDI flow moment: (destination, origin). Used
+                       # by moments.load_run when re-loading a saved checkpoint;
+                       # without this entry the saved target stays as a flat
+                       # (N*N,) vector and the broadcast in
+                       # compute_moments_deviations against the (N, N) model
+                       # value crashes.
+                       'FDI_FLOW':(len(self.countries),len(self.countries)),
                        }
         
         if S>2:
@@ -9762,6 +10115,106 @@ class moments:
         ratio = np.where(denom > 0, X_M_F_sum_n / denom, 1e-6)
         self.FDI_FLOW_N = np.maximum(ratio, 1e-6)
 
+    def compute_FDI_FLOW(self, var, p):
+        """
+        Bilateral affiliate-sales ratio (sector 1):
+            FDI_FLOW_{ni} = X^{M,F}_{ni,s=1}
+                            / (X_{nn,s=1} - sum_j X^{M,F}_{nj,s=1})
+        Same denominator as FDI_FLOW_N (net domestic absorption), bilateral
+        numerator.
+
+        Diagonal entries (n=i, no domestic FDI) are filled with 1.0 to match
+        the FDI_FLOW_target diagonal convention (also 1.0); this prevents
+        log(0/0) NaNs in the deviation builder while contributing exactly
+        zero to the residual (since deviation = |log(1/1)| = 0).
+
+        Off-diagonal cells masked out by self.FDI_FLOW_mask (e.g. data-zero
+        cells set via set_fdi_flow_zero_threshold) are likewise rewritten on
+        BOTH sides to 1.0 so they contribute zero to the residual without
+        injecting NaNs.  The mask is True where the cell is INCLUDED.
+
+        Sums to FDI_FLOW_N along origin axis (excluding the diagonal floor),
+        providing a more granular target for bilateral FDI cost calibration.
+
+        Output shape: (N, N) — matches FDI_FLOW_target loaded in load_data.
+        """
+        X_M_F_s1 = var.X_M_F[:, :, 1]                              # (N, N)
+        X_M_F_sum_n = X_M_F_s1.sum(axis=1)                         # (N,)
+        X_nn = np.einsum('nns->n', var.X[:, :, 1:2]).squeeze()     # (N,)
+        denom = X_nn - X_M_F_sum_n                                 # (N,)
+        # Safe-divide; floor at 1e-6 for entries with non-zero numerator
+        safe_denom = np.where(denom > 0, denom, 1.0)
+        ratio = np.where(denom[:, None] > 0,
+                         X_M_F_s1 / safe_denom[:, None], 1e-6)     # (N, N)
+        # Floor off-diagonal at 1e-6 (avoid log(0)); set diagonal to 1
+        # to match the FDI_FLOW_target diagonal convention.
+        ratio = np.maximum(ratio, 1e-6)
+        np.fill_diagonal(ratio, 1.0)
+        # Mask out excluded cells: rewrite to 1 on BOTH model and target so
+        # the deviation log(1/1) is zero. We touch the target here (not at
+        # load_data time) so that toggling the mask is non-destructive.
+        if hasattr(self, 'FDI_FLOW_mask') and self.FDI_FLOW_mask is not None:
+            ratio = np.where(self.FDI_FLOW_mask, ratio, 1.0)
+            # Apply the same rewrite to the saved target.  Re-derive the
+            # masked target on each call to keep it in sync with the mask
+            # (in case the threshold was changed without re-loading data).
+            if hasattr(self, '_FDI_FLOW_target_original'):
+                self.FDI_FLOW_target = np.where(self.FDI_FLOW_mask,
+                                                self._FDI_FLOW_target_original,
+                                                1.0)
+        self.FDI_FLOW = ratio
+
+    def set_fdi_flow_zero_threshold(self, threshold):
+        """
+        Exclude bilateral FDI flow cells whose DATA value is below
+        `threshold` from the FDI_FLOW calibration residual.
+
+        Why: the model structurally cannot drive FDI_FLOW_{ni} down to the
+        1e-6 floor for many pairs (the Pareto-tail leverage of the bilateral
+        cost a^s_{ni} is bounded; see compute_entry_costs). Including the
+        ~30 "data-zero" cells then amplifies noise and pulls the
+        bilateral-a optimization away from the corridors where FDI is
+        actually present.
+
+        After this call:
+          - self.FDI_FLOW_mask[n, i] = False on cells where the raw data
+            FDI flow ratio is below `threshold` (or on the diagonal).
+          - self._FDI_FLOW_target_original holds the un-masked target;
+            compute_FDI_FLOW rewrites both model and target to 1.0 on the
+            masked cells at call time.
+          - Cells where the raw flow was at the safe-divide fallback
+            (denom <= 0) are also masked (they were floored arbitrarily).
+
+        To also drop the corresponding bilateral-a entries from
+        calibration, call parameters.mask_a_from_fdi_flow_mask(self) on
+        the matching parameters instance.
+
+        Parameters
+        ----------
+        threshold : float
+            Cells with raw data FDI ratio below this value are masked.
+            Use 0 to keep only the diagonal masked (default).  A reasonable
+            non-zero value is ~1e-4 (one fortieth the median target).
+        """
+        # Stash the pristine target the first time we touch it, so repeated
+        # threshold changes are non-destructive.
+        if not hasattr(self, '_FDI_FLOW_target_original'):
+            self._FDI_FLOW_target_original = self.FDI_FLOW_target.copy()
+        raw = self._FDI_FLOW_raw_data
+        keep = (raw >= threshold)
+        np.fill_diagonal(keep, False)
+        self.FDI_FLOW_mask = keep
+        # Refresh the target so it matches what compute_FDI_FLOW will use.
+        self.FDI_FLOW_target = np.where(keep,
+                                        self._FDI_FLOW_target_original, 1.0)
+        n_kept = int(keep.sum())
+        n_total = keep.size - self.N  # exclude diagonal from "total"
+        print(f"[FDI_FLOW] threshold={threshold:.2e}: keeping {n_kept} of "
+              f"{n_total} off-diagonal cells "
+              f"({n_total - n_kept} masked as data-zero)")
+        return keep
+
+
     def _vartheta_from_thresholds(self, p, c2, psi_mO, psi_mF, a_npf, a_npo,
                                    a_po, psi_bar, a_nis):
         """
@@ -9874,6 +10327,11 @@ class moments:
         # Only destination n_idx, all origins i, gets the perturbation
         b_new = b_old.copy()
         b_new[n_idx, :, :] = b_old[n_idx, :, :] + delta_b
+        # F1 (ChatGPT report): the perturbation target is origins i != n_idx;
+        # leave the own-origin diagonal entry unperturbed so it doesn't
+        # contaminate the recomputed psi^{o*,dag} via the diagonal pair's
+        # Case-1 LHS contribution.
+        b_new[n_idx, n_idx, :] = b_old[n_idx, n_idx, :]
         lam_dag = ((1 + b_new) / (1 + b_old))**(-sigma_s[None, None, :])  # (N, N, S-1)
 
         # ---- Perturbed export-side profit: pi^{w,dag}_{nis} = lambda^dag * pi^w_{nis} ----
@@ -9932,7 +10390,7 @@ class moments:
         a_PF_NPO_dag  = _thr(w_n * a_nis + h_fe, V_P_F - V_NP_dag)
         psi_bar_dag   = _thr(h_fe, V_P_F - V_NP_dag)
 
-        # ---- Perturbed Case-2 patenting cutoffs psi^{*,O,dag}, psi^{*,F,dag} ----
+        # ---- Perturbed Case-1/Case-2 patenting cutoffs psi^{*,O,dag}, psi^{*,F,dag} ----
         # For destination n != US: V's are unchanged, so these equal baseline.
         # For destination n = US: V_NP, V_P change to V_NP_dag, V_P_dag.
         # FDI-side V's (V_P_F, V_NP_F) are unchanged at all destinations.
@@ -9940,19 +10398,55 @@ class moments:
                                 p.fe[1:])[:, None, :]   # (N, 1, S-1)
         psi_star_O_dag = var.psi_star_O[..., 1:].copy()
         psi_star_F_dag = var.psi_star_F[..., 1:].copy()
-        # Update only the n=US row using daggered V's (Case-2 formula)
+        # Update only the n=US row using daggered V's.
         c2_us = c2_dag[n_idx, :, :]                     # (N, S-1)
+
+        # F1 fix (ChatGPT report): for US-row pairs that stay in Case 1 after
+        # the perturbation, the algorithm/TeX requires the Case-1 analytically-
+        # continued cutoff (eq:psiC1) evaluated with pi^{w,dag}, NOT inf.
+        # Setting it to inf drops the Case-1 export-patenting contribution
+        # to the perturbed psi^{o*,dag} LHS root-solve, which propagates to
+        # vartheta_dag at OTHER destinations for those origins.
+        #
+        # Case-1 perturbed cutoff (mirrors compute_patenting_thresholds line 1949):
+        #   psi^{C,O,dag}_{n_idx, i, s} = w_n h_n f^e_s
+        #     / (pi^{w,dag}_{n_idx,i,s} * w_i
+        #        * (1/(G_s + delta_{n_idx,s} - nu_s) - 1/(G_s + delta_{n_idx,s})))
+        delta_us = p.delta[n_idx, 1:]                      # (S-1,)
+        bracket_us = (1.0 / (G - p.nu[1:] + delta_us)
+                      - 1.0 / (G + delta_us))               # (S-1,)
+        # profit_dag[n_idx, :, :] is (N, S-1) over origins; var.w is (N,)
+        psi_C1_O_us_denom = (profit_dag[n_idx, :, :]        # (N, S-1)
+                             * var.w[:, None]               # (N, 1) = w_i
+                             * bracket_us[None, :])         # (1, S-1)
+        psi_C1_O_us = np.where(
+            np.abs(psi_C1_O_us_denom) > 0,
+            w_fe_h_nis[n_idx, 0, :][None, :]
+              / np.where(np.abs(psi_C1_O_us_denom) > 0, psi_C1_O_us_denom, 1.0),
+            np.inf)
+
+        # Case-2 perturbed cutoff (unchanged formula)
         psi_C2_O_us = np.where(
             c2_us,
             w_fe_h_nis[n_idx, 0, :][None, :]
               / (V_P_dag[n_idx, :, :] - V_NP_dag[n_idx, :, :] + 1e-30),
             np.inf)
-        psi_C2_O_us = np.maximum(psi_C2_O_us, 1.0)
-        psi_star_O_dag[n_idx, :, :] = psi_C2_O_us
+
+        # Mixed assignment per eq:psib: max(psi^{C,O}, 1) with the case-
+        # appropriate analytical continuation
+        psi_star_O_us = np.where(c2_us, psi_C2_O_us, psi_C1_O_us)
+        psi_star_O_us = np.maximum(psi_star_O_us, 1.0)
+        psi_star_O_dag[n_idx, :, :] = psi_star_O_us
+
+        # FIX 2.2: per algorithm eq (12), the FDI patenting cutoff compares
+        # V^{P,F} vs V^{NP,F} — BOTH unchanged by the export-tariff shock
+        # (the perturbation touches export profits only, not FDI profits).
+        # Case 1 has no psi^{*,F} (no FDI), so leave it inf (default from baseline
+        # where Case-1 pairs already have inf via compute_patenting_thresholds).
         psi_C2_F_us = np.where(
             c2_us,
             w_fe_h_nis[n_idx, 0, :][None, :]
-              / (V_P_F[n_idx, :, :] - V_NP_dag[n_idx, :, :] + 1e-30),
+              / (V_P_F[n_idx, :, :] - V_NP_F[n_idx, :, :] + 1e-30),
             np.inf)
         psi_C2_F_us = np.maximum(psi_C2_F_us, 1.0)
         psi_star_F_dag[n_idx, :, :] = psi_C2_F_us
@@ -10148,9 +10642,14 @@ class moments:
            V's (V^{NP,F}, V^{P,F}, V^{P,D,F}) are UNCHANGED.
         4. Recompute Case 2 indicator and the four auxiliary thresholds
            (a_NPF_NPO, a_PF_PO, a_PF_NPO, psi_bar) with the perturbed V's.
-        5. Evaluate vartheta^dag at the perturbed thresholds (entry-cost
-           cutoffs psi^{m*,O}, psi^{m*,F} are HELD FIXED at baseline as part
-           of the partial-equilibrium assumption).
+        5. Recompute Case-2 patenting cutoffs (psi^{*,O}, psi^{*,F}) for
+           the n=US row from the perturbed thresholds, and re-solve the
+           original-patent cutoff psi^{o*}_{is} with ONLY the n=US destination
+           term daggered (partial-equilibrium recomputation per algorithm
+           p. 9 just below eq 77).  The full entry-cost cutoffs
+           psi^{m*,O,dag} = max(psi^{*,O,dag}, psi^{o*,dag}) and similarly
+           for psi^{m*,F,dag} are then computed.  Evaluate vartheta^dag at
+           these perturbed thresholds.
         6. Aggregate both vartheta and vartheta^dag with baseline R&D weights
            and take the level difference / Delta_b.
 
@@ -10223,6 +10722,10 @@ class moments:
             except:
                 pass
             try:
+                self.compute_FDI_FLOW(var, p)
+            except:
+                pass
+            try:
                 self.compute_FDI_ELAST(var, p)
             except:
                 pass
@@ -10251,7 +10754,7 @@ class moments:
                 # print(mom)
                 distort_for_large_pflows_fac = 6
                 # if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT':
-                if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW' and mom != 'SPFLOWDOM':
+                if mom != 'GPDIFF' and mom != 'TO' and mom != 'TE' and mom != 'GROWTH' and mom != 'OUT' and mom != 'SPFLOW' and mom != 'SPFLOWDOM' and mom != 'FDI_FLOW':
                     # setattr(self,
                     #         mom+'_deviation',
                     #         self.weights_dict[mom]*np.log(np.abs(getattr(self,mom)/getattr(self,mom+'_target')))
@@ -10287,22 +10790,33 @@ class moments:
                                     self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))/getattr(self,mom+'_target')
                                     /getattr(self,mom+'_target').size
                                     )
-                
-                
-                elif mom == 'SPFLOW' or mom == 'SPFLOWDOM':
+
+
+                elif mom == 'SPFLOW' or mom == 'SPFLOWDOM' or mom == 'FDI_FLOW':
+                    # Safe denominator for the distortion factor: at masked /
+                    # diagonal cells the target is rewritten to 1.0, so
+                    # log(target) == 0 and the naive (1 + c/|log(target)|)
+                    # produces inf, then 0 * inf = NaN in the deviation.
+                    # Replace the |log(target)| under the bar with 1.0 wherever
+                    # it is < 1e-12, so the distortion factor becomes (1 + c)
+                    # there and the deviation stays a clean zero (since the
+                    # |log(model/target)| factor is already zero on those cells).
+                    _log_tgt = np.log(getattr(self, mom + '_target'))
+                    _safe_log_tgt = np.where(np.abs(_log_tgt) > 1e-12,
+                                              np.abs(_log_tgt), 1.0)
                     if self.loss == 'log':
                         if self.dim_weight == 'lin':
                             setattr(self,
                                     mom+'_deviation',
                                     self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
-                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    *(1+distort_for_large_pflows_fac/_safe_log_tgt)
                                     /getattr(self,mom+'_target').size**(1/2)
                                     )
                         if self.dim_weight == 'sqr':
                             setattr(self,
                                     mom+'_deviation',
                                     self.weights_dict[mom]*np.abs(np.log(getattr(self,mom)/getattr(self,mom+'_target')))
-                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    *(1+distort_for_large_pflows_fac/_safe_log_tgt)
                                     /getattr(self,mom+'_target')
                                     )
                     if self.loss == 'ratio':
@@ -10310,7 +10824,7 @@ class moments:
                             setattr(self,
                                     mom+'_deviation',
                                     self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))
-                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    *(1+distort_for_large_pflows_fac/_safe_log_tgt)
                                     /getattr(self,mom+'_target')
                                     /getattr(self,mom+'_target').size**(1/2)
                                     )
@@ -10318,7 +10832,7 @@ class moments:
                             setattr(self,
                                     mom+'_deviation',
                                     self.weights_dict[mom]*np.abs(getattr(self,mom)-getattr(self,mom+'_target'))
-                                    *(1+distort_for_large_pflows_fac/np.abs(np.log(getattr(self,mom+'_target'))))
+                                    *(1+distort_for_large_pflows_fac/_safe_log_tgt)
                                     /getattr(self,mom+'_target')
                                     /getattr(self,mom+'_target').size
                                     )
