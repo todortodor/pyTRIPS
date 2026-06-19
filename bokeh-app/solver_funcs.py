@@ -2514,6 +2514,9 @@ def calibration_func(vec_parameters,p,m,v0=None,hist=None,start_time=0):
     if p.fix_fe_across_sectors:
         p.fe[2:] = p.fe[1]
         # print(p.fe[1:])
+    if getattr(p, 'fix_delta_across_sectors', False):
+        for s in range(2, p.S):
+            p.delta[:, s] = p.delta[:, 1]
     # if p.S>2:
     #     for s in range(2,p.S):
     #         p.delta[:,s] = p.delta[:,1]
@@ -3541,16 +3544,16 @@ def find_nash_eq(p_baseline,lb_delta=0.01,ub_delta=100,method='fixed_point',dyna
         if it>5:
             damping = 5
         
-        if plot_convergence:
-            deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
-            fig,ax = plt.subplots()
+        # if plot_convergence:
+        #     deltas = np.concatenate([deltas,new_deltas[:,None]],axis=1)
+        #     fig,ax = plt.subplots()
             
-            ax2 = ax.twinx()
-            ax.semilogy(deltas.transpose())
-            ax2.plot(welfares.transpose(), ls = '--')
-            plt.legend(labels = p_baseline.countries)
+        #     ax2 = ax.twinx()
+        #     ax.semilogy(deltas.transpose())
+        #     ax2.plot(welfares.transpose(), ls = '--')
+        #     plt.legend(labels = p_baseline.countries)
             
-            plt.show()
+        #     plt.show()
 
     if dynamics:
         return p_it_baseline, dyn_sol_it

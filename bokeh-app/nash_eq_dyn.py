@@ -21,7 +21,8 @@ import time
 
 baseline_dics = [
     # {'baseline':'2000','variation': 'baseline'},
-    {'baseline':'2000','variation': '14.0'},
+    {'baseline':'2002','variation': '8.0'},
+    {'baseline':'2002','variation': '8.8'},
     # {'baseline':'2000','variation': '99.0'},
     # {'baseline':'2000','variation': '99.1'},
     # {'baseline':'2000','variation': '99.2'},

@@ -1115,7 +1115,7 @@ sol_multi.compute_non_solver_quantities(p_multi)
 m_multi.compute_moments(sol_multi,p_multi)
 m_multi.compute_moments_deviations()
 
-write_calibration_results(multi_sector_path+'baseline',p_multi,m_multi,sol_multi,commentary = '')
+# write_calibration_results(multi_sector_path+'baseline',p_multi,m_multi,sol_multi,commentary = '')
 
 
 #%% Harmonization to delta US

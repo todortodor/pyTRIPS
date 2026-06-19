@@ -84,7 +84,8 @@ class parameters:
         
         self.correct_eur_patent_cost = True
         self.fix_fe_across_sectors = False
-        
+        self.fix_delta_across_sectors = False
+
         self.g_0 = 0.01
         self.kappa = 0.5
         self.gamma = 0.5 
@@ -306,7 +307,12 @@ class parameters:
         
         if self.fix_fe_across_sectors:
             sl_non_calib['fe'] = [np.s_[0],np.s_[2:]]
-        
+
+        if self.fix_delta_across_sectors:
+            # calibrate delta only in the first patenting sector (sector 1);
+            # sectors >=2 are tied to it (see calibration_func)
+            sl_non_calib['delta'] = [np.s_[::S], np.s_[2::S]]
+
         self.mask = {}
         
         for par_name in ['eta','k','rho','alpha','fe','T','fo','sigma','theta','beta','zeta',

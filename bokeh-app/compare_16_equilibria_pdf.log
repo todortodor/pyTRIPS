@@ -1,0 +1,17 @@
+
+===== case baseline =====
+  Nash             world(Negishi)=0.9873 world(Equal)=0.9805  g=0.0156
+  Coop (Negishi)   world(Negishi)=1.0499 world(Equal)=1.0733  g=0.0227
+  Coop (Equal)     world(Negishi)=1.0485 world(Equal)=1.0739  g=0.0229
+
+===== case 16.0 =====
+  Nash             world(Negishi)=0.9870 world(Equal)=0.9802  g=0.0157
+  Coop (Negishi)   world(Negishi)=1.0498 world(Equal)=1.0741  g=0.0229
+  Coop (Equal)     world(Negishi)=1.0484 world(Equal)=1.0747  g=0.0231
+
+===== case 16.1 =====
+  Nash             world(Negishi)=0.9840 world(Equal)=0.9768  g=0.0154
+  Coop (Negishi)   world(Negishi)=1.0616 world(Equal)=1.0892  g=0.0239
+  Coop (Equal)     world(Negishi)=1.0614 world(Equal)=1.0899  g=0.0240
+
+wrote output/compare_baseline_16.0_16.1.pdf

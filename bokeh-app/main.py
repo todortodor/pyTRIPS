@@ -78,9 +78,10 @@ def init_dic_of_dataframes_with_baseline(p_baseline,m_baseline,sol_baseline,list
                 df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,1])
                 df.index.name='x'
                 dic_df_param[param+' patent sector'] = df
-                df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,2])
-                df.index.name='x'
-                dic_df_param[param+' pharma chem'] = df
+                if getattr(p_baseline,param).shape[-1] > 2:   # pharma-chem sector only exists in the multi-sector model
+                    df = pd.DataFrame(index = p_baseline.countries, columns = ['baseline'], data = getattr(p_baseline,param)[...,2])
+                    df.index.name='x'
+                    dic_df_param[param+' pharma chem'] = df
     dic_df_param['scalars'] = df_scalar_params
     
     df_scalar_moments = pd.DataFrame(columns = ['target','baseline'])
@@ -366,38 +367,72 @@ comments_dic['2001'] = {
     "7.2":"7.2:yellow option",
     }
 
+# --- previous app config for 2002 (commented out, kept for reference, not deleted) ---
+# comments_dic['2002'] = {
+#     "baseline":"old baseline, before typo",
+#     "1.0":"1.0:KM, AGGAVMARKUP, TO",
+#     "2.0":"2.0:KM, AGGAVMARKUP, TOPATENT",
+#     "3.0":"3.0:KMPATENT, AGGAVMARKUP, TO",
+#     "4.0":"4.0:KMPATENT, AGGAVMARKUP, TOPATENT",
+#     "5.0":"5.0:KM, fixed sigma 1, TO",
+#     "5.1":"5.1:5.0 with lowered sigma_2",
+#     "5.2":"5.2:5.2, lowered sigma_2, recalibrated",
+#     "5.8":"5.8:5.0 with delta_phchem = delta_patent",
+#     "5.9":"5.9:5.0 fixed sigma_2, no markup moment",
+#     "6.0":"6.0:KM, fixed sigma 1, TOPATENT",
+#     "6.8":"6.8:6.0 with delta_phchem = delta_patent",
+#     "6.9":"6.9:6.0 fixed sigma_2, no markup moment",
+#     "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
+#     "7.8":"7.8:7.0 with delta_phchem = delta_patent",
+#     "7.9":"7.9:7.0 fixed sigma_2, no markup moment",
+#     "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
+#     "8.8":"8.8:8.0 with delta_phchem = delta_patent",
+#     "8.9":"8.9:8.0 fixed sigma_2, no markup moment",
+#     "9.0":"9.0:KM,AGGAVMARKUP,TO,sigma_1=sigma_2,no markupratio",
+#     "10.0":"10.0:KM,AGGAVMARKUP,TOPATENT,sigma_1=sigma_2,no markupratio",
+#     "11.0":"11.0:KMPATENT,AGGAVMARKUP,TO,sigma_1=sigma_2,no markupratio",
+#     "12.0":"12.0:KMPATENT,AGGAVMARKUP,TOPATENT,sigma_1=sigma_2,no markupratio",
+#     }
+
+# --- current app config: post-TRIPS seeds + pre-TRIPS (1992) lever calibrations ---
+# multi-sector (baseline 2002): post = 8.0 (separate), 8.8 (common);
+# pre-TRIPS levers: 17.x separate, 18.x common(equal 1992), 19.x common2015/diff1992
 comments_dic['2002'] = {
-    "baseline":"old baseline, before typo",
-    "1.0":"1.0:KM, AGGAVMARKUP, TO",
-    "2.0":"2.0:KM, AGGAVMARKUP, TOPATENT",
-    "3.0":"3.0:KMPATENT, AGGAVMARKUP, TO",
-    "4.0":"4.0:KMPATENT, AGGAVMARKUP, TOPATENT",
-    "5.0":"5.0:KM, fixed sigma 1, TO",
-    "5.1":"5.1:5.0 with lowered sigma_2",
-    "5.2":"5.2:5.2, lowered sigma_2, recalibrated",
-    "5.8":"5.8:5.0 with delta_phchem = delta_patent",
-    "5.9":"5.9:5.0 fixed sigma_2, no markup moment",
-    "6.0":"6.0:KM, fixed sigma 1, TOPATENT",
-    "6.8":"6.8:6.0 with delta_phchem = delta_patent",
-    "6.9":"6.9:6.0 fixed sigma_2, no markup moment",
-    "7.0":"7.0:KMPATENT, fixed sigma 1, TO",
-    "7.8":"7.8:7.0 with delta_phchem = delta_patent",
-    "7.9":"7.9:7.0 fixed sigma_2, no markup moment",
-    "8.0":"8.0:KMPATENT, fixed sigma 1, TOPATENT",
-    "8.8":"8.8:8.0 with delta_phchem = delta_patent",
-    "8.9":"8.9:8.0 fixed sigma_2, no markup moment",
-    "9.0":"9.0:KM,AGGAVMARKUP,TO,sigma_1=sigma_2,no markupratio",
-    "10.0":"10.0:KM,AGGAVMARKUP,TOPATENT,sigma_1=sigma_2,no markupratio",
-    "11.0":"11.0:KMPATENT,AGGAVMARKUP,TO,sigma_1=sigma_2,no markupratio",
-    "12.0":"12.0:KMPATENT,AGGAVMARKUP,TOPATENT,sigma_1=sigma_2,no markupratio",
+    "baseline":"2002 baseline (2015 multi-sector)",
+    "8.0":"8.0:POST-TRIPS 2015: separate delta",
+    "8.8":"8.8:POST-TRIPS 2015: common delta",
+    "17.0":"17.0:PRE-TRIPS separate: base",
+    "17.1":"17.1:PRE-TRIPS separate: +fe,fo",
+    "17.2":"17.2:PRE-TRIPS separate: +nu (turnover)",
+    "17.3":"17.3:PRE-TRIPS separate: +fe,fo+nu",
+    "18.0":"18.0:PRE-TRIPS common(equal92): base",
+    "18.1":"18.1:PRE-TRIPS common(equal92): +fe,fo",
+    "18.2":"18.2:PRE-TRIPS common(equal92): +nu (turnover)",
+    "18.3":"18.3:PRE-TRIPS common(equal92): +fe,fo+nu",
+    "19.0":"19.0:PRE-TRIPS common2015/diff1992: base",
+    "19.1":"19.1:PRE-TRIPS common2015/diff1992: +fe,fo",
+    "19.2":"19.2:PRE-TRIPS common2015/diff1992: +nu (turnover)",
+    "19.3":"19.3:PRE-TRIPS common2015/diff1992: +fe,fo+nu",
+    "20.0":"20.0:PRE-TRIPS separate: +fe,fo+nu (turnover@2015)",
+    "20.1":"20.1:PRE-TRIPS common2015/diff1992: +fe,fo+nu (turnover@2015)",
+    }
+
+# mono-sector (baseline 2000): post = baseline; pre-TRIPS levers 17.x
+comments_dic['2000'] = {
+    "baseline":"2000 baseline (2015 mono-sector) POST-TRIPS",
+    "17.0":"17.0:PRE-TRIPS mono: base",
+    "17.1":"17.1:PRE-TRIPS mono: +fe,fo",
+    "17.2":"17.2:PRE-TRIPS mono: +nu (turnover)",
+    "17.3":"17.3:PRE-TRIPS mono: +fe,fo+nu",
     }
 
 baselines_dic_param = {}
 baselines_dic_mom = {}
 baselines_dic_sol_qty = {}
 
-# baseline_list = ['5003','5001','5002']    
-baseline_list = ['2002']    
+# baseline_list = ['5003','5001','5002']
+# baseline_list = ['2002']     # previous app config (commented out, not deleted)
+baseline_list = ['2002','2000']   # show multi-sector (2002) and mono-sector (2000)
 baseline_mom = baseline_list[0]
 
 def section(s):
@@ -539,6 +574,10 @@ data_table_mom = DataTable(source=ds_mom, columns = columns_mom, width=1200, hei
     
 def update_baseline_mom(attrname, old, new):
     mom = mom_select.value
+    if mom not in baselines_dic_mom[new]:        # baselines may expose different quantities
+        mom = 'SPFLOW' if 'SPFLOW' in baselines_dic_mom[new] else sorted(baselines_dic_mom[new].keys())[0]
+    mom_select.options = sorted(baselines_dic_mom[new].keys())
+    mom_select.value = mom
     ds_mom.data = baselines_dic_mom[new][mom]
     
     # legend_items_mom = [LegendItem(label=comments_dic[new][col], 
@@ -604,28 +643,69 @@ x_mom_select.on_change('value', update_x_axis_target)
 baseline_par = baseline_mom
 par = 'delta patent sector'
 
+def par_options(baseline):
+    # the combined 'deltas' quantity (patent-sector delta plain + pharma-chem
+    # delta dashed) is only meaningful for multi-sector baselines
+    opts = sorted(baselines_dic_param[baseline].keys())
+    if 'delta pharma chem' in baselines_dic_param[baseline]:
+        opts = opts + ['deltas']
+    return opts
+
 baseline_par_select = Select(value=baseline_par, title='Baseline', options=sorted(baselines_dic_param.keys()))
-par_select = Select(value=par, title='Quantity', options=sorted(baselines_dic_param[baseline_par].keys()))
+par_select = Select(value=par, title='Quantity', options=par_options(baseline_par))
 
 country_sort = {
+    # developed economies first
     'USA':	1,
-    'JAP':	2,
-    'CAN':	3,
-    'ZAF':	13,
-    'EUR':	5,
-    'KOR':	6,
-    'MEX':	7,
-    'RUS':	8,
-    'BRA':	9,
-    'ROW':	10,
-    'CHN':	11,
-    'IND':	12,
-    'IDN':	14
+    'EUR':	2,
+    'JAP':	3,
+    'CAN':	4,
+    'KOR':	5,
+    # developing economies next
+    'CHN':	6,
+    'BRA':	7,
+    'IND':	8,
+    'RUS':	9,
+    'MEX':	10,
+    'ZAF':	11,
+    # rest
+    'ROW':	12,
+    'IDN':	13
     }
 
 x_range = baselines_dic_param[baseline_par][par_select.value].index.to_list()
 x_range = sorted(x_range, key = country_sort.get)
-ds_par = ColumnDataSource(baselines_dic_param[baseline_par][par].loc[x_range])
+
+def par_src(df):
+    # build the data source dict and add a formatted-value text column per run
+    # (col+'__lab') used by the value-label toggle on the parameters plot
+    d = {'x': list(df.index)}
+    for c in df.columns:
+        vals = list(df[c])
+        d[c] = vals
+        d[c + '__lab'] = ['' if pd.isna(v) else f'{v:.3g}' for v in vals]
+    return d
+
+def blank_par_src(df):
+    # same shape as df but all values NaN (used to "hide" the dashed pharma-chem
+    # lines / labels when the selected quantity is not 'deltas')
+    d = {'x': list(df.index)}
+    for c in df.columns:
+        d[c] = [float('nan')] * len(df.index)
+        d[c + '__lab'] = [''] * len(df.index)
+    return d
+
+def par_frames(baseline, quantity):
+    # returns (primary_frame, secondary_frame_or_None) for a selected quantity;
+    # 'deltas' overlays the patent-sector delta (primary, plain) and the
+    # pharma-chem delta (secondary, dashed)
+    if quantity == 'deltas':
+        return (baselines_dic_param[baseline]['delta patent sector'],
+                baselines_dic_param[baseline]['delta pharma chem'])
+    return baselines_dic_param[baseline][quantity], None
+
+ds_par = ColumnDataSource(par_src(baselines_dic_param[baseline_par][par].loc[x_range]))
+ds_par2 = ColumnDataSource(blank_par_src(baselines_dic_param[baseline_par][par].loc[x_range]))
 p_par = figure(title="Parameters", 
                width = 1200,
                height = 875,
@@ -642,15 +722,33 @@ hover_tool_par.tooltips = [
 p_par.add_tools(hover_tool_par)
 colors_par = itertools.cycle(Category18)
 lines_par = {}
+lines_par2 = {}   # dashed twin per run, used for the pharma-chem delta in 'deltas'
+colors_par_dic = {}
 
 for col in baselines_dic_param[baseline_par][par].columns:
-    lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=next(colors_par),
+    color = next(colors_par)
+    colors_par_dic[col] = color
+    lines_par[col] = p_par.line(x='x', y=col, source = ds_par, color=color,
                                 line_width = 2)
+    lines_par2[col] = p_par.line(x='x', y=col, source = ds_par2, color=color,
+                                 line_width = 2, line_dash='dashed')
     if col != 'baseline':
         lines_par[col].visible = False
+        lines_par2[col].visible = False
 
-legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lin_par])
-                    for col, lin_par in lines_par.items() if col in comments_dic[baseline_par]]
+# value labels on the points (one LabelSet per run; toggled via labels_par_toggle)
+labels_par = {}
+labels_par2 = {}
+for col in baselines_dic_param[baseline_par][par].columns:
+    labels_par[col] = LabelSet(x='x', y=col, text=col + '__lab', source=ds_par,
+                               text_font_size='7pt', x_offset=2, y_offset=2, visible=False)
+    p_par.add_layout(labels_par[col])
+    labels_par2[col] = LabelSet(x='x', y=col, text=col + '__lab', source=ds_par2,
+                                text_font_size='7pt', x_offset=2, y_offset=2, visible=False)
+    p_par.add_layout(labels_par2[col])
+
+legend_items_par = [LegendItem(label=comments_dic[baseline_par][col], renderers=[lines_par[col], lines_par2[col]])
+                    for col in lines_par if col in comments_dic[baseline_par]]
 legend_par = Legend(items=legend_items_par, click_policy="hide", 
                     label_text_font_size="8pt",
                     spacing = 0, 
@@ -674,14 +772,36 @@ columns_par = [
 
 data_table_par = DataTable(source=ds_par, columns = columns_par, width=1200, height=400)
 
+def set_par_sources(baseline, quantity):
+    # populate ds_par (primary, plain) and ds_par2 (secondary, dashed) and set
+    # the categorical x-range; ds_par2 carries pharma-chem deltas only for 'deltas'
+    prim, sec = par_frames(baseline, quantity)
+    x_range_factors = prim.index.to_list()
+    if quantity != 'scalars':
+        try:
+            x_range_factors = sorted(x_range_factors, key = country_sort.get)
+        except:
+            pass
+    p_par.x_range.factors = x_range_factors
+    ds_par.data = par_src(prim.loc[x_range_factors])
+    if sec is not None:
+        ds_par2.data = par_src(sec.loc[x_range_factors])
+    else:
+        ds_par2.data = blank_par_src(prim.loc[x_range_factors])
+    deltas_caption.visible = (quantity == 'deltas')
+    toggle_labels_par(labels_par_toggle.active)
+
 def update_baseline_par(attrname, old, new):
     par = par_select.value
-    x_range_factors = baselines_dic_param[new][par].index.to_list()
-    if new != 'scalars':
-        x_range_factors = sorted(x_range_factors, key = country_sort.get)
-    ds_par.data = baselines_dic_param[new][par].loc[x_range_factors]
-    legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col]])
-                        for col in ds_par.data if col in comments_dic[new]]
+    if par != 'deltas' and par not in baselines_dic_param[new]:   # baselines may expose different quantities
+        par = 'delta patent sector' if 'delta patent sector' in baselines_dic_param[new] else sorted(baselines_dic_param[new].keys())[0]
+    par_select.options = par_options(new)
+    if par not in par_select.options:
+        par = par_select.options[0]
+    par_select.value = par
+    set_par_sources(new, par)
+    legend_items_par = [LegendItem(label=comments_dic[new][col], renderers=[lines_par[col], lines_par2[col]])
+                        for col in lines_par if col in comments_dic[new]]
     legend_par.items = legend_items_par
     # legend_par_split_1.items = legend_items_par[:round((1+len(legend_items_par))/2)]
     # legend_par_split_2.items = legend_items_par[round((len(legend_items_par)+1)/2):]
@@ -692,22 +812,32 @@ def update_baseline_par(attrname, old, new):
 
 def update_par(attrname, old, new):
     baseline_par = baseline_par_select.value
-    x_range_factors = baselines_dic_param[baseline_par][new].index.to_list()
-    if new != 'scalars':
-        try:
-            x_range_factors = sorted(x_range_factors, key = country_sort.get)
-        except:
-            pass
-    p_par.x_range.factors = x_range_factors
-    ds_par.data = baselines_dic_param[baseline_par][new].loc[x_range_factors]
+    set_par_sources(baseline_par, new)
 
-controls_par = row(baseline_par_select, par_select)
+labels_par_toggle = Toggle(label="Values On/Off", align='end')
+
+def toggle_labels_par(active):
+    # show value labels only for currently-visible lines (avoids clutter); the
+    # dashed pharma-chem labels only appear when ds_par2 carries data ('deltas')
+    for col, ls in labels_par.items():
+        ls.visible = bool(active) and lines_par[col].visible
+    for col, ls in labels_par2.items():
+        ls.visible = bool(active) and lines_par2[col].visible
+
+labels_par_toggle.on_click(toggle_labels_par)
+
+# caption explaining the dual-line 'deltas' view (shown only for that quantity)
+deltas_caption = Div(text="<b>deltas view:</b> solid line = patent sector &nbsp;|&nbsp; "
+                          "dashed line = pharma-chem (same color per run)",
+                     visible=(par_select.value == 'deltas'))
+
+controls_par = row(baseline_par_select, par_select, labels_par_toggle)
 
 baseline_par_select.on_change('value', update_baseline_par)
 par_select.on_change('value', update_par)
 
 moment_report = column(controls_mom,p_mom,data_table_mom)
-param_report = column(controls_par, p_par, data_table_par)
+param_report = column(controls_par, deltas_caption, p_par, data_table_par)
 
 #!!! first panel
 # first_panel = row(moment_report,param_report,sol_qty_report)
