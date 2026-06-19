@@ -415,6 +415,8 @@ comments_dic['2002'] = {
     "19.3":"19.3:PRE-TRIPS common2015/diff1992: +fe,fo+nu",
     "20.0":"20.0:PRE-TRIPS separate: +fe,fo+nu (turnover@2015)",
     "20.1":"20.1:PRE-TRIPS common2015/diff1992: +fe,fo+nu (turnover@2015)",
+    "21.0":"21.0:PRE-TRIPS common(equal92): +fe,fo+nu (nu via growth)",
+    "21.1":"21.1:PRE-TRIPS separate: +nu (nu via growth)",
     }
 
 # mono-sector (baseline 2000): post = baseline; pre-TRIPS levers 17.x
